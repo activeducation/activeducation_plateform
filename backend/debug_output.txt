@@ -1,0 +1,34 @@
+Starting debug script...
+Backend dir: D:\ActivEducation\backend
+Loaded .env from D:\ActivEducation\backend\.env
+Logging setup complete.
+Settings loaded.
+SUPABASE_URL: https://hmzschnpyygmlwbmyswm.supabase.co
+SUPABASE_KEY present: True
+SUPABASE_SERVICE_ROLE_KEY present: False
+Repository initialized.
+Attempting create with: {'name': 'Test Creation Debug', 'description': 'Debugging admin creation via script.', 'type': 'riasec', 'duration_minutes': 15, 'image_url': 'https://example.com/image.png', 'is_active': True, 'display_order': 99}
+ERROR: Erreur lors de l'insertion dans orientation_tests: {'message': 'new row violates row-level security policy for table "orientation_tests"', 'code': '42501', 'hint': None, 'details': None}
+Traceback (most recent call last):
+  File "D:\ActivEducation\backend\app\db\supabase_client.py", line 242, in insert
+    result = self.client.table(table).insert(data).execute()
+  File "C:\Users\HP VICTUS\AppData\Roaming\Python\Python314\site-packages\postgrest\_sync\request_builder.py", line 53, in execute
+    raise APIError(dict(json_obj))
+postgrest.exceptions.APIError: {'message': 'new row violates row-level security policy for table "orientation_tests"', 'code': '42501', 'hint': None, 'details': None}
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\ActivEducation\backend\scripts\debug_test_creation.py", line 79, in test_creation
+    new_test = await repo.create_test(test_data)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ActivEducation\backend\app\repositories\admin\tests_repository.py", line 118, in create_test
+    result = self._db.insert(table="orientation_tests", data=data.model_dump())
+  File "D:\ActivEducation\backend\app\db\supabase_client.py", line 71, in wrapper
+    raise last_exception
+  File "D:\ActivEducation\backend\app\db\supabase_client.py", line 56, in wrapper
+    return func(*args, **kwargs)
+  File "D:\ActivEducation\backend\app\db\supabase_client.py", line 247, in insert
+    raise QueryError(f"Erreur lors de l'insertion dans {table}: {str(e)}")
+app.core.exceptions.QueryError: Erreur lors de l'insertion dans orientation_tests: {'message': 'new row violates row-level security policy for table "orientation_tests"', 'code': '42501', 'hint': None, 'details': None}
+

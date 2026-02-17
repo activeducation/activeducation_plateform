@@ -1,0 +1,43 @@
+name: admin_dashboard
+description: "Dashboard Administratif ActivEducation"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.8
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # State Management & DI
+  flutter_bloc: ^8.1.6
+  get_it: ^8.0.2
+  equatable: ^2.0.5
+
+  # Networking
+  dio: ^5.7.0
+  http: ^1.2.0
+
+  # Navigation
+  go_router: ^14.6.2
+
+  # Storage
+  shared_preferences: ^2.3.4
+
+  # UI
+  google_fonts: ^6.2.1
+  fl_chart: ^0.69.2
+  data_table_2: ^2.5.15
+  file_picker: ^8.1.6
+  intl: ^0.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true

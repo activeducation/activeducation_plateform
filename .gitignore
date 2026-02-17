@@ -1,0 +1,25 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Flutter
+**/.dart_tool/
+**/build/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+
+# Node
+**/node_modules/
+
+# IDE
+.vscode/
+.idea/
+
+# Secrets
+.env
+
+# Logs
+*.log
+nul
