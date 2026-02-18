@@ -91,18 +91,15 @@ class _LoginPageState extends State<LoginPage> {
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [AppColors.primary, AppColors.secondary],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
             borderRadius: BorderRadius.circular(20),
             boxShadow: AppColors.crossBrandShadow,
           ),
-          child: const Icon(
-            Icons.school_rounded,
-            size: 48,
-            color: Colors.white,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Image.asset(
+              'assets/images/logo.png',
+              fit: BoxFit.contain,
+            ),
           ),
         ),
         const SizedBox(height: 24),

@@ -26,9 +26,22 @@ class AuthGuard {
     '/register',
   ];
 
+  /// Prefixes de routes publiques (toutes les sous-routes sont accessibles).
+  /// Seul /profile necessite une authentification.
+  static const List<String> publicPrefixes = [
+    '/home',
+    '/orientation',
+    '/schools',
+  ];
+
   /// Verifie si la route est publique.
   static bool isPublicRoute(String location) {
-    return publicRoutes.any((route) => location == route || location.startsWith('$route?'));
+    // Verifier les routes exactes
+    if (publicRoutes.any((route) => location == route || location.startsWith('$route?'))) {
+      return true;
+    }
+    // Verifier les prefixes (orientation et sous-routes)
+    return publicPrefixes.any((prefix) => location.startsWith(prefix));
   }
 
   /// Verifie si c'est une route d'authentification.

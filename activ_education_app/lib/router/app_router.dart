@@ -185,22 +185,13 @@ class _MainShellWrapperState extends State<_MainShellWrapper> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: const BoxDecoration(
-                      gradient: AppColors.crossBrandGradient,
-                      borderRadius: BorderRadius.all(Radius.circular(10)),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'A',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
-                      ),
+                  ClipRRect(
+                    borderRadius: const BorderRadius.all(Radius.circular(10)),
+                    child: Image.asset(
+                      'assets/images/logo.png',
+                      width: 36,
+                      height: 36,
+                      fit: BoxFit.contain,
                     ),
                   ),
                   const SizedBox(width: 10),

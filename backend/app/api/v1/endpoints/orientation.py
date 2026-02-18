@@ -16,7 +16,7 @@ from fastapi import APIRouter, Depends, Query, Request
 
 from app.core.logging import get_logger
 from app.core.exceptions import TestNotFoundError, QueryError
-from app.core.security import get_current_user_id
+from app.core.security import get_current_user_id, get_current_user_id_optional
 from app.schemas.orientation import (
     OrientationTest,
     OrientationTestSummary,
@@ -204,13 +204,15 @@ async def submit_test(
     request: Request,
     test_id: UUID,
     submission: TestSubmission,
-    user_id: UUID = Depends(get_current_user_id),
+    user_id: Optional[UUID] = Depends(get_current_user_id_optional),
     repo: OrientationRepository = Depends(get_repo),
 ):
     """
     Soumet les reponses d'un test et calcule les resultats.
     Retourne les scores, l'interpretation, les carrieres avec score de correspondance,
     et les programmes scolaires recommandes.
+    L'authentification est optionnelle: les resultats sont toujours calcules,
+    mais la session n'est sauvegardee que pour les utilisateurs connectes.
     """
     try:
         test = await repo.get_test_by_id(test_id)
@@ -228,78 +230,85 @@ async def submit_test(
     )
     result.test_id = test_id
 
-    try:
-        session = await repo.create_test_session(user_id, test_id)
+    # Enrichir les recommandations avec carrieres + score de correspondance
+    if result.dominant_traits:
+        try:
+            careers = await repo.get_careers_by_traits(result.dominant_traits, limit=8)
+            enriched_recs = []
+            for c in careers:
+                career_traits = c.get("related_traits") or []
+                match_score = orientation_engine.calculate_match_score(
+                    career_traits=career_traits,
+                    user_dominant_traits=result.dominant_traits,
+                    user_scores=result.scores,
+                )
+                # Calculer les traits en commun (normaliser accents + langues)
+                from app.services.orientation_engine import EN_TO_FR, CODE_TO_FR
+                _no_accent = {"Realiste": "Réaliste"}
+                normalized_ct = [EN_TO_FR.get(t) or CODE_TO_FR.get(t) or _no_accent.get(t) or t for t in career_traits]
+                matching = [t for t in normalized_ct if t in result.dominant_traits]
 
-        # Enrichir les recommandations avec carrieres + score de correspondance
-        if result.dominant_traits:
-            try:
-                careers = await repo.get_careers_by_traits(result.dominant_traits, limit=8)
-                enriched_recs = []
-                for c in careers:
-                    career_traits = c.get("related_traits") or []
-                    match_score = orientation_engine.calculate_match_score(
-                        career_traits=career_traits,
-                        user_dominant_traits=result.dominant_traits,
-                        user_scores=result.scores,
-                    )
-                    # Calculer les traits en commun (normaliser accents + langues)
-                    from app.services.orientation_engine import EN_TO_FR, CODE_TO_FR
-                    _no_accent = {"Realiste": "Réaliste"}
-                    normalized_ct = [EN_TO_FR.get(t) or CODE_TO_FR.get(t) or _no_accent.get(t) or t for t in career_traits]
-                    matching = [t for t in normalized_ct if t in result.dominant_traits]
+                enriched_recs.append(CareerSummary(
+                    id=c["id"],
+                    name=c["name"],
+                    description=c.get("description", ""),
+                    sector_name=c.get("sector_name", ""),
+                    job_demand=c.get("job_demand"),
+                    salary_avg_fcfa=c.get("salary_avg_fcfa"),
+                    salary_min_fcfa=c.get("salary_min_fcfa"),
+                    salary_max_fcfa=c.get("salary_max_fcfa"),
+                    image_url=c.get("image_url"),
+                    match_score=match_score,
+                    matching_traits=matching,
+                    required_skills=(c.get("required_skills") or [])[:5],
+                    related_traits=career_traits,
+                    education_minimum_level=_extract_education_level(c),
+                ))
 
-                    enriched_recs.append(CareerSummary(
-                        id=c["id"],
-                        name=c["name"],
-                        description=c.get("description", ""),
-                        sector_name=c.get("sector_name", ""),
-                        job_demand=c.get("job_demand"),
-                        salary_avg_fcfa=c.get("salary_avg_fcfa"),
-                        salary_min_fcfa=c.get("salary_min_fcfa"),
-                        salary_max_fcfa=c.get("salary_max_fcfa"),
-                        image_url=c.get("image_url"),
-                        match_score=match_score,
-                        matching_traits=matching,
-                        required_skills=(c.get("required_skills") or [])[:5],
-                        related_traits=career_traits,
-                        education_minimum_level=_extract_education_level(c),
-                    ))
+            # Trier par score de correspondance decroissant
+            enriched_recs.sort(key=lambda r: r.match_score, reverse=True)
+            result.recommendations = enriched_recs[:6]
+        except Exception as e:
+            logger.error(f"Error fetching recommended careers: {e}")
+            result.recommendations = []
 
-                # Trier par score de correspondance decroissant
-                enriched_recs.sort(key=lambda r: r.match_score, reverse=True)
-                result.recommendations = enriched_recs[:6]
-            except Exception as e:
-                logger.error(f"Error fetching recommended careers: {e}")
-                result.recommendations = []
+        # Recuperer les programmes scolaires correspondants
+        try:
+            sectors = result.interpretation.get("recommended_sectors", [])
+            if sectors:
+                programs = await repo.get_matching_school_programs(sectors, limit=8)
+                result.matching_programs = programs
+        except Exception as e:
+            logger.error(f"Error fetching matching school programs: {e}")
+            result.matching_programs = []
 
-            # Recuperer les programmes scolaires correspondants
-            try:
-                sectors = result.interpretation.get("recommended_sectors", [])
-                if sectors:
-                    programs = await repo.get_matching_school_programs(sectors, limit=8)
-                    result.matching_programs = programs
-            except Exception as e:
-                logger.error(f"Error fetching matching school programs: {e}")
-                result.matching_programs = []
+    # Sauvegarder la session uniquement pour les utilisateurs connectes
+    if user_id is not None:
+        try:
+            session = await repo.create_test_session(user_id, test_id)
 
-        await repo.complete_test_session(
-            session_id=UUID(session["id"]),
-            user_id=user_id,
-            test_id=test_id,
-            responses=submission.responses,
-            result=result,
-        )
+            await repo.complete_test_session(
+                session_id=UUID(session["id"]),
+                user_id=user_id,
+                test_id=test_id,
+                responses=submission.responses,
+                result=result,
+            )
+            logger.info(
+                f"Test submitted successfully",
+                extra={
+                    "test_id": str(test_id),
+                    "user_id": str(user_id),
+                    "dominant_traits": result.dominant_traits,
+                },
+            )
+        except Exception as e:
+            logger.warning(f"Could not save test results to DB: {e}")
+    else:
         logger.info(
-            f"Test submitted successfully",
-            extra={
-                "test_id": str(test_id),
-                "user_id": str(user_id),
-                "dominant_traits": result.dominant_traits,
-            },
+            f"Test submitted anonymously (no auth)",
+            extra={"test_id": str(test_id), "dominant_traits": result.dominant_traits},
         )
-    except Exception as e:
-        logger.warning(f"Could not save test results to DB: {e}")
 
     return result
 

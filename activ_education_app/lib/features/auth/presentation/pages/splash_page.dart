@@ -49,9 +49,11 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
         if (state is AuthAuthenticated) {
           context.go('/home');
         } else if (state is AuthUnauthenticated) {
-          context.go('/login');
+          // Permettre la navigation sans connexion
+          context.go('/home');
         } else if (state is AuthError) {
-          context.go('/login');
+          // Meme en cas d'erreur auth, laisser l'utilisateur naviguer
+          context.go('/home');
         }
       },
       child: Scaffold(
@@ -73,19 +75,11 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Logo with blue→orange gradient
+                    // Logo ActivEducation
                     Container(
                       width: 140,
                       height: 140,
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [
-                            AppColors.primary,
-                            AppColors.secondary,
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
                         borderRadius: BorderRadius.circular(35),
                         boxShadow: [
                           BoxShadow(
@@ -102,10 +96,12 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
                           ),
                         ],
                       ),
-                      child: const Icon(
-                        Icons.school_rounded,
-                        size: 72,
-                        color: Colors.white,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(35),
+                        child: Image.asset(
+                          'assets/images/logo.png',
+                          fit: BoxFit.contain,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 32),
