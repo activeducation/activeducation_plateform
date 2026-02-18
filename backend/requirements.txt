@@ -4,9 +4,10 @@
 
 # Core Framework
 fastapi>=0.110.0
-uvicorn>=0.27.1
+uvicorn[standard]>=0.41.0
 pydantic>=2.6.2
 pydantic-settings>=2.2.1
+gunicorn>=25.1.0
 
 # Database
 supabase>=2.4.0
@@ -36,6 +37,3 @@ pytest-cov>=4.1.0
 factory-boy>=3.3.0
 
 
-# Ajoute ça à la fin ou dans la section "Core Framework" ou "Server"
-gunicorn>=25.1.0
-# ou encore plus strict :gunicorn==25.1.0
