@@ -76,61 +76,17 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     // Logo ActivEducation
-                    Container(
-                      width: 140,
-                      height: 140,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(35),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.25),
-                            blurRadius: 24,
-                            spreadRadius: 2,
-                            offset: const Offset(0, 4),
-                          ),
-                          BoxShadow(
-                            color: AppColors.secondary.withValues(alpha: 0.2),
-                            blurRadius: 32,
-                            spreadRadius: 1,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(35),
-                        child: Image.asset(
-                          'assets/images/logo.png',
-                          fit: BoxFit.contain,
-                        ),
-                      ),
+                    Image.asset(
+                      'assets/images/logo.jpeg',
+                      width: 180,
+                      height: 180,
+                      fit: BoxFit.contain,
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 16),
 
-                    // App Name - "Activ" in blue, "Education" in orange
-                    RichText(
-                      text: TextSpan(
-                        style: const TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
-                        ),
-                        children: [
-                          TextSpan(
-                            text: 'Activ',
-                            style: TextStyle(color: AppColors.primary),
-                          ),
-                          TextSpan(
-                            text: 'Education',
-                            style: TextStyle(color: AppColors.secondary),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-
-                    // Tagline - italic with orange tint
+                    // Tagline
                     Text(
-                      'Decouvre ton avenir',
+                      'Découvre ton avenir',
                       style: TextStyle(
                         color: AppColors.secondaryDark,
                         fontSize: 16,

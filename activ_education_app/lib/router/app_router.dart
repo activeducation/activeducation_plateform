@@ -188,7 +188,7 @@ class _MainShellWrapperState extends State<_MainShellWrapper> {
                   ClipRRect(
                     borderRadius: const BorderRadius.all(Radius.circular(10)),
                     child: Image.asset(
-                      'assets/images/logo.png',
+                      'assets/images/logo.jpeg',
                       width: 36,
                       height: 36,
                       fit: BoxFit.contain,
