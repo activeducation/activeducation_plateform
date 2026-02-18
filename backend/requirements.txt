@@ -34,3 +34,8 @@ pytest>=8.0.2
 pytest-asyncio>=0.23.5
 pytest-cov>=4.1.0
 factory-boy>=3.3.0
+
+
+# Ajoute ça à la fin ou dans la section "Core Framework" ou "Server"
+gunicorn>=25.1.0
+# ou encore plus strict :gunicorn==25.1.0
