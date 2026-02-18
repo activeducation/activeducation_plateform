@@ -67,9 +67,8 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 
 # 2. CORS - Configure selon l'environnement
-# Ajouter les origines du dashboard admin
-admin_origins = ["http://localhost:5000", "http://localhost:5001", "http://localhost:8080"]
-cors_origins = list(set(settings.BACKEND_CORS_ORIGINS + admin_origins)) if settings.BACKEND_CORS_ORIGINS else admin_origins
+# Toutes les origines sont definies dans BACKEND_CORS_ORIGINS (.env)
+cors_origins = settings.BACKEND_CORS_ORIGINS if settings.BACKEND_CORS_ORIGINS else []
 
 if cors_origins:
     # Note: allow_credentials=True est incompatible avec allow_origins=["*"]

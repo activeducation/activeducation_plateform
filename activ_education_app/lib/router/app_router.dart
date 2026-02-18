@@ -126,6 +126,8 @@ class _MainShellWrapperState extends State<_MainShellWrapper> {
     '/profile',
   ];
 
+  static const double _desktopBreakpoint = 768;
+
   @override
   Widget build(BuildContext context) {
     // Determine current index from route
@@ -137,10 +139,115 @@ class _MainShellWrapperState extends State<_MainShellWrapper> {
       }
     }
 
+    final isDesktop = MediaQuery.sizeOf(context).width >= _desktopBreakpoint;
+
+    if (isDesktop) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        body: Row(
+          children: [
+            _buildSideNav(context),
+            Expanded(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 960),
+                  child: widget.child,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: widget.child,
       bottomNavigationBar: _buildBottomNav(context),
+    );
+  }
+
+  Widget _buildSideNav(BuildContext context) {
+    return Container(
+      width: 240,
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        border: const Border(
+          right: BorderSide(color: AppColors.border, width: 1),
+        ),
+      ),
+      child: SafeArea(
+        child: Column(
+          children: [
+            const SizedBox(height: 24),
+            // Logo / Brand
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: const BoxDecoration(
+                      gradient: AppColors.crossBrandGradient,
+                      borderRadius: BorderRadius.all(Radius.circular(10)),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'A',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'ActivEducation',
+                    style: AppTypography.titleMedium.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
+            _SideNavItem(
+              icon: Icons.home_outlined,
+              activeIcon: Icons.home_rounded,
+              label: 'Accueil',
+              isActive: _currentIndex == 0,
+              onTap: () => context.go('/home'),
+            ),
+            _SideNavItem(
+              icon: Icons.school_outlined,
+              activeIcon: Icons.school_rounded,
+              label: 'Orientation',
+              isActive: _currentIndex == 1,
+              onTap: () => context.go('/orientation'),
+            ),
+            _SideNavItem(
+              icon: Icons.business_outlined,
+              activeIcon: Icons.business_rounded,
+              label: '\u00c9coles',
+              isActive: _currentIndex == 2,
+              onTap: () => context.go('/schools'),
+            ),
+            const Spacer(),
+            const Divider(height: 1),
+            _SideNavItem(
+              icon: Icons.person_outline,
+              activeIcon: Icons.person_rounded,
+              label: 'Profil',
+              isActive: _currentIndex == 3,
+              onTap: () => context.go('/profile'),
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
     );
   }
 
@@ -260,6 +367,69 @@ class _NavItem extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SideNavItem extends StatelessWidget {
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  const _SideNavItem({
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+      child: Material(
+        color: isActive ? AppColors.primarySurface : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          hoverColor: AppColors.surface,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                Icon(
+                  isActive ? activeIcon : icon,
+                  color: isActive ? AppColors.primaryDark : AppColors.textSecondary,
+                  size: 22,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: AppTypography.labelLarge.copyWith(
+                      color: isActive ? AppColors.primaryDark : AppColors.textSecondary,
+                      fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                    ),
+                  ),
+                ),
+                if (isActive)
+                  Container(
+                    width: 4,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      color: AppColors.secondary,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),

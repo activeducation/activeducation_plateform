@@ -1,38 +1,105 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
   <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="Plateforme d'orientation scolaire et professionnelle gamifiée">
+  <meta name="description" content="ActivEducation - Plateforme d'orientation scolaire et professionnelle gamifiee">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="activ_education_app">
+  <meta name="apple-mobile-web-app-title" content="ActivEducation">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>activ_education_app</title>
+  <title>ActivEducation</title>
   <link rel="manifest" href="manifest.json">
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #FAFBFD;
+      overflow: hidden;
+    }
+
+    /* Loading screen */
+    .loading-container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    .loading-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .loading-logo-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #1060CF, #F2A423);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .loading-logo-text {
+      font-size: 28px;
+      font-weight: 700;
+      color: #1A1A2E;
+    }
+
+    .loading-logo-text span {
+      color: #F2A423;
+    }
+
+    .loading-bar {
+      width: 200px;
+      height: 4px;
+      background-color: #E8F0FE;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .loading-bar-inner {
+      width: 40%;
+      height: 100%;
+      background: linear-gradient(90deg, #1060CF, #F2A423);
+      border-radius: 2px;
+      animation: loading 1.2s ease-in-out infinite;
+    }
+
+    @keyframes loading {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(350%); }
+    }
+  </style>
 </head>
 <body>
+  <div class="loading-container" id="loading">
+    <div class="loading-logo">
+      <div class="loading-logo-icon">A</div>
+      <div class="loading-logo-text">Activ<span>Education</span></div>
+    </div>
+    <div class="loading-bar">
+      <div class="loading-bar-inner"></div>
+    </div>
+  </div>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

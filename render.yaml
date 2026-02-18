@@ -1,0 +1,28 @@
+services:
+  # Backend API FastAPI
+  - type: web
+    name: activeducation-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: "False"
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: BACKEND_CORS_ORIGINS
+        sync: false
+      - key: RATE_LIMIT_PER_MINUTE
+        value: "60"
+      - key: LOG_LEVEL
+        value: INFO
+    healthCheckPath: /health

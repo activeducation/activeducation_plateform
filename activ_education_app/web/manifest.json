@@ -1,12 +1,12 @@
 {
-    "name": "activ_education_app",
-    "short_name": "activ_education_app",
+    "name": "ActivEducation",
+    "short_name": "ActivEducation",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "Plateforme d'orientation scolaire et professionnelle gamifiée",
-    "orientation": "portrait-primary",
+    "background_color": "#FAFBFD",
+    "theme_color": "#1060CF",
+    "description": "Plateforme d'orientation scolaire et professionnelle gamifiee",
+    "orientation": "any",
     "prefer_related_applications": false,
     "icons": [
         {

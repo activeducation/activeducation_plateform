@@ -1,6 +1,10 @@
-import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart';
 
 /// Endpoints API pour le backend FastAPI.
+///
+/// L'URL du backend est configurable via --dart-define=API_BASE_URL=...
+/// Exemple build web production:
+///   flutter build web --dart-define=API_BASE_URL=https://mon-backend.onrender.com
 class ApiEndpoints {
   ApiEndpoints._();
 
@@ -8,25 +12,28 @@ class ApiEndpoints {
   // BASE URL
   // ============================================
 
-  /// Detecte automatiquement la bonne URL selon la plateforme.
-  /// - Android emulateur: 10.0.2.2 (localhost de la machine hote)
-  /// - Autres (iOS simulator, web, desktop): localhost
-  /// Pour un appareil physique, remplacer par l'IP de la machine.
+  /// URL du backend injectee au build via --dart-define=API_BASE_URL=...
+  /// Fallback: detection automatique selon la plateforme.
   static final String baseUrl = _resolveBaseUrl();
 
   /// Prefixe commun de toutes les routes backend.
   static const String apiV1 = '/api/v1';
 
   static String _resolveBaseUrl() {
-    // TODO: En production, retourner l'URL de prod.
-    // return 'https://api.activeducation.com';
+    // 1. Verifier si une URL a ete injectee au build
+    const envUrl = String.fromEnvironment('API_BASE_URL');
+    if (envUrl.isNotEmpty) {
+      return envUrl;
+    }
+
+    // 2. Fallback dev: detection plateforme
     const port = '8000';
-    try {
-      if (Platform.isAndroid) {
-        return 'http://10.0.2.2:$port';
-      }
-    } catch (_) {
-      // Platform non disponible (web): fallback localhost.
+    if (kIsWeb) {
+      return 'http://localhost:$port';
+    }
+    // Android emulateur: 10.0.2.2 = localhost de la machine hote
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return 'http://10.0.2.2:$port';
     }
     return 'http://localhost:$port';
   }
