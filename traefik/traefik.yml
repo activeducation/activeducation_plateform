@@ -1,0 +1,46 @@
+# ============================================================
+# ActivEducation - Traefik Configuration Statique
+# ============================================================
+# AVANT DE DEPLOYER: remplacez REMPLACER_PAR_VOTRE_EMAIL
+# par votre vraie adresse email (requise par Let's Encrypt).
+# ============================================================
+
+# Interface Traefik - desactivee en production
+api:
+  dashboard: false
+
+# Decouverte automatique des services Docker
+providers:
+  docker:
+    exposedByDefault: false   # Seuls les services avec traefik.enable=true sont exposes
+    network: app-network      # Reseau Docker utilise pour joindre les conteneurs
+
+# Points d'entree reseau
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true   # 301 Redirect HTTP -> HTTPS pour tous les domaines
+
+  websecure:
+    address: ":443"
+
+# Gestionnaire de certificats SSL - Let's Encrypt automatique
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: "activedutg@gmail.com"
+      storage: /letsencrypt/acme.json
+      httpChallenge:
+        entryPoint: web   # Validation via HTTP sur port 80 (Traefik gere avant le redirect)
+
+# Journalisation
+log:
+  level: INFO
+
+# Journalisation des acces (optionnel - commenter pour reduire les logs)
+accessLog: {}

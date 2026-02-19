@@ -1,14 +1,25 @@
 #!/bin/bash
 # =============================================================================
-# ActivEducation - Script de deploiement VPS Hostinger
-# Domaines:
-#   activeduhub.com       -> App Etudiante (Flutter Web)
+# ActivEducation - Script de deploiement VPS Hostinger (avec Traefik)
+# =============================================================================
+# Architecture:
+#   activeduhub.com       -> App Etudiante  (Flutter Web)
 #   admin.activeduhub.com -> Admin Dashboard (Flutter Web)
 #   api.activeduhub.com   -> Backend FastAPI
-# =============================================================================
+#
+# Traefik gere automatiquement le SSL (Let's Encrypt) - pas de Certbot.
+#
 # Usage: sudo bash deploy.sh
-# Prerequis: Projet uploade sur le VPS, .env.production configure,
-#            les 2 builds Flutter generes localement avant upload
+#
+# Prerequis AVANT de lancer ce script:
+#   1. DNS: 4 enregistrements A pointant vers l'IP de ce serveur
+#        activeduhub.com, www.activeduhub.com,
+#        admin.activeduhub.com, api.activeduhub.com
+#   2. traefik/traefik.yml: remplacer REMPLACER_PAR_VOTRE_EMAIL
+#   3. backend/.env.production: remplir SUPABASE_KEY, SERVICE_ROLE_KEY, SECRET_KEY
+#   4. Builds Flutter generes localement et uploades:
+#        activ_education_app/build/web/
+#        admin_dashboard/build/web/
 # =============================================================================
 
 set -euo pipefail
@@ -18,7 +29,6 @@ DOMAIN="activeduhub.com"
 ADMIN_DOMAIN="admin.activeduhub.com"
 API_DOMAIN="api.activeduhub.com"
 WWW_DOMAIN="www.activeduhub.com"
-CERTBOT_EMAIL="REMPLACER_PAR_VOTRE_EMAIL"   # <-- Changez ceci avant de lancer!
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -44,51 +54,51 @@ check_root() {
     fi
 }
 
-check_email() {
-    if [[ "$CERTBOT_EMAIL" == "REMPLACER_PAR_VOTRE_EMAIL" ]]; then
-        error "Editez deploy.sh et remplacez CERTBOT_EMAIL par votre vraie adresse email!"
+check_traefik_config() {
+    local traefik_config="$PROJECT_DIR/traefik/traefik.yml"
+    if [[ ! -f "$traefik_config" ]]; then
+        error "Fichier manquant: traefik/traefik.yml"
     fi
+    if grep -q "REMPLACER_PAR_VOTRE_EMAIL" "$traefik_config"; then
+        error "Email non configure dans traefik/traefik.yml!\nRemplacez REMPLACER_PAR_VOTRE_EMAIL par votre vraie adresse email (requis par Let's Encrypt)."
+    fi
+    success "traefik/traefik.yml configure"
 }
 
 check_env_file() {
     local env_file="$PROJECT_DIR/backend/.env.production"
     if [[ ! -f "$env_file" ]]; then
-        error "Fichier manquant: backend/.env.production\nCopiez et editez le fichier avec vos vraies valeurs."
+        error "Fichier manquant: backend/.env.production"
     fi
-
-    # Verifier que les valeurs placeholder ont ete remplacees
     local placeholders=("REMPLACER_PAR_VOTRE_SUPABASE_ANON_KEY" "REMPLACER_PAR_VOTRE_SERVICE_ROLE_KEY" "REMPLACER_PAR_UNE_CLE_SECRETE_MINIMUM_32_CARACTERES")
     for placeholder in "${placeholders[@]}"; do
         if grep -q "$placeholder" "$env_file"; then
-            error "Valeur non configuree dans .env.production: $placeholder\nRemplissez toutes les valeurs avant de deployer."
+            error "Valeur non configuree dans backend/.env.production: $placeholder"
         fi
     done
-    success "Fichier .env.production valide"
+    success "backend/.env.production configure"
 }
 
 check_flutter_builds() {
     section "Verification des builds Flutter"
 
-    # Verifier l'app etudiante
     local app_build="$PROJECT_DIR/activ_education_app/build/web"
     if [[ ! -d "$app_build" ]] || [[ ! -f "$app_build/index.html" ]]; then
-        error "Build Flutter Web manquant pour l'app etudiante!\n\nSur votre machine locale (avant d'uploader):\n  cd activ_education_app\n  flutter build web --release --dart-define=API_BASE_URL=https://api.activeduhub.com\n\nPuis re-uploadez le projet complet sur le VPS."
+        error "Build Flutter manquant: activ_education_app/build/web/index.html\n\nGenerez-le sur votre machine locale:\n  cd activ_education_app\n  flutter build web --release --dart-define=API_BASE_URL=https://api.activeduhub.com\nPuis re-uploadez le projet sur le VPS."
     fi
-    success "Build app etudiante trouve: activ_education_app/build/web"
+    success "Build app etudiante: activ_education_app/build/web/"
 
-    # Verifier le dashboard admin
     local admin_build="$PROJECT_DIR/admin_dashboard/build/web"
     if [[ ! -d "$admin_build" ]] || [[ ! -f "$admin_build/index.html" ]]; then
-        error "Build Flutter Web manquant pour le dashboard admin!\n\nSur votre machine locale (avant d'uploader):\n  cd admin_dashboard\n  flutter build web --release --dart-define=API_BASE_URL=https://api.activeduhub.com/api/v1\n\nPuis re-uploadez le projet complet sur le VPS."
+        error "Build Flutter manquant: admin_dashboard/build/web/index.html\n\nGenerez-le sur votre machine locale:\n  cd admin_dashboard\n  flutter build web --release --dart-define=API_BASE_URL=https://api.activeduhub.com/api/v1\nPuis re-uploadez le projet sur le VPS."
     fi
-    success "Build admin dashboard trouve: admin_dashboard/build/web"
+    success "Build admin dashboard: admin_dashboard/build/web/"
 }
 
 # ─── INSTALLATION DEPENDANCES ─────────────────────────────────────────────────
 
 install_dependencies() {
     section "Installation des dependances systeme"
-    log "Mise a jour des paquets..."
     apt-get update -qq
     apt-get install -y -qq curl git ufw openssl
     success "Paquets systeme installes"
@@ -99,7 +109,6 @@ install_docker() {
         success "Docker deja installe: $(docker --version)"
         return
     fi
-
     log "Installation de Docker..."
     curl -fsSL https://get.docker.com | bash -s
     systemctl enable docker --now
@@ -111,7 +120,6 @@ install_docker_compose() {
         success "Docker Compose deja installe: $(docker compose version)"
         return
     fi
-
     log "Installation de Docker Compose plugin..."
     apt-get install -y -qq docker-compose-plugin
     success "Docker Compose installe"
@@ -131,123 +139,92 @@ setup_firewall() {
     success "Pare-feu configure (SSH + HTTP + HTTPS)"
 }
 
-# ─── PHASE 1: NGINX HTTP POUR CERTBOT ─────────────────────────────────────────
+# ─── PREPARATION TRAEFIK ──────────────────────────────────────────────────────
 
-start_nginx_http() {
-    section "Phase 1/3 - Nginx HTTP (validation Let's Encrypt)"
+setup_traefik() {
+    section "Preparation Traefik + Let's Encrypt"
 
-    # Creer les repertoires necessaires
-    mkdir -p "$PROJECT_DIR/nginx/certbot/conf"
-    mkdir -p "$PROJECT_DIR/nginx/certbot/www"
+    # Creer le repertoire de stockage des certificats
+    mkdir -p "$PROJECT_DIR/traefik/letsencrypt"
 
-    # Utiliser la config HTTP initiale
-    cp "$PROJECT_DIR/nginx/conf.d/init.conf" "$PROJECT_DIR/nginx/conf.d/activeduhub.conf"
+    # acme.json doit exister avec permissions 600 avant le demarrage de Traefik
+    local acme_file="$PROJECT_DIR/traefik/letsencrypt/acme.json"
+    touch "$acme_file"
+    chmod 600 "$acme_file"
 
-    log "Demarrage de Nginx (HTTP)..."
-    cd "$PROJECT_DIR"
-    docker compose up -d nginx backend
-
-    # Attendre que Nginx soit pret
-    log "Attente de Nginx..."
-    sleep 5
-
-    if docker compose ps nginx | grep -q "Up"; then
-        success "Nginx HTTP demarre"
-    else
-        error "Nginx n'a pas pu demarrer. Verifiez: docker compose logs nginx"
-    fi
-}
-
-# ─── PHASE 2: CERTIFICAT SSL ─────────────────────────────────────────────────
-
-get_ssl_certificate() {
-    section "Phase 2/3 - Certificat SSL Let's Encrypt"
-
-    log "Verification que les DNS pointent vers ce serveur..."
     SERVER_IP=$(curl -s ifconfig.me 2>/dev/null || curl -s api.ipify.org 2>/dev/null || echo "INCONNUE")
     warn "IP de ce serveur: $SERVER_IP"
-    warn "Assurez-vous que ces 4 enregistrements DNS ont bien ete configures:"
-    warn "  A  activeduhub.com        -> $SERVER_IP"
-    warn "  A  www.activeduhub.com    -> $SERVER_IP"
-    warn "  A  admin.activeduhub.com  -> $SERVER_IP"
-    warn "  A  api.activeduhub.com    -> $SERVER_IP"
+    warn "Verifiez que ces 4 enregistrements DNS A pointent vers $SERVER_IP:"
+    warn "  activeduhub.com        -> $SERVER_IP"
+    warn "  www.activeduhub.com    -> $SERVER_IP"
+    warn "  admin.activeduhub.com  -> $SERVER_IP"
+    warn "  api.activeduhub.com    -> $SERVER_IP"
+    echo ""
+    warn "Si les DNS ne sont pas encore propagés, Traefik reessaiera automatiquement."
     echo ""
 
-    log "Obtention du certificat SSL pour $DOMAIN, $WWW_DOMAIN, $ADMIN_DOMAIN, $API_DOMAIN..."
-    cd "$PROJECT_DIR"
-    docker compose run --rm certbot certonly \
-        --webroot \
-        --webroot-path=/var/www/certbot \
-        --email "$CERTBOT_EMAIL" \
-        --agree-tos \
-        --no-eff-email \
-        --force-renewal \
-        -d "$DOMAIN" \
-        -d "$WWW_DOMAIN" \
-        -d "$ADMIN_DOMAIN" \
-        -d "$API_DOMAIN"
-
-    success "Certificat SSL obtenu pour $DOMAIN (couvre aussi $ADMIN_DOMAIN et $API_DOMAIN)"
+    success "Traefik prepare (acme.json cree avec permissions 600)"
 }
 
-# ─── PHASE 3: ACTIVATION HTTPS ────────────────────────────────────────────────
-
-enable_https() {
-    section "Phase 3/3 - Activation HTTPS"
-
-    log "Remplacement de la config Nginx par la version HTTPS..."
-    cp "$PROJECT_DIR/nginx/conf.d/ssl.conf" "$PROJECT_DIR/nginx/conf.d/activeduhub.conf"
-
-    log "Rechargement de Nginx avec la config SSL..."
-    cd "$PROJECT_DIR"
-    docker compose exec nginx nginx -t  # Test de la config
-    docker compose exec nginx nginx -s reload
-
-    success "HTTPS active sur $DOMAIN, $ADMIN_DOMAIN et $API_DOMAIN"
-}
-
-# ─── DEMARRAGE COMPLET ────────────────────────────────────────────────────────
+# ─── DEMARRAGE ────────────────────────────────────────────────────────────────
 
 start_all_services() {
     section "Demarrage de tous les services"
     cd "$PROJECT_DIR"
-    docker compose up -d
-    success "Tous les services demarres (backend + nginx + certbot auto-renouvellement)"
+
+    # Arreter les anciens conteneurs si besoin (migration depuis nginx/certbot)
+    docker compose down --remove-orphans 2>/dev/null || true
+
+    # Demarrer avec la nouvelle configuration
+    docker compose up -d --build
+
+    success "Tous les services demarres (traefik + backend + app + admin)"
+    log "Traefik obtient les certificats SSL automatiquement au premier acces."
+    log "Cela peut prendre 30-60 secondes apres le demarrage."
 }
 
 # ─── VERIFICATION DE SANTE ───────────────────────────────────────────────────
 
 health_check() {
     section "Verification de sante"
-    log "Attente du demarrage complet (20 secondes)..."
-    sleep 20
+    log "Attente du demarrage complet (30 secondes)..."
+    sleep 30
 
-    # Test API
-    if curl -sf --max-time 10 "https://$API_DOMAIN/health" > /dev/null 2>&1; then
+    local all_ok=true
+
+    if curl -sf --max-time 15 "https://$API_DOMAIN/health" > /dev/null 2>&1; then
         success "API Backend:       https://$API_DOMAIN/health [OK]"
     else
-        warn "API Backend:       https://$API_DOMAIN/health [En cours de demarrage - reessayez dans 30s]"
+        warn "API Backend:       https://$API_DOMAIN/health [En attente - verifiez: docker compose logs backend]"
+        all_ok=false
     fi
 
-    # Test App Etudiante
-    if curl -sf --max-time 10 "https://$DOMAIN" > /dev/null 2>&1; then
+    if curl -sf --max-time 15 "https://$DOMAIN" > /dev/null 2>&1; then
         success "App Etudiante:     https://$DOMAIN [OK]"
     else
-        warn "App Etudiante:     https://$DOMAIN [En cours de demarrage - reessayez dans 30s]"
+        warn "App Etudiante:     https://$DOMAIN [En attente - verifiez: docker compose logs app-frontend]"
+        all_ok=false
     fi
 
-    # Test Admin Dashboard
-    if curl -sf --max-time 10 "https://$ADMIN_DOMAIN" > /dev/null 2>&1; then
+    if curl -sf --max-time 15 "https://$ADMIN_DOMAIN" > /dev/null 2>&1; then
         success "Admin Dashboard:   https://$ADMIN_DOMAIN [OK]"
     else
-        warn "Admin Dashboard:   https://$ADMIN_DOMAIN [En cours de demarrage - reessayez dans 30s]"
+        warn "Admin Dashboard:   https://$ADMIN_DOMAIN [En attente - verifiez: docker compose logs admin-frontend]"
+        all_ok=false
     fi
 
-    # Status des containers
     echo ""
     log "Status des containers Docker:"
     cd "$PROJECT_DIR"
     docker compose ps
+
+    if [[ "$all_ok" == "false" ]]; then
+        echo ""
+        warn "Certains services ne repondent pas encore - c'est normal si les DNS viennent d'etre configures."
+        warn "Traefik reessaie d'obtenir les certificats automatiquement."
+        warn "Reessayez dans 2-3 minutes: curl -I https://$DOMAIN"
+        warn "Logs Traefik: docker compose logs -f traefik"
+    fi
 }
 
 # ─── SUMMARY ─────────────────────────────────────────────────────────────────
@@ -263,12 +240,16 @@ print_summary() {
     printf "║  Admin Dashboard: https://%-34s ║\n" "$ADMIN_DOMAIN"
     printf "║  API Backend:     https://%-34s ║\n" "$API_DOMAIN"
     echo "║                                                              ║"
+    echo "║  SSL: automatique via Traefik + Let's Encrypt               ║"
+    echo "║  Renouvellement: automatique tous les 90 jours              ║"
+    echo "║                                                              ║"
     echo "╠══════════════════════════════════════════════════════════════╣"
     echo "║  Commandes utiles:                                           ║"
-    echo "║  docker compose logs -f backend   (logs API)                ║"
-    echo "║  docker compose logs -f nginx     (logs Nginx)              ║"
-    echo "║  docker compose restart backend   (redemarrer API)          ║"
-    echo "║  docker compose ps                (status services)         ║"
+    echo "║  docker compose logs -f traefik      (logs Traefik/SSL)     ║"
+    echo "║  docker compose logs -f backend      (logs API)             ║"
+    echo "║  docker compose logs -f app-frontend (logs app web)         ║"
+    echo "║  docker compose ps                   (status services)      ║"
+    echo "║  docker compose restart backend      (redemarrer API)       ║"
     echo "╚══════════════════════════════════════════════════════════════╝"
     echo -e "${NC}"
 }
@@ -278,12 +259,12 @@ print_summary() {
 main() {
     clear
     echo -e "${BOLD}${GREEN}"
-    echo "  ActivEducation - Deploiement VPS Hostinger"
-    echo "  App: activeduhub.com | Admin: admin.activeduhub.com | API: api.activeduhub.com"
+    echo "  ActivEducation - Deploiement VPS Hostinger (Traefik + Let's Encrypt)"
+    echo "  App: $DOMAIN | Admin: $ADMIN_DOMAIN | API: $API_DOMAIN"
     echo -e "${NC}"
 
     check_root
-    check_email
+    check_traefik_config
     check_env_file
     check_flutter_builds
 
@@ -292,9 +273,7 @@ main() {
     install_docker_compose
     setup_firewall
 
-    start_nginx_http
-    get_ssl_certificate
-    enable_https
+    setup_traefik
     start_all_services
     health_check
     print_summary
