@@ -69,6 +69,11 @@ services:
   # APP-FRONTEND - Application Etudiante (Flutter Web statique)
   # Accessible via : https://activeduhub.com
   # https://www.activeduhub.com -> redirect vers activeduhub.com
+  #
+  # MODE LANDING PAGE (en attendant le build Flutter) :
+  #   volume: ./landing:/var/www/html:ro
+  # MODE PRODUCTION (quand l'app Flutter est buildée) :
+  #   volume: ./activ_education_app/build/web:/var/www/html:ro
   # ============================================================
   app-frontend:
     image: nginx:1.25-alpine
@@ -76,7 +81,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./nginx/app.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./activ_education_app/build/web:/var/www/html:ro
+      - ./landing:/var/www/html:ro
     networks:
       - app-network
     labels:

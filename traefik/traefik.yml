@@ -1,9 +1,7 @@
 # ============================================================
 # ActivEducation - Traefik Configuration Statique
 # ============================================================
-# AVANT DE DEPLOYER: remplacez REMPLACER_PAR_VOTRE_EMAIL
-# par votre vraie adresse email (requise par Let's Encrypt).
-# ============================================================
+
 
 # Interface Traefik - desactivee en production
 api:

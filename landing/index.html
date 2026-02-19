@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ActivEducation — Découvrez votre voie, jouez votre avenir</title>
+  <meta name="description" content="La première plateforme d'orientation scolaire et professionnelle gamifiée. Tests d'orientation, mentors, gamification et bien plus. Bientôt disponible." />
+  <meta property="og:title" content="ActivEducation — Bientôt en ligne" />
+  <meta property="og:description" content="La première plateforme d'orientation scolaire et professionnelle gamifiée." />
+  <meta property="og:type" content="website" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ─── VARIABLES ─────────────────────────────────────────────────────── */
+    :root {
+      --blue:        #1060CF;
+      --blue-dark:   #0A45A0;
+      --blue-light:  #3D82E3;
+      --gold:        #F2A423;
+      --gold-dark:   #D4880A;
+      --gold-light:  #FFD166;
+      --navy:        #050E1F;
+      --navy-mid:    #0C1E3E;
+      --navy-card:   #0F2550;
+      --white:       #FFFFFF;
+      --off-white:   #F6F9FF;
+      --text-main:   #1A2B4A;
+      --text-muted:  #64748B;
+      --border:      rgba(255,255,255,0.08);
+      --radius-sm:   8px;
+      --radius-md:   16px;
+      --radius-lg:   24px;
+      --radius-xl:   40px;
+      --shadow-card: 0 4px 32px rgba(10, 69, 160, 0.15);
+      --transition:  0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* ─── RESET ─────────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 16px; }
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      background: var(--navy);
+      color: var(--white);
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+    img { max-width: 100%; display: block; }
+    a { text-decoration: none; color: inherit; }
+    button { cursor: pointer; border: none; font-family: inherit; }
+
+    /* ─── SCROLLBAR ─────────────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--navy); }
+    ::-webkit-scrollbar-thumb { background: var(--blue); border-radius: 3px; }
+
+    /* ─── UTILITIES ─────────────────────────────────────────────────────── */
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+    .gradient-text {
+      background: linear-gradient(135deg, var(--blue-light), var(--gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 16px; border-radius: 100px;
+      font-size: 13px; font-weight: 600; letter-spacing: 0.5px;
+      border: 1px solid rgba(242,164,35,0.3);
+      background: rgba(242,164,35,0.08);
+      color: var(--gold-light);
+    }
+    .badge .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--gold);
+      animation: pulse 2s infinite;
+    }
+
+    /* ─── ANIMATIONS ────────────────────────────────────────────────────── */
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.5; transform: scale(0.8); }
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      33%       { transform: translateY(-20px) rotate(1deg); }
+      66%       { transform: translateY(-10px) rotate(-1deg); }
+    }
+    @keyframes floatReverse {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      33%       { transform: translateY(15px) rotate(-1deg); }
+      66%       { transform: translateY(25px) rotate(1deg); }
+    }
+    @keyframes shimmer {
+      0%   { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+    @keyframes gradientShift {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    @keyframes countUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(40px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    @keyframes orb {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      25%       { transform: translate(40px, -30px) scale(1.05); }
+      50%       { transform: translate(-20px, 50px) scale(0.95); }
+      75%       { transform: translate(-40px, -20px) scale(1.02); }
+    }
+
+    .fade-in-up {
+      opacity: 0;
+      animation: fadeInUp 0.8s ease forwards;
+    }
+    .fade-in-up.delay-1 { animation-delay: 0.15s; }
+    .fade-in-up.delay-2 { animation-delay: 0.3s; }
+    .fade-in-up.delay-3 { animation-delay: 0.45s; }
+    .fade-in-up.delay-4 { animation-delay: 0.6s; }
+
+    /* ─── NAVBAR ────────────────────────────────────────────────────────── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      padding: 16px 0;
+      transition: var(--transition);
+    }
+    nav.scrolled {
+      background: rgba(5, 14, 31, 0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 0;
+    }
+    .nav-inner {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 800; font-size: 20px; letter-spacing: -0.3px;
+    }
+    .nav-logo .logo-icon {
+      width: 38px; height: 38px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--blue), var(--blue-light));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; box-shadow: 0 4px 12px rgba(16,96,207,0.4);
+    }
+    .nav-logo span { color: var(--white); }
+    .nav-logo .accent { color: var(--gold); }
+    .nav-cta {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .btn-outline {
+      padding: 9px 22px; border-radius: 100px;
+      border: 1.5px solid rgba(255,255,255,0.2);
+      font-size: 14px; font-weight: 600; color: var(--white);
+      transition: var(--transition);
+    }
+    .btn-outline:hover { border-color: var(--blue-light); background: rgba(16,96,207,0.1); }
+    .btn-primary {
+      padding: 9px 22px; border-radius: 100px;
+      background: linear-gradient(135deg, var(--blue), var(--blue-light));
+      font-size: 14px; font-weight: 700; color: var(--white);
+      transition: var(--transition);
+      box-shadow: 0 4px 14px rgba(16,96,207,0.4);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16,96,207,0.5); }
+
+    /* ─── HERO ──────────────────────────────────────────────────────────── */
+    #hero {
+      position: relative; min-height: 100vh;
+      display: flex; align-items: center;
+      overflow: hidden; padding: 120px 0 80px;
+    }
+    .hero-bg {
+      position: absolute; inset: 0; z-index: 0;
+      background: radial-gradient(ellipse at 20% 50%, rgba(16,96,207,0.25) 0%, transparent 60%),
+                  radial-gradient(ellipse at 80% 20%, rgba(242,164,35,0.12) 0%, transparent 50%),
+                  radial-gradient(ellipse at 60% 80%, rgba(61,130,227,0.2) 0%, transparent 55%),
+                  var(--navy);
+    }
+    .orb {
+      position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none;
+    }
+    .orb-1 {
+      width: 600px; height: 600px; top: -200px; left: -150px;
+      background: rgba(16, 96, 207, 0.2);
+      animation: orb 15s ease-in-out infinite;
+    }
+    .orb-2 {
+      width: 500px; height: 500px; top: 100px; right: -100px;
+      background: rgba(242, 164, 35, 0.1);
+      animation: orb 20s ease-in-out infinite reverse;
+    }
+    .orb-3 {
+      width: 400px; height: 400px; bottom: -100px; left: 30%;
+      background: rgba(61, 130, 227, 0.15);
+      animation: orb 18s ease-in-out infinite 3s;
+    }
+
+    /* Grid pattern overlay */
+    .hero-grid {
+      position: absolute; inset: 0; z-index: 0;
+      background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+
+    .hero-content { position: relative; z-index: 1; text-align: center; }
+    .hero-badge { margin-bottom: 28px; }
+    .hero-title {
+      font-size: clamp(42px, 7vw, 80px);
+      font-weight: 800; line-height: 1.08; letter-spacing: -2px;
+      margin-bottom: 24px;
+    }
+    .hero-title .line2 { display: block; }
+    .hero-subtitle {
+      font-size: clamp(16px, 2.5vw, 20px);
+      color: rgba(255,255,255,0.65);
+      max-width: 560px; margin: 0 auto 48px;
+      font-weight: 400; line-height: 1.7;
+    }
+
+    /* Countdown */
+    .countdown-wrapper { margin-bottom: 52px; }
+    .countdown-label {
+      font-size: 13px; font-weight: 600; letter-spacing: 2px;
+      text-transform: uppercase; color: rgba(255,255,255,0.4);
+      margin-bottom: 20px;
+    }
+    .countdown {
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      flex-wrap: wrap;
+    }
+    .countdown-item {
+      display: flex; flex-direction: column; align-items: center;
+      min-width: 80px;
+      animation: countUp 0.6s ease backwards;
+    }
+    .countdown-item:nth-child(1) { animation-delay: 0.1s; }
+    .countdown-item:nth-child(2) { animation-delay: 0.2s; }
+    .countdown-item:nth-child(3) { animation-delay: 0.3s; }
+    .countdown-item:nth-child(4) { animation-delay: 0.4s; }
+    .countdown-num {
+      font-size: clamp(36px, 5vw, 56px);
+      font-weight: 800; line-height: 1;
+      background: linear-gradient(135deg, var(--white), rgba(255,255,255,0.7));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .countdown-sep {
+      font-size: 40px; font-weight: 300;
+      color: rgba(255,255,255,0.2);
+      padding-bottom: 24px; line-height: 1;
+    }
+    .countdown-unit {
+      font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; color: rgba(255,255,255,0.35);
+      margin-top: 6px;
+    }
+
+    /* Email Form */
+    .hero-form {
+      display: flex; max-width: 500px; margin: 0 auto;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 100px; padding: 6px;
+      backdrop-filter: blur(10px);
+      transition: var(--transition);
+    }
+    .hero-form:focus-within {
+      border-color: rgba(16, 96, 207, 0.6);
+      box-shadow: 0 0 0 4px rgba(16,96,207,0.1);
+    }
+    .hero-form input {
+      flex: 1; background: transparent; border: none; outline: none;
+      padding: 10px 20px; color: var(--white); font-size: 15px;
+      font-family: inherit;
+    }
+    .hero-form input::placeholder { color: rgba(255,255,255,0.35); }
+    .hero-form .btn-submit {
+      padding: 12px 28px; border-radius: 100px;
+      background: linear-gradient(135deg, var(--blue), var(--blue-light));
+      color: var(--white); font-size: 14px; font-weight: 700;
+      white-space: nowrap; transition: var(--transition);
+      box-shadow: 0 4px 14px rgba(16,96,207,0.5);
+    }
+    .hero-form .btn-submit:hover { transform: scale(1.03); }
+    .form-success {
+      display: none; align-items: center; justify-content: center; gap: 10px;
+      padding: 14px 28px; border-radius: 100px;
+      background: rgba(22, 163, 74, 0.15);
+      border: 1px solid rgba(22,163,74,0.3);
+      color: #4ade80; font-weight: 600; font-size: 15px;
+      max-width: 500px; margin: 0 auto;
+    }
+    .hero-note {
+      margin-top: 16px; font-size: 13px;
+      color: rgba(255,255,255,0.3);
+    }
+
+    /* Floating cards */
+    .floating-cards {
+      position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    }
+    .f-card {
+      position: absolute;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: var(--radius-md);
+      backdrop-filter: blur(8px);
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 16px; font-size: 13px; font-weight: 600;
+      white-space: nowrap;
+    }
+    .f-card .icon { font-size: 20px; }
+    .f-card-1 { top: 20%; left: 5%; animation: float 6s ease-in-out infinite; }
+    .f-card-2 { top: 35%; right: 4%; animation: floatReverse 7s ease-in-out infinite; }
+    .f-card-3 { bottom: 25%; left: 6%; animation: float 8s ease-in-out infinite 1s; }
+    .f-card-4 { bottom: 30%; right: 5%; animation: floatReverse 6.5s ease-in-out infinite 0.5s; }
+    @media (max-width: 1024px) { .floating-cards { display: none; } }
+
+    /* ─── STATS ─────────────────────────────────────────────────────────── */
+    #stats { padding: 60px 0; background: rgba(255,255,255,0.02); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 0;
+    }
+    .stat-item {
+      text-align: center; padding: 24px;
+      border-right: 1px solid var(--border);
+    }
+    .stat-item:last-child { border-right: none; }
+    .stat-num {
+      font-size: 42px; font-weight: 800; line-height: 1;
+      background: linear-gradient(135deg, var(--blue-light), var(--gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .stat-label { font-size: 14px; color: rgba(255,255,255,0.5); margin-top: 8px; font-weight: 500; }
+    @media (max-width: 640px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .stat-item:nth-child(2) { border-right: none; }
+      .stat-item:nth-child(3) { border-right: 1px solid var(--border); }
+      .stat-item:nth-child(3), .stat-item:nth-child(4) { border-top: 1px solid var(--border); }
+    }
+
+    /* ─── SECTION TITLES ────────────────────────────────────────────────── */
+    .section-header { text-align: center; margin-bottom: 64px; }
+    .section-tag {
+      display: inline-block; padding: 5px 16px; border-radius: 100px;
+      background: rgba(16,96,207,0.12); border: 1px solid rgba(16,96,207,0.25);
+      font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--blue-light); margin-bottom: 16px;
+    }
+    .section-title {
+      font-size: clamp(30px, 4vw, 48px);
+      font-weight: 800; line-height: 1.15; letter-spacing: -1px;
+    }
+    .section-sub {
+      margin-top: 16px; font-size: 17px; color: rgba(255,255,255,0.5);
+      max-width: 560px; margin-left: auto; margin-right: auto;
+    }
+
+    /* ─── FEATURES ──────────────────────────────────────────────────────── */
+    #features { padding: 120px 0; }
+    .features-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+    }
+    .feature-card {
+      position: relative; padding: 32px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: var(--radius-lg);
+      transition: var(--transition);
+      overflow: hidden;
+    }
+    .feature-card::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, transparent, rgba(16,96,207,0.05));
+      opacity: 0; transition: var(--transition);
+    }
+    .feature-card:hover { border-color: rgba(16,96,207,0.3); transform: translateY(-6px); box-shadow: var(--shadow-card); }
+    .feature-card:hover::before { opacity: 1; }
+    .feature-icon {
+      width: 56px; height: 56px; border-radius: 14px; margin-bottom: 20px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px;
+      background: linear-gradient(135deg, var(--blue-dark), var(--blue));
+      box-shadow: 0 8px 20px rgba(16,96,207,0.3);
+    }
+    .feature-card:nth-child(2) .feature-icon { background: linear-gradient(135deg, #7C3AED, #A855F7); box-shadow: 0 8px 20px rgba(124,58,237,0.3); }
+    .feature-card:nth-child(3) .feature-icon { background: linear-gradient(135deg, #0891B2, #06B6D4); box-shadow: 0 8px 20px rgba(8,145,178,0.3); }
+    .feature-card:nth-child(4) .feature-icon { background: linear-gradient(135deg, #059669, #10B981); box-shadow: 0 8px 20px rgba(5,150,105,0.3); }
+    .feature-card:nth-child(5) .feature-icon { background: linear-gradient(135deg, #D97706, var(--gold)); box-shadow: 0 8px 20px rgba(217,119,6,0.3); }
+    .feature-card:nth-child(6) .feature-icon { background: linear-gradient(135deg, #DC2626, #EF4444); box-shadow: 0 8px 20px rgba(220,38,38,0.3); }
+    .feature-title { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+    .feature-desc { font-size: 15px; color: rgba(255,255,255,0.5); line-height: 1.7; }
+    .feature-tag {
+      display: inline-block; margin-top: 16px; padding: 4px 12px;
+      border-radius: 100px; font-size: 11px; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; background: rgba(16,96,207,0.12); color: var(--blue-light);
+    }
+    .feature-card:nth-child(2) .feature-tag { background: rgba(168,85,247,0.12); color: #C084FC; }
+    .feature-card:nth-child(3) .feature-tag { background: rgba(6,182,212,0.12); color: #67E8F9; }
+    .feature-card:nth-child(4) .feature-tag { background: rgba(16,185,129,0.12); color: #6EE7B7; }
+    .feature-card:nth-child(5) .feature-tag { background: rgba(251,191,36,0.12); color: var(--gold-light); }
+    .feature-card:nth-child(6) .feature-tag { background: rgba(239,68,68,0.12); color: #FCA5A5; }
+    @media (max-width: 900px) { .features-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 580px) { .features-grid { grid-template-columns: 1fr; } }
+
+    /* ─── HOW IT WORKS ──────────────────────────────────────────────────── */
+    #how { padding: 120px 0; background: rgba(255,255,255,0.02); border-top: 1px solid var(--border); }
+    .steps {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 0; position: relative;
+    }
+    .steps::before {
+      content: ''; position: absolute; top: 48px; left: 16.66%; right: 16.66%;
+      height: 2px;
+      background: linear-gradient(90deg, var(--blue), var(--blue-light), var(--gold));
+      opacity: 0.3;
+    }
+    .step-item { text-align: center; padding: 0 24px; }
+    .step-num {
+      width: 96px; height: 96px; border-radius: 50%; margin: 0 auto 28px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 32px; font-weight: 800; position: relative;
+      background: linear-gradient(135deg, var(--navy-card), var(--navy-mid));
+      border: 2px solid rgba(16,96,207,0.3);
+      box-shadow: 0 0 0 8px rgba(16,96,207,0.05), 0 8px 24px rgba(0,0,0,0.3);
+    }
+    .step-num .num-inner {
+      background: linear-gradient(135deg, var(--blue-light), var(--gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .step-title { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+    .step-desc { font-size: 15px; color: rgba(255,255,255,0.5); line-height: 1.7; }
+    @media (max-width: 768px) {
+      .steps { grid-template-columns: 1fr; gap: 48px; }
+      .steps::before { display: none; }
+    }
+
+    /* ─── GAMIFICATION SPOTLIGHT ────────────────────────────────────────── */
+    #gamification { padding: 120px 0; }
+    .gami-inner {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center;
+    }
+    .gami-text .section-header { text-align: left; margin-bottom: 32px; }
+    .gami-list { display: flex; flex-direction: column; gap: 16px; }
+    .gami-item {
+      display: flex; align-items: flex-start; gap: 14px; padding: 16px 20px;
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: var(--radius-md); transition: var(--transition);
+    }
+    .gami-item:hover { border-color: rgba(16,96,207,0.25); background: rgba(16,96,207,0.05); }
+    .gami-item-icon { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+    .gami-item-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .gami-item-desc { font-size: 14px; color: rgba(255,255,255,0.45); }
+
+    .gami-visual {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+    }
+    .gami-card {
+      padding: 20px; border-radius: var(--radius-md);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      text-align: center; transition: var(--transition);
+    }
+    .gami-card:hover { transform: translateY(-4px); border-color: rgba(16,96,207,0.3); }
+    .gami-card:first-child { grid-column: span 2; }
+    .gami-card .icon { font-size: 32px; margin-bottom: 10px; }
+    .gami-card .value {
+      font-size: 28px; font-weight: 800;
+      background: linear-gradient(135deg, var(--blue-light), var(--gold));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .gami-card .label { font-size: 13px; color: rgba(255,255,255,0.45); margin-top: 4px; }
+    @media (max-width: 900px) {
+      .gami-inner { grid-template-columns: 1fr; gap: 48px; }
+      .gami-text .section-header { text-align: center; }
+    }
+
+    /* ─── WAITLIST CTA ──────────────────────────────────────────────────── */
+    #waitlist {
+      padding: 120px 0; position: relative; overflow: hidden;
+      background: radial-gradient(ellipse at center, rgba(16,96,207,0.15) 0%, transparent 70%);
+      border-top: 1px solid var(--border);
+    }
+    .waitlist-inner { text-align: center; }
+    .waitlist-inner .section-title { font-size: clamp(32px, 5vw, 56px); margin-bottom: 20px; }
+    .waitlist-inner .section-sub { margin-bottom: 48px; }
+
+    .waitlist-form-big {
+      display: flex; max-width: 600px; margin: 0 auto 20px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: var(--radius-xl); padding: 8px;
+      backdrop-filter: blur(10px);
+      transition: var(--transition);
+    }
+    .waitlist-form-big:focus-within {
+      border-color: rgba(16,96,207,0.5);
+      box-shadow: 0 0 0 4px rgba(16,96,207,0.1);
+    }
+    .waitlist-form-big input {
+      flex: 1; background: transparent; border: none; outline: none;
+      padding: 12px 24px; color: var(--white); font-size: 16px; font-family: inherit;
+    }
+    .waitlist-form-big input::placeholder { color: rgba(255,255,255,0.3); }
+    .waitlist-form-big .btn-gold {
+      padding: 14px 32px; border-radius: var(--radius-xl);
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+      color: var(--navy); font-size: 15px; font-weight: 800;
+      white-space: nowrap; transition: var(--transition);
+      box-shadow: 0 4px 20px rgba(242,164,35,0.4);
+    }
+    .waitlist-form-big .btn-gold:hover { transform: scale(1.03); box-shadow: 0 6px 28px rgba(242,164,35,0.5); }
+
+    .waitlist-note { font-size: 13px; color: rgba(255,255,255,0.3); margin-bottom: 48px; }
+
+    .social-proof {
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      flex-wrap: wrap;
+    }
+    .avatars { display: flex; }
+    .avatar {
+      width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--navy);
+      margin-left: -10px; font-size: 18px;
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, var(--blue-dark), var(--blue));
+    }
+    .avatars .avatar:first-child { margin-left: 0; }
+    .social-text { font-size: 14px; color: rgba(255,255,255,0.5); }
+    .social-text strong { color: var(--white); }
+
+    /* Success message waitlist */
+    .waitlist-success {
+      display: none; flex-direction: column; align-items: center; gap: 12px;
+      max-width: 500px; margin: 0 auto;
+    }
+    .waitlist-success .success-icon { font-size: 48px; }
+    .waitlist-success .success-title { font-size: 22px; font-weight: 700; }
+    .waitlist-success .success-sub { font-size: 16px; color: rgba(255,255,255,0.5); }
+
+    /* ─── FOOTER ────────────────────────────────────────────────────────── */
+    footer {
+      padding: 48px 0 32px;
+      border-top: 1px solid var(--border);
+      background: rgba(5,14,31,0.8);
+    }
+    .footer-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 20px;
+    }
+    .footer-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 800; font-size: 18px;
+    }
+    .footer-logo .logo-icon {
+      width: 34px; height: 34px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--blue), var(--blue-light));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+    .footer-links { display: flex; gap: 28px; flex-wrap: wrap; }
+    .footer-links a { font-size: 14px; color: rgba(255,255,255,0.4); transition: var(--transition); }
+    .footer-links a:hover { color: var(--white); }
+    .footer-copy { font-size: 13px; color: rgba(255,255,255,0.3); }
+    @media (max-width: 640px) {
+      .footer-inner { flex-direction: column; text-align: center; }
+      .footer-links { justify-content: center; }
+    }
+
+    /* ─── SCROLL REVEAL ─────────────────────────────────────────────────── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .reveal.delay-1 { transition-delay: 0.1s; }
+    .reveal.delay-2 { transition-delay: 0.2s; }
+    .reveal.delay-3 { transition-delay: 0.3s; }
+    .reveal.delay-4 { transition-delay: 0.4s; }
+    .reveal.delay-5 { transition-delay: 0.5s; }
+    .reveal.delay-6 { transition-delay: 0.6s; }
+  </style>
+</head>
+
+<body>
+
+  <!-- ─── NAVBAR ──────────────────────────────────────────────────────────── -->
+  <nav id="navbar">
+    <div class="container">
+      <div class="nav-inner">
+        <div class="nav-logo">
+          <div class="logo-icon">🎓</div>
+          <span>Activ<span class="accent">Educ</span></span>
+        </div>
+        <div class="nav-cta">
+          <a href="#waitlist" class="btn-outline">Se connecter</a>
+          <a href="#waitlist" class="btn-primary">Rejoindre la liste</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ─── HERO ────────────────────────────────────────────────────────────── -->
+  <section id="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-grid"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <!-- Floating cards (desktop only) -->
+    <div class="floating-cards">
+      <div class="f-card f-card-1">
+        <span class="icon">🏆</span> <span>+150 XP gagnés</span>
+      </div>
+      <div class="f-card f-card-2">
+        <span class="icon">🎯</span> <span>Test d'orientation complété</span>
+      </div>
+      <div class="f-card f-card-3">
+        <span class="icon">👨‍🏫</span> <span>Mentor trouvé · Dr. Kofi Asante</span>
+      </div>
+      <div class="f-card f-card-4">
+        <span class="icon">🔥</span> <span>7 jours de streak !</span>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="hero-content">
+
+        <div class="hero-badge fade-in-up">
+          <span class="badge"><span class="dot"></span>Lancement imminent</span>
+        </div>
+
+        <h1 class="hero-title fade-in-up delay-1">
+          Découvrez votre voie.
+          <span class="line2 gradient-text">Jouez votre avenir.</span>
+        </h1>
+
+        <p class="hero-subtitle fade-in-up delay-2">
+          La première plateforme d'orientation scolaire et professionnelle gamifiée.
+          Tests personnalisés, mentors, classements — tout pour trouver votre chemin avec plaisir.
+        </p>
+
+        <!-- Countdown -->
+        <div class="countdown-wrapper fade-in-up delay-3">
+          <div class="countdown-label">Lancement dans</div>
+          <div class="countdown">
+            <div class="countdown-item">
+              <div class="countdown-num" id="cd-days">00</div>
+              <div class="countdown-unit">Jours</div>
+            </div>
+            <div class="countdown-sep">:</div>
+            <div class="countdown-item">
+              <div class="countdown-num" id="cd-hours">00</div>
+              <div class="countdown-unit">Heures</div>
+            </div>
+            <div class="countdown-sep">:</div>
+            <div class="countdown-item">
+              <div class="countdown-num" id="cd-mins">00</div>
+              <div class="countdown-unit">Minutes</div>
+            </div>
+            <div class="countdown-sep">:</div>
+            <div class="countdown-item">
+              <div class="countdown-num" id="cd-secs">00</div>
+              <div class="countdown-unit">Secondes</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Email form hero -->
+        <div id="hero-form-wrapper" class="fade-in-up delay-4">
+          <form class="hero-form" id="heroForm" onsubmit="handleHeroSubmit(event)">
+            <input type="email" id="heroEmail" placeholder="Votre adresse e-mail" required />
+            <button type="submit" class="btn-submit">Accès anticipé →</button>
+          </form>
+          <div class="form-success" id="heroSuccess">
+            ✅ Parfait ! Vous serez parmi les premiers informés.
+          </div>
+          <p class="hero-note">Gratuit · Sans engagement · Notification à l'ouverture</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── STATS ────────────────────────────────────────────────────────────── -->
+  <section id="stats">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat-item reveal">
+          <div class="stat-num">500+</div>
+          <div class="stat-label">Métiers répertoriés</div>
+        </div>
+        <div class="stat-item reveal delay-1">
+          <div class="stat-num">50+</div>
+          <div class="stat-label">Mentors professionnels</div>
+        </div>
+        <div class="stat-item reveal delay-2">
+          <div class="stat-num">20+</div>
+          <div class="stat-label">Tests d'orientation</div>
+        </div>
+        <div class="stat-item reveal delay-3">
+          <div class="stat-num">100%</div>
+          <div class="stat-label">Gratuit pour débuter</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── FEATURES ─────────────────────────────────────────────────────────── -->
+  <section id="features">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Fonctionnalités</span>
+        <h2 class="section-title">Tout ce dont vous avez besoin<br><span class="gradient-text">pour choisir votre avenir</span></h2>
+        <p class="section-sub">Une plateforme complète qui combine orientation professionnelle et mécanique de jeu pour vous garder motivé.</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card reveal">
+          <div class="feature-icon">🎯</div>
+          <div class="feature-title">Tests d'orientation</div>
+          <div class="feature-desc">Des évaluations scientifiques et ludiques pour identifier vos aptitudes, vos intérêts et vous orienter vers les carrières qui vous correspondent vraiment.</div>
+          <span class="feature-tag">Personnalisé</span>
+        </div>
+
+        <div class="feature-card reveal delay-1">
+          <div class="feature-icon">🏆</div>
+          <div class="feature-title">Gamification complète</div>
+          <div class="feature-desc">Gagnez des XP, débloquez des badges, montez dans le classement hebdomadaire et relevez des défis quotidiens. L'orientation devient un jeu passionnant.</div>
+          <span class="feature-tag">Motivant</span>
+        </div>
+
+        <div class="feature-card reveal delay-2">
+          <div class="feature-icon">👨‍🏫</div>
+          <div class="feature-title">Réseau de mentors</div>
+          <div class="feature-desc">Accédez à des professionnels expérimentés dans votre domaine d'intérêt. Demandez des conseils, posez vos questions, bénéficiez d'un accompagnement réel.</div>
+          <span class="feature-tag">Humain</span>
+        </div>
+
+        <div class="feature-card reveal delay-3">
+          <div class="feature-icon">💼</div>
+          <div class="feature-title">Explorer les carrières</div>
+          <div class="feature-desc">Parcourez une base de données riche de métiers avec leurs perspectives d'emploi, salaires, formations requises et témoignages de professionnels.</div>
+          <span class="feature-tag">Complet</span>
+        </div>
+
+        <div class="feature-card reveal delay-4">
+          <div class="feature-icon">🏫</div>
+          <div class="feature-title">Annuaire des établissements</div>
+          <div class="feature-desc">Trouvez les meilleures écoles, universités et centres de formation correspondant à votre profil, vos objectifs et votre localisation.</div>
+          <span class="feature-tag">Géolocalisé</span>
+        </div>
+
+        <div class="feature-card reveal delay-5">
+          <div class="feature-icon">💬</div>
+          <div class="feature-title">Messagerie intégrée</div>
+          <div class="feature-desc">Communiquez directement avec vos mentors et conseillers via la messagerie intégrée. Suivez vos conversations et votre progression en temps réel.</div>
+          <span class="feature-tag">Temps réel</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── HOW IT WORKS ─────────────────────────────────────────────────────── -->
+  <section id="how">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Comment ça marche</span>
+        <h2 class="section-title">Trois étapes vers<br><span class="gradient-text">votre carrière idéale</span></h2>
+      </div>
+
+      <div class="steps">
+        <div class="step-item reveal">
+          <div class="step-num"><span class="num-inner">01</span></div>
+          <h3 class="step-title">Crée ton profil</h3>
+          <p class="step-desc">Inscris-toi gratuitement en quelques minutes. Remplis ton profil avec ton niveau d'études, tes centres d'intérêt et tes ambitions.</p>
+        </div>
+
+        <div class="step-item reveal delay-2">
+          <div class="step-num"><span class="num-inner">02</span></div>
+          <h3 class="step-title">Passe tes tests</h3>
+          <p class="step-desc">Évalue tes aptitudes et découvre tes talents cachés grâce à nos tests d'orientation. Gagne des points à chaque étape complétée.</p>
+        </div>
+
+        <div class="step-item reveal delay-4">
+          <div class="step-num"><span class="num-inner">03</span></div>
+          <h3 class="step-title">Trace ta voie</h3>
+          <p class="step-desc">Reçois des recommandations personnalisées, connecte-toi avec un mentor et accède aux meilleures formations pour te lancer.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── GAMIFICATION SPOTLIGHT ───────────────────────────────────────────── -->
+  <section id="gamification">
+    <div class="container">
+      <div class="gami-inner">
+
+        <div class="gami-text">
+          <div class="section-header">
+            <span class="section-tag">Gamification</span>
+            <h2 class="section-title">L'orientation<br><span class="gradient-text">comme un jeu vidéo</span></h2>
+          </div>
+          <div class="gami-list">
+            <div class="gami-item reveal">
+              <div class="gami-item-icon">⚡</div>
+              <div>
+                <div class="gami-item-title">Streaks quotidiens</div>
+                <div class="gami-item-desc">Connectez-vous chaque jour pour maintenir votre streak et débloquer des bonus exclusifs.</div>
+              </div>
+            </div>
+            <div class="gami-item reveal delay-1">
+              <div class="gami-item-icon">🎖️</div>
+              <div>
+                <div class="gami-item-title">Badges & Achievements</div>
+                <div class="gami-item-desc">Plus de 50 badges à débloquer : explorateur, persévérant, mentor, champion du classement…</div>
+              </div>
+            </div>
+            <div class="gami-item reveal delay-2">
+              <div class="gami-item-icon">📊</div>
+              <div>
+                <div class="gami-item-title">Classements hebdomadaires</div>
+                <div class="gami-item-desc">Comparez-vous avec d'autres élèves et grimpez dans le top du leaderboard régional.</div>
+              </div>
+            </div>
+            <div class="gami-item reveal delay-3">
+              <div class="gami-item-icon">⚔️</div>
+              <div>
+                <div class="gami-item-title">Défis & Challenges</div>
+                <div class="gami-item-desc">Relevez des challenges thématiques pour gagner des XP bonus et des récompenses spéciales.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="gami-visual reveal delay-2">
+          <div class="gami-card">
+            <div class="icon">🔥</div>
+            <div class="value">12 jours</div>
+            <div class="label">Streak actuel · Record : 42 jours</div>
+          </div>
+          <div class="gami-card">
+            <div class="icon">⭐</div>
+            <div class="value">2 450 XP</div>
+            <div class="label">Points accumulés</div>
+          </div>
+          <div class="gami-card">
+            <div class="icon">🥇</div>
+            <div class="value">#3</div>
+            <div class="label">Classement cette semaine</div>
+          </div>
+          <div class="gami-card">
+            <div class="icon">🏅</div>
+            <div class="value">18 / 50</div>
+            <div class="label">Badges débloqués</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── WAITLIST ─────────────────────────────────────────────────────────── -->
+  <section id="waitlist">
+    <div class="container">
+      <div class="waitlist-inner">
+        <div class="section-header reveal">
+          <span class="section-tag">Accès anticipé</span>
+          <h2 class="section-title">Soyez parmi les premiers<br><span class="gradient-text">à découvrir la plateforme</span></h2>
+          <p class="section-sub">Inscrivez-vous dès maintenant pour être notifié au lancement et bénéficier d'un accès prioritaire gratuit.</p>
+        </div>
+
+        <div id="waitlist-form-section" class="reveal delay-1">
+          <form class="waitlist-form-big" id="waitlistForm" onsubmit="handleWaitlistSubmit(event)">
+            <input type="email" id="waitlistEmail" placeholder="votre@email.com" required />
+            <button type="submit" class="btn-gold">Je veux accès →</button>
+          </form>
+          <p class="waitlist-note">🔒 Vos données sont en sécurité. Aucun spam, promis.</p>
+        </div>
+
+        <div class="waitlist-success" id="waitlistSuccess">
+          <div class="success-icon">🎉</div>
+          <div class="success-title">Vous êtes sur la liste !</div>
+          <div class="success-sub">On vous contacte dès l'ouverture. Partagez autour de vous !</div>
+        </div>
+
+        <div class="social-proof reveal delay-2">
+          <div class="avatars">
+            <div class="avatar">👩🏾</div>
+            <div class="avatar">👨🏿</div>
+            <div class="avatar">👩🏽</div>
+            <div class="avatar">👨🏾</div>
+            <div class="avatar">👩🏻</div>
+          </div>
+          <div class="social-text"><strong>+320 personnes</strong> déjà inscrites sur la liste d'attente</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── FOOTER ───────────────────────────────────────────────────────────── -->
+  <footer>
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-logo">
+          <div class="logo-icon">🎓</div>
+          <span>ActivEducation</span>
+        </div>
+        <div class="footer-links">
+          <a href="#">À propos</a>
+          <a href="#">Contact</a>
+          <a href="#">Confidentialité</a>
+          <a href="#">CGU</a>
+        </div>
+        <div class="footer-copy">© 2025 ActivEducation. Tous droits réservés.</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ─── JAVASCRIPT ───────────────────────────────────────────────────────── -->
+  <script>
+    // ── Countdown Timer
+    const LAUNCH_DATE = new Date('2026-05-01T00:00:00').getTime();
+
+    function updateCountdown() {
+      const now = Date.now();
+      const diff = LAUNCH_DATE - now;
+
+      if (diff <= 0) {
+        document.querySelector('.countdown-wrapper').innerHTML =
+          '<div class="countdown-label" style="font-size:20px;color:var(--gold)">🚀 La plateforme est en ligne !</div>';
+        return;
+      }
+
+      const d = Math.floor(diff / 86400000);
+      const h = Math.floor((diff % 86400000) / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+
+      const pad = n => String(n).padStart(2, '0');
+      document.getElementById('cd-days').textContent  = pad(d);
+      document.getElementById('cd-hours').textContent = pad(h);
+      document.getElementById('cd-mins').textContent  = pad(m);
+      document.getElementById('cd-secs').textContent  = pad(s);
+    }
+
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+
+    // ── Navbar scroll effect
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+      navbar.classList.toggle('scrolled', window.scrollY > 40);
+    }, { passive: true });
+
+    // ── Scroll reveal (Intersection Observer)
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // ── Hero form submit
+    function handleHeroSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('heroEmail').value.trim();
+      if (!email) return;
+
+      const form = document.getElementById('heroForm');
+      const success = document.getElementById('heroSuccess');
+
+      form.style.display = 'none';
+      success.style.display = 'flex';
+
+      // Stocker localement (ou envoyer à une API)
+      const emails = JSON.parse(localStorage.getItem('ae_waitlist') || '[]');
+      if (!emails.includes(email)) { emails.push(email); localStorage.setItem('ae_waitlist', JSON.stringify(emails)); }
+
+      console.log('[ActivEducation] Waitlist email:', email);
+    }
+
+    // ── Waitlist form submit
+    function handleWaitlistSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('waitlistEmail').value.trim();
+      if (!email) return;
+
+      document.getElementById('waitlist-form-section').style.display = 'none';
+      const success = document.getElementById('waitlistSuccess');
+      success.style.display = 'flex';
+
+      const emails = JSON.parse(localStorage.getItem('ae_waitlist') || '[]');
+      if (!emails.includes(email)) { emails.push(email); localStorage.setItem('ae_waitlist', JSON.stringify(emails)); }
+
+      console.log('[ActivEducation] Waitlist email:', email);
+    }
+
+    // ── Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        const target = document.querySelector(a.getAttribute('href'));
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+  </script>
+</body>
+</html>
