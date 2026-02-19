@@ -1,16 +1,21 @@
 #!/bin/bash
 # =============================================================================
 # ActivEducation - Script de deploiement VPS Hostinger
-# Domaine: activeduhub.com | api.activeduhub.com
+# Domaines:
+#   activeduhub.com       -> App Etudiante (Flutter Web)
+#   admin.activeduhub.com -> Admin Dashboard (Flutter Web)
+#   api.activeduhub.com   -> Backend FastAPI
 # =============================================================================
 # Usage: sudo bash deploy.sh
-# Prerequis: Projet uploade sur le VPS, .env.production configure
+# Prerequis: Projet uploade sur le VPS, .env.production configure,
+#            les 2 builds Flutter generes localement avant upload
 # =============================================================================
 
 set -euo pipefail
 
 # ─── CONFIGURATION ────────────────────────────────────────────────────────────
 DOMAIN="activeduhub.com"
+ADMIN_DOMAIN="admin.activeduhub.com"
 API_DOMAIN="api.activeduhub.com"
 WWW_DOMAIN="www.activeduhub.com"
 CERTBOT_EMAIL="REMPLACER_PAR_VOTRE_EMAIL"   # <-- Changez ceci avant de lancer!
@@ -61,12 +66,22 @@ check_env_file() {
     success "Fichier .env.production valide"
 }
 
-check_flutter_build() {
-    local build_dir="$PROJECT_DIR/admin_dashboard/build/web"
-    if [[ ! -d "$build_dir" ]] || [[ ! -f "$build_dir/index.html" ]]; then
-        error "Build Flutter Web manquant!\n\nSur votre machine locale (avant d'uploader):\n  cd admin_dashboard\n  flutter build web --release --dart-define=API_BASE_URL=https://api.activeduhub.com/api/v1\n\nPuis re-uploadez le projet complet sur le VPS."
+check_flutter_builds() {
+    section "Verification des builds Flutter"
+
+    # Verifier l'app etudiante
+    local app_build="$PROJECT_DIR/activ_education_app/build/web"
+    if [[ ! -d "$app_build" ]] || [[ ! -f "$app_build/index.html" ]]; then
+        error "Build Flutter Web manquant pour l'app etudiante!\n\nSur votre machine locale (avant d'uploader):\n  cd activ_education_app\n  flutter build web --release --dart-define=API_BASE_URL=https://api.activeduhub.com\n\nPuis re-uploadez le projet complet sur le VPS."
     fi
-    success "Build Flutter Web trouve"
+    success "Build app etudiante trouve: activ_education_app/build/web"
+
+    # Verifier le dashboard admin
+    local admin_build="$PROJECT_DIR/admin_dashboard/build/web"
+    if [[ ! -d "$admin_build" ]] || [[ ! -f "$admin_build/index.html" ]]; then
+        error "Build Flutter Web manquant pour le dashboard admin!\n\nSur votre machine locale (avant d'uploader):\n  cd admin_dashboard\n  flutter build web --release --dart-define=API_BASE_URL=https://api.activeduhub.com/api/v1\n\nPuis re-uploadez le projet complet sur le VPS."
+    fi
+    success "Build admin dashboard trouve: admin_dashboard/build/web"
 }
 
 # ─── INSTALLATION DEPENDANCES ─────────────────────────────────────────────────
@@ -151,13 +166,14 @@ get_ssl_certificate() {
     log "Verification que les DNS pointent vers ce serveur..."
     SERVER_IP=$(curl -s ifconfig.me 2>/dev/null || curl -s api.ipify.org 2>/dev/null || echo "INCONNUE")
     warn "IP de ce serveur: $SERVER_IP"
-    warn "Assurez-vous que ces DNS ont bien ete configures:"
-    warn "  A  activeduhub.com      -> $SERVER_IP"
-    warn "  A  www.activeduhub.com  -> $SERVER_IP"
-    warn "  A  api.activeduhub.com  -> $SERVER_IP"
+    warn "Assurez-vous que ces 4 enregistrements DNS ont bien ete configures:"
+    warn "  A  activeduhub.com        -> $SERVER_IP"
+    warn "  A  www.activeduhub.com    -> $SERVER_IP"
+    warn "  A  admin.activeduhub.com  -> $SERVER_IP"
+    warn "  A  api.activeduhub.com    -> $SERVER_IP"
     echo ""
 
-    log "Obtention du certificat SSL pour $DOMAIN, $WWW_DOMAIN, $API_DOMAIN..."
+    log "Obtention du certificat SSL pour $DOMAIN, $WWW_DOMAIN, $ADMIN_DOMAIN, $API_DOMAIN..."
     cd "$PROJECT_DIR"
     docker compose run --rm certbot certonly \
         --webroot \
@@ -168,9 +184,10 @@ get_ssl_certificate() {
         --force-renewal \
         -d "$DOMAIN" \
         -d "$WWW_DOMAIN" \
+        -d "$ADMIN_DOMAIN" \
         -d "$API_DOMAIN"
 
-    success "Certificat SSL obtenu pour $DOMAIN"
+    success "Certificat SSL obtenu pour $DOMAIN (couvre aussi $ADMIN_DOMAIN et $API_DOMAIN)"
 }
 
 # ─── PHASE 3: ACTIVATION HTTPS ────────────────────────────────────────────────
@@ -186,7 +203,7 @@ enable_https() {
     docker compose exec nginx nginx -t  # Test de la config
     docker compose exec nginx nginx -s reload
 
-    success "HTTPS active sur $DOMAIN et $API_DOMAIN"
+    success "HTTPS active sur $DOMAIN, $ADMIN_DOMAIN et $API_DOMAIN"
 }
 
 # ─── DEMARRAGE COMPLET ────────────────────────────────────────────────────────
@@ -207,16 +224,23 @@ health_check() {
 
     # Test API
     if curl -sf --max-time 10 "https://$API_DOMAIN/health" > /dev/null 2>&1; then
-        success "API Backend:      https://$API_DOMAIN/health [OK]"
+        success "API Backend:       https://$API_DOMAIN/health [OK]"
     else
-        warn "API Backend:      https://$API_DOMAIN/health [En cours de demarrage - reessayez dans 30s]"
+        warn "API Backend:       https://$API_DOMAIN/health [En cours de demarrage - reessayez dans 30s]"
     fi
 
-    # Test Dashboard
+    # Test App Etudiante
     if curl -sf --max-time 10 "https://$DOMAIN" > /dev/null 2>&1; then
-        success "Admin Dashboard:  https://$DOMAIN [OK]"
+        success "App Etudiante:     https://$DOMAIN [OK]"
     else
-        warn "Admin Dashboard:  https://$DOMAIN [En cours de demarrage - reessayez dans 30s]"
+        warn "App Etudiante:     https://$DOMAIN [En cours de demarrage - reessayez dans 30s]"
+    fi
+
+    # Test Admin Dashboard
+    if curl -sf --max-time 10 "https://$ADMIN_DOMAIN" > /dev/null 2>&1; then
+        success "Admin Dashboard:   https://$ADMIN_DOMAIN [OK]"
+    else
+        warn "Admin Dashboard:   https://$ADMIN_DOMAIN [En cours de demarrage - reessayez dans 30s]"
     fi
 
     # Status des containers
@@ -231,20 +255,21 @@ health_check() {
 print_summary() {
     echo ""
     echo -e "${GREEN}${BOLD}"
-    echo "╔══════════════════════════════════════════════════════════╗"
-    echo "║            DEPLOIEMENT TERMINE AVEC SUCCES!             ║"
-    echo "╠══════════════════════════════════════════════════════════╣"
-    echo "║                                                          ║"
-    printf "║  Admin Dashboard: https://%-30s ║\n" "$DOMAIN"
-    printf "║  API Backend:     https://%-30s ║\n" "$API_DOMAIN"
-    echo "║                                                          ║"
-    echo "╠══════════════════════════════════════════════════════════╣"
-    echo "║  Commandes utiles:                                       ║"
-    echo "║  docker compose logs -f backend   (logs API)            ║"
-    echo "║  docker compose logs -f nginx     (logs Nginx)          ║"
-    echo "║  docker compose restart backend   (redemarrer API)      ║"
-    echo "║  docker compose ps                (status services)     ║"
-    echo "╚══════════════════════════════════════════════════════════╝"
+    echo "╔══════════════════════════════════════════════════════════════╗"
+    echo "║             DEPLOIEMENT TERMINE AVEC SUCCES!                ║"
+    echo "╠══════════════════════════════════════════════════════════════╣"
+    echo "║                                                              ║"
+    printf "║  App Etudiante:   https://%-34s ║\n" "$DOMAIN"
+    printf "║  Admin Dashboard: https://%-34s ║\n" "$ADMIN_DOMAIN"
+    printf "║  API Backend:     https://%-34s ║\n" "$API_DOMAIN"
+    echo "║                                                              ║"
+    echo "╠══════════════════════════════════════════════════════════════╣"
+    echo "║  Commandes utiles:                                           ║"
+    echo "║  docker compose logs -f backend   (logs API)                ║"
+    echo "║  docker compose logs -f nginx     (logs Nginx)              ║"
+    echo "║  docker compose restart backend   (redemarrer API)          ║"
+    echo "║  docker compose ps                (status services)         ║"
+    echo "╚══════════════════════════════════════════════════════════════╝"
     echo -e "${NC}"
 }
 
@@ -254,13 +279,13 @@ main() {
     clear
     echo -e "${BOLD}${GREEN}"
     echo "  ActivEducation - Deploiement VPS Hostinger"
-    echo "  Domaine: activeduhub.com"
+    echo "  App: activeduhub.com | Admin: admin.activeduhub.com | API: api.activeduhub.com"
     echo -e "${NC}"
 
     check_root
     check_email
     check_env_file
-    check_flutter_build
+    check_flutter_builds
 
     install_dependencies
     install_docker

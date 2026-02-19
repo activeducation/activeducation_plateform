@@ -34,6 +34,7 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - ./nginx/certbot/conf:/etc/letsencrypt:ro
       - ./nginx/certbot/www:/var/www/certbot:ro
+      - ./activ_education_app/build/web:/var/www/app:ro
       - ./admin_dashboard/build/web:/var/www/admin:ro
     depends_on:
       - backend

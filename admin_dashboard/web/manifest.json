@@ -1,12 +1,12 @@
 {
-    "name": "admin_dashboard",
-    "short_name": "admin_dashboard",
+    "name": "ActivEducation Admin",
+    "short_name": "AE Admin",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
-    "orientation": "portrait-primary",
+    "background_color": "#1060CF",
+    "theme_color": "#1060CF",
+    "description": "ActivEducation - Tableau de bord administrateur",
+    "orientation": "landscape-primary",
     "prefer_related_applications": false,
     "icons": [
         {
