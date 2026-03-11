@@ -106,6 +106,13 @@ class ApiEndpoints {
   static String schoolById(String id) => '$schools/$id';
 
   // ============================================
+  // CHAT IA — AÏDA
+  // ============================================
+  static const String chat = '$apiV1/chat';
+  static const String chatMessage = '$chat/message';
+  static String chatSession(String sessionId) => '$chat/session/$sessionId';
+
+  // ============================================
   // GAMIFICATION
   // ============================================
   static const String gamification = '$apiV1/gamification';

@@ -233,7 +233,7 @@ async def submit_test(
     # Enrichir les recommandations avec carrieres + score de correspondance
     if result.dominant_traits:
         try:
-            careers = await repo.get_careers_by_traits(result.dominant_traits, limit=8)
+            careers = await repo.get_careers_by_traits(result.dominant_traits, limit=25)
             enriched_recs = []
             for c in careers:
                 career_traits = c.get("related_traits") or []
@@ -265,9 +265,24 @@ async def submit_test(
                     education_minimum_level=_extract_education_level(c),
                 ))
 
-            # Trier par score de correspondance decroissant
+            # Trier par score de correspondance décroissant
             enriched_recs.sort(key=lambda r: r.match_score, reverse=True)
-            result.recommendations = enriched_recs[:6]
+
+            # Diversifier : mélanger les carrières dans la même tranche de score (±8 pts)
+            # pour éviter de toujours retourner le même ordre alphabétique
+            import random
+            diversified: list[CareerSummary] = []
+            i = 0
+            while i < len(enriched_recs):
+                tier_score = enriched_recs[i].match_score
+                j = i
+                while j < len(enriched_recs) and (tier_score - enriched_recs[j].match_score) <= 8:
+                    j += 1
+                tier = enriched_recs[i:j]
+                random.shuffle(tier)
+                diversified.extend(tier)
+                i = j
+            result.recommendations = diversified[:6]
         except Exception as e:
             logger.error(f"Error fetching recommended careers: {e}")
             result.recommendations = []

@@ -13,6 +13,7 @@ from typing import Any, Optional
 from uuid import UUID
 
 from app.db.supabase_client import get_supabase_client, SupabaseClient
+from app.db.local_fallback import FALLBACK_TESTS
 from app.core.logging import get_logger
 from app.core.exceptions import (
     TestNotFoundError,
@@ -101,6 +102,11 @@ class OrientationRepository:
             return tests
 
         except Exception as e:
+            error_msg = str(e)
+            # Fallback local si Supabase est inaccessible (DNS fail, connexion refusee, etc.)
+            if any(kw in error_msg for kw in ("getaddrinfo", "Connection refused", "ConnectionError", "ConnectTimeout")):
+                logger.warning(f"Supabase inaccessible, utilisation du fallback local: {error_msg}")
+                return [t for t in FALLBACK_TESTS if not active_only or t.get("is_active", True)]
             logger.error(f"Error fetching orientation tests: {e}")
             raise QueryError(f"Erreur lors de la recuperation des tests: {str(e)}")
 
@@ -135,6 +141,14 @@ class OrientationRepository:
         except TestNotFoundError:
             raise
         except Exception as e:
+            error_msg = str(e)
+            if any(kw in error_msg for kw in ("getaddrinfo", "Connection refused", "ConnectionError", "ConnectTimeout")):
+                logger.warning(f"Supabase inaccessible, recherche dans le fallback local pour test {test_id}")
+                test_id_str = str(test_id)
+                for t in FALLBACK_TESTS:
+                    if t["id"] == test_id_str:
+                        return t
+                raise TestNotFoundError(str(test_id))
             logger.error(f"Error fetching test {test_id}: {e}")
             raise QueryError(f"Erreur lors de la recuperation du test: {str(e)}")
 

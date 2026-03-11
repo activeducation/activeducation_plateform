@@ -8,6 +8,7 @@ import '../../../../core/constants/app_typography.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../shared/widgets/inputs/custom_search_bar.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../ai_chat/presentation/pages/chat_page.dart';
 import '../../../orientation/domain/entities/orientation_test.dart';
 import '../../../orientation/domain/usecases/get_orientation_tests.dart';
 
@@ -61,6 +62,8 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 _buildOrientationCTA(context),
+                const SizedBox(height: AppSpacing.lg),
+                _buildAidaCard(context),
                 const SizedBox(height: AppSpacing.xl),
                 _buildTestsSection(context),
                 const SizedBox(height: AppSpacing.xl),
@@ -288,6 +291,85 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildAidaCard(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [
+            AppColors.primary.withValues(alpha: 0.08),
+            AppColors.secondary.withValues(alpha: 0.06),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.2),
+        ),
+      ),
+      child: InkWell(
+        onTap: () => context.push(
+          '/chat',
+          extra: const ChatPageArgs(),
+        ),
+        borderRadius: BorderRadius.circular(16),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                gradient: AppColors.primaryGradient,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.smart_toy_rounded,
+                color: Colors.white,
+                size: 26,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Discute avec A\u00cfDA',
+                    style: AppTypography.titleSmall.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Ta conseill\u00e8re d\'orientation virtuelle',
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.arrow_forward_rounded,
+                color: AppColors.primary,
+                size: 18,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

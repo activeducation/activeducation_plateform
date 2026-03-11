@@ -13,7 +13,9 @@ import '../features/orientation/domain/entities/orientation_test.dart';
 import '../features/orientation/domain/entities/test_result.dart';
 import '../features/orientation/domain/entities/career.dart';
 import '../features/profile/presentation/pages/profile_page.dart';
+import '../features/ai_chat/presentation/pages/chat_page.dart';
 import '../core/constants/app_colors.dart';
+import '../core/constants/app_spacing.dart';
 import '../core/constants/app_typography.dart';
 import 'auth_guard.dart';
 
@@ -103,6 +105,14 @@ class AppRouter {
           return CareerDetailPage(career: career);
         },
       ),
+      // Chat IA — AÏDA
+      GoRoute(
+        path: '/chat',
+        builder: (BuildContext context, GoRouterState state) {
+          final args = state.extra as ChatPageArgs? ?? const ChatPageArgs();
+          return ChatPage(args: args);
+        },
+      ),
     ],
   );
 }
@@ -157,6 +167,7 @@ class _MainShellWrapperState extends State<_MainShellWrapper> {
             ),
           ],
         ),
+        floatingActionButton: _buildAidaFab(context),
       );
     }
 
@@ -164,6 +175,7 @@ class _MainShellWrapperState extends State<_MainShellWrapper> {
       backgroundColor: AppColors.background,
       body: widget.child,
       bottomNavigationBar: _buildBottomNav(context),
+      floatingActionButton: _buildAidaFab(context),
     );
   }
 
@@ -237,6 +249,36 @@ class _MainShellWrapperState extends State<_MainShellWrapper> {
             ),
             const SizedBox(height: 12),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAidaFab(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.xs),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: FloatingActionButton(
+        heroTag: 'aida_fab',
+        onPressed: () => context.push('/chat'),
+        backgroundColor: AppColors.primary,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Icon(
+          Icons.smart_toy_rounded,
+          color: Colors.white,
+          size: 26,
         ),
       ),
     );

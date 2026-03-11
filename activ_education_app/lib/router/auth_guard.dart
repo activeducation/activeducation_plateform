@@ -32,6 +32,7 @@ class AuthGuard {
     '/home',
     '/orientation',
     '/schools',
+    '/chat',
   ];
 
   /// Verifie si la route est publique.

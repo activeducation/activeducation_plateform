@@ -11,9 +11,9 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro   # Decouverte des services Docker
-      - ./traefik/traefik.yml:/traefik.yml:ro          # Config statique
-      - ./traefik/letsencrypt:/letsencrypt             # Stockage certificats SSL
+      - /var/run/docker.sock:/var/run/docker.sock:ro # Decouverte des services Docker
+      - ./traefik/traefik.yml:/traefik.yml:ro # Config statique
+      - ./traefik/letsencrypt:/letsencrypt # Stockage certificats SSL
     networks:
       - app-network
     logging:
@@ -54,7 +54,7 @@ services:
       - "traefik.http.middlewares.api-headers.headers.customResponseHeaders.X-Frame-Options=DENY"
       - "traefik.http.routers.backend.middlewares=api-headers"
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -81,7 +81,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./nginx/app.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./landing:/var/www/html:ro
+      - ./activ_education_app/build/web:/var/www/html:ro
     networks:
       - app-network
     labels:

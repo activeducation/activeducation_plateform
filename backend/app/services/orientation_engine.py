@@ -24,80 +24,110 @@ RIASEC_FR = {
     "Réaliste": {
         "code": "R",
         "en": "Realistic",
-        "description": "Vous êtes pragmatique et aimez travailler avec vos mains. Les activités concrètes, techniques et physiques vous motivent.",
+        "description": "Vous êtes pragmatique et aimez les défis concrets, techniques et physiques.",
         "forces": [
-            "Sens pratique et concret",
-            "Habileté manuelle et technique",
+            "Habileté technique et manuelle",
+            "Sens pratique et efficacité",
             "Endurance et persévérance",
-            "Capacité à résoudre des problèmes concrets",
+            "Fiabilité dans l'exécution",
         ],
-        "style_travail": "Vous préférez les environnements de travail structurés où vous pouvez voir le résultat concret de vos efforts. Vous êtes à l'aise avec les outils, les machines et le travail en extérieur.",
-        "secteurs": ["Ingénierie & BTP", "Agriculture & Environnement", "Technologie & Informatique"],
+        "secteurs": [
+            "Génie Civil & BTP",
+            "Mécanique & Électrotechnique",
+            "Agriculture & Agroalimentaire",
+            "Topographie & Géomatique",
+            "Maintenance & Logistique Industrielle",
+        ],
     },
     "Investigateur": {
         "code": "I",
         "en": "Investigative",
-        "description": "Vous êtes curieux, analytique et aimez comprendre le fonctionnement des choses. La recherche et la résolution de problèmes complexes vous passionnent.",
+        "description": "Vous êtes analytique, curieux intellectuellement et passionné par la résolution de problèmes complexes.",
         "forces": [
             "Esprit analytique et critique",
             "Curiosité intellectuelle",
             "Rigueur scientifique",
-            "Capacité d'abstraction",
+            "Capacité d'abstraction et de modélisation",
         ],
-        "style_travail": "Vous excellez dans les environnements qui demandent de la réflexion, de l'analyse et de la recherche. Vous aimez travailler de manière autonome sur des problèmes complexes.",
-        "secteurs": ["Technologie & Informatique", "Santé", "Agriculture & Environnement"],
+        "secteurs": [
+            "Informatique & Cybersécurité",
+            "Biologie & Pharmacie",
+            "Mathématiques & Data Science",
+            "Physique & Énergies Renouvelables",
+            "Médecine & Recherche Clinique",
+        ],
     },
     "Artistique": {
         "code": "A",
         "en": "Artistic",
-        "description": "Vous êtes créatif, expressif et aimez l'innovation. Les activités qui permettent l'expression personnelle et la création vous attirent.",
+        "description": "Vous êtes créatif, expressif et attiré par l'innovation, l'esthétique et la communication.",
         "forces": [
             "Créativité et imagination",
-            "Sens esthétique développé",
+            "Sensibilité esthétique",
             "Originalité et innovation",
-            "Sensibilité et expressivité",
+            "Expression et communication visuelle",
         ],
-        "style_travail": "Vous recherchez des environnements de travail flexibles, non conventionnels, qui laissent place à la créativité et à l'expression personnelle.",
-        "secteurs": ["Création & Médias", "Éducation", "Commerce & Entrepreneuriat"],
+        "secteurs": [
+            "Design Graphique & Communication Visuelle",
+            "Architecture & Décoration d'Intérieur",
+            "Journalisme & Médias Numériques",
+            "Cinéma, Arts & Culture",
+            "Marketing Créatif & UX Design",
+        ],
     },
     "Social": {
         "code": "S",
         "en": "Social",
-        "description": "Vous aimez aider, enseigner et accompagner les autres. Les relations humaines et le service aux personnes sont au cœur de vos motivations.",
+        "description": "Vous êtes empathique, aimez aider les autres et êtes motivé par le service aux personnes.",
         "forces": [
             "Empathie et écoute active",
-            "Capacité à travailler en équipe",
             "Communication interpersonnelle",
-            "Patience et bienveillance",
+            "Travail en équipe et collaboration",
+            "Pédagogie et accompagnement",
         ],
-        "style_travail": "Vous vous épanouissez dans les métiers de contact humain, d'accompagnement et de service. Le travail en équipe et l'aide aux autres vous motivent profondément.",
-        "secteurs": ["Santé", "Éducation", "Droit & Administration"],
+        "secteurs": [
+            "Sciences Infirmières & Santé Communautaire",
+            "Enseignement & Sciences de l'Éducation",
+            "Psychologie & Travail Social",
+            "Ressources Humaines & Coaching",
+            "Développement Communautaire & ONG",
+        ],
     },
     "Entrepreneur": {
         "code": "E",
         "en": "Enterprising",
-        "description": "Vous êtes ambitieux, leader et aimez convaincre. Le management, la prise de décision et les défis commerciaux vous motivent.",
+        "description": "Vous êtes ambitieux, leadership naturel et motivé par la prise de décision et les défis commerciaux.",
         "forces": [
             "Leadership et charisme",
-            "Capacité de persuasion",
-            "Prise d'initiative",
-            "Goût du risque calculé",
+            "Prise d'initiative et audace",
+            "Négociation et persuasion",
+            "Vision stratégique",
         ],
-        "style_travail": "Vous préférez les environnements dynamiques et compétitifs. Vous aimez diriger, influencer et prendre des décisions stratégiques.",
-        "secteurs": ["Commerce & Entrepreneuriat", "Finance & Banque", "Droit & Administration"],
+        "secteurs": [
+            "Commerce & Gestion d'Entreprise",
+            "Finance & Banque",
+            "Marketing & Vente",
+            "Droit des Affaires & Entrepreneuriat",
+            "Management & Direction de Projets",
+        ],
     },
     "Conventionnel": {
         "code": "C",
         "en": "Conventional",
-        "description": "Vous êtes organisé, méthodique et aimez la précision. Les tâches structurées, les procédures claires et l'ordre vous conviennent.",
+        "description": "Vous êtes organisé, méthodique et à l'aise avec la précision, les procédures et l'ordre.",
         "forces": [
-            "Organisation et méthode",
-            "Rigueur et précision",
+            "Organisation et rigueur",
+            "Précision et souci du détail",
             "Fiabilité et constance",
-            "Respect des règles et procédures",
+            "Maîtrise des procédures et réglementations",
         ],
-        "style_travail": "Vous excellez dans les environnements structurés avec des procédures claires. Vous êtes fiable, ponctuel et attentif aux détails.",
-        "secteurs": ["Finance & Banque", "Droit & Administration", "Technologie & Informatique"],
+        "secteurs": [
+            "Comptabilité, Audit & Contrôle de Gestion",
+            "Administration Publique & Fiscalité",
+            "Gestion des Systèmes d'Information",
+            "Statistiques & Actuariat",
+            "Secrétariat & Office Management",
+        ],
     },
 }
 
@@ -206,10 +236,9 @@ class OrientationEngine:
         """Genere une interpretation structuree du profil RIASEC."""
         if not dominant_traits:
             return {
-                "profile_summary": "Les résultats ne permettent pas de dégager un profil dominant clair. Nous vous recommandons de refaire le test en prenant le temps de répondre à chaque question.",
+                "profile_summary": "Aucun profil dominant dégagé. Prenez le temps de répondre à chaque question.",
                 "strengths": [],
-                "work_style": "",
-                "advice": "Prenez le temps de réfléchir à ce qui vous motive réellement dans votre quotidien.",
+                "advice": "Réfléchissez à ce qui vous motive réellement dans votre quotidien.",
                 "recommended_sectors": [],
             }
 
@@ -217,48 +246,60 @@ class OrientationEngine:
         primary_data = RIASEC_FR.get(primary, {})
         secondary = dominant_traits[1] if len(dominant_traits) > 1 else None
         secondary_data = RIASEC_FR.get(secondary, {}) if secondary else {}
+        tertiary = dominant_traits[2] if len(dominant_traits) > 2 else None
+        tertiary_data = RIASEC_FR.get(tertiary, {}) if tertiary else {}
 
-        # Resume du profil
+        # Code et résumé court
         profile_code = "".join([RIASEC_FR.get(t, {}).get("code", "?") for t in dominant_traits])
-        summary = f"Votre profil RIASEC est de type **{profile_code}** ({' - '.join(dominant_traits)}). "
-        summary += primary_data.get("description", "")
+        summary = f"Profil **{profile_code}** — {primary_data.get('description', '')}"
         if secondary:
-            summary += f" Votre dimension secondaire **{secondary}** renforce ce profil : {secondary_data.get('description', '').lower()}"
+            summary += f" Votre dimension **{secondary}** apporte une complémentarité précieuse."
 
-        # Forces combinées des 2 traits dominants
-        strengths = list(primary_data.get("forces", []))
+        # Forces : top 3 du trait principal + 1-2 du trait secondaire
+        strengths = list(primary_data.get("forces", []))[:3]
         if secondary_data:
             for s in secondary_data.get("forces", [])[:2]:
                 if s not in strengths:
                     strengths.append(s)
 
-        # Style de travail
-        work_style = primary_data.get("style_travail", "")
-
-        # Conseils personnalises
+        # Conseils personnalisés
         advice = self._generate_personalized_advice(dominant_traits, scores)
 
-        # Secteurs recommandes (union des 2 premiers traits, dedupliques)
-        sectors = list(primary_data.get("secteurs", []))
-        if secondary_data:
-            for s in secondary_data.get("secteurs", []):
-                if s not in sectors:
+        # Secteurs pondérés par les scores des 3 traits dominants
+        # Chaque trait contribue ses secteurs proportionnellement à son score
+        trait_weights = [(primary, scores.get(primary, 0))]
+        if secondary:
+            trait_weights.append((secondary, scores.get(secondary, 0)))
+        if tertiary:
+            trait_weights.append((tertiary, scores.get(tertiary, 0)))
+
+        total_weight = sum(w for _, w in trait_weights) or 1
+        sectors: list[str] = []
+        seen: set[str] = set()
+
+        for trait, weight in trait_weights:
+            # Nombre de secteurs proportionnel au score (min 1, max 3)
+            n = max(1, round((weight / total_weight) * 5))
+            for s in RIASEC_FR.get(trait, {}).get("secteurs", [])[:n]:
+                if s not in seen:
                     sectors.append(s)
+                    seen.add(s)
+
+        # Compléter jusqu'à 6 si nécessaire avec les secteurs restants
+        for trait, _ in trait_weights:
+            if len(sectors) >= 6:
+                break
+            for s in RIASEC_FR.get(trait, {}).get("secteurs", []):
+                if s not in seen:
+                    sectors.append(s)
+                    seen.add(s)
 
         return {
             "profile_summary": summary,
             "profile_code": profile_code,
             "strengths": strengths,
-            "work_style": work_style,
             "advice": advice,
-            "recommended_sectors": sectors[:5],
-            "trait_details": {
-                trait: {
-                    "score": scores.get(trait, 0),
-                    "description": RIASEC_FR.get(trait, {}).get("description", ""),
-                }
-                for trait in dominant_traits
-            },
+            "recommended_sectors": sectors[:6],
         }
 
     def _generate_personalized_advice(self, dominant_traits: list[str], scores: dict) -> str:
@@ -285,18 +326,18 @@ class OrientationEngine:
 
         # Conseils specifiques par profil dominant
         specific_advice = {
-            "Réaliste": "Privilégiez les formations avec beaucoup de pratique (stages, alternance, travaux pratiques). "
-                       "Au Togo, les secteurs du BTP et de l'agriculture offrent de belles opportunités.",
-            "Investigateur": "Investissez dans les études longues (Master, Doctorat) si possible. "
-                            "Les métiers de la data et de la recherche sont en forte croissance en Afrique de l'Ouest.",
-            "Artistique": "Constituez un portfolio solide et explorez les formations créatives. "
-                         "Le secteur digital au Togo ouvre de nouvelles voies pour les créatifs (design, contenu, UX).",
-            "Social": "Les stages en milieu hospitalier, éducatif ou associatif vous aideront à confirmer votre vocation. "
-                     "Le Togo a un grand besoin de professionnels du social et de la santé.",
-            "Entrepreneur": "Participez aux programmes d'incubation (Woelab, CUBE) et aux formations en gestion. "
-                           "L'écosystème entrepreneurial togolais est dynamique avec le soutien du FAIEJ.",
-            "Conventionnel": "Les certifications professionnelles (comptabilité, finance, gestion) augmentent votre employabilité. "
-                            "Les secteurs bancaire et administratif au Togo recrutent régulièrement.",
+            "Réaliste": "Privilégiez les formations pratiques (BTS, DUT, alternance). "
+                       "Les filières Génie Civil, Mécanique et Agroalimentaire recrutent bien au Togo.",
+            "Investigateur": "Visez les études longues (Licence, Master, Doctorat). "
+                            "L'Informatique, la Data Science et les Sciences biologiques sont en forte croissance en Afrique de l'Ouest.",
+            "Artistique": "Construisez un portfolio solide dès maintenant. "
+                         "Le Design, le Marketing digital et l'UX ouvrent de nouvelles carrières au Togo et en Afrique.",
+            "Social": "Recherchez des stages en milieu hospitalier, éducatif ou associatif pour confirmer votre vocation. "
+                     "Les filières Santé Communautaire et Sciences de l'Éducation offrent de nombreux débouchés.",
+            "Entrepreneur": "Rejoignez des programmes d'incubation (Woelab, CUBE) et formez-vous en gestion. "
+                           "Le Droit des Affaires et le Management sont des atouts pour créer ou diriger une entreprise.",
+            "Conventionnel": "Visez les certifications reconnues (comptabilité SYSCOHADA, fiscalité). "
+                            "La Comptabilité, l'Audit et l'Administration Publique offrent une forte employabilité au Togo.",
         }
         if primary in specific_advice:
             advice_parts.append(specific_advice[primary])
@@ -362,20 +403,17 @@ class OrientationEngine:
         """Genere une interpretation pour le test de personnalite."""
         descriptions = []
         for trait in dominant_traits:
-            # Find the matching MBTI description
             for en_name, data in MBTI_FR.items():
                 if data["fr"] == trait:
                     descriptions.append(data["desc"])
                     break
 
-        summary = f"Votre profil de personnalité dominant est : **{' / '.join(dominant_traits)}**. "
-        summary += " ".join(descriptions)
+        summary = f"Type **{' / '.join(dominant_traits)}** — " + " ".join(descriptions[:2])
 
         return {
             "profile_summary": summary,
-            "strengths": dominant_traits,
-            "work_style": "Votre personnalité influence votre manière d'aborder le travail et les relations professionnelles.",
-            "advice": "Cherchez des métiers et environnements de travail compatibles avec votre type de personnalité pour vous épanouir professionnellement.",
+            "strengths": dominant_traits[:3],
+            "advice": "Cherchez des environnements de travail alignés avec votre personnalité pour vous épanouir.",
             "recommended_sectors": [],
         }
 

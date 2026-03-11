@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import orientation, auth, schools
+from app.api.v1.endpoints import orientation, auth, schools, chat
 from app.api.v1.endpoints.admin import (
     auth as admin_auth,
     upload as admin_upload,
@@ -23,6 +23,9 @@ api_router.include_router(orientation.router, prefix="/orientation", tags=["orie
 
 # Schools public endpoints
 api_router.include_router(schools.router, prefix="/schools", tags=["schools"])
+
+# Chat IA — AÏDA (Groq, gratuit)
+api_router.include_router(chat.router, prefix="/chat", tags=["chat-ia"])
 
 # =============================================================================
 # ADMIN ENDPOINTS
