@@ -20,11 +20,20 @@ class Settings(BaseSettings):
     SUPABASE_KEY: str
     SUPABASE_SERVICE_ROLE_KEY: Optional[str] = None
 
-    # JWT - SECRET_KEY est OBLIGATOIRE, pas de valeur par defaut
-    SECRET_KEY: str
+    # Supabase Auth JWT Secret pour validation cote serveur
+    # Recuperer depuis : Supabase Dashboard → Settings → API → JWT Secret
+    SUPABASE_JWT_SECRET: Optional[str] = None
+
+    # Conserve pour retrocompatibilite (legacy - ne plus utiliser en production)
+    SECRET_KEY: str = "legacy-placeholder-key-will-be-removed-v2"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+
+    # Redis cache (facultatif - fallback vers cache memoire si absent)
+    # En production: redis://redis:6379/0 (nom du service Docker)
+    # En developpement: redis://localhost:6379/0
+    REDIS_URL: str = "redis://redis:6379/0"
 
     # CORS - Liste vide par defaut, doit etre configuree
     BACKEND_CORS_ORIGINS: list[str] = []
@@ -47,8 +56,6 @@ class Settings(BaseSettings):
     def validate_secret_key(cls, v: str) -> str:
         if len(v) < 32:
             raise ValueError("SECRET_KEY doit contenir au moins 32 caracteres")
-        if v == "YOUR_SECRET_KEY_HERE_FOR_DEV":
-            raise ValueError("SECRET_KEY par defaut non autorise. Generez une cle securisee.")
         return v
 
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
@@ -70,6 +77,12 @@ class Settings(BaseSettings):
                 raise ValueError("BACKEND_CORS_ORIGINS doit etre configure en production")
             if "*" in self.BACKEND_CORS_ORIGINS:
                 raise ValueError("CORS wildcard '*' interdit en production")
+            # En production, SUPABASE_JWT_SECRET est requis pour validation locale des tokens
+            if not self.SUPABASE_JWT_SECRET:
+                raise ValueError(
+                    "SUPABASE_JWT_SECRET requis en production. "
+                    "Trouver dans Supabase Dashboard → Settings → API → JWT Secret"
+                )
         # En developpement, permettre le wildcard "*"
         if "*" in self.BACKEND_CORS_ORIGINS and self.ENVIRONMENT != "production":
             self.BACKEND_CORS_ORIGINS = ["*"]

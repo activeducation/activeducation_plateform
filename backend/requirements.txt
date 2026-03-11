@@ -9,13 +9,20 @@ pydantic>=2.6.2
 pydantic-settings>=2.2.1
 gunicorn>=25.1.0
 
-# Database
+# Database & Auth (Supabase Auth gere les mots de passe et tokens)
 supabase>=2.4.0
 
-# Security & Auth
+# Migrations SQL (schema versionne et reproductible)
+alembic>=1.13.0
+sqlalchemy>=2.0.0
+psycopg2-binary>=2.9.9
+
+# Cache Redis (fallback automatique vers cache memoire si Redis absent)
+redis>=5.0.0
+
+# JWT validation locale des tokens Supabase (optionnel mais recommande en prod)
+# Utilise si SUPABASE_JWT_SECRET est configure - evite un appel reseau par requete
 python-jose[cryptography]>=3.3.0
-passlib[bcrypt]>=1.7.4
-bcrypt>=4.1.2
 
 # Middleware
 slowapi>=0.1.9
@@ -29,6 +36,9 @@ email-validator>=2.1.1
 
 # Environment
 python-dotenv>=1.0.1
+
+# Monitoring & Error tracking (optionnel - active si SENTRY_DSN est defini)
+sentry-sdk[fastapi]>=2.0.0
 
 # Testing
 pytest>=8.0.2

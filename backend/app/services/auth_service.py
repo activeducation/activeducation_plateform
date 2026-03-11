@@ -1,28 +1,16 @@
 """
-Service d'authentification.
+Service d'authentification via Supabase Auth.
 
-Gere la logique metier pour:
-- Login/Register
-- Token refresh
-- Password reset
-- Profile management
+Toute la gestion des mots de passe et tokens est deleguee a Supabase Auth.
+Le backend se charge uniquement de la logique metier supplementaire
+(creation du profil utilisateur, mise a jour du profil, etc.)
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
 from app.core.logging import get_logger
-from app.core.config import settings
-from app.core.security import (
-    hash_password,
-    verify_password,
-    create_token_pair,
-    verify_refresh_token,
-    create_password_reset_token,
-    verify_password_reset_token,
-    TokenPair,
-)
 from app.core.exceptions import (
     AuthenticationError,
     AlreadyExistsError,
@@ -43,15 +31,17 @@ from app.repositories.users_repository import (
     get_users_repository,
     UsersRepository,
 )
+from app.db.supabase_client import get_supabase_client
 
 logger = get_logger("services.auth")
 
 
 class AuthService:
-    """Service pour les operations d'authentification."""
+    """Service pour les operations d'authentification via Supabase Auth."""
 
     def __init__(self):
         self._users_repo: UsersRepository = get_users_repository()
+        self._db = get_supabase_client()
 
     # =========================================================================
     # LOGIN / REGISTER
@@ -59,116 +49,126 @@ class AuthService:
 
     async def login(self, request: LoginRequest) -> AuthResponse:
         """
-        Authentifie un utilisateur.
-
-        Args:
-            request: Email et mot de passe
+        Authentifie un utilisateur via Supabase Auth.
 
         Returns:
-            AuthResponse avec user et tokens
+            AuthResponse avec user et tokens Supabase
 
         Raises:
             AuthenticationError: Si credentials invalides
         """
-        # Recuperer l'utilisateur par email
-        user = await self._users_repo.get_by_email(request.email)
+        try:
+            response = self._db.client.auth.sign_in_with_password({
+                "email": request.email.lower(),
+                "password": request.password,
+            })
 
-        if not user:
-            logger.warning(f"Login attempt with unknown email: {request.email}")
-            raise AuthenticationError("Email ou mot de passe incorrect")
+            if not response.user or not response.session:
+                raise AuthenticationError("Email ou mot de passe incorrect")
 
-        # Verifier le mot de passe
-        if not verify_password(request.password, user.get("password_hash", "")):
-            logger.warning(f"Invalid password for user: {request.email}")
-            raise AuthenticationError("Email ou mot de passe incorrect")
+        except AuthenticationError:
+            raise
+        except Exception as e:
+            error_msg = str(e).lower()
+            if any(k in error_msg for k in ("invalid", "incorrect", "credentials", "not found")):
+                logger.warning(f"Failed login attempt for: {request.email}")
+                raise AuthenticationError("Email ou mot de passe incorrect")
+            logger.error(f"Login error for {request.email}: {e}")
+            raise AuthenticationError("Erreur lors de la connexion")
 
-        # Generer les tokens
-        tokens = create_token_pair(user["id"], request.email)
-        refresh_expires_at = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-        await self._users_repo.save_refresh_token(
-            UUID(user["id"]),
-            tokens.refresh_token,
-            refresh_expires_at,
-        )
+        user_id = UUID(response.user.id)
+        session = response.session
 
-        # Mettre a jour la derniere connexion
-        await self._users_repo.update_last_login(UUID(user["id"]))
+        # Recuperer ou creer le profil dans user_profiles
+        profile = await self._users_repo.get_by_id(user_id)
+        if not profile:
+            profile = await self._users_repo.create_profile(
+                user_id=user_id,
+                email=response.user.email,
+            )
+
+        await self._users_repo.update_last_login(user_id)
 
         logger.info(f"User logged in: {request.email}")
 
         return AuthResponse(
-            user=self._to_user_response(user),
+            user=self._to_user_response(profile, response.user.email),
             tokens=TokenResponse(
-                access_token=tokens.access_token,
-                refresh_token=tokens.refresh_token,
-                expires_in=tokens.expires_in,
+                access_token=session.access_token,
+                refresh_token=session.refresh_token,
+                expires_in=session.expires_in or 1800,
             ),
         )
 
     async def register(self, request: RegisterRequest) -> AuthResponse:
         """
-        Inscrit un nouvel utilisateur.
-
-        Args:
-            request: Donnees d'inscription
-
-        Returns:
-            AuthResponse avec user et tokens
+        Inscrit un nouvel utilisateur via Supabase Auth.
 
         Raises:
             AlreadyExistsError: Si l'email existe deja
         """
-        # Verifier si l'email existe deja
-        existing = await self._users_repo.get_by_email(request.email)
-        if existing:
-            raise AlreadyExistsError("Utilisateur", "email", request.email)
+        try:
+            response = self._db.client.auth.sign_up({
+                "email": request.email.lower(),
+                "password": request.password,
+                "options": {
+                    "data": {
+                        "first_name": request.first_name,
+                        "last_name": request.last_name,
+                    }
+                }
+            })
 
-        # Hasher le mot de passe
-        password_hash = hash_password(request.password)
+            if not response.user:
+                raise AuthenticationError("Erreur lors de l'inscription")
 
-        # Creer l'utilisateur
-        user = await self._users_repo.create(
-            email=request.email,
-            password_hash=password_hash,
+        except AuthenticationError:
+            raise
+        except Exception as e:
+            error_msg = str(e).lower()
+            if any(k in error_msg for k in ("already", "exists", "duplicate")):
+                raise AlreadyExistsError("Utilisateur", "email", request.email)
+            logger.error(f"Register error for {request.email}: {e}")
+            raise AuthenticationError("Erreur lors de l'inscription")
+
+        user_id = UUID(response.user.id)
+        session = response.session
+
+        # Creer le profil dans user_profiles
+        profile = await self._users_repo.create_profile(
+            user_id=user_id,
+            email=request.email.lower(),
             first_name=request.first_name,
             last_name=request.last_name,
             phone_number=request.phone_number,
         )
 
-        # Generer les tokens
-        tokens = create_token_pair(user["id"], request.email)
-        refresh_expires_at = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-        await self._users_repo.save_refresh_token(
-            UUID(user["id"]),
-            tokens.refresh_token,
-            refresh_expires_at,
-        )
-
         logger.info(f"New user registered: {request.email}")
 
+        # Supabase peut envoyer un email de confirmation (session peut etre None)
+        access_token = session.access_token if session else ""
+        refresh_token = session.refresh_token if session else ""
+        expires_in = session.expires_in if session else 1800
+
         return AuthResponse(
-            user=self._to_user_response(user),
+            user=self._to_user_response(profile, request.email),
             tokens=TokenResponse(
-                access_token=tokens.access_token,
-                refresh_token=tokens.refresh_token,
-                expires_in=tokens.expires_in,
+                access_token=access_token,
+                refresh_token=refresh_token,
+                expires_in=expires_in,
             ),
         )
 
     async def logout(self, user_id: UUID) -> bool:
         """
-        Deconnecte un utilisateur.
-
-        Note: Dans une implementation complete, on invaliderait
-        le refresh token en base de donnees.
-
-        Args:
-            user_id: ID de l'utilisateur
-
-        Returns:
-            True si succes
+        Deconnecte un utilisateur (invalide la session Supabase).
         """
-        await self._users_repo.revoke_all_refresh_tokens(user_id)
+        try:
+            if hasattr(self._db.client.auth, 'admin'):
+                self._db.client.auth.admin.sign_out(str(user_id))
+        except Exception as e:
+            logger.warning(f"Could not invalidate Supabase session for {user_id}: {e}")
+
         logger.info(f"User logged out: {user_id}")
         return True
 
@@ -178,48 +178,34 @@ class AuthService:
 
     async def refresh_tokens(self, refresh_token: str) -> TokenResponse:
         """
-        Rafraichit les tokens avec un refresh token.
-
-        Args:
-            refresh_token: Token de rafraichissement
-
-        Returns:
-            Nouveaux tokens
+        Rafraichit les tokens via Supabase Auth.
 
         Raises:
             InvalidTokenError: Si le token est invalide
         """
-        # Verifier le refresh token
-        payload = verify_refresh_token(refresh_token)
-        user_id = UUID(payload.sub)
+        try:
+            response = self._db.client.auth.refresh_session(refresh_token)
 
-        # Verifier que le refresh token est actif en base
-        is_active = await self._users_repo.is_refresh_token_active(user_id, refresh_token)
-        if not is_active:
-            raise InvalidTokenError("Refresh token invalide ou revoque")
+            if not response.session:
+                raise InvalidTokenError("Refresh token invalide ou revoque")
 
-        # Verifier que l'utilisateur existe toujours
-        user = await self._users_repo.get_by_id(user_id)
-        if not user:
-            raise InvalidTokenError("Utilisateur non trouve")
+            session = response.session
+            logger.info("Tokens refreshed")
 
-        # Generer de nouveaux tokens
-        tokens = create_token_pair(payload.sub, user.get("email"))
-        await self._users_repo.revoke_refresh_token(refresh_token)
-        refresh_expires_at = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-        await self._users_repo.save_refresh_token(
-            user_id,
-            tokens.refresh_token,
-            refresh_expires_at,
-        )
+            return TokenResponse(
+                access_token=session.access_token,
+                refresh_token=session.refresh_token,
+                expires_in=session.expires_in or 1800,
+            )
 
-        logger.info(f"Tokens refreshed for user: {payload.sub}")
-
-        return TokenResponse(
-            access_token=tokens.access_token,
-            refresh_token=tokens.refresh_token,
-            expires_in=tokens.expires_in,
-        )
+        except InvalidTokenError:
+            raise
+        except Exception as e:
+            error_msg = str(e).lower()
+            if any(k in error_msg for k in ("expired", "invalid")):
+                raise InvalidTokenError("Refresh token invalide ou expire")
+            logger.error(f"Token refresh error: {e}")
+            raise InvalidTokenError("Erreur lors du rafraichissement du token")
 
     # =========================================================================
     # PASSWORD RESET
@@ -228,66 +214,49 @@ class AuthService:
     async def request_password_reset(self, email: str) -> bool:
         """
         Demande une reinitialisation de mot de passe.
-
-        Args:
-            email: Email de l'utilisateur
-
-        Returns:
-            True (meme si l'email n'existe pas, pour securite)
+        Supabase envoie automatiquement l'email de reset.
+        Retourne toujours True pour ne pas reveler si l'email existe.
         """
-        user = await self._users_repo.get_by_email(email)
+        try:
+            self._db.client.auth.reset_password_for_email(
+                email.lower(),
+                options={"redirect_to": "https://activeduhub.com/reset-password"},
+            )
+            logger.info(f"Password reset email sent for: {email}")
+        except Exception as e:
+            logger.warning(f"Password reset request failed for {email}: {e}")
 
-        if user:
-            # Generer le token de reset
-            reset_token = create_password_reset_token(email)
-
-            # TODO: Envoyer l'email avec le lien de reset
-            logger.info(f"Password reset requested for: {email}")
-
-            # Sauvegarder le token en DB (optionnel, pour invalidation)
-            await self._users_repo.save_reset_token(UUID(user["id"]), reset_token)
-
-        # Toujours retourner True pour ne pas reveler si l'email existe
         return True
 
     async def reset_password(self, token: str, new_password: str) -> bool:
         """
-        Reinitialise le mot de passe avec un token.
+        Reinitialise le mot de passe via le token du lien email.
 
         Args:
-            token: Token de reinitialisation
+            token: Access token Supabase du lien de reset
             new_password: Nouveau mot de passe
-
-        Returns:
-            True si succes
 
         Raises:
             InvalidTokenError: Si le token est invalide
         """
-        # Verifier le token
-        email = verify_password_reset_token(token)
+        try:
+            response = self._db.client.auth.get_user(token)
+            if not response or not response.user:
+                raise InvalidTokenError("Token de reinitialisation invalide")
 
-        # Recuperer l'utilisateur par token DB pour garantir l'invalidation serveur
-        user = await self._users_repo.get_by_valid_reset_token(token)
-        if not user:
-            raise InvalidTokenError("Token de reinitialisation invalide ou expire")
+            self._db.client.auth.admin.update_user_by_id(
+                response.user.id,
+                {"password": new_password},
+            )
 
-        # Verifier la coherence entre token JWT et token stocke en DB
-        if user.get("email", "").lower() != email.lower():
-            raise InvalidTokenError("Token de reinitialisation invalide")
+            logger.info(f"Password reset successful for: {response.user.email}")
+            return True
 
-        # Hasher le nouveau mot de passe
-        password_hash = hash_password(new_password)
-
-        # Mettre a jour le mot de passe
-        await self._users_repo.update_password(UUID(user["id"]), password_hash)
-
-        # Invalider le token de reset
-        await self._users_repo.invalidate_reset_token(UUID(user["id"]))
-
-        logger.info(f"Password reset successful for: {email}")
-
-        return True
+        except InvalidTokenError:
+            raise
+        except Exception as e:
+            logger.error(f"Password reset error: {e}")
+            raise InvalidTokenError("Erreur lors de la reinitialisation du mot de passe")
 
     async def change_password(
         self,
@@ -297,14 +266,7 @@ class AuthService:
     ) -> bool:
         """
         Change le mot de passe d'un utilisateur connecte.
-
-        Args:
-            user_id: ID de l'utilisateur
-            current_password: Mot de passe actuel
-            new_password: Nouveau mot de passe
-
-        Returns:
-            True si succes
+        Verifie l'ancien mot de passe via re-authentification.
 
         Raises:
             AuthenticationError: Si le mot de passe actuel est incorrect
@@ -313,39 +275,36 @@ class AuthService:
         if not user:
             raise NotFoundError("Utilisateur", str(user_id))
 
-        # Verifier le mot de passe actuel
-        if not verify_password(current_password, user.get("password_hash", "")):
+        # Verifier l'ancien mot de passe via re-authentification Supabase
+        try:
+            self._db.client.auth.sign_in_with_password({
+                "email": user["email"],
+                "password": current_password,
+            })
+        except Exception:
             raise AuthenticationError("Mot de passe actuel incorrect")
 
-        # Hasher et sauvegarder le nouveau mot de passe
-        password_hash = hash_password(new_password)
-        await self._users_repo.update_password(user_id, password_hash)
-
-        logger.info(f"Password changed for user: {user_id}")
-
-        return True
+        # Mettre a jour le mot de passe via admin API
+        try:
+            self._db.client.auth.admin.update_user_by_id(
+                str(user_id),
+                {"password": new_password},
+            )
+            logger.info(f"Password changed for user: {user_id}")
+            return True
+        except Exception as e:
+            logger.error(f"Error changing password for {user_id}: {e}")
+            raise AuthenticationError("Erreur lors du changement de mot de passe")
 
     # =========================================================================
     # PROFILE MANAGEMENT
     # =========================================================================
 
     async def get_profile(self, user_id: UUID) -> UserProfile:
-        """
-        Recupere le profil d'un utilisateur.
-
-        Args:
-            user_id: ID de l'utilisateur
-
-        Returns:
-            UserProfile
-
-        Raises:
-            NotFoundError: Si l'utilisateur n'existe pas
-        """
+        """Recupere le profil d'un utilisateur."""
         user = await self._users_repo.get_by_id(user_id)
         if not user:
             raise NotFoundError("Utilisateur", str(user_id))
-
         return self._to_user_profile(user)
 
     async def update_profile(
@@ -353,17 +312,7 @@ class AuthService:
         user_id: UUID,
         request: UpdateProfileRequest,
     ) -> UserProfile:
-        """
-        Met a jour le profil d'un utilisateur.
-
-        Args:
-            user_id: ID de l'utilisateur
-            request: Donnees a mettre a jour
-
-        Returns:
-            UserProfile mis a jour
-        """
-        # Filtrer les champs non-None
+        """Met a jour le profil d'un utilisateur."""
         update_data = request.model_dump(exclude_unset=True)
 
         if not update_data:
@@ -382,24 +331,24 @@ class AuthService:
     # HELPERS
     # =========================================================================
 
-    def _to_user_response(self, user: dict) -> UserResponse:
+    def _to_user_response(self, profile: dict, email: Optional[str] = None) -> UserResponse:
         """Convertit les donnees DB en UserResponse."""
         return UserResponse(
-            id=UUID(user["id"]),
-            email=user["email"],
-            first_name=user.get("first_name"),
-            last_name=user.get("last_name"),
-            display_name=user.get("display_name"),
-            phone_number=user.get("phone_number"),
-            avatar_url=user.get("avatar_url"),
-            created_at=user.get("created_at", datetime.now()),
+            id=UUID(profile["id"]),
+            email=profile.get("email") or email or "",
+            first_name=profile.get("first_name"),
+            last_name=profile.get("last_name"),
+            display_name=profile.get("display_name"),
+            phone_number=profile.get("phone_number"),
+            avatar_url=profile.get("avatar_url"),
+            created_at=profile.get("created_at", datetime.now()),
         )
 
     def _to_user_profile(self, user: dict) -> UserProfile:
         """Convertit les donnees DB en UserProfile."""
         return UserProfile(
             id=UUID(user["id"]),
-            email=user["email"],
+            email=user.get("email", ""),
             first_name=user.get("first_name"),
             last_name=user.get("last_name"),
             display_name=user.get("display_name"),
