@@ -25,15 +25,18 @@ class Settings(BaseSettings):
     SUPABASE_JWT_SECRET: Optional[str] = None
 
     # Conserve pour retrocompatibilite (legacy - ne plus utiliser en production)
+    # En production: generer avec `python -c "import secrets; print(secrets.token_urlsafe(64))"`
     SECRET_KEY: str = "legacy-placeholder-key-will-be-removed-v2"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     # Redis cache (facultatif - fallback vers cache memoire si absent)
-    # En production: redis://redis:6379/0 (nom du service Docker)
+    # En production: redis://:${REDIS_PASSWORD}@redis:6379/0
     # En developpement: redis://localhost:6379/0
+    # Si REDIS_PASSWORD est defini, l'URL doit inclure le mot de passe.
     REDIS_URL: str = "redis://redis:6379/0"
+    REDIS_PASSWORD: Optional[str] = None
 
     # CORS - Liste vide par defaut, doit etre configuree
     BACKEND_CORS_ORIGINS: list[str] = []
@@ -51,11 +54,21 @@ class Settings(BaseSettings):
         extra="ignore"
     )
 
+    _PLACEHOLDER_KEYS = {
+        "legacy-placeholder-key-will-be-removed-v2",
+        "legacy-placeholder-key",
+        "changeme",
+        "secret",
+    }
+
     @field_validator("SECRET_KEY")
     @classmethod
     def validate_secret_key(cls, v: str) -> str:
-        if len(v) < 32:
-            raise ValueError("SECRET_KEY doit contenir au moins 32 caracteres")
+        if len(v) < 64:
+            raise ValueError(
+                "SECRET_KEY doit contenir au moins 64 caracteres. "
+                "Generez-en une avec : python -c \"import secrets; print(secrets.token_urlsafe(64))\""
+            )
         return v
 
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
@@ -82,6 +95,12 @@ class Settings(BaseSettings):
                 raise ValueError(
                     "SUPABASE_JWT_SECRET requis en production. "
                     "Trouver dans Supabase Dashboard → Settings → API → JWT Secret"
+                )
+            # En production, SECRET_KEY ne peut pas etre une valeur placeholder connue
+            if self.SECRET_KEY in self._PLACEHOLDER_KEYS or "placeholder" in self.SECRET_KEY.lower():
+                raise ValueError(
+                    "SECRET_KEY utilise une valeur placeholder non securisee en production. "
+                    "Generez une cle avec : python -c \"import secrets; print(secrets.token_urlsafe(64))\""
                 )
         # En developpement, permettre le wildcard "*"
         if "*" in self.BACKEND_CORS_ORIGINS and self.ENVIRONMENT != "production":

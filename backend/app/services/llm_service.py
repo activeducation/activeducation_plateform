@@ -10,7 +10,9 @@ Obtenir une clé Groq gratuite : https://console.groq.com
 Installer Ollama              : https://ollama.com
 """
 
+import json
 import os
+import re
 import uuid
 import logging
 from pathlib import Path
@@ -48,10 +50,21 @@ OLLAMA_TIMEOUT = 90.0  # Plus long car inférence locale
 MAX_TOKENS = 800
 TEMPERATURE = 0.7
 
-# Historique en mémoire : {session_id: [messages]}
-_sessions: dict[str, list[dict]] = {}
-MAX_SESSIONS = 1000
 MAX_HISTORY = 10       # Messages conservés par session (5 échanges, laisse ~4k tokens pour le system prompt)
+SESSION_TTL = 3600     # 1 heure de TTL par session dans Redis
+
+# Validation des inputs utilisateur
+MAX_INPUT_LENGTH = 2000    # Caractères max par message
+MAX_CONTEXT_ITEMS = 10     # Nombre max d'éléments dans client_history
+
+# Patterns d'injection de prompt à filtrer (défense en profondeur)
+_INJECTION_PATTERNS = re.compile(
+    r"ignore\s+(all\s+)?(previous|above|prior)\s+instructions?"
+    r"|you\s+are\s+now\s+(a\s+)?(?!AÏDA|Aida|aida)"
+    r"|system\s*:\s*(you|ignore|forget)"
+    r"|<\s*system\s*>",
+    re.IGNORECASE,
+)
 
 # ---------------------------------------------------------------------------
 # Base de connaissances — écoles et métiers réels au Togo
@@ -259,7 +272,9 @@ class LLMService:
     """
     Service conversationnel AÏDA — Groq (principal) + Ollama (fallback).
 
-    Stratégie :
+    Sessions stockées dans Redis (avec fallback mémoire si Redis indisponible).
+
+    Stratégie providers :
     1. Si GROQ_API_KEY est configurée → tenter Groq en priorité
     2. Si Groq échoue (429, timeout, 5xx) → fallback vers Ollama
     3. Si GROQ_API_KEY absente → utiliser directement Ollama
@@ -275,6 +290,9 @@ class LLMService:
         self._ollama_url = OLLAMA_BASE_URL
         self._ollama_model = OLLAMA_MODEL
         self._ollama_available: Optional[bool] = None  # Vérifié au premier appel
+
+        # --- Fallback mémoire si Redis indisponible ---
+        self._memory_sessions: dict[str, list[dict]] = {}
 
         # --- Log de démarrage ---
         providers = []
@@ -316,14 +334,17 @@ class LLMService:
         Returns:
             {"reply": str, "session_id": str}
         """
-        history = _sessions.get(session_id, [])
+        # Valider et assainir l'input utilisateur
+        message = self._validate_input(message)
+
+        history = self._load_session(session_id)
 
         # Session seeding : si le backend ne connaît pas la session mais que
         # le client a envoyé son historique local, on reconstruit le contexte.
         if not history and client_history:
             history = [
                 {"role": m["role"], "content": m["content"]}
-                for m in client_history
+                for m in client_history[:MAX_CONTEXT_ITEMS]
                 if m.get("role") in ("user", "assistant") and m.get("content")
             ][-MAX_HISTORY:]
             logger.info(
@@ -362,26 +383,91 @@ class LLMService:
         history.append({"role": "user", "content": message})
         history.append({"role": "assistant", "content": reply})
 
-        if len(_sessions) >= MAX_SESSIONS and session_id not in _sessions:
-            oldest = next(iter(_sessions))
-            del _sessions[oldest]
-
-        _sessions[session_id] = history
+        self._save_session(session_id, history)
 
         return {"reply": reply, "session_id": session_id}
 
     def clear_session(self, session_id: str) -> None:
         """Efface l'historique d'une session."""
-        _sessions.pop(session_id, None)
+        try:
+            from app.core.cache import get_cache
+            get_cache().delete(f"aida:session:{session_id}")
+        except Exception:
+            pass
+        self._memory_sessions.pop(session_id, None)
 
     def get_history(self, session_id: str) -> list[dict]:
         """Retourne l'historique brut d'une session."""
-        return list(_sessions.get(session_id, []))
+        return list(self._load_session(session_id))
 
     @staticmethod
     def new_session_id() -> str:
         """Génère un identifiant de session unique."""
         return str(uuid.uuid4())
+
+    # ------------------------------------------------------------------
+    # Gestion des sessions (Redis avec fallback mémoire)
+    # ------------------------------------------------------------------
+
+    def _load_session(self, session_id: str) -> list[dict]:
+        """Charge l'historique d'une session depuis Redis (ou mémoire)."""
+        try:
+            from app.core.cache import get_cache
+            cached = get_cache().get(f"aida:session:{session_id}")
+            if cached is not None:
+                return cached if isinstance(cached, list) else []
+        except Exception as e:
+            logger.debug("Redis session load failed, using memory: %s", e)
+
+        return self._memory_sessions.get(session_id, [])
+
+    def _save_session(self, session_id: str, history: list[dict]) -> None:
+        """Sauvegarde l'historique d'une session dans Redis (ou mémoire)."""
+        try:
+            from app.core.cache import get_cache
+            get_cache().set(f"aida:session:{session_id}", history, ttl=SESSION_TTL)
+            return
+        except Exception as e:
+            logger.debug("Redis session save failed, using memory: %s", e)
+
+        # Fallback mémoire avec éviction simple
+        if len(self._memory_sessions) >= 200 and session_id not in self._memory_sessions:
+            oldest = next(iter(self._memory_sessions))
+            del self._memory_sessions[oldest]
+        self._memory_sessions[session_id] = history
+
+    # ------------------------------------------------------------------
+    # Validation des inputs
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _validate_input(message: str) -> str:
+        """
+        Valide et assainit le message utilisateur.
+        - Tronque les messages trop longs
+        - Détecte les tentatives d'injection de prompt
+        """
+        if not message or not message.strip():
+            raise ValueError("Le message ne peut pas être vide.")
+
+        # Tronquer les messages trop longs
+        message = message.strip()
+        if len(message) > MAX_INPUT_LENGTH:
+            logger.warning(
+                "Message utilisateur tronqué : %d → %d caractères",
+                len(message), MAX_INPUT_LENGTH,
+            )
+            message = message[:MAX_INPUT_LENGTH]
+
+        # Détecter les patterns d'injection de prompt
+        if _INJECTION_PATTERNS.search(message):
+            logger.warning("Tentative d'injection de prompt détectée et bloquée.")
+            raise ValueError(
+                "Votre message contient des instructions non autorisées. "
+                "Posez directement votre question sur l'orientation ou les études."
+            )
+
+        return message
 
     # ------------------------------------------------------------------
     # Providers privés

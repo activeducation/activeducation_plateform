@@ -58,7 +58,14 @@ services:
     image: redis:7.2-alpine
     container_name: activeducation-redis
     restart: unless-stopped
-    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru --save ""
+    # REDIS_PASSWORD doit etre defini dans .env.production
+    # Generer avec : openssl rand -base64 32
+    command: >
+      redis-server
+      --maxmemory 128mb
+      --maxmemory-policy allkeys-lru
+      --save ""
+      --requirepass ${REDIS_PASSWORD}
     expose:
       - "6379"
     networks:
