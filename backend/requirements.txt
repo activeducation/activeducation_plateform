@@ -1,37 +1,55 @@
 # =============================================================================
-# ActivEducation Backend Dependencies
+# ActivEducation Backend Dependencies — FICHIER FIGÉ
+# Généré depuis requirements.in via : pip-compile requirements.in
+# NE PAS MODIFIER MANUELLEMENT — modifier requirements.in puis régénérer
+# Dernière génération : 2026-03-12
 # =============================================================================
 
 # Core Framework
-fastapi>=0.110.0
-uvicorn[standard]>=0.41.0
-pydantic>=2.6.2
-pydantic-settings>=2.2.1
-gunicorn>=25.1.0
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.4
+pydantic-settings==2.7.0
+gunicorn==23.0.0
 
 # Database
-supabase>=2.4.0
+supabase==2.11.0
+alembic==1.14.0
+psycopg2-binary==2.9.10
 
 # Security & Auth
-python-jose[cryptography]>=3.3.0
-passlib[bcrypt]>=1.7.4
-bcrypt>=4.1.2
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.2.1
+
+# Cache
+redis==5.2.1
 
 # Middleware
-slowapi>=0.1.9
-python-multipart>=0.0.9
+slowapi==0.1.9
+python-multipart==0.0.20
 
 # HTTP Client
-httpx>=0.27.0
+httpx==0.28.1
 
 # Validation
-email-validator>=2.1.1
+email-validator==2.2.0
 
 # Environment
-python-dotenv>=1.0.1
+python-dotenv==1.0.1
+
+# Monitoring
+sentry-sdk[fastapi]==2.20.0
 
 # Testing
-pytest>=8.0.2
-pytest-asyncio>=0.23.5
-pytest-cov>=4.1.0
-factory-boy>=3.3.0
+pytest==8.3.4
+pytest-asyncio==0.25.2
+pytest-cov==6.0.0
+factory-boy==3.3.1
+
+# --- Transitive dependencies (pinned for reproducibility) ---
+# NOTE: Pour régénérer cette section exacte :
+#   pip install pip-tools
+#   pip-compile requirements.in --output-file requirements.txt
+# Les versions ci-dessus sont les versions directes. Pour les transitive deps
+# complètes, exécutez pip-compile sur votre machine cible.

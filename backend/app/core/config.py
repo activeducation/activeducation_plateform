@@ -19,12 +19,22 @@ class Settings(BaseSettings):
     SUPABASE_URL: str
     SUPABASE_KEY: str
     SUPABASE_SERVICE_ROLE_KEY: Optional[str] = None
+    # Recommande en production : valide les tokens Supabase localement (0 appel reseau)
+    # Generer depuis Supabase Dashboard > Settings > API > JWT Secret
+    SUPABASE_JWT_SECRET: Optional[str] = None
 
-    # JWT - SECRET_KEY est OBLIGATOIRE, pas de valeur par defaut
+    # SECRET_KEY : sert a signer les tokens JWT internes (reset mot de passe,
+    # tokens de session internes). Generer avec : python -c "import secrets; print(secrets.token_urlsafe(48))"
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+
+    # Cache Redis
+    REDIS_URL: str = "redis://redis:6379/0"
+
+    # LLM - AÏDA
+    GROQ_API_KEY: Optional[str] = None
 
     # CORS - Liste vide par defaut, doit etre configuree
     BACKEND_CORS_ORIGINS: list[str] = []
@@ -34,6 +44,9 @@ class Settings(BaseSettings):
 
     # Logging
     LOG_LEVEL: str = "INFO"
+
+    # Monitoring
+    SENTRY_DSN: Optional[str] = None
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -1,7 +1,8 @@
 """
 Endpoints de chat IA — ActivEducation
 
-POST /api/v1/chat/message      → Envoyer un message à AÏDA
+POST /api/v1/chat/message          → Envoyer un message à AÏDA (JSON)
+POST /api/v1/chat/message/stream   → Envoyer un message à AÏDA (SSE streaming)
 DELETE /api/v1/chat/session/{session_id} → Effacer l'historique
 
 L'assistant AÏDA utilise Groq (gratuit) avec llama-3.1-8b-instant.
@@ -9,11 +10,14 @@ L'assistant AÏDA utilise Groq (gratuit) avec llama-3.1-8b-instant.
 
 import uuid
 from datetime import datetime, timezone
-from typing import Optional
+from typing import AsyncGenerator, Optional
+from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
+from app.core.security import get_current_user_id
 from app.services.llm_service import llm_service
 
 router = APIRouter()
@@ -63,7 +67,7 @@ class ChatRequest(BaseModel):
 
 
 class ChatResponse(BaseModel):
-    """Réponse d'AÏDA."""
+    """Réponse d'AÏDA (mode non-streaming)."""
 
     reply: str
     session_id: str
@@ -85,12 +89,14 @@ class SessionClearedResponse(BaseModel):
     response_model=ChatResponse,
     summary="Envoyer un message à AÏDA",
     description=(
-        "Envoie un message à l'assistante d'orientation AÏDA et reçoit une réponse "
-        "personnalisée. L'historique de conversation est conservé par session_id. "
-        "Si aucun session_id n'est fourni, un nouveau est créé automatiquement."
+        "Envoie un message à l'assistante AÏDA et reçoit la réponse complète en JSON. "
+        "Pour un affichage progressif mot par mot, utiliser /message/stream (SSE)."
     ),
 )
-async def send_message(request: ChatRequest) -> ChatResponse:
+async def send_message(
+    request: ChatRequest,
+    user_id: UUID = Depends(get_current_user_id),
+) -> ChatResponse:
     session_id = request.session_id or str(uuid.uuid4())
 
     context_dict: Optional[dict] = None
@@ -121,12 +127,72 @@ async def send_message(request: ChatRequest) -> ChatResponse:
     )
 
 
+@router.post(
+    "/message/stream",
+    summary="Envoyer un message à AÏDA (streaming SSE)",
+    description=(
+        "Envoie un message à AÏDA et reçoit la réponse en streaming Server-Sent Events. "
+        "Le premier token apparaît en < 500ms. "
+        "Format de chaque événement : 'data: {\"chunk\": \"...\"}\\n\\n'. "
+        "Événement de fin : 'data: {\"done\": true, \"session_id\": \"...\"}\\n\\n'."
+    ),
+    response_class=StreamingResponse,
+    responses={
+        200: {
+            "content": {"text/event-stream": {}},
+            "description": "Stream SSE de la réponse AÏDA",
+        }
+    },
+)
+async def send_message_stream(
+    request: ChatRequest,
+    user_id: UUID = Depends(get_current_user_id),
+) -> StreamingResponse:
+    session_id = request.session_id or str(uuid.uuid4())
+
+    context_dict: Optional[dict] = None
+    if request.orientation_context:
+        context_dict = request.orientation_context.model_dump(exclude_none=True)
+
+    client_history: Optional[list[dict]] = None
+    if request.history:
+        client_history = [h.model_dump() for h in request.history]
+
+    async def event_generator() -> AsyncGenerator[str, None]:
+        try:
+            async for chunk in llm_service.chat_stream(
+                message=request.message,
+                session_id=session_id,
+                orientation_context=context_dict,
+                client_history=client_history,
+            ):
+                if chunk.get("done"):
+                    yield f'data: {{"done": true, "session_id": "{session_id}"}}\n\n'
+                else:
+                    content = chunk.get("chunk", "").replace('"', '\\"').replace('\n', '\\n')
+                    yield f'data: {{"chunk": "{content}"}}\n\n'
+        except Exception:
+            yield 'data: {"error": "Le service AÏDA est temporairement indisponible."}\n\n'
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
 @router.delete(
     "/session/{session_id}",
     response_model=SessionClearedResponse,
     summary="Effacer l'historique d'une session",
 )
-async def clear_session(session_id: str) -> SessionClearedResponse:
+async def clear_session(
+    session_id: str,
+    user_id: UUID = Depends(get_current_user_id),
+) -> SessionClearedResponse:
     llm_service.clear_session(session_id)
     return SessionClearedResponse(
         message="Historique de conversation effacé.",
