@@ -78,7 +78,7 @@ dev_dependencies:
   
   # Testing
   mocktail: ^1.0.4
-  bloc_test: ^9.1.7
+  bloc_test: ^10.0.0
   integration_test:
     sdk: flutter
 
