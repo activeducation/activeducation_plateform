@@ -11,6 +11,7 @@ from app.api.v1.endpoints.admin import (
     gamification as admin_gamification,
     mentors as admin_mentors,
     settings as admin_settings,
+    knowledge_base as admin_knowledge_base,
 )
 
 api_router = APIRouter()
@@ -40,3 +41,4 @@ api_router.include_router(admin_orientation.router, prefix="/admin/tests", tags=
 api_router.include_router(admin_gamification.router, prefix="/admin/gamification", tags=["admin-gamification"])
 api_router.include_router(admin_mentors.router, prefix="/admin/mentors", tags=["admin-mentors"])
 api_router.include_router(admin_settings.router, prefix="/admin", tags=["admin-settings"])
+api_router.include_router(admin_knowledge_base.router, prefix="/admin/knowledge-base", tags=["admin-knowledge-base"])

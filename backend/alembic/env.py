@@ -1,113 +1,67 @@
-"""
-Configuration d'environnement Alembic pour ActivEducation.
-
-Supporte:
-- Migrations online (connexion directe a la DB)
-- Migrations offline (generation de SQL sans connexion)
-- Autogenerate depuis les modeles SQLAlchemy (si utilises)
-"""
+"""Alembic environment configuration."""
 
 import os
 from logging.config import fileConfig
+
 from sqlalchemy import engine_from_config, pool
 from alembic import context
 
-# Charger le fichier .ini de configuration
 config = context.config
 
-# Configurer le logging depuis le fichier .ini
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# =============================================================================
-# CONFIGURATION DE L'URL DE BASE DE DONNEES
-# =============================================================================
-
-def get_database_url() -> str:
-    """
-    Construit l'URL de connexion PostgreSQL Supabase.
-
-    Priorite:
-    1. Variable d'environnement DATABASE_URL (si definie directement)
-    2. Variables SUPABASE_DB_* individuelles
-    3. URL dans alembic.ini
-    """
-    # URL directe (la plus simple)
-    database_url = os.getenv("DATABASE_URL")
-    if database_url:
-        return database_url
-
-    # Construction depuis les variables individuelles
-    host = os.getenv("SUPABASE_DB_HOST")
-    password = os.getenv("SUPABASE_DB_PASSWORD")
-    port = os.getenv("SUPABASE_DB_PORT", "5432")
-    user = os.getenv("SUPABASE_DB_USER", "postgres")
-    db = os.getenv("SUPABASE_DB_NAME", "postgres")
-
-    if host and password:
-        return f"postgresql://{user}:{password}@{host}:{port}/{db}"
-
-    # Fallback vers l'URL dans alembic.ini
-    return config.get_main_option("sqlalchemy.url")
-
-
-# Injecter l'URL dans la config Alembic
-url = get_database_url()
-if url:
-    config.set_main_option("sqlalchemy.url", url)
-
-# Metadata (si vous utilisez SQLAlchemy ORM pour l'autogenerate)
-# Pour ActivEducation, on utilise des migrations manuelles SQL
-# donc target_metadata = None
 target_metadata = None
 
+# Résoudre DATABASE_URL depuis les variables d'environnement
+def get_database_url() -> str:
+    url = os.environ.get("DATABASE_URL")
+    if url:
+        return url
 
-# =============================================================================
-# FONCTIONS DE MIGRATION
-# =============================================================================
+    # Reconstruction depuis les variables Supabase
+    host = os.environ.get("SUPABASE_DB_HOST")
+    password = os.environ.get("SUPABASE_DB_PASSWORD")
+    db_name = os.environ.get("SUPABASE_DB_NAME", "postgres")
+    db_user = os.environ.get("SUPABASE_DB_USER", "postgres")
+    db_port = os.environ.get("SUPABASE_DB_PORT", "5432")
+
+    if host and password:
+        return f"postgresql://{db_user}:{password}@{host}:{db_port}/{db_name}"
+
+    raise ValueError(
+        "DATABASE_URL ou SUPABASE_DB_HOST + SUPABASE_DB_PASSWORD requis pour les migrations"
+    )
 
 
 def run_migrations_offline() -> None:
-    """
-    Mode offline: genere le SQL sans connexion a la DB.
-
-    Utile pour:
-    - Revue avant application
-    - Environnements sans acces direct a la DB
-    """
-    url = config.get_main_option("sqlalchemy.url")
+    url = get_database_url()
     context.configure(
         url=url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
     )
-
     with context.begin_transaction():
         context.run_migrations()
 
 
 def run_migrations_online() -> None:
-    """
-    Mode online: connexion directe a la DB et application des migrations.
-    """
+    configuration = config.get_section(config.config_ini_section, {})
+    configuration["sqlalchemy.url"] = get_database_url()
+
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        configuration,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection,
-            target_metadata=target_metadata,
-        )
-
+        context.configure(connection=connection, target_metadata=target_metadata)
         with context.begin_transaction():
             context.run_migrations()
 
 
-# Choisir le mode selon le contexte
 if context.is_offline_mode():
     run_migrations_offline()
 else:

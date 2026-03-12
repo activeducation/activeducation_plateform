@@ -10,6 +10,10 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # Shared package
+  shared_core:
+    path: ../packages/shared_core
+
   # State Management
   flutter_bloc: ^9.0.0
   equatable: ^2.0.5
@@ -74,6 +78,9 @@ dev_dependencies:
   
   # Testing
   mocktail: ^1.0.4
+  bloc_test: ^9.1.7
+  integration_test:
+    sdk: flutter
 
 flutter:
   uses-material-design: true

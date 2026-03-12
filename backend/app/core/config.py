@@ -19,17 +19,22 @@ class Settings(BaseSettings):
     SUPABASE_URL: str
     SUPABASE_KEY: str
     SUPABASE_SERVICE_ROLE_KEY: Optional[str] = None
-
-    # Supabase Auth JWT Secret pour validation cote serveur
-    # Recuperer depuis : Supabase Dashboard → Settings → API → JWT Secret
+    # Recommande en production : valide les tokens Supabase localement (0 appel reseau)
+    # Generer depuis Supabase Dashboard > Settings > API > JWT Secret
     SUPABASE_JWT_SECRET: Optional[str] = None
 
-    # Redis cache (facultatif - fallback vers cache memoire si absent)
-    # En production: redis://:${REDIS_PASSWORD}@redis:6379/0
-    # En developpement: redis://localhost:6379/0
-    # Si REDIS_PASSWORD est defini, l'URL doit inclure le mot de passe.
+    # SECRET_KEY : sert a signer les tokens JWT internes (reset mot de passe,
+    # tokens de session internes). Generer avec : python -c "import secrets; print(secrets.token_urlsafe(48))"
+    SECRET_KEY: str
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+
+    # Cache Redis
     REDIS_URL: str = "redis://redis:6379/0"
-    REDIS_PASSWORD: Optional[str] = None
+
+    # LLM - AÏDA
+    GROQ_API_KEY: Optional[str] = None
 
     # CORS - Liste vide par defaut, doit etre configuree
     BACKEND_CORS_ORIGINS: list[str] = []
@@ -40,12 +45,24 @@ class Settings(BaseSettings):
     # Logging
     LOG_LEVEL: str = "INFO"
 
+    # Monitoring
+    SENTRY_DSN: Optional[str] = None
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=True,
         extra="ignore"
     )
+
+    @field_validator("SECRET_KEY")
+    @classmethod
+    def validate_secret_key(cls, v: str) -> str:
+        if len(v) < 32:
+            raise ValueError("SECRET_KEY doit contenir au moins 32 caracteres")
+        if v == "YOUR_SECRET_KEY_HERE_FOR_DEV":
+            raise ValueError("SECRET_KEY par defaut non autorise. Generez une cle securisee.")
+        return v
 
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
     @classmethod
@@ -66,12 +83,6 @@ class Settings(BaseSettings):
                 raise ValueError("BACKEND_CORS_ORIGINS doit etre configure en production")
             if "*" in self.BACKEND_CORS_ORIGINS:
                 raise ValueError("CORS wildcard '*' interdit en production")
-            # En production, SUPABASE_JWT_SECRET est requis pour validation locale des tokens
-            if not self.SUPABASE_JWT_SECRET:
-                raise ValueError(
-                    "SUPABASE_JWT_SECRET requis en production. "
-                    "Trouver dans Supabase Dashboard → Settings → API → JWT Secret"
-                )
         # En developpement, permettre le wildcard "*"
         if "*" in self.BACKEND_CORS_ORIGINS and self.ENVIRONMENT != "production":
             self.BACKEND_CORS_ORIGINS = ["*"]
