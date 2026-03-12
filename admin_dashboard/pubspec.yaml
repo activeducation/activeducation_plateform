@@ -10,6 +10,10 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # Shared package
+  shared_core:
+    path: ../packages/shared_core
+
   cupertino_icons: ^1.0.8
 
   # State Management & DI
@@ -38,6 +42,10 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  mocktail: ^1.0.4
+  bloc_test: ^9.1.7
+  integration_test:
+    sdk: flutter
 
 flutter:
   uses-material-design: true
