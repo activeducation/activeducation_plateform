@@ -48,14 +48,14 @@ jobs:
       - name: Security scan with bandit (SAST)
         run: |
           pip install bandit
-          bandit -r app/ -ll -x app/tests/ --format txt || true
-          bandit -r app/ -ll -x app/tests/ --format txt -o bandit-report.txt
-          echo "--- Bandit scan complete ---"
+          bandit -r app/ -l -x app/tests/ --format txt -o bandit-report.txt
+          cat bandit-report.txt
+          echo "--- Bandit scan complete (BLOCKING) ---"
 
       - name: Dependency vulnerability check (safety)
         run: |
           pip install safety
-          safety check -r requirements.txt --output text || true
+          safety check -r requirements.txt --output text
 
       - name: Secret detection (truffleHog)
         uses: trufflesecurity/trufflehog@main

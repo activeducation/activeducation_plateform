@@ -10,10 +10,12 @@ L'assistant AÏDA utilise Groq (gratuit) avec llama-3.1-8b-instant.
 import uuid
 from datetime import datetime, timezone
 from typing import Optional
+from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
+from app.core.security import get_current_user_id
 from app.services.llm_service import llm_service
 
 router = APIRouter()
@@ -87,11 +89,17 @@ class SessionClearedResponse(BaseModel):
     description=(
         "Envoie un message à l'assistante d'orientation AÏDA et reçoit une réponse "
         "personnalisée. L'historique de conversation est conservé par session_id. "
-        "Si aucun session_id n'est fourni, un nouveau est créé automatiquement."
+        "Si aucun session_id n'est fourni, un nouveau est créé automatiquement. "
+        "Authentification requise (Bearer token Supabase)."
     ),
 )
-async def send_message(request: ChatRequest) -> ChatResponse:
-    session_id = request.session_id or str(uuid.uuid4())
+async def send_message(
+    request: ChatRequest,
+    user_id: UUID = Depends(get_current_user_id),
+) -> ChatResponse:
+    # L'ID utilisateur est utilisé pour namespacing la session
+    # afin d'éviter les collisions entre utilisateurs différents.
+    session_id = request.session_id or f"{user_id}:{uuid.uuid4()}"
 
     context_dict: Optional[dict] = None
     if request.orientation_context:
@@ -126,7 +134,10 @@ async def send_message(request: ChatRequest) -> ChatResponse:
     response_model=SessionClearedResponse,
     summary="Effacer l'historique d'une session",
 )
-async def clear_session(session_id: str) -> SessionClearedResponse:
+async def clear_session(
+    session_id: str,
+    user_id: UUID = Depends(get_current_user_id),
+) -> SessionClearedResponse:
     llm_service.clear_session(session_id)
     return SessionClearedResponse(
         message="Historique de conversation effacé.",
