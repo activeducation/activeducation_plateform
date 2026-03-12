@@ -33,6 +33,7 @@ from app.schemas.orientation import (
     MobileJobOutlook,
 )
 from app.services.orientation_engine import orientation_engine
+from app.services.career_matcher import career_matcher
 from app.repositories.orientation_repository import (
     get_orientation_repository,
     OrientationRepository,
@@ -230,72 +231,8 @@ async def submit_test(
     )
     result.test_id = test_id
 
-    # Enrichir les recommandations avec carrieres + score de correspondance
-    if result.dominant_traits:
-        try:
-            careers = await repo.get_careers_by_traits(result.dominant_traits, limit=25)
-            enriched_recs = []
-            for c in careers:
-                career_traits = c.get("related_traits") or []
-                match_score = orientation_engine.calculate_match_score(
-                    career_traits=career_traits,
-                    user_dominant_traits=result.dominant_traits,
-                    user_scores=result.scores,
-                )
-                # Calculer les traits en commun (normaliser accents + langues)
-                from app.services.orientation_engine import EN_TO_FR, CODE_TO_FR
-                _no_accent = {"Realiste": "Réaliste"}
-                normalized_ct = [EN_TO_FR.get(t) or CODE_TO_FR.get(t) or _no_accent.get(t) or t for t in career_traits]
-                matching = [t for t in normalized_ct if t in result.dominant_traits]
-
-                enriched_recs.append(CareerSummary(
-                    id=c["id"],
-                    name=c["name"],
-                    description=c.get("description", ""),
-                    sector_name=c.get("sector_name", ""),
-                    job_demand=c.get("job_demand"),
-                    salary_avg_fcfa=c.get("salary_avg_fcfa"),
-                    salary_min_fcfa=c.get("salary_min_fcfa"),
-                    salary_max_fcfa=c.get("salary_max_fcfa"),
-                    image_url=c.get("image_url"),
-                    match_score=match_score,
-                    matching_traits=matching,
-                    required_skills=(c.get("required_skills") or [])[:5],
-                    related_traits=career_traits,
-                    education_minimum_level=_extract_education_level(c),
-                ))
-
-            # Trier par score de correspondance décroissant
-            enriched_recs.sort(key=lambda r: r.match_score, reverse=True)
-
-            # Diversifier : mélanger les carrières dans la même tranche de score (±8 pts)
-            # pour éviter de toujours retourner le même ordre alphabétique
-            import random
-            diversified: list[CareerSummary] = []
-            i = 0
-            while i < len(enriched_recs):
-                tier_score = enriched_recs[i].match_score
-                j = i
-                while j < len(enriched_recs) and (tier_score - enriched_recs[j].match_score) <= 8:
-                    j += 1
-                tier = enriched_recs[i:j]
-                random.shuffle(tier)
-                diversified.extend(tier)
-                i = j
-            result.recommendations = diversified[:6]
-        except Exception as e:
-            logger.error(f"Error fetching recommended careers: {e}")
-            result.recommendations = []
-
-        # Recuperer les programmes scolaires correspondants
-        try:
-            sectors = result.interpretation.get("recommended_sectors", [])
-            if sectors:
-                programs = await repo.get_matching_school_programs(sectors, limit=8)
-                result.matching_programs = programs
-        except Exception as e:
-            logger.error(f"Error fetching matching school programs: {e}")
-            result.matching_programs = []
+    # Enrichir les recommandations avec carrières scorées et programmes scolaires
+    await career_matcher.enrich_result(result, repo)
 
     # Sauvegarder la session uniquement pour les utilisateurs connectes
     if user_id is not None:
@@ -326,20 +263,6 @@ async def submit_test(
         )
 
     return result
-
-
-def _extract_education_level(career_data: dict) -> str:
-    """Extrait le niveau d'education minimum d'une carriere."""
-    edu = career_data.get("education_path")
-    if isinstance(edu, str):
-        import json
-        try:
-            edu = json.loads(edu)
-        except Exception:
-            return "BAC"
-    if isinstance(edu, dict):
-        return edu.get("minimum_level", "BAC")
-    return "BAC"
 
 
 # =============================================================================

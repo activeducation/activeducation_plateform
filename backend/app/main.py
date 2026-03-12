@@ -16,6 +16,31 @@ from slowapi.errors import RateLimitExceeded
 
 from app.core.config import settings
 from app.core.logging import setup_logging, get_logger
+
+# Initialiser Sentry en premier (avant tout import applicatif)
+_sentry_dsn = __import__("os").getenv("SENTRY_DSN")
+if _sentry_dsn:
+    try:
+        import sentry_sdk
+        from sentry_sdk.integrations.fastapi import FastApiIntegration
+        from sentry_sdk.integrations.starlette import StarletteIntegration
+
+        sentry_sdk.init(
+            dsn=_sentry_dsn,
+            environment=__import__("os").getenv("ENVIRONMENT", "development"),
+            traces_sample_rate=0.1,  # 10% des transactions pour performance
+            profiles_sample_rate=0.1,
+            integrations=[
+                StarletteIntegration(transaction_style="endpoint"),
+                FastApiIntegration(transaction_style="endpoint"),
+            ],
+            # Ne pas envoyer les donnees sensibles
+            send_default_pii=False,
+            # Ignorer les erreurs non-critiques
+            ignore_errors=[KeyboardInterrupt],
+        )
+    except ImportError:
+        pass  # sentry-sdk non installe - ignorer silencieusement
 from app.core.exceptions import AppException
 from app.api.v1.router import api_router
 from app.middleware import (

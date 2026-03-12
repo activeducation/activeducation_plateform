@@ -8,8 +8,9 @@ from fastapi.testclient import TestClient
 
 
 os.environ.setdefault("SUPABASE_URL", "https://placeholder.supabase.co")
-os.environ.setdefault("SUPABASE_KEY", "placeholder_key")
-os.environ.setdefault("SECRET_KEY", "test_secret_key_with_at_least_32_characters")
+os.environ.setdefault("SUPABASE_KEY", "placeholder_key_for_testing_only_not_real")
+os.environ.setdefault("SUPABASE_SERVICE_ROLE_KEY", "placeholder_service_role_key_for_testing")
+# SUPABASE_JWT_SECRET non defini en test -> validation via mock, pas via Supabase
 os.environ.setdefault("ENVIRONMENT", "development")
 os.environ.setdefault("DEBUG", "True")
 

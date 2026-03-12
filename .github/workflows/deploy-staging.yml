@@ -1,0 +1,93 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [develop]
+
+concurrency:
+  group: staging-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/activeducation-api:staging
+            ${{ secrets.DOCKERHUB_USERNAME }}/activeducation-api:staging-${{ github.sha }}
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/activeducation-api:staging
+          cache-to: type=inline
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Build app frontend
+        working-directory: activ_education_app
+        run: |
+          flutter pub get
+          flutter build web --release
+
+      - name: Build admin frontend
+        working-directory: admin_dashboard
+        run: |
+          flutter pub get
+          flutter build web --release
+
+      - name: Deploy to staging server
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          script: |
+            cd /opt/activeducation-staging
+            git pull origin develop
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/activeducation-api:staging
+            docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d --no-build backend
+            docker system prune -f
+
+      - name: Sync frontend builds
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          source: "activ_education_app/build/web/*,admin_dashboard/build/web/*"
+          target: "/opt/activeducation-staging/"
+
+      - name: Health check
+        run: |
+          sleep 15
+          curl -f https://api-staging.activeduhub.com/health || exit 1
+
+      - name: Notify on success
+        if: success()
+        run: echo "✅ Staging deployment successful for commit ${{ github.sha }}"
+
+      - name: Notify on failure
+        if: failure()
+        run: echo "❌ Staging deployment failed for commit ${{ github.sha }}"
