@@ -2,18 +2,16 @@
 # ActivEducation - Traefik Configuration Statique
 # ============================================================
 
-
 # Interface Traefik - desactivee en production
 api:
   dashboard: false
 
-# Decouverte automatique des services Docker
-# Utilise le socket proxy (tecnativa/docker-socket-proxy) au lieu du socket brut
+# File provider - routes definies dans dynamic.yml
+# Pas de connexion Docker API (incompatible avec Docker 29.x MinAPIVersion=1.40)
 providers:
-  docker:
-    exposedByDefault: false   # Seuls les services avec traefik.enable=true sont exposes
-    network: app-network      # Reseau Docker utilise pour joindre les conteneurs
-    # endpoint par defaut : unix:///var/run/docker.sock (monte en :ro dans le conteneur)
+  file:
+    filename: /etc/traefik/dynamic.yml
+    watch: true   # Rechargement auto si le fichier change
 
 # Points d'entree reseau
 entryPoints:

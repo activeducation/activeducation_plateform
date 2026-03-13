@@ -1,0 +1,122 @@
+# ============================================================
+# ActivEducation - Traefik Configuration Dynamique
+# Routes, services et middlewares definis statiquement.
+# Traefik joint les conteneurs via le reseau Docker app-network.
+# ============================================================
+
+http:
+
+  # ==========================================================
+  # ROUTERS
+  # ==========================================================
+  routers:
+
+    # API FastAPI
+    backend:
+      rule: "Host(`api.activeducationhub.com`)"
+      entryPoints: ["websecure"]
+      service: backend
+      tls:
+        certResolver: letsencrypt
+      middlewares: ["api-headers"]
+
+    # App etudiante (non-www)
+    app:
+      rule: "Host(`activeducationhub.com`)"
+      entryPoints: ["websecure"]
+      service: app-frontend
+      tls:
+        certResolver: letsencrypt
+      middlewares: ["app-headers"]
+
+    # www -> redirect permanent vers non-www
+    app-www:
+      rule: "Host(`www.activeducationhub.com`)"
+      entryPoints: ["websecure"]
+      service: app-frontend
+      tls:
+        certResolver: letsencrypt
+      middlewares: ["www-redirect"]
+
+    # Dashboard admin
+    admin:
+      rule: "Host(`admin.activeducationhub.com`)"
+      entryPoints: ["websecure"]
+      service: admin-frontend
+      tls:
+        certResolver: letsencrypt
+      middlewares: ["admin-headers"]
+
+  # ==========================================================
+  # SERVICES - URLs internes via reseau Docker app-network
+  # ==========================================================
+  services:
+
+    backend:
+      loadBalancer:
+        servers:
+          - url: "http://activeducation-api:8000"
+
+    app-frontend:
+      loadBalancer:
+        servers:
+          - url: "http://activeducation-app:80"
+
+    admin-frontend:
+      loadBalancer:
+        servers:
+          - url: "http://activeducation-admin:80"
+
+  # ==========================================================
+  # MIDDLEWARES - Security headers
+  # ==========================================================
+  middlewares:
+
+    # Headers securite API
+    api-headers:
+      headers:
+        stsSeconds: 63072000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        forceSTSHeader: true
+        contentTypeNosniff: true
+        customResponseHeaders:
+          X-Frame-Options: "DENY"
+          X-Permitted-Cross-Domain-Policies: "none"
+          Permissions-Policy: "geolocation=(), microphone=(), camera=()"
+          Content-Security-Policy: "default-src 'none'; frame-ancestors 'none'"
+
+    # Headers securite app etudiante
+    app-headers:
+      headers:
+        stsSeconds: 63072000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        forceSTSHeader: true
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        customResponseHeaders:
+          X-Frame-Options: "SAMEORIGIN"
+          Permissions-Policy: "geolocation=(), microphone=(), camera=()"
+
+    # Headers securite admin (plus restrictif)
+    admin-headers:
+      headers:
+        stsSeconds: 63072000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        forceSTSHeader: true
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        customResponseHeaders:
+          X-Frame-Options: "DENY"
+          Permissions-Policy: "geolocation=(), microphone=(), camera=()"
+
+    # Redirect www -> non-www
+    www-redirect:
+      redirectRegex:
+        regex: "^https://www\\.activeducationhub\\.com(.*)"
+        replacement: "https://activeducationhub.com${1}"
+        permanent: true
