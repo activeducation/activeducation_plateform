@@ -12,6 +12,7 @@ import time
 from threading import Lock
 from typing import Any, Optional
 from uuid import UUID
+from passlib.context import CryptContext
 
 from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -289,3 +290,24 @@ def validate_password_strength(password: str) -> tuple[bool, list[str]]:
         errors.append("Le mot de passe doit contenir au moins un caractere special")
 
     return len(errors) == 0, errors
+
+
+
+# =============================================================================
+# PASSWORD HASHING (pour les utilisateurs crees via l'admin)
+# =============================================================================
+
+# Context pour le hash des mots de passe
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """
+    Vérifie que le mot de passe en clair correspond au hash.
+    """
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password: str) -> str:
+    """
+    Retourne le hash d'un mot de passe.
+    """
+    return pwd_context.hash(password)
