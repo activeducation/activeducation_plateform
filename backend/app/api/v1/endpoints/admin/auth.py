@@ -1,17 +1,11 @@
 """Admin authentication endpoint."""
 
-from datetime import datetime
-from uuid import UUID
-
 from fastapi import APIRouter, Request
 
 from app.core.logging import get_logger
-from app.core.security import (
-    verify_password,
-    create_token_pair,
-)
 from app.core.exceptions import AuthenticationError, AuthorizationError
 from app.schemas.auth import LoginRequest
+from app.services.auth_service import get_auth_service
 from app.repositories.users_repository import get_users_repository
 
 
@@ -26,14 +20,16 @@ async def admin_login(request: Request, body: LoginRequest):
     Login admin - refuse les utilisateurs sans role admin/super_admin.
     Retourne user (avec role) + tokens.
     """
+    # Authenticate via Supabase Auth
+    service = get_auth_service()
+    auth_result = await service.login(body)
+
+    # Check admin role in user_profiles
     repo = get_users_repository()
-    user = await repo.get_by_email(body.email)
+    user = await repo.get_by_id(auth_result.user.id)
 
     if not user:
-        raise AuthenticationError("Email ou mot de passe incorrect")
-
-    if not verify_password(body.password, user.get("password_hash", "")):
-        raise AuthenticationError("Email ou mot de passe incorrect")
+        raise AuthenticationError("Utilisateur non trouve")
 
     role = user.get("role", "student")
     if role not in ("admin", "super_admin"):
@@ -42,31 +38,18 @@ async def admin_login(request: Request, body: LoginRequest):
     if not user.get("is_active", True):
         raise AuthenticationError("Compte desactive")
 
-    tokens = create_token_pair(user["id"], body.email)
-
-    # Update last login
-    try:
-        repo._db.update(
-            table="user_profiles",
-            id_column="id",
-            id_value=str(user["id"]),
-            data={"last_login_at": datetime.utcnow().isoformat()},
-        )
-    except Exception:
-        pass  # Ne pas bloquer le login si last_login echoue
-
     return {
         "user": {
-            "id": user["id"],
-            "email": user["email"],
-            "first_name": user.get("first_name"),
-            "last_name": user.get("last_name"),
-            "display_name": user.get("display_name"),
+            "id": str(auth_result.user.id),
+            "email": auth_result.user.email,
+            "first_name": auth_result.user.first_name,
+            "last_name": auth_result.user.last_name,
+            "display_name": auth_result.user.display_name,
             "role": role,
         },
         "tokens": {
-            "access_token": tokens.access_token,
-            "refresh_token": tokens.refresh_token,
-            "expires_in": tokens.expires_in,
+            "access_token": auth_result.tokens.access_token,
+            "refresh_token": auth_result.tokens.refresh_token,
+            "expires_in": auth_result.tokens.expires_in,
         },
     }
