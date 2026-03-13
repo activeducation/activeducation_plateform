@@ -5,7 +5,7 @@ services:
   # Traefik n'a plus acces direct au socket brut (moindre privilege)
   # ============================================================
   socket-proxy:
-    image: tecnativa/docker-socket-proxy:0.6.0
+    image: tecnativa/docker-socket-proxy:0.3.0
     container_name: activeducation-socket-proxy
     restart: unless-stopped
     environment:
