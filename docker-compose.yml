@@ -1,51 +1,24 @@
 services:
 
   # ============================================================
-  # DOCKER SOCKET PROXY - Securise l'acces au socket Docker
-  # Traefik n'a plus acces direct au socket brut (moindre privilege)
-  # ============================================================
-  socket-proxy:
-    image: tecnativa/docker-socket-proxy:0.3.0
-    container_name: activeducation-socket-proxy
-    restart: unless-stopped
-    environment:
-      CONTAINERS: 1   # Traefik a besoin de lire les conteneurs
-      NETWORKS: 1     # Traefik a besoin de lire les reseaux
-      SERVICES: 0
-      TASKS: 0
-      POST: 0         # Lecture seule - aucune modification possible
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    networks:
-      - socket-proxy-network
-    security_opt:
-      - no-new-privileges:true
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "5m"
-        max-file: "2"
-
-  # ============================================================
   # TRAEFIK - Reverse proxy + SSL automatique (Let's Encrypt)
+  # Connecte au socket Docker en lecture seule (:ro)
   # ============================================================
   traefik:
     image: traefik:v3.2
     container_name: activeducation-traefik
     restart: unless-stopped
-    depends_on:
-      - socket-proxy
     ports:
       - "80:80"
       - "443:443"
-    environment:
-      - DOCKER_API_VERSION=1.41  # Force le client Docker a utiliser API 1.41+
     volumes:
-      - ./traefik/traefik.yml:/traefik.yml:ro # Config statique
-      - ./traefik/letsencrypt:/letsencrypt # Stockage certificats SSL
+      - ./traefik/traefik.yml:/traefik.yml:ro          # Config statique
+      - ./traefik/letsencrypt:/letsencrypt              # Stockage certificats SSL
+      - /var/run/docker.sock:/var/run/docker.sock:ro   # Lecture seule - decouverte services
     networks:
       - app-network
-      - socket-proxy-network
+    security_opt:
+      - no-new-privileges:true
     logging:
       driver: "json-file"
       options:
@@ -139,7 +112,7 @@ services:
   #
   # MODE LANDING PAGE (en attendant le build Flutter) :
   #   volume: ./landing:/var/www/html:ro
-  # MODE PRODUCTION (quand l'app Flutter est buildée) :
+  # MODE PRODUCTION (quand l'app Flutter est buildee) :
   #   volume: ./activ_education_app/build/web:/var/www/html:ro
   # ============================================================
   app-frontend:
@@ -224,6 +197,3 @@ services:
 networks:
   app-network:
     driver: bridge
-  socket-proxy-network:
-    driver: bridge
-    internal: true  # Reseau interne - pas d'acces externe

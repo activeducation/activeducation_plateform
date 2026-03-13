@@ -13,7 +13,7 @@ providers:
   docker:
     exposedByDefault: false   # Seuls les services avec traefik.enable=true sont exposes
     network: app-network      # Reseau Docker utilise pour joindre les conteneurs
-    endpoint: "tcp://socket-proxy:2375"  # Via proxy securise, pas le socket brut
+    # endpoint par defaut : unix:///var/run/docker.sock (monte en :ro dans le conteneur)
 
 # Points d'entree reseau
 entryPoints:
