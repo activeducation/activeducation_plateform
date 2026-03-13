@@ -9,6 +9,7 @@ Gere:
 """
 
 from uuid import UUID
+from app.core.security import verify_password
 
 from fastapi import APIRouter, Depends, Request
 
