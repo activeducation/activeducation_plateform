@@ -33,7 +33,7 @@ entryPoints:
 certificatesResolvers:
   letsencrypt:
     acme:
-      email: "ops@activeduhub.com"
+      email: "ops@activeducationhub.com"
       storage: /letsencrypt/acme.json
       httpChallenge:
         entryPoint: web   # Validation via HTTP sur port 80 (Traefik gere avant le redirect)

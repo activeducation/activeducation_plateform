@@ -5,7 +5,7 @@ services:
   # Traefik n'a plus acces direct au socket brut (moindre privilege)
   # ============================================================
   socket-proxy:
-    image: tecnativa/docker-socket-proxy:0.3.0
+    image: tecnativa/docker-socket-proxy:0.6.0
     container_name: activeducation-socket-proxy
     restart: unless-stopped
     environment:
@@ -38,6 +38,8 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    environment:
+      - DOCKER_API_VERSION=1.41  # Force le client Docker a utiliser API 1.41+
     volumes:
       - ./traefik/traefik.yml:/traefik.yml:ro # Config statique
       - ./traefik/letsencrypt:/letsencrypt # Stockage certificats SSL
@@ -83,7 +85,7 @@ services:
 
   # ============================================================
   # BACKEND - API FastAPI
-  # Accessible via : https://api.activeduhub.com
+  # Accessible via : https://api.activeducationhub.com
   # ============================================================
   backend:
     build:
@@ -103,7 +105,7 @@ services:
     labels:
       - "traefik.enable=true"
       # Routing
-      - "traefik.http.routers.backend.rule=Host(`api.activeduhub.com`)"
+      - "traefik.http.routers.backend.rule=Host(`api.activeducationhub.com`)"
       - "traefik.http.routers.backend.entrypoints=websecure"
       - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
       - "traefik.http.services.backend.loadbalancer.server.port=8000"
@@ -132,8 +134,8 @@ services:
 
   # ============================================================
   # APP-FRONTEND - Application Etudiante (Flutter Web statique)
-  # Accessible via : https://activeduhub.com
-  # https://www.activeduhub.com -> redirect vers activeduhub.com
+  # Accessible via : https://activeducationhub.com
+  # https://www.activeducationhub.com -> redirect vers activeducationhub.com
   #
   # MODE LANDING PAGE (en attendant le build Flutter) :
   #   volume: ./landing:/var/www/html:ro
@@ -151,8 +153,8 @@ services:
       - app-network
     labels:
       - "traefik.enable=true"
-      # Router principal : activeduhub.com
-      - "traefik.http.routers.app.rule=Host(`activeduhub.com`)"
+      # Router principal : activeducationhub.com
+      - "traefik.http.routers.app.rule=Host(`activeducationhub.com`)"
       - "traefik.http.routers.app.entrypoints=websecure"
       - "traefik.http.routers.app.tls.certresolver=letsencrypt"
       - "traefik.http.services.app.loadbalancer.server.port=80"
@@ -168,12 +170,12 @@ services:
       - "traefik.http.middlewares.app-headers.headers.customResponseHeaders.Permissions-Policy=geolocation=(), microphone=(), camera=()"
       - "traefik.http.routers.app.middlewares=app-headers"
       # Router www -> redirect permanent vers non-www
-      - "traefik.http.routers.app-www.rule=Host(`www.activeduhub.com`)"
+      - "traefik.http.routers.app-www.rule=Host(`www.activeducationhub.com`)"
       - "traefik.http.routers.app-www.entrypoints=websecure"
       - "traefik.http.routers.app-www.tls.certresolver=letsencrypt"
       - "traefik.http.routers.app-www.service=app"
-      - "traefik.http.middlewares.www-redirect.redirectregex.regex=^https://www\\.activeduhub\\.com(.*)"
-      - "traefik.http.middlewares.www-redirect.redirectregex.replacement=https://activeduhub.com$${1}"
+      - "traefik.http.middlewares.www-redirect.redirectregex.regex=^https://www\\.activeducationhub\\.com(.*)"
+      - "traefik.http.middlewares.www-redirect.redirectregex.replacement=https://activeducationhub.com$${1}"
       - "traefik.http.middlewares.www-redirect.redirectregex.permanent=true"
       - "traefik.http.routers.app-www.middlewares=www-redirect"
     logging:
@@ -184,7 +186,7 @@ services:
 
   # ============================================================
   # ADMIN-FRONTEND - Dashboard Administrateur (Flutter Web statique)
-  # Accessible via : https://admin.activeduhub.com
+  # Accessible via : https://admin.activeducationhub.com
   # ============================================================
   admin-frontend:
     image: nginx:1.25-alpine
@@ -198,7 +200,7 @@ services:
     labels:
       - "traefik.enable=true"
       # Routing
-      - "traefik.http.routers.admin.rule=Host(`admin.activeduhub.com`)"
+      - "traefik.http.routers.admin.rule=Host(`admin.activeducationhub.com`)"
       - "traefik.http.routers.admin.entrypoints=websecure"
       - "traefik.http.routers.admin.tls.certresolver=letsencrypt"
       - "traefik.http.services.admin.loadbalancer.server.port=80"
