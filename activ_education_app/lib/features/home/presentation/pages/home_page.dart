@@ -580,7 +580,7 @@ class _HomePageState extends State<HomePage> {
                     width: 220,
                     child: CourseCard(
                       course: course,
-                      compact: true,
+                      mode: CourseCardMode.compact,
                       onTap: () => context.push(
                         '/elearning/course/${course.id}',
                       ),
