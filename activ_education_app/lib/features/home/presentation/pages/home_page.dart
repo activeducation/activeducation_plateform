@@ -11,6 +11,9 @@ import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../ai_chat/presentation/pages/chat_page.dart';
 import '../../../orientation/domain/entities/orientation_test.dart';
 import '../../../orientation/domain/usecases/get_orientation_tests.dart';
+import '../../../elearning/domain/entities/course.dart';
+import '../../../elearning/domain/usecases/get_courses_usecase.dart';
+import '../../../elearning/presentation/widgets/course_card.dart';
 
 /// Page d'accueil de l'application ActivEducation
 class HomePage extends StatefulWidget {
@@ -22,11 +25,13 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   late final Future<List<OrientationTest>> _testsFuture;
+  late final Future<List<Course>> _coursesFuture;
 
   @override
   void initState() {
     super.initState();
     _testsFuture = _loadTests();
+    _coursesFuture = _loadCourses();
   }
 
   Future<List<OrientationTest>> _loadTests() async {
@@ -35,6 +40,14 @@ class _HomePageState extends State<HomePage> {
       debugPrint('[HomePage] Erreur chargement tests: $error');
       return <OrientationTest>[];
     }, (tests) => tests);
+  }
+
+  Future<List<Course>> _loadCourses() async {
+    final result = await getIt<GetCoursesUsecase>()();
+    return result.fold((error) {
+      debugPrint('[HomePage] Erreur chargement cours: $error');
+      return <Course>[];
+    }, (courses) => courses);
   }
 
   void _openTest(BuildContext context, OrientationTest test) {
@@ -66,6 +79,8 @@ class _HomePageState extends State<HomePage> {
                 _buildAidaCard(context),
                 const SizedBox(height: AppSpacing.xl),
                 _buildTestsSection(context),
+                const SizedBox(height: AppSpacing.xl),
+                _buildElearningSection(context),
                 const SizedBox(height: AppSpacing.xl),
                 _buildSchoolsSection(context),
                 const SizedBox(height: AppSpacing.pagePaddingBottom),
@@ -510,6 +525,76 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Widget _buildElearningSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              '📚 E-Learning',
+              style: AppTypography.titleLarge.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            TextButton(
+              onPressed: () => context.push('/elearning'),
+              child: Text(
+                'Voir tout',
+                style: AppTypography.labelMedium.copyWith(
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.md),
+        FutureBuilder<List<Course>>(
+          future: _coursesFuture,
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return const SizedBox(
+                height: 140,
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
+
+            final courses = snapshot.data ?? <Course>[];
+
+            if (courses.isEmpty) {
+              return _ElearningCTACard(
+                onTap: () => context.push('/elearning'),
+              );
+            }
+
+            return SizedBox(
+              height: 160,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: courses.take(4).length,
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                itemBuilder: (context, index) {
+                  final course = courses.elementAt(index);
+                  return SizedBox(
+                    width: 220,
+                    child: CourseCard(
+                      course: course,
+                      compact: true,
+                      onTap: () => context.push(
+                        '/elearning/course/${course.id}',
+                      ),
+                    ),
+                  );
+                },
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
   Widget _buildSchoolsSection(BuildContext context) {
     final schools = [
       _SchoolPreview(
@@ -569,6 +654,92 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ElearningCTACard extends StatelessWidget {
+  final VoidCallback? onTap;
+
+  const _ElearningCTACard({this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.categoryTechnology.withValues(alpha: 0.08),
+                AppColors.primary.withValues(alpha: 0.06),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: AppColors.categoryTechnology.withValues(alpha: 0.25),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.categoryTechnology.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.play_lesson_rounded,
+                  color: AppColors.categoryTechnology,
+                  size: 26,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Découvrez nos cours',
+                      style: AppTypography.titleSmall.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Vidéos, quiz, articles & hackathons',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.categoryTechnology.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.arrow_forward_rounded,
+                  color: AppColors.categoryTechnology,
+                  size: 18,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

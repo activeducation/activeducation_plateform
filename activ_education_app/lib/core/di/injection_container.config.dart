@@ -44,6 +44,27 @@ import '../../features/profile/domain/repositories/profile_repository.dart'
     as _i894;
 import '../../features/profile/domain/usecases/get_user_profile.dart' as _i12;
 import '../../features/profile/presentation/bloc/profile_bloc.dart' as _i469;
+import '../../features/elearning/data/datasources/elearning_remote_datasource.dart'
+    as _i701;
+import '../../features/elearning/data/repositories/elearning_repository_impl.dart'
+    as _i702;
+import '../../features/elearning/domain/repositories/elearning_repository.dart'
+    as _i703;
+import '../../features/elearning/domain/usecases/get_courses_usecase.dart'
+    as _i704;
+import '../../features/elearning/domain/usecases/get_course_detail_usecase.dart'
+    as _i705;
+import '../../features/elearning/domain/usecases/get_lesson_usecase.dart'
+    as _i706;
+import '../../features/elearning/domain/usecases/enroll_course_usecase.dart'
+    as _i707;
+import '../../features/elearning/domain/usecases/get_my_courses_usecase.dart'
+    as _i708;
+import '../../features/elearning/domain/usecases/complete_lesson_usecase.dart'
+    as _i709;
+import '../../features/elearning/presentation/bloc/catalog_bloc.dart' as _i710;
+import '../../features/elearning/presentation/bloc/course_bloc.dart' as _i711;
+import '../../features/elearning/presentation/bloc/lesson_bloc.dart' as _i712;
 import '../auth/auth_interceptor.dart' as _i53;
 import '../auth/token_storage.dart' as _i1002;
 import 'register_module.dart' as _i291;
@@ -125,6 +146,36 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i48.LogoutUseCase>(),
           gh<_i17.GetCurrentUserUseCase>(),
           gh<_i787.AuthRepository>(),
+        ));
+    // ── E-Learning ──────────────────────────────────────────────────────────
+    gh.lazySingleton<_i701.ElearningRemoteDataSource>(() =>
+        _i701.ElearningRemoteDataSourceImpl(
+            gh<_i361.Dio>(instanceName: 'apiClient')));
+    gh.lazySingleton<_i703.ElearningRepository>(() =>
+        _i702.ElearningRepositoryImpl(gh<_i701.ElearningRemoteDataSource>()));
+    gh.lazySingleton<_i704.GetCoursesUsecase>(
+        () => _i704.GetCoursesUsecase(gh<_i703.ElearningRepository>()));
+    gh.lazySingleton<_i705.GetCourseDetailUsecase>(
+        () => _i705.GetCourseDetailUsecase(gh<_i703.ElearningRepository>()));
+    gh.lazySingleton<_i706.GetLessonUsecase>(
+        () => _i706.GetLessonUsecase(gh<_i703.ElearningRepository>()));
+    gh.lazySingleton<_i707.EnrollCourseUsecase>(
+        () => _i707.EnrollCourseUsecase(gh<_i703.ElearningRepository>()));
+    gh.lazySingleton<_i708.GetMyCoursesUsecase>(
+        () => _i708.GetMyCoursesUsecase(gh<_i703.ElearningRepository>()));
+    gh.lazySingleton<_i709.CompleteLessonUsecase>(
+        () => _i709.CompleteLessonUsecase(gh<_i703.ElearningRepository>()));
+    gh.factory<_i710.CatalogBloc>(() => _i710.CatalogBloc(
+          gh<_i704.GetCoursesUsecase>(),
+          gh<_i708.GetMyCoursesUsecase>(),
+        ));
+    gh.factory<_i711.CourseBloc>(() => _i711.CourseBloc(
+          gh<_i705.GetCourseDetailUsecase>(),
+          gh<_i707.EnrollCourseUsecase>(),
+        ));
+    gh.factory<_i712.LessonBloc>(() => _i712.LessonBloc(
+          gh<_i706.GetLessonUsecase>(),
+          gh<_i709.CompleteLessonUsecase>(),
         ));
     return this;
   }
