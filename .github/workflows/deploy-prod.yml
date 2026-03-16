@@ -74,13 +74,13 @@ jobs:
         working-directory: activ_education_app
         run: |
           flutter pub get
-          flutter build web --release
+          flutter build web --release --dart-define=API_BASE_URL=https://api.activeducationhub.com
 
       - name: Build admin frontend
         working-directory: admin_dashboard
         run: |
           flutter pub get
-          flutter build web --release
+          flutter build web --release --dart-define=API_BASE_URL=https://api.activeducationhub.com
 
       - name: Deploy to production server
         uses: appleboy/ssh-action@v1
@@ -107,7 +107,7 @@ jobs:
       - name: Production health check
         run: |
           sleep 20
-          curl -f https://api.activeduhub.com/health || exit 1
+          curl -f https://api.activeducationhub.com/health || exit 1
           echo "✅ Production API is healthy"
 
       - name: Tag release

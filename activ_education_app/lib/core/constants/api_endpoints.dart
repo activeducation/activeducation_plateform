@@ -113,6 +113,18 @@ class ApiEndpoints {
   static String chatSession(String sessionId) => '$chat/session/$sessionId';
 
   // ============================================
+  // E-LEARNING
+  // ============================================
+  static const String elearning = '$apiV1/elearning';
+  static const String elearningCourses = '$elearning/courses';
+  static String elearningCourseById(String id) => '$elearningCourses/$id';
+  static String elearningCourseEnroll(String id) => '$elearningCourses/$id/enroll';
+  static const String elearningLessons = '$elearning/lessons';
+  static String elearningLessonById(String id) => '$elearningLessons/$id';
+  static String elearningLessonComplete(String id) => '$elearningLessons/$id/complete';
+  static const String elearningMyCourses = '$elearning/my-courses';
+
+  // ============================================
   // GAMIFICATION
   // ============================================
   static const String gamification = '$apiV1/gamification';

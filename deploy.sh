@@ -25,10 +25,10 @@
 set -euo pipefail
 
 # ─── CONFIGURATION ────────────────────────────────────────────────────────────
-DOMAIN="activeduhub.com"
-ADMIN_DOMAIN="admin.activeduhub.com"
-API_DOMAIN="api.activeduhub.com"
-WWW_DOMAIN="www.activeduhub.com"
+DOMAIN="activeducationhub.com"
+ADMIN_DOMAIN="admin.activeducationhub.com"
+API_DOMAIN="api.activeducationhub.com"
+WWW_DOMAIN="www.activeducationhub.com"
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -84,13 +84,13 @@ check_flutter_builds() {
 
     local app_build="$PROJECT_DIR/activ_education_app/build/web"
     if [[ ! -d "$app_build" ]] || [[ ! -f "$app_build/index.html" ]]; then
-        error "Build Flutter manquant: activ_education_app/build/web/index.html\n\nGenerez-le sur votre machine locale:\n  cd activ_education_app\n  flutter build web --release --dart-define=API_BASE_URL=https://api.activeduhub.com\nPuis re-uploadez le projet sur le VPS."
+        error "Build Flutter manquant: activ_education_app/build/web/index.html\n\nGenerez-le sur votre machine locale:\n  cd activ_education_app\n  flutter build web --release --dart-define=API_BASE_URL=https://api.activeducationhub.com\nPuis re-uploadez le projet sur le VPS."
     fi
     success "Build app etudiante: activ_education_app/build/web/"
 
     local admin_build="$PROJECT_DIR/admin_dashboard/build/web"
     if [[ ! -d "$admin_build" ]] || [[ ! -f "$admin_build/index.html" ]]; then
-        error "Build Flutter manquant: admin_dashboard/build/web/index.html\n\nGenerez-le sur votre machine locale:\n  cd admin_dashboard\n  flutter build web --release --dart-define=API_BASE_URL=https://api.activeduhub.com/api/v1\nPuis re-uploadez le projet sur le VPS."
+        error "Build Flutter manquant: admin_dashboard/build/web/index.html\n\nGenerez-le sur votre machine locale:\n  cd admin_dashboard\n  flutter build web --release --dart-define=API_BASE_URL=https://api.activeducationhub.com\nPuis re-uploadez le projet sur le VPS."
     fi
     success "Build admin dashboard: admin_dashboard/build/web/"
 }

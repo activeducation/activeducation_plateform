@@ -82,7 +82,7 @@ jobs:
       - name: Health check
         run: |
           sleep 15
-          curl -f https://api-staging.activeduhub.com/health || exit 1
+          curl -f https://api-staging.activeducationhub.com/health || exit 1
 
       - name: Notify on success
         if: success()

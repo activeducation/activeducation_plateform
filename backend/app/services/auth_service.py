@@ -220,7 +220,7 @@ class AuthService:
         try:
             self._db.client.auth.reset_password_for_email(
                 email.lower(),
-                options={"redirect_to": "https://activeduhub.com/reset-password"},
+                options={"redirect_to": "https://activeducationhub.com/reset-password"},
             )
             logger.info(f"Password reset email sent for: {email}")
         except Exception as e:

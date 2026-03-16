@@ -262,21 +262,21 @@ build_flutter_apps() {
     section "Build des applications Flutter Web"
 
     # App étudiante
-    log "Build de l'app étudiante (activeduhub.com)..."
+    log "Build de l'app étudiante (activeducationhub.com)..."
     cd "$SCRIPT_DIR/activ_education_app"
     flutter pub get --quiet
     flutter build web --release \
-        --dart-define=API_BASE_URL=https://api.activeduhub.com \
+        --dart-define=API_BASE_URL=https://api.activeducationhub.com \
         2>&1 | tail -5
     [[ ! -f "build/web/index.html" ]] && error "Le build de l'app étudiante a échoué."
     success "App étudiante buildée → activ_education_app/build/web/"
 
     # Dashboard admin
-    log "Build du dashboard admin (admin.activeduhub.com)..."
+    log "Build du dashboard admin (admin.activeducationhub.com)..."
     cd "$SCRIPT_DIR/admin_dashboard"
     flutter pub get --quiet
     flutter build web --release \
-        --dart-define=API_BASE_URL=https://api.activeduhub.com/api/v1 \
+        --dart-define=API_BASE_URL=https://api.activeducationhub.com \
         2>&1 | tail -5
     [[ ! -f "build/web/index.html" ]] && error "Le build du dashboard admin a échoué."
     success "Dashboard admin buildé → admin_dashboard/build/web/"

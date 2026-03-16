@@ -14,6 +14,9 @@ import '../features/orientation/domain/entities/test_result.dart';
 import '../features/orientation/domain/entities/career.dart';
 import '../features/profile/presentation/pages/profile_page.dart';
 import '../features/ai_chat/presentation/pages/chat_page.dart';
+import '../features/elearning/presentation/pages/elearning_catalog_page.dart';
+import '../features/elearning/presentation/pages/course_detail_page.dart';
+import '../features/elearning/presentation/pages/lesson_page.dart';
 import '../core/constants/app_colors.dart';
 import '../core/constants/app_spacing.dart';
 import '../core/constants/app_typography.dart';
@@ -111,6 +114,25 @@ class AppRouter {
         builder: (BuildContext context, GoRouterState state) {
           final args = state.extra as ChatPageArgs? ?? const ChatPageArgs();
           return ChatPage(args: args);
+        },
+      ),
+      // E-Learning
+      GoRoute(
+        path: '/elearning',
+        builder: (BuildContext context, GoRouterState state) {
+          return const ElearningCatalogPage();
+        },
+      ),
+      GoRoute(
+        path: '/elearning/course/:id',
+        builder: (BuildContext context, GoRouterState state) {
+          return CourseDetailPage(courseId: state.pathParameters['id']!);
+        },
+      ),
+      GoRoute(
+        path: '/elearning/lesson/:id',
+        builder: (BuildContext context, GoRouterState state) {
+          return LessonPage(lessonId: state.pathParameters['id']!);
         },
       ),
     ],
