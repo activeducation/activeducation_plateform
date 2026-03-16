@@ -47,6 +47,8 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
+    # Override sqlalchemy.url BEFORE get_section() to avoid ConfigParser interpolation errors
+    config.set_main_option("sqlalchemy.url", get_database_url())
     configuration = config.get_section(config.config_ini_section, {})
     configuration["sqlalchemy.url"] = get_database_url()
 
