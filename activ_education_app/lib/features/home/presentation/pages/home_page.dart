@@ -112,7 +112,7 @@ class _HomePageState extends State<HomePage> {
 
               const SizedBox(height: 36),
 
-              // Schools — pleine largeur pour le scroll horizontal
+              // Établissements — en bas
               _buildSchoolsSection(context),
 
               const SizedBox(height: AppSpacing.pagePaddingBottom),
@@ -581,7 +581,7 @@ class _HomePageState extends State<HomePage> {
                   crossAxisCount: 2,
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
-                  childAspectRatio: 1.15,
+                  childAspectRatio: 1.45,
                 ),
                 itemCount: cards.length,
                 itemBuilder: (context, index) {
@@ -632,15 +632,15 @@ class _HomePageState extends State<HomePage> {
   Color _colorFromType(TestType type) {
     switch (type) {
       case TestType.riasec:
-        return AppColors.primary;
+        return AppColors.primary; // bleu
       case TestType.personality:
-        return AppColors.secondary;
+        return AppColors.secondary; // orange
       case TestType.skills:
-        return AppColors.success;
+        return AppColors.primary; // bleu
       case TestType.interests:
-        return AppColors.categoryTechnology;
+        return AppColors.secondary; // orange
       case TestType.aptitude:
-        return AppColors.warning;
+        return AppColors.primary; // bleu
     }
   }
 
@@ -1012,10 +1012,10 @@ class _TestCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Container(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: AppColors.card,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(color: AppColors.border),
             boxShadow: AppColors.cardShadow,
           ),
@@ -1028,17 +1028,17 @@ class _TestCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: data.color.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(data.icon, color: data.color, size: 22),
+                    child: Icon(data.icon, color: data.color, size: 18),
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
+                      horizontal: 7,
+                      vertical: 3,
                     ),
                     decoration: BoxDecoration(
                       color: AppColors.surface,
@@ -1069,7 +1069,7 @@ class _TestCard extends StatelessWidget {
                 children: [
                   Text(
                     data.title,
-                    style: AppTypography.titleSmall.copyWith(
+                    style: AppTypography.bodyMedium.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                     maxLines: 2,
