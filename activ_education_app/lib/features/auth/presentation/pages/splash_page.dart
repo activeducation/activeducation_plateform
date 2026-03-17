@@ -64,7 +64,7 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [Colors.white, Color(0xFFF0F5FF)],
+              colors: [Colors.white, AppColors.primarySurface],
             ),
           ),
           child: Center(

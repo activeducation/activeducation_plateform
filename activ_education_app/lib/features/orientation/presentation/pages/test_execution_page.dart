@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../../shared/widgets/buttons/gradient_button.dart';
 import '../../domain/entities/orientation_test.dart';
 import '../bloc/orientation_bloc.dart';
 import '../bloc/test_session_bloc.dart';
@@ -156,17 +157,16 @@ class _TestExecutionView extends StatelessWidget {
                     )
                   else
                     const SizedBox.shrink(),
-                  ElevatedButton(
+                  GradientButton(
+                    text: state.isLastQuestion ? 'Terminer' : 'Suivant',
                     onPressed: state.canGoNext
                         ? () {
                             context.read<TestSessionBloc>().add(NextQuestion());
                           }
                         : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: state.isLastQuestion ? AppColors.success : AppColors.primary,
-                      minimumSize: const Size(120, 50),
-                    ),
-                    child: Text(state.isLastQuestion ? 'TERMINER' : 'SUIVANT'),
+                    showArrow: !state.isLastQuestion,
+                    useSecondaryColor: state.isLastQuestion,
+                    width: 140,
                   ),
                 ],
               ),
@@ -387,16 +387,10 @@ class _SectionTransition extends StatelessWidget {
               ),
             ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1),
             const SizedBox(height: AppSpacing.xxl),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: onContinue,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  minimumSize: const Size(double.infinity, 56),
-                ),
-                child: const Text('CONTINUER'),
-              ),
+            GradientButton(
+              text: 'Continuer',
+              onPressed: onContinue,
+              showArrow: true,
             ).animate().fadeIn(delay: 800.ms, duration: 400.ms).slideY(begin: 0.2),
           ],
         ),

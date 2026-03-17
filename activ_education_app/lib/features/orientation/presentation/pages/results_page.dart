@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../features/ai_chat/presentation/pages/chat_page.dart';
+import '../../../../shared/widgets/buttons/gradient_button.dart';
 import '../../data/datasources/careers_database.dart';
 import '../../domain/entities/career.dart';
 import '../../domain/entities/test_result.dart';
@@ -562,24 +563,14 @@ class ResultsPage extends StatelessWidget {
     return Column(
       children: [
         // Bouton principal : discuter avec AÏDA
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: () => context.push(
-              '/chat',
-              extra: ChatPageArgs(orientationResult: result),
-            ),
-            icon: const Icon(Icons.smart_toy_rounded, size: 20),
-            label: const Text('DISCUTER AVEC AÏDA'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-              ),
-            ),
+        GradientButton(
+          text: 'Discuter avec AÏDA',
+          icon: Icons.smart_toy_rounded,
+          onPressed: () => context.push(
+            '/chat',
+            extra: ChatPageArgs(orientationResult: result),
           ),
+          showArrow: false,
         ),
         const SizedBox(height: AppSpacing.md),
         Row(
@@ -587,14 +578,24 @@ class ResultsPage extends StatelessWidget {
             Expanded(
               child: OutlinedButton(
                 onPressed: () => context.go('/orientation'),
-                child: const Text('AUTRE TEST'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.primary,
+                  side: const BorderSide(color: AppColors.border),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+                  ),
+                ),
+                child: const Text('Autre test'),
               ),
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(
-              child: ElevatedButton(
+              child: GradientButton(
+                text: 'Voir les écoles',
                 onPressed: () => context.go('/schools'),
-                child: const Text('VOIR LES ÉCOLES'),
+                showArrow: false,
+                useSecondaryColor: true,
               ),
             ),
           ],

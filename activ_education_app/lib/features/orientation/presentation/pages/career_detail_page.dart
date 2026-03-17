@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/constants.dart';
 import '../../domain/entities/career.dart';
+import '../../../../shared/widgets/buttons/gradient_button.dart';
 
 /// Page de détail d'un métier avec toutes les informations
 /// formations, salaires et perspectives au Togo.
@@ -116,10 +117,11 @@ class CareerDetailPage extends StatelessWidget {
                   const SizedBox(height: AppSpacing.xl),
 
                   // Bouton retour
-                  ElevatedButton.icon(
+                  GradientButton(
+                    text: 'Retour aux résultats',
+                    icon: Icons.arrow_back_rounded,
                     onPressed: () => context.pop(),
-                    icon: const Icon(Icons.arrow_back),
-                    label: const Text('RETOUR AUX RÉSULTATS'),
+                    showArrow: false,
                   ),
                   const SizedBox(height: AppSpacing.pagePaddingBottom),
                 ]),

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../../shared/widgets/buttons/gradient_button.dart';
 import '../../domain/entities/orientation_test.dart';
 import '../bloc/orientation_bloc.dart';
 
@@ -138,15 +139,12 @@ class _TestCard extends StatelessWidget {
                   style: AppTypography.bodyMedium,
                 ),
                 const SizedBox(height: AppSpacing.md),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-             // Navigation vers la page de test
-            context.push('/orientation/test', extra: test);
-                    },
-                    child: const Text('COMMENCER'),
-                  ),
+                GradientButton(
+                  text: 'Commencer',
+                  onPressed: () {
+                    context.push('/orientation/test', extra: test);
+                  },
+                  showArrow: true,
                 ),
               ],
             ),

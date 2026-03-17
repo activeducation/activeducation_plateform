@@ -25,6 +25,7 @@ class AppColors {
   // COULEURS ENRICHIES
   // ============================================
   static const Color primaryMedium = Color(0xFF2E7CE6);
+  static const Color primaryIndigo = Color(0xFF3B49DF);
   static const Color shimmer = Color(0xFFF5E6D0);
 
   // ============================================

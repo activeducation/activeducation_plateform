@@ -259,9 +259,9 @@ class _SchoolCard extends StatelessWidget {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      const Color(0xFFF0F5FF),
                       AppColors.primarySurface,
-                      const Color(0xFFFEF3E2).withValues(alpha: 0.5),
+                      AppColors.card,
+                      AppColors.secondarySurface.withValues(alpha: 0.5),
                     ],
                   ),
                 ),

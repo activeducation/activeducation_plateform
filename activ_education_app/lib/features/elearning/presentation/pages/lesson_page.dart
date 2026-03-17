@@ -502,7 +502,7 @@ class _ChallengeContent extends StatelessWidget {
             padding: const EdgeInsets.all(AppSpacing.md),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [AppColors.categoryTechnology, Color(0xFF9333EA)],
+                colors: [AppColors.categoryTechnology, AppColors.primaryIndigo],
               ),
               borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
             ),

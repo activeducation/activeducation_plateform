@@ -260,21 +260,14 @@ class _QuizWidgetState extends State<QuizWidget> {
               if (_currentIndex > 0) const SizedBox(width: AppSpacing.sm),
               Expanded(
                 flex: 2,
-                child: ElevatedButton.icon(
+                child: GradientButton(
+                  text: _isLast ? 'Voir le résultat' : 'Suivant',
+                  icon: _isLast
+                      ? Icons.check_circle_rounded
+                      : null,
                   onPressed: _isAnswered ? _goNext : null,
-                  icon: Icon(
-                    _isLast
-                        ? Icons.check_circle_rounded
-                        : Icons.arrow_forward_rounded,
-                    size: 18,
-                  ),
-                  label: Text(_isLast ? 'Voir le résultat' : 'Suivant'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                        vertical: AppSpacing.sm),
-                  ),
+                  showArrow: !_isLast,
+                  isSmall: true,
                 ),
               ),
             ],

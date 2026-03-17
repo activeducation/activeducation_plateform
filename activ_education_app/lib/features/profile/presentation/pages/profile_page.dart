@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:iconsax/iconsax.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_typography.dart';
@@ -34,45 +35,70 @@ class ProfilePage extends StatelessWidget {
             String fullName = 'Utilisateur';
             String email = '';
             String initials = 'U';
-            String? firstName;
-            String? lastName;
 
             if (state is AuthAuthenticated) {
               fullName = state.user.fullName;
               email = state.user.email;
               initials = state.user.initials;
-              firstName = state.user.firstName;
-              lastName = state.user.lastName;
             }
 
             return SingleChildScrollView(
               child: Column(
                 children: [
-                  // Decorative gradient banner behind avatar
+                  // Banner gradient + avatar
                   Stack(
                     clipBehavior: Clip.none,
                     alignment: Alignment.center,
                     children: [
                       Container(
                         width: double.infinity,
-                        height: 120,
+                        height: 130,
                         decoration: const BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
-                            colors: [AppColors.primary, Color(0xFF3B49DF)],
+                            colors: [AppColors.primary, AppColors.primaryIndigo],
                           ),
                           borderRadius: BorderRadius.only(
                             bottomLeft: Radius.circular(32),
                             bottomRight: Radius.circular(32),
                           ),
                         ),
+                        // Motif décoratif en filigrane
+                        child: Stack(
+                          children: [
+                            Positioned(
+                              right: -20,
+                              top: -20,
+                              child: Container(
+                                width: 120,
+                                height: 120,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.white.withValues(alpha: 0.05),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              right: 20,
+                              bottom: -10,
+                              child: Container(
+                                width: 80,
+                                height: 80,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.white.withValues(alpha: 0.06),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       Positioned(
-                        bottom: -45,
+                        bottom: -48,
                         child: Container(
-                          width: 90,
-                          height: 90,
+                          width: 96,
+                          height: 96,
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
                               colors: [AppColors.primary, AppColors.secondary],
@@ -96,7 +122,9 @@ class ProfilePage extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 52),
+                  const SizedBox(height: 60),
+
+                  // Nom + email
                   Text(
                     fullName,
                     style: AppTypography.headlineSmall.copyWith(
@@ -111,61 +139,45 @@ class ProfilePage extends StatelessWidget {
                     ),
                   ),
 
+                  const SizedBox(height: AppSpacing.xl),
+
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.pagePaddingHorizontal),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.pagePaddingHorizontal,
+                    ),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                  const SizedBox(height: AppSpacing.xl),
-
-                  // Section Mon compte
-                  _buildSectionTitle('Mon compte'),
-                  const SizedBox(height: AppSpacing.sm),
-                  _buildInfoCard([
-                    _InfoRow(
-                      icon: Icons.person_outline,
-                      label: 'Prénom',
-                      value: firstName ?? '-',
-                    ),
-                    _InfoRow(
-                      icon: Icons.person_outline,
-                      label: 'Nom',
-                      value: lastName ?? '-',
-                    ),
-                    _InfoRow(
-                      icon: Icons.email_outlined,
-                      label: 'Email',
-                      value: email,
-                    ),
-                  ]),
-
-                  const SizedBox(height: AppSpacing.xl),
-
-                  // Bouton déconnexion
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        _showLogoutDialog(context);
-                      },
-                      icon: const Icon(Icons.logout, color: AppColors.error),
-                      label: Text(
-                        'Se déconnecter',
-                        style: AppTypography.labelLarge.copyWith(
-                          color: AppColors.error,
-                          fontWeight: FontWeight.w600,
+                        // Section Accès rapide
+                        Text(
+                          'Accès rapide',
+                          style: AppTypography.titleMedium.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
                         ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: AppColors.error, width: 1.5),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
-                        ),
-                      ),
-                    ),
-                  ),
+                        const SizedBox(height: AppSpacing.sm),
+                        _buildQuickAccessCard(context),
 
-                  const SizedBox(height: AppSpacing.pagePaddingBottom),
+                        const SizedBox(height: AppSpacing.xl),
+
+                        // Section Mon compte
+                        Text(
+                          'Mon compte',
+                          style: AppTypography.titleMedium.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        _buildAccountCard(context, email, fullName),
+
+                        const SizedBox(height: AppSpacing.xl),
+
+                        // Bouton déconnexion
+                        _buildLogoutButton(context),
+
+                        const SizedBox(height: AppSpacing.pagePaddingBottom),
                       ],
                     ),
                   ),
@@ -178,65 +190,99 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Text(
-        title,
-        style: AppTypography.titleMedium.copyWith(
-          fontWeight: FontWeight.bold,
-          color: AppColors.textPrimary,
-        ),
+  Widget _buildQuickAccessCard(BuildContext context) {
+    final items = [
+      _QuickItem(
+        icon: Iconsax.chart,
+        label: 'Tests d\'orientation',
+        subtitle: 'Explore tes aptitudes',
+        color: AppColors.primary,
+        route: '/orientation',
       ),
-    );
-  }
+      _QuickItem(
+        icon: Iconsax.book,
+        label: 'E-Learning',
+        subtitle: 'Cours et vidéos',
+        color: AppColors.categoryTechnology,
+        route: '/elearning',
+      ),
+      _QuickItem(
+        icon: Iconsax.building,
+        label: 'Établissements',
+        subtitle: 'Écoles et universités',
+        color: AppColors.secondary,
+        route: '/schools',
+      ),
+    ];
 
-  Widget _buildInfoCard(List<_InfoRow> rows) {
     return Container(
-      width: double.infinity,
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
         border: Border.all(color: AppColors.border),
-        boxShadow: AppColors.cardShadowMedium,
+        boxShadow: AppColors.cardShadow,
       ),
       child: Column(
-        children: rows.asMap().entries.map((entry) {
-          final index = entry.key;
-          final row = entry.value;
+        children: items.asMap().entries.map((entry) {
+          final i = entry.key;
+          final item = entry.value;
           return Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                  vertical: AppSpacing.md,
+              InkWell(
+                onTap: () => context.go(item.route),
+                borderRadius: BorderRadius.circular(
+                  i == 0
+                      ? AppSpacing.cardRadius
+                      : i == items.length - 1
+                          ? AppSpacing.cardRadius
+                          : 0,
                 ),
-                child: Row(
-                  children: [
-                    Icon(row.icon, size: 20, color: AppColors.primary),
-                    const SizedBox(width: AppSpacing.sm),
-                    Text(
-                      row.label,
-                      style: AppTypography.bodyMedium.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    const Spacer(),
-                    Flexible(
-                      child: Text(
-                        row.value,
-                        style: AppTypography.bodyMedium.copyWith(
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.w500,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: 14,
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(9),
+                        decoration: BoxDecoration(
+                          color: item.color.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        textAlign: TextAlign.end,
-                        overflow: TextOverflow.ellipsis,
+                        child: Icon(item.icon, size: 18, color: item.color),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item.label,
+                              style: AppTypography.bodyMedium.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            Text(
+                              item.subtitle,
+                              style: AppTypography.labelSmall.copyWith(
+                                color: AppColors.textTertiary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        size: 18,
+                        color: AppColors.textTertiary,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              if (index < rows.length - 1)
+              if (i < items.length - 1)
                 const Divider(height: 1, indent: 16, endIndent: 16),
             ],
           );
@@ -245,16 +291,120 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
+  Widget _buildAccountCard(
+      BuildContext context, String email, String fullName) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+        border: Border.all(color: AppColors.border),
+        boxShadow: AppColors.cardShadow,
+      ),
+      child: Column(
+        children: [
+          _AccountRow(
+            icon: Icons.person_outline_rounded,
+            label: 'Nom complet',
+            value: fullName,
+            isFirst: true,
+          ),
+          const Divider(height: 1, indent: 16, endIndent: 16),
+          _AccountRow(
+            icon: Icons.email_outlined,
+            label: 'Email',
+            value: email,
+            isLast: true,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLogoutButton(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+        border: Border.all(color: AppColors.errorLight),
+        boxShadow: AppColors.cardShadow,
+      ),
+      child: InkWell(
+        onTap: () => _showLogoutDialog(context),
+        borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: 16,
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(9),
+                decoration: BoxDecoration(
+                  color: AppColors.errorLight,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.logout_rounded,
+                  size: 18,
+                  color: AppColors.error,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Text(
+                'Se déconnecter',
+                style: AppTypography.bodyMedium.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.error,
+                ),
+              ),
+              const Spacer(),
+              const Icon(
+                Icons.chevron_right_rounded,
+                size: 18,
+                color: AppColors.error,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Se déconnecter'),
-        content: const Text('Êtes-vous sûr de vouloir vous déconnecter ?'),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.errorLight,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.logout_rounded,
+                size: 20,
+                color: AppColors.error,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text('Se déconnecter'),
+          ],
+        ),
+        content:
+            const Text('Êtes-vous sûr de vouloir vous déconnecter ?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Annuler'),
+            child: Text(
+              'Annuler',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
           ),
           TextButton(
             onPressed: () {
@@ -263,7 +413,10 @@ class ProfilePage extends StatelessWidget {
             },
             child: Text(
               'Déconnexion',
-              style: TextStyle(color: AppColors.error),
+              style: TextStyle(
+                color: AppColors.error,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -272,14 +425,68 @@ class ProfilePage extends StatelessWidget {
   }
 }
 
-class _InfoRow {
+class _QuickItem {
+  final IconData icon;
+  final String label;
+  final String subtitle;
+  final Color color;
+  final String route;
+
+  const _QuickItem({
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+    required this.color,
+    required this.route,
+  });
+}
+
+class _AccountRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
+  final bool isFirst;
+  final bool isLast;
 
-  const _InfoRow({
+  const _AccountRow({
     required this.icon,
     required this.label,
     required this.value,
+    this.isFirst = false,
+    this.isLast = false,
   });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.md,
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: AppColors.primary),
+          const SizedBox(width: AppSpacing.sm),
+          Text(
+            label,
+            style: AppTypography.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const Spacer(),
+          Flexible(
+            child: Text(
+              value,
+              style: AppTypography.bodyMedium.copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.end,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

@@ -202,7 +202,7 @@ class _HomePageState extends State<HomePage> {
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color(0xFF1060CF), Color(0xFF3B49DF)],
+              colors: [AppColors.primary, AppColors.primaryIndigo],
             ),
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
@@ -915,7 +915,7 @@ class _SchoolCard extends StatelessWidget {
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Colors.white, Color(0xFFF0F5FF)],
+              colors: [Colors.white, AppColors.primarySurface],
             ),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppColors.border),

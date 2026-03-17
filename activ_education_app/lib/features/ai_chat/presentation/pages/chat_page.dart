@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/auth/token_storage.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_typography.dart';
+import '../../../../shared/widgets/buttons/gradient_button.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../features/orientation/domain/entities/test_result.dart';
 import '../../data/datasources/chat_local_datasource.dart';
@@ -183,26 +184,10 @@ class _AuthRequiredScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: () => context.go('/login'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Text(
-                    'Se connecter',
-                    style: AppTypography.labelLarge.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
+              GradientButton(
+                text: 'Se connecter',
+                onPressed: () => context.go('/login'),
+                showArrow: false,
               ),
               const SizedBox(height: 12),
               TextButton(
@@ -377,14 +362,20 @@ class _ChatViewState extends State<_ChatView> {
                     onPressed: () => Navigator.pop(context),
                     child: const Text('Annuler'),
                   ),
-                  ElevatedButton(
+                  TextButton(
                     onPressed: () {
                       Navigator.pop(context);
                       context
                           .read<ChatBloc>()
                           .add(ClearChatSession());
                     },
-                    child: const Text('Recommencer'),
+                    child: Text(
+                      'Recommencer',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ],
               ),

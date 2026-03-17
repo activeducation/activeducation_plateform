@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_typography.dart';
 import '../../../../shared/widgets/buttons/gradient_button.dart';
 import '../bloc/auth_bloc.dart';
 
@@ -37,9 +38,53 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  InputDecoration _inputDecoration({
+    required String label,
+    String? hint,
+    Widget? prefixIcon,
+    Widget? suffixIcon,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      prefixIcon: prefixIcon,
+      suffixIcon: suffixIcon,
+      labelStyle: AppTypography.bodyMedium.copyWith(
+        color: AppColors.textSecondary,
+      ),
+      hintStyle: AppTypography.bodyMedium.copyWith(
+        color: AppColors.textTertiary,
+      ),
+      filled: true,
+      fillColor: AppColors.surface,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.border),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.border),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.error),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.error, width: 1.5),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthAuthenticated) {
@@ -48,32 +93,33 @@ class _LoginPageState extends State<LoginPage> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.message),
-                backgroundColor: Colors.red,
+                backgroundColor: AppColors.error,
+                behavior: SnackBarBehavior.floating,
               ),
             );
           }
         },
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: 40),
-                  _buildHeader(),
                   const SizedBox(height: 48),
+                  _buildHeader(),
+                  const SizedBox(height: 40),
                   _buildEmailField(),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
                   _buildPasswordField(),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   _buildForgotPassword(),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 28),
                   _buildLoginButton(),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 28),
                   _buildDivider(),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
                   _buildRegisterLink(),
                 ],
               ),
@@ -89,33 +135,33 @@ class _LoginPageState extends State<LoginPage> {
       children: [
         Image.asset(
           'assets/images/logo.jpeg',
-          width: 100,
-          height: 100,
+          width: 88,
+          height: 88,
           fit: BoxFit.contain,
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
         Text(
           'Bienvenue',
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: AppTypography.headlineMedium.copyWith(
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
         ),
         const SizedBox(height: 8),
-        // Decorative orange bar
         Container(
-          width: 50,
-          height: 4,
+          width: 44,
+          height: 3,
           decoration: BoxDecoration(
             color: AppColors.secondary,
             borderRadius: BorderRadius.circular(2),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         Text(
           'Connectez-vous pour continuer',
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Colors.grey,
-              ),
+          style: AppTypography.bodyMedium.copyWith(
+            color: AppColors.textSecondary,
+          ),
         ),
       ],
     );
@@ -126,18 +172,14 @@ class _LoginPageState extends State<LoginPage> {
       controller: _emailController,
       keyboardType: TextInputType.emailAddress,
       textInputAction: TextInputAction.next,
-      decoration: InputDecoration(
-        labelText: 'Email',
-        hintText: 'votre@email.com',
-        prefixIcon: const Icon(Icons.email_outlined),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+      style: AppTypography.bodyMedium.copyWith(color: AppColors.textPrimary),
+      decoration: _inputDecoration(
+        label: 'Email',
+        hint: 'votre@email.com',
+        prefixIcon: const Icon(Icons.email_outlined, color: AppColors.textSecondary, size: 20),
       ),
       validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Veuillez entrer votre email';
-        }
+        if (value == null || value.isEmpty) return 'Veuillez entrer votre email';
         if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
           return 'Veuillez entrer un email valide';
         }
@@ -152,28 +194,22 @@ class _LoginPageState extends State<LoginPage> {
       obscureText: _obscurePassword,
       textInputAction: TextInputAction.done,
       onFieldSubmitted: (_) => _onLogin(),
-      decoration: InputDecoration(
-        labelText: 'Mot de passe',
-        hintText: '********',
-        prefixIcon: const Icon(Icons.lock_outline),
+      style: AppTypography.bodyMedium.copyWith(color: AppColors.textPrimary),
+      decoration: _inputDecoration(
+        label: 'Mot de passe',
+        hint: '••••••••',
+        prefixIcon: const Icon(Icons.lock_outline, color: AppColors.textSecondary, size: 20),
         suffixIcon: IconButton(
           icon: Icon(
-            _obscurePassword ? Icons.visibility_off : Icons.visibility,
+            _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+            color: AppColors.textSecondary,
+            size: 20,
           ),
-          onPressed: () {
-            setState(() {
-              _obscurePassword = !_obscurePassword;
-            });
-          },
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
         ),
       ),
       validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Veuillez entrer votre mot de passe';
-        }
+        if (value == null || value.isEmpty) return 'Veuillez entrer votre mot de passe';
         return null;
       },
     );
@@ -185,13 +221,18 @@ class _LoginPageState extends State<LoginPage> {
       child: TextButton(
         onPressed: () {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Fonctionnalite a venir')),
+            const SnackBar(content: Text('Fonctionnalité à venir')),
           );
         },
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.primary,
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        ),
         child: Text(
-          'Mot de passe oublie ?',
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.primary,
+          'Mot de passe oublié ?',
+          style: AppTypography.labelMedium.copyWith(
+            color: AppColors.primary,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ),
@@ -202,13 +243,15 @@ class _LoginPageState extends State<LoginPage> {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
         final isLoading = state is AuthLoading;
-
         return isLoading
             ? const Center(
                 child: SizedBox(
                   width: 24,
                   height: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.primary,
+                  ),
                 ),
               )
             : GradientButton(
@@ -223,15 +266,19 @@ class _LoginPageState extends State<LoginPage> {
   Widget _buildDivider() {
     return Row(
       children: [
-        Expanded(child: Divider(color: Colors.grey.shade300)),
+        const Expanded(child: Divider(color: AppColors.border)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
             'OU',
-            style: TextStyle(color: Colors.grey.shade600),
+            style: AppTypography.labelSmall.copyWith(
+              color: AppColors.textTertiary,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1,
+            ),
           ),
         ),
-        Expanded(child: Divider(color: Colors.grey.shade300)),
+        const Expanded(child: Divider(color: AppColors.border)),
       ],
     );
   }
@@ -242,15 +289,19 @@ class _LoginPageState extends State<LoginPage> {
       children: [
         Text(
           'Pas encore de compte ? ',
-          style: TextStyle(color: Colors.grey.shade600),
+          style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
         ),
         TextButton(
           onPressed: () => context.push('/register'),
+          style: TextButton.styleFrom(
+            foregroundColor: AppColors.primary,
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+          ),
           child: Text(
             'S\'inscrire',
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.bold,
+            style: AppTypography.bodySmall.copyWith(
+              color: AppColors.primary,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ),

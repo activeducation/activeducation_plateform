@@ -90,11 +90,14 @@ class _CourseDetailView extends StatelessWidget {
                         style: AppTypography.bodyMedium,
                         textAlign: TextAlign.center),
                     const SizedBox(height: AppSpacing.md),
-                    ElevatedButton(
+                    GradientButton(
+                      text: 'Réessayer',
                       onPressed: () => context
                           .read<CourseBloc>()
                           .add(LoadCourse(state.message)),
-                      child: const Text('Réessayer'),
+                      showArrow: false,
+                      isSmall: true,
+                      width: 140,
                     ),
                   ],
                 ),
@@ -233,13 +236,13 @@ class _CourseAppBar extends StatelessWidget {
       return AppColors.heroGradient;
     } else if (lower.contains('math')) {
       return const LinearGradient(
-          colors: [AppColors.categoryTechnology, Color(0xFF9333EA)]);
+          colors: [AppColors.categoryTechnology, AppColors.primaryIndigo]);
     } else if (lower.contains('scien')) {
       return const LinearGradient(
-          colors: [AppColors.categoryScience, Color(0xFF0E7490)]);
+          colors: [AppColors.categoryScience, AppColors.primary]);
     } else if (lower.contains('orient')) {
       return const LinearGradient(
-          colors: [AppColors.categoryEconomics, Color(0xFF15803D)]);
+          colors: [AppColors.categoryEconomics, AppColors.successDark]);
     } else if (lower.contains('hack')) {
       return AppColors.secondaryGradient;
     }
