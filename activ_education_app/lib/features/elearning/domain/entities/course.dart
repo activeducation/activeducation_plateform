@@ -50,7 +50,7 @@ class CourseModule extends Equatable {
   final String id;
   final String courseId;
   final String title;
-  final String description;
+  final String? description;
   final int displayOrder;
   final bool isLocked;
   final List<LessonSummary> lessons;
@@ -59,7 +59,7 @@ class CourseModule extends Equatable {
     required this.id,
     required this.courseId,
     required this.title,
-    required this.description,
+    this.description,
     required this.displayOrder,
     required this.isLocked,
     required this.lessons,

@@ -33,7 +33,7 @@ class CourseModuleModel extends CourseModule {
     required super.id,
     required super.courseId,
     required super.title,
-    required super.description,
+    super.description,
     required super.displayOrder,
     required super.isLocked,
     required this.lessons,

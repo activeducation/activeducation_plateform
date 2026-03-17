@@ -83,6 +83,7 @@ class LessonSummary(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
+    module_id: UUID
     title: str
     lesson_type: LessonType
     duration_minutes: int
@@ -103,6 +104,7 @@ class ModuleDetail(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
+    course_id: UUID
     title: str
     description: Optional[str] = None
     display_order: int

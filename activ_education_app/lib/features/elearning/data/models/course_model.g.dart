@@ -84,7 +84,7 @@ CourseModuleModel _$CourseModuleModelFromJson(Map<String, dynamic> json) =>
       id: json['id'] as String,
       courseId: json['course_id'] as String,
       title: json['title'] as String,
-      description: json['description'] as String,
+      description: json['description'] as String?,
       displayOrder: (json['display_order'] as num).toInt(),
       isLocked: json['is_locked'] as bool? ?? false,
       lessons: (json['lessons'] as List<dynamic>)
