@@ -97,7 +97,7 @@ class LessonTypeBadge extends StatelessWidget {
         );
       case LessonType.challenge:
         return _BadgeConfig(
-          color: const Color(0xFF7C3AED),
+          color: AppColors.categoryTechnology,
           icon: Icons.emoji_events_outlined,
           label: 'Challenge',
         );

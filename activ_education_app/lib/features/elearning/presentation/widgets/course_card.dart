@@ -1,5 +1,5 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:iconsax/iconsax.dart';
 
 import '../../../../core/constants/constants.dart';
 import '../../domain/entities/course.dart';
@@ -9,25 +9,49 @@ enum CourseCardMode { compact, full }
 class CourseCard extends StatelessWidget {
   final Course course;
   final CourseCardMode mode;
+  final bool compact;
   final VoidCallback? onTap;
 
   const CourseCard({
     super.key,
     required this.course,
     this.mode = CourseCardMode.full,
+    this.compact = false,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (mode == CourseCardMode.compact) {
+    if (compact || mode == CourseCardMode.compact) {
       return _CompactCourseCard(course: course, onTap: onTap);
     }
     return _FullCourseCard(course: course, onTap: onTap);
   }
 }
 
-// ─── Full Card (for grid) ──────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+Color _colorForCategory(String category) {
+  final lower = category.toLowerCase();
+  if (lower.contains('info') || lower.contains('tech')) return AppColors.primary;
+  if (lower.contains('math')) return AppColors.categoryTechnology;
+  if (lower.contains('scien')) return AppColors.categoryScience;
+  if (lower.contains('orient')) return AppColors.categoryEconomics;
+  if (lower.contains('hack')) return AppColors.secondary;
+  return AppColors.primary;
+}
+
+IconData _iconForCategory(String category) {
+  final lower = category.toLowerCase();
+  if (lower.contains('info') || lower.contains('tech')) return Icons.computer_rounded;
+  if (lower.contains('math')) return Icons.calculate_rounded;
+  if (lower.contains('scien')) return Icons.science_rounded;
+  if (lower.contains('orient')) return Icons.explore_rounded;
+  if (lower.contains('hack')) return Icons.code_rounded;
+  return Icons.school_rounded;
+}
+
+// ─── Full Card — Pattern _TestCard ────────────────────────────────────────────
 
 class _FullCourseCard extends StatelessWidget {
   final Course course;
@@ -37,54 +61,100 @@ class _FullCourseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-        border: Border.all(color: AppColors.border),
-        boxShadow: AppColors.cardShadow,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _ThumbnailWidget(
-                thumbnailUrl: course.thumbnailUrl,
-                category: course.category,
-                height: 110,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(AppSpacing.cardRadius),
-                ),
+    final color = _colorForCategory(course.category);
+
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Stack(
+          children: [
+            Container(
+              padding: const EdgeInsets.only(
+                left: AppSpacing.md + 3,
+                top: AppSpacing.md,
+                right: AppSpacing.md,
+                bottom: AppSpacing.md,
               ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.sm),
-                  child: Column(
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.04),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.border, width: 1),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Top row: icon + duration badge
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          _iconForCategory(course.category),
+                          color: color,
+                          size: 22,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '${course.durationMinutes} min',
+                          style: AppTypography.labelSmall.copyWith(
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  // Bottom: title + category + progress
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         course.title,
-                        style: AppTypography.titleSmall,
+                        style: AppTypography.titleSmall.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: AppSpacing.xxs),
                       Row(
                         children: [
-                          _DifficultyChip(difficulty: course.difficulty),
-                          const Spacer(),
+                          Expanded(
+                            child: Text(
+                              course.category,
+                              style: AppTypography.labelSmall.copyWith(
+                                color: AppColors.textTertiary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
                           Icon(
                             Icons.star_rounded,
-                            size: AppSpacing.iconXs,
+                            size: 12,
                             color: AppColors.secondary,
                           ),
                           const SizedBox(width: 2),
                           Text(
-                            '${course.pointsReward} pts',
+                            '${course.pointsReward}',
                             style: AppTypography.labelSmall.copyWith(
                               color: AppColors.secondary,
                               fontWeight: FontWeight.w600,
@@ -92,38 +162,47 @@ class _FullCourseCard extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: AppSpacing.xxs),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.timer_outlined,
-                            size: AppSpacing.iconXs,
-                            color: AppColors.textTertiary,
-                          ),
-                          const SizedBox(width: 2),
-                          Text(
-                            '${course.durationMinutes} min',
-                            style: AppTypography.labelSmall,
-                          ),
-                        ],
+                      const SizedBox(height: 6),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: course.isEnrolled && course.progressPct != null
+                              ? (course.progressPct! / 100).clamp(0.0, 1.0)
+                              : 0.0,
+                          minHeight: 3,
+                          backgroundColor: color.withValues(alpha: 0.1),
+                          valueColor: AlwaysStoppedAnimation<Color>(color),
+                        ),
                       ),
-                      if (course.isEnrolled && course.progressPct != null) ...[
-                        const Spacer(),
-                        _ProgressBar(progressPct: course.progressPct!),
-                      ],
                     ],
+                  ),
+                ],
+              ),
+            ),
+            // Left color accent strip
+            Positioned(
+              left: 0,
+              top: 0,
+              bottom: 0,
+              child: Container(
+                width: 4,
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    bottomLeft: Radius.circular(16),
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-// ─── Compact Card (for horizontal list / my courses) ─────────────────────────
+// ─── Compact Card — Pattern _SchoolCard ───────────────────────────────────────
 
 class _CompactCourseCard extends StatelessWidget {
   final Course course;
@@ -133,246 +212,118 @@ class _CompactCourseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 200,
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-        border: Border.all(color: AppColors.border),
-        boxShadow: AppColors.cardShadow,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+    final color = _colorForCategory(course.category);
+
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          width: 220,
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Colors.white, Color(0xFFF0F5FF)],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border),
+            boxShadow: AppColors.cardShadow,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _ThumbnailWidget(
-                thumbnailUrl: course.thumbnailUrl,
-                category: course.category,
-                height: 90,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(AppSpacing.cardRadius),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(AppSpacing.xs),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      course.title,
-                      style: AppTypography.titleSmall,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          color.withValues(alpha: 0.08),
+                          color.withValues(alpha: 0.15),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    const SizedBox(height: AppSpacing.xxs),
-                    if (course.isEnrolled && course.progressPct != null)
-                      _ProgressBar(progressPct: course.progressPct!),
-                  ],
-                ),
+                    child: Icon(
+                      _iconForCategory(course.category),
+                      color: color,
+                      size: 24,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.secondarySurface,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: AppColors.secondary.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Text(
+                      '${course.pointsReward} pts',
+                      style: AppTypography.labelSmall.copyWith(
+                        color: AppColors.secondaryDark,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 9,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    course.title,
+                    style: AppTypography.titleSmall.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Icon(
+                        Iconsax.timer_1,
+                        size: 12,
+                        color: AppColors.textTertiary,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${course.durationMinutes} min',
+                        style: AppTypography.labelSmall.copyWith(
+                          color: AppColors.textTertiary,
+                        ),
+                      ),
+                      if (course.isEnrolled && course.progressPct != null) ...[
+                        const SizedBox(width: 8),
+                        Text(
+                          '${course.progressPct}%',
+                          style: AppTypography.labelSmall.copyWith(
+                            color: color,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
               ),
             ],
           ),
         ),
       ),
-    );
-  }
-}
-
-// ─── Shared Widgets ───────────────────────────────────────────────────────────
-
-class _ThumbnailWidget extends StatelessWidget {
-  final String? thumbnailUrl;
-  final String category;
-  final double height;
-  final BorderRadius borderRadius;
-
-  const _ThumbnailWidget({
-    required this.thumbnailUrl,
-    required this.category,
-    required this.height,
-    required this.borderRadius,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (thumbnailUrl != null && thumbnailUrl!.isNotEmpty) {
-      return ClipRRect(
-        borderRadius: borderRadius,
-        child: CachedNetworkImage(
-          imageUrl: thumbnailUrl!,
-          height: height,
-          width: double.infinity,
-          fit: BoxFit.cover,
-          placeholder: (context, url) => _GradientPlaceholder(
-            category: category,
-            height: height,
-            borderRadius: borderRadius,
-          ),
-          errorWidget: (context, url, error) => _GradientPlaceholder(
-            category: category,
-            height: height,
-            borderRadius: borderRadius,
-          ),
-        ),
-      );
-    }
-
-    return _GradientPlaceholder(
-      category: category,
-      height: height,
-      borderRadius: borderRadius,
-    );
-  }
-}
-
-class _GradientPlaceholder extends StatelessWidget {
-  final String category;
-  final double height;
-  final BorderRadius borderRadius;
-
-  const _GradientPlaceholder({
-    required this.category,
-    required this.height,
-    required this.borderRadius,
-  });
-
-  LinearGradient _gradientForCategory(String cat) {
-    final lower = cat.toLowerCase();
-    if (lower.contains('info') || lower.contains('tech')) {
-      return const LinearGradient(
-        colors: [Color(0xFF1060CF), Color(0xFF3B49DF)],
-      );
-    } else if (lower.contains('math')) {
-      return const LinearGradient(
-        colors: [Color(0xFF7C3AED), Color(0xFF9333EA)],
-      );
-    } else if (lower.contains('scien')) {
-      return const LinearGradient(
-        colors: [Color(0xFF0891B2), Color(0xFF0E7490)],
-      );
-    } else if (lower.contains('orient')) {
-      return const LinearGradient(
-        colors: [Color(0xFF16A34A), Color(0xFF15803D)],
-      );
-    } else if (lower.contains('hack')) {
-      return const LinearGradient(
-        colors: [Color(0xFFF2A423), Color(0xFFD98E1B)],
-      );
-    }
-    return AppColors.primaryGradient;
-  }
-
-  IconData _iconForCategory(String cat) {
-    final lower = cat.toLowerCase();
-    if (lower.contains('info') || lower.contains('tech')) {
-      return Icons.computer_rounded;
-    } else if (lower.contains('math')) {
-      return Icons.calculate_rounded;
-    } else if (lower.contains('scien')) {
-      return Icons.science_rounded;
-    } else if (lower.contains('orient')) {
-      return Icons.explore_rounded;
-    } else if (lower.contains('hack')) {
-      return Icons.code_rounded;
-    }
-    return Icons.school_rounded;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: height,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: _gradientForCategory(category),
-        borderRadius: borderRadius,
-      ),
-      child: Center(
-        child: Icon(
-          _iconForCategory(category),
-          size: height * 0.4,
-          color: Colors.white.withValues(alpha: 0.8),
-        ),
-      ),
-    );
-  }
-}
-
-class _DifficultyChip extends StatelessWidget {
-  final CourseDifficulty difficulty;
-
-  const _DifficultyChip({required this.difficulty});
-
-  @override
-  Widget build(BuildContext context) {
-    final (label, color) = switch (difficulty) {
-      CourseDifficulty.debutant => ('Débutant', AppColors.success),
-      CourseDifficulty.intermediaire => ('Intermédiaire', AppColors.warning),
-      CourseDifficulty.avance => ('Avancé', AppColors.error),
-    };
-
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.xxs,
-        vertical: 1,
-      ),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(AppSpacing.xs),
-      ),
-      child: Text(
-        label,
-        style: AppTypography.labelSmall.copyWith(
-          color: color,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}
-
-class _ProgressBar extends StatelessWidget {
-  final int progressPct;
-
-  const _ProgressBar({required this.progressPct});
-
-  @override
-  Widget build(BuildContext context) {
-    final progress = (progressPct / 100).clamp(0.0, 1.0);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Progression',
-              style: AppTypography.labelSmall,
-            ),
-            Text(
-              '$progressPct%',
-              style: AppTypography.labelSmall.copyWith(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.xxxs),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(AppSpacing.xs),
-          child: LinearProgressIndicator(
-            value: progress,
-            backgroundColor: AppColors.border,
-            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
-            minHeight: AppSpacing.progressBarHeight,
-          ),
-        ),
-      ],
     );
   }
 }

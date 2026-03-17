@@ -5,6 +5,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/constants/constants.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../../shared/widgets/buttons/gradient_button.dart';
+import '../../../../shared/widgets/cards/glass_card.dart';
 import '../../domain/entities/course.dart';
 import '../bloc/lesson_bloc.dart';
 import '../widgets/lesson_type_badge.dart';
@@ -349,7 +351,13 @@ class _VideoContent extends StatelessWidget {
                           color: Colors.white,
                         ),
                         const SizedBox(height: AppSpacing.sm),
-                        ElevatedButton.icon(
+                        GradientButton(
+                          text: 'Ouvrir la vidéo',
+                          icon: Icons.open_in_new_rounded,
+                          isSmall: true,
+                          width: 200,
+                          showArrow: false,
+                          useSecondaryColor: true,
                           onPressed: () async {
                             final uri = Uri.tryParse(videoUrl);
                             if (uri != null &&
@@ -358,12 +366,6 @@ class _VideoContent extends StatelessWidget {
                                   mode: LaunchMode.externalApplication);
                             }
                           },
-                          icon: const Icon(Icons.open_in_new_rounded),
-                          label: const Text('Ouvrir la vidéo'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: AppColors.primary,
-                          ),
                         ),
                       ],
                     ),
@@ -428,7 +430,7 @@ class _PdfContent extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(AppSpacing.lg),
             decoration: BoxDecoration(
-              color: const Color(0xFFFEE2E2),
+              color: AppColors.errorLight,
               borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
               border: Border.all(
                   color: AppColors.error.withValues(alpha: 0.3)),
@@ -443,7 +445,10 @@ class _PdfContent extends StatelessWidget {
                         color: AppColors.errorDark)),
                 const SizedBox(height: AppSpacing.md),
                 if (pdfUrl.isNotEmpty)
-                  ElevatedButton.icon(
+                  GradientButton(
+                    text: 'Ouvrir le PDF',
+                    icon: Icons.open_in_new_rounded,
+                    showArrow: false,
                     onPressed: () async {
                       final uri = Uri.tryParse(pdfUrl);
                       if (uri != null && await canLaunchUrl(uri)) {
@@ -451,12 +456,6 @@ class _PdfContent extends StatelessWidget {
                             mode: LaunchMode.externalApplication);
                       }
                     },
-                    icon: const Icon(Icons.open_in_new_rounded),
-                    label: const Text('Ouvrir le PDF'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.error,
-                      foregroundColor: Colors.white,
-                    ),
                   )
                 else
                   Text('PDF non disponible.',
@@ -503,7 +502,7 @@ class _ChallengeContent extends StatelessWidget {
             padding: const EdgeInsets.all(AppSpacing.md),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF7C3AED), Color(0xFF9333EA)],
+                colors: [AppColors.categoryTechnology, Color(0xFF9333EA)],
               ),
               borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
             ),
@@ -539,7 +538,7 @@ class _ChallengeContent extends StatelessWidget {
                     children: [
                       const Icon(Icons.check_circle_outline_rounded,
                           size: AppSpacing.iconSm,
-                          color: Color(0xFF7C3AED)),
+                          color: AppColors.categoryTechnology),
                       const SizedBox(width: AppSpacing.xs),
                       Expanded(
                         child: Text(obj,
@@ -552,25 +551,16 @@ class _ChallengeContent extends StatelessWidget {
 
           if (submissionUrl != null) ...[
             const SizedBox(height: AppSpacing.lg),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () async {
-                  final uri = Uri.tryParse(submissionUrl);
-                  if (uri != null && await canLaunchUrl(uri)) {
-                    await launchUrl(uri,
-                        mode: LaunchMode.externalApplication);
-                  }
-                },
-                icon: const Icon(Icons.upload_rounded),
-                label: const Text('Soumettre ma solution'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF7C3AED),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                      vertical: AppSpacing.sm),
-                ),
-              ),
+            GradientButton(
+              text: 'Soumettre ma solution',
+              icon: Icons.upload_rounded,
+              onPressed: () async {
+                final uri = Uri.tryParse(submissionUrl);
+                if (uri != null && await canLaunchUrl(uri)) {
+                  await launchUrl(uri,
+                      mode: LaunchMode.externalApplication);
+                }
+              },
             ),
           ],
         ],
@@ -718,38 +708,31 @@ class _BottomCompleteButton extends StatelessWidget {
       child: SafeArea(
         child: SizedBox(
           width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: (canComplete && !isCompleting) ? onComplete : null,
-            icon: isCompleting
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white),
-                  )
-                : Icon(
-                    isQuiz
-                        ? Icons.check_circle_rounded
-                        : Icons.done_all_rounded,
+          child: isCompleting
+              ? Container(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.8),
+                    borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
                   ),
-            label: Text(
-              isCompleting
-                  ? 'Validation...'
-                  : isQuiz && !canComplete
+                  child: const Center(
+                    child: SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
+                    ),
+                  ),
+                )
+              : GradientButton(
+                  text: isQuiz && !canComplete
                       ? 'Terminez le quiz d\'abord'
                       : 'Valider cette leçon',
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              disabledBackgroundColor:
-                  AppColors.border,
-              disabledForegroundColor:
-                  AppColors.textTertiary,
-              padding: const EdgeInsets.symmetric(
-                  vertical: AppSpacing.sm),
-            ),
-          ),
+                  icon: isQuiz
+                      ? Icons.check_circle_rounded
+                      : Icons.done_all_rounded,
+                  onPressed: canComplete ? onComplete : null,
+                ),
         ),
       ),
     );
@@ -779,19 +762,26 @@ class _LessonCompletedView extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Success animation placeholder
+              // Success icon
               Container(
                 width: 120,
                 height: 120,
-                decoration: const BoxDecoration(
-                  color: AppColors.successLight,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.success,
+                      AppColors.success.withValues(alpha: 0.7),
+                    ],
+                  ),
                   shape: BoxShape.circle,
                 ),
                 child: const Center(
                   child: Icon(
-                    Icons.check_circle_rounded,
-                    size: 72,
-                    color: AppColors.success,
+                    Icons.emoji_events_rounded,
+                    size: 56,
+                    color: Colors.white,
                   ),
                 ),
               ),
@@ -806,71 +796,55 @@ class _LessonCompletedView extends StatelessWidget {
               const SizedBox(height: AppSpacing.sm),
 
               // Points earned
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.lg,
-                  vertical: AppSpacing.sm,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.secondarySurface,
-                  borderRadius:
-                      BorderRadius.circular(AppSpacing.cardRadiusLarge),
-                  border: Border.all(
-                      color: AppColors.secondary.withValues(alpha: 0.4)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+              GlassCard(
+                margin: EdgeInsets.zero,
+                child: Column(
                   children: [
-                    const Icon(Icons.star_rounded,
-                        color: AppColors.secondary,
-                        size: AppSpacing.iconLg),
-                    const SizedBox(width: AppSpacing.xs),
-                    Text(
-                      '+$pointsEarned points gagnés !',
-                      style: AppTypography.titleMedium.copyWith(
-                        color: AppColors.secondaryDark,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.star_rounded,
+                            color: AppColors.secondary,
+                            size: AppSpacing.iconLg),
+                        const SizedBox(width: AppSpacing.xs),
+                        Text(
+                          '+$pointsEarned points gagnés !',
+                          style: AppTypography.titleMedium.copyWith(
+                            color: AppColors.secondaryDark,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
                     ),
+                    // Course progress
+                    if (courseProgressPct != null) ...[
+                      const SizedBox(height: AppSpacing.md),
+                      Text(
+                        'Progression du cours : $courseProgressPct%',
+                        style: AppTypography.bodyMedium,
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(AppSpacing.xs),
+                        child: LinearProgressIndicator(
+                          value: (courseProgressPct! / 100).clamp(0.0, 1.0),
+                          backgroundColor: AppColors.border,
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                              AppColors.success),
+                          minHeight: AppSpacing.progressBarHeightLarge,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
 
-              // Course progress
-              if (courseProgressPct != null) ...[
-                const SizedBox(height: AppSpacing.lg),
-                Text(
-                  'Progression du cours : $courseProgressPct%',
-                  style: AppTypography.bodyMedium,
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(AppSpacing.xs),
-                  child: LinearProgressIndicator(
-                    value: (courseProgressPct! / 100).clamp(0.0, 1.0),
-                    backgroundColor: AppColors.border,
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                        AppColors.success),
-                    minHeight: AppSpacing.progressBarHeightLarge,
-                  ),
-                ),
-              ],
-
               const SizedBox(height: AppSpacing.xxl),
 
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: onBack,
-                  icon: const Icon(Icons.arrow_back_rounded),
-                  label: const Text('Retour au cours'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                        vertical: AppSpacing.sm),
-                  ),
-                ),
+              GradientButton(
+                text: 'Retour au cours',
+                icon: Icons.arrow_back_rounded,
+                onPressed: onBack,
               ),
             ],
           ),

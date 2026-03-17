@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/constants.dart';
+import '../../../../shared/widgets/buttons/gradient_button.dart';
+import '../../../../shared/widgets/cards/glass_card.dart';
 
 class QuizQuestion {
   final String id;
@@ -219,12 +221,15 @@ class _QuizWidgetState extends State<QuizWidget> {
 
                 // Options
                 ...widget.questions[_currentIndex].options
-                    .map((option) => _OptionTile(
-                          option: option,
+                    .asMap()
+                    .entries
+                    .map((entry) => _OptionTile(
+                          index: entry.key,
+                          option: entry.value,
                           selectedId:
                               _selectedAnswers[_currentQuestion.id],
                           isAnswered: _isAnswered,
-                          onSelect: () => _selectOption(option),
+                          onSelect: () => _selectOption(entry.value),
                         )),
 
                 const SizedBox(height: AppSpacing.xl),
@@ -281,17 +286,21 @@ class _QuizWidgetState extends State<QuizWidget> {
 }
 
 class _OptionTile extends StatelessWidget {
+  final int index;
   final QuizOption option;
   final String? selectedId;
   final bool isAnswered;
   final VoidCallback onSelect;
 
   const _OptionTile({
+    required this.index,
     required this.option,
     required this.selectedId,
     required this.isAnswered,
     required this.onSelect,
   });
+
+  static const _letters = ['A', 'B', 'C', 'D', 'E', 'F'];
 
   @override
   Widget build(BuildContext context) {
@@ -302,6 +311,8 @@ class _OptionTile extends StatelessWidget {
     Color borderColor = AppColors.border;
     Color bgColor = AppColors.card;
     Color textColor = AppColors.textPrimary;
+    Color letterBg = AppColors.surface;
+    Color letterColor = AppColors.textTertiary;
     IconData? trailingIcon;
     Color? iconColor;
 
@@ -309,32 +320,57 @@ class _OptionTile extends StatelessWidget {
       borderColor = AppColors.success;
       bgColor = AppColors.successLight;
       textColor = AppColors.successDark;
+      letterBg = AppColors.success;
+      letterColor = Colors.white;
       trailingIcon = Icons.check_circle_rounded;
       iconColor = AppColors.success;
     } else if (showWrong) {
       borderColor = AppColors.error;
       bgColor = AppColors.errorLight;
       textColor = AppColors.errorDark;
+      letterBg = AppColors.error;
+      letterColor = Colors.white;
       trailingIcon = Icons.cancel_rounded;
       iconColor = AppColors.error;
     } else if (isSelected) {
       borderColor = AppColors.primary;
       bgColor = AppColors.primarySurface;
       textColor = AppColors.primary;
+      letterBg = AppColors.primary;
+      letterColor = Colors.white;
     }
 
     return GestureDetector(
       onTap: isAnswered ? null : onSelect,
       child: Container(
-        margin: const EdgeInsets.only(bottom: AppSpacing.xs),
+        margin: const EdgeInsets.only(bottom: AppSpacing.sm),
         padding: const EdgeInsets.all(AppSpacing.sm),
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(AppSpacing.cardRadiusSmall),
           border: Border.all(color: borderColor, width: isSelected ? 2 : 1),
+          boxShadow: isSelected ? AppColors.cardShadow : null,
         ),
         child: Row(
           children: [
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: letterBg,
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Text(
+                  index < _letters.length ? _letters[index] : '${index + 1}',
+                  style: AppTypography.labelSmall.copyWith(
+                    color: letterColor,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Text(
                 option.text,
@@ -371,6 +407,9 @@ class _ResultView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final resultColor = _passed ? AppColors.success : AppColors.error;
+    final resultBg = _passed ? AppColors.successLight : AppColors.errorLight;
+
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
@@ -380,9 +419,11 @@ class _ResultView extends StatelessWidget {
             width: 100,
             height: 100,
             decoration: BoxDecoration(
-              color: _passed
-                  ? AppColors.successLight
-                  : AppColors.errorLight,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [resultColor, resultColor.withValues(alpha: 0.7)],
+              ),
               shape: BoxShape.circle,
             ),
             child: Center(
@@ -391,8 +432,7 @@ class _ResultView extends StatelessWidget {
                     ? Icons.emoji_events_rounded
                     : Icons.replay_rounded,
                 size: 48,
-                color:
-                    _passed ? AppColors.success : AppColors.error,
+                color: Colors.white,
               ),
             ),
           ),
@@ -400,46 +440,55 @@ class _ResultView extends StatelessWidget {
           Text(
             _passed ? 'Bravo !' : 'Dommage !',
             style: AppTypography.headlineSmall.copyWith(
-              color:
-                  _passed ? AppColors.success : AppColors.error,
+              color: resultColor,
             ),
           ),
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            'Score : $score%',
-            style: AppTypography.titleLarge.copyWith(
-              color: AppColors.textPrimary,
+          const SizedBox(height: AppSpacing.md),
+          GlassCard(
+            margin: EdgeInsets.zero,
+            child: Column(
+              children: [
+                Text(
+                  'Score : $score%',
+                  style: AppTypography.titleLarge.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xxs),
+                Text(
+                  '$correctCount/$totalQuestions bonnes réponses',
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: AppSpacing.xxxs,
+                  ),
+                  decoration: BoxDecoration(
+                    color: resultBg,
+                    borderRadius: BorderRadius.circular(AppSpacing.xs),
+                  ),
+                  child: Text(
+                    _passed
+                        ? 'Quiz réussi !'
+                        : 'Minimum requis : $passScorePct%',
+                    style: AppTypography.labelSmall.copyWith(
+                      color: resultColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: AppSpacing.xxs),
-          Text(
-            '$correctCount/$totalQuestions bonnes réponses',
-            style: AppTypography.bodyMedium,
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            _passed
-                ? 'Vous avez réussi le quiz !'
-                : 'Score minimum requis : $passScorePct%',
-            style: AppTypography.bodySmall.copyWith(
-              color:
-                  _passed ? AppColors.textSecondary : AppColors.error,
-            ),
-            textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSpacing.xl),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: onValidate,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                    vertical: AppSpacing.sm),
-              ),
-              child: const Text('Valider et continuer'),
-            ),
+          GradientButton(
+            text: 'Valider et continuer',
+            onPressed: onValidate,
           ),
         ],
       ),

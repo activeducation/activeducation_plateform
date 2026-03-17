@@ -5,6 +5,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../../core/constants/constants.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../../shared/widgets/buttons/gradient_button.dart';
+import '../../../../shared/widgets/cards/glass_card.dart';
 import '../../domain/entities/course.dart';
 import '../bloc/course_bloc.dart';
 import '../widgets/lesson_type_badge.dart';
@@ -131,20 +133,36 @@ class _CourseDetailView extends StatelessWidget {
                       _CourseMetaRow(course: course),
                       const SizedBox(height: AppSpacing.md),
 
-                      // Description
-                      Text(
-                        course.description,
-                        style: AppTypography.bodyMedium,
+                      // Description in GlassCard
+                      GlassCard(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.info_outline_rounded,
+                                    size: 20, color: AppColors.primary),
+                                const SizedBox(width: AppSpacing.xs),
+                                Text('Description',
+                                    style: AppTypography.titleSmall.copyWith(
+                                        fontWeight: FontWeight.bold)),
+                              ],
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                            Text(
+                              course.description,
+                              style: AppTypography.bodyMedium,
+                            ),
+                          ],
+                        ),
                       ),
 
                       // Progress bar if enrolled
                       if (course.isEnrolled &&
                           course.progressPct != null) ...[
-                        const SizedBox(height: AppSpacing.md),
                         _EnrolledProgressBar(progressPct: course.progressPct!),
+                        const SizedBox(height: AppSpacing.sm),
                       ],
-
-                      const SizedBox(height: AppSpacing.md),
 
                       // Enroll / Continue button
                       _ActionButton(
@@ -157,9 +175,17 @@ class _CourseDetailView extends StatelessWidget {
 
                       const SizedBox(height: AppSpacing.lg),
 
-                      // Modules
-                      Text('Contenu du cours',
-                          style: AppTypography.titleMedium),
+                      // Modules header
+                      Row(
+                        children: [
+                          Icon(Icons.menu_book_rounded,
+                              size: 20, color: AppColors.primary),
+                          const SizedBox(width: AppSpacing.xs),
+                          Text('Contenu du cours',
+                              style: AppTypography.titleMedium.copyWith(
+                                  fontWeight: FontWeight.bold)),
+                        ],
+                      ),
                       const SizedBox(height: AppSpacing.sm),
                     ],
                   ),
@@ -204,14 +230,18 @@ class _CourseAppBar extends StatelessWidget {
   LinearGradient _gradientForCategory(String cat) {
     final lower = cat.toLowerCase();
     if (lower.contains('info') || lower.contains('tech')) {
-      return const LinearGradient(
-          colors: [Color(0xFF1060CF), Color(0xFF3B49DF)]);
+      return AppColors.heroGradient;
     } else if (lower.contains('math')) {
       return const LinearGradient(
-          colors: [Color(0xFF7C3AED), Color(0xFF9333EA)]);
+          colors: [AppColors.categoryTechnology, Color(0xFF9333EA)]);
     } else if (lower.contains('scien')) {
       return const LinearGradient(
-          colors: [Color(0xFF0891B2), Color(0xFF0E7490)]);
+          colors: [AppColors.categoryScience, Color(0xFF0E7490)]);
+    } else if (lower.contains('orient')) {
+      return const LinearGradient(
+          colors: [AppColors.categoryEconomics, Color(0xFF15803D)]);
+    } else if (lower.contains('hack')) {
+      return AppColors.secondaryGradient;
     }
     return AppColors.primaryGradient;
   }
@@ -405,7 +435,6 @@ class _ActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (course.isEnrolled) {
-      // Find first non-completed lesson
       String? nextLessonId;
       outer:
       for (final module in course.modules) {
@@ -418,45 +447,29 @@ class _ActionButton extends StatelessWidget {
         }
       }
 
-      return SizedBox(
-        width: double.infinity,
-        child: ElevatedButton.icon(
-          onPressed: nextLessonId != null
-              ? () => context.push('/elearning/lesson/$nextLessonId')
-              : null,
-          icon: const Icon(Icons.play_arrow_rounded),
-          label: Text(
-            nextLessonId != null ? 'Continuer' : 'Cours terminé',
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.success,
-            foregroundColor: Colors.white,
-            padding:
-                const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-          ),
+      return GradientButton(
+        text: nextLessonId != null ? 'Continuer' : 'Cours terminé',
+        icon: Icons.play_arrow_rounded,
+        showArrow: nextLessonId != null,
+        onPressed: nextLessonId != null
+            ? () => context.push('/elearning/lesson/$nextLessonId')
+            : null,
+      );
+    }
+
+    if (isEnrolling) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
+          child: CircularProgressIndicator(),
         ),
       );
     }
 
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton.icon(
-        onPressed: isEnrolling ? null : onEnroll,
-        icon: isEnrolling
-            ? const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(
-                    strokeWidth: 2, color: Colors.white),
-              )
-            : const Icon(Icons.school_rounded),
-        label: Text(isEnrolling ? 'Inscription...' : 'S\'inscrire'),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-        ),
-      ),
+    return GradientButton(
+      text: 'S\'inscrire',
+      icon: Icons.school_rounded,
+      onPressed: onEnroll,
     );
   }
 }
