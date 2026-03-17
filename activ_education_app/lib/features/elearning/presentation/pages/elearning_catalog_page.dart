@@ -246,7 +246,7 @@ class _CatalogViewState extends State<_CatalogView> {
                         crossAxisCount: 2,
                         crossAxisSpacing: 12,
                         mainAxisSpacing: 12,
-                        childAspectRatio: 1.2,
+                        childAspectRatio: 0.78,
                       ),
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {
@@ -304,7 +304,7 @@ class _ShimmerLoading extends StatelessWidget {
                   crossAxisCount: 2,
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
-                  childAspectRatio: 1.2,
+                  childAspectRatio: 0.78,
                 ),
                 itemCount: 6,
                 itemBuilder: (context, index) => Container(
