@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:iconsax/iconsax.dart';
 
 import '../../../../core/constants/constants.dart';
 import '../../domain/entities/course.dart';
@@ -19,33 +20,27 @@ class LessonTypeBadge extends StatelessWidget {
 
     if (compact) {
       return Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.xxs,
-          vertical: AppSpacing.xxxs,
-        ),
+        width: 26,
+        height: 26,
         decoration: BoxDecoration(
-          color: config.color.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(AppSpacing.cardRadiusSmall),
+          color: config.color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(7),
         ),
         child: Icon(
           config.icon,
-          size: AppSpacing.iconXs,
+          size: 14,
           color: config.color,
         ),
       );
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.xs,
-        vertical: AppSpacing.xxxs,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: config.color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+        color: config.color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: config.color.withValues(alpha: 0.3),
-          width: 1,
+          color: config.color.withValues(alpha: 0.15),
         ),
       ),
       child: Row(
@@ -53,15 +48,17 @@ class LessonTypeBadge extends StatelessWidget {
         children: [
           Icon(
             config.icon,
-            size: AppSpacing.iconXs,
+            size: 13,
             color: config.color,
           ),
-          const SizedBox(width: AppSpacing.xxs),
+          const SizedBox(width: 5),
           Text(
             config.label,
-            style: AppTypography.labelSmall.copyWith(
-              color: config.color,
+            style: TextStyle(
+              fontSize: 11,
               fontWeight: FontWeight.w600,
+              color: config.color,
+              letterSpacing: 0.1,
             ),
           ),
         ],
@@ -74,31 +71,31 @@ class LessonTypeBadge extends StatelessWidget {
       case LessonType.video:
         return _BadgeConfig(
           color: AppColors.info,
-          icon: Icons.play_circle_outline_rounded,
+          icon: Iconsax.play_circle,
           label: 'Vidéo',
         );
       case LessonType.article:
         return _BadgeConfig(
           color: AppColors.success,
-          icon: Icons.article_outlined,
+          icon: Iconsax.document_text,
           label: 'Article',
         );
       case LessonType.quiz:
         return _BadgeConfig(
           color: AppColors.secondary,
-          icon: Icons.quiz_outlined,
+          icon: Iconsax.message_question,
           label: 'Quiz',
         );
       case LessonType.pdf:
         return _BadgeConfig(
           color: AppColors.error,
-          icon: Icons.picture_as_pdf_outlined,
+          icon: Iconsax.document,
           label: 'PDF',
         );
       case LessonType.challenge:
         return _BadgeConfig(
           color: AppColors.categoryTechnology,
-          icon: Icons.emoji_events_outlined,
+          icon: Iconsax.cup,
           label: 'Challenge',
         );
     }

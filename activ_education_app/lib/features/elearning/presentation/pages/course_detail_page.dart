@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:iconsax/iconsax.dart';
+import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/constants/constants.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../shared/widgets/buttons/gradient_button.dart';
-import '../../../../shared/widgets/cards/glass_card.dart';
 import '../../domain/entities/course.dart';
 import '../bloc/course_bloc.dart';
+import '../widgets/course_card.dart' show colorForCategory, iconForCategory;
 import '../widgets/lesson_type_badge.dart';
 
 class CourseDetailPage extends StatelessWidget {
@@ -45,12 +47,20 @@ class _CourseDetailView extends StatelessWidget {
           if (state is CourseEnrolled) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: const Text('Inscription réussie ! Bonne chance.'),
+                content: Row(
+                  children: [
+                    const Icon(Icons.check_circle_rounded,
+                        color: Colors.white, size: 18),
+                    const SizedBox(width: 8),
+                    const Text('Inscription réussie !'),
+                  ],
+                ),
                 backgroundColor: AppColors.success,
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppSpacing.cardRadiusSmall),
+                  borderRadius: BorderRadius.circular(10),
                 ),
+                margin: const EdgeInsets.all(16),
               ),
             );
           }
@@ -60,48 +70,26 @@ class _CourseDetailView extends StatelessWidget {
                 content: Text(state.message),
                 backgroundColor: AppColors.error,
                 behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                margin: const EdgeInsets.all(16),
               ),
             );
           }
         },
         builder: (context, state) {
           if (state is CourseLoading) {
-            return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            );
+            return const _DetailShimmer();
           }
 
           if (state is CourseError && state is! CourseLoaded) {
-            return Scaffold(
-              appBar: AppBar(
-                leading: IconButton(
-                  icon: const Icon(Icons.arrow_back_rounded),
-                  onPressed: () => context.pop(),
-                ),
-              ),
-              body: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.error_outline_rounded,
-                        size: AppSpacing.iconXl, color: AppColors.error),
-                    const SizedBox(height: AppSpacing.md),
-                    Text('Erreur: ${state.message}',
-                        style: AppTypography.bodyMedium,
-                        textAlign: TextAlign.center),
-                    const SizedBox(height: AppSpacing.md),
-                    GradientButton(
-                      text: 'Réessayer',
-                      onPressed: () => context
-                          .read<CourseBloc>()
-                          .add(LoadCourse(state.message)),
-                      showArrow: false,
-                      isSmall: true,
-                      width: 140,
-                    ),
-                  ],
-                ),
-              ),
+            return _DetailError(
+              message: state.message,
+              onRetry: () => context
+                  .read<CourseBloc>()
+                  .add(LoadCourse(state.message)),
+              onBack: () => context.pop(),
             );
           }
 
@@ -116,154 +104,179 @@ class _CourseDetailView extends StatelessWidget {
           if (state is CourseEnrolled) course = state.course;
 
           if (course == null) {
-            return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            );
+            return const _DetailShimmer();
           }
 
-          return CustomScrollView(
-            slivers: [
-              _CourseAppBar(course: course),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Title & badges
-                      Text(course.title, style: AppTypography.headlineSmall),
-                      const SizedBox(height: AppSpacing.sm),
-                      _CourseMetaRow(course: course),
-                      const SizedBox(height: AppSpacing.md),
-
-                      // Description in GlassCard
-                      GlassCard(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(Icons.info_outline_rounded,
-                                    size: 20, color: AppColors.primary),
-                                const SizedBox(width: AppSpacing.xs),
-                                Text('Description',
-                                    style: AppTypography.titleSmall.copyWith(
-                                        fontWeight: FontWeight.bold)),
-                              ],
-                            ),
-                            const SizedBox(height: AppSpacing.sm),
-                            Text(
-                              course.description,
-                              style: AppTypography.bodyMedium,
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // Progress bar if enrolled
-                      if (course.isEnrolled &&
-                          course.progressPct != null) ...[
-                        _EnrolledProgressBar(progressPct: course.progressPct!),
-                        const SizedBox(height: AppSpacing.sm),
-                      ],
-
-                      // Enroll / Continue button
-                      _ActionButton(
-                        course: course,
-                        isEnrolling: isEnrolling,
-                        onEnroll: () => context
-                            .read<CourseBloc>()
-                            .add(EnrollCourse(course!.id)),
-                      ),
-
-                      const SizedBox(height: AppSpacing.lg),
-
-                      // Modules header
-                      Row(
-                        children: [
-                          Icon(Icons.menu_book_rounded,
-                              size: 20, color: AppColors.primary),
-                          const SizedBox(width: AppSpacing.xs),
-                          Text('Contenu du cours',
-                              style: AppTypography.titleMedium.copyWith(
-                                  fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Modules list
-              SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final module = course!.modules[index];
-                    return _ModuleSection(
-                      module: module,
-                      isLocked: module.isLocked,
-                      onLessonTap: (lesson) {
-                        if (!module.isLocked || lesson.isFree) {
-                          context.push('/elearning/lesson/${lesson.id}');
-                        }
-                      },
-                    );
-                  },
-                  childCount: course.modules.length,
-                ),
-              ),
-
-              const SliverToBoxAdapter(
-                child: SizedBox(height: AppSpacing.pagePaddingBottom),
-              ),
-            ],
-          );
+          return _CourseBody(course: course, isEnrolling: isEnrolling);
         },
       ),
     );
   }
 }
 
-class _CourseAppBar extends StatelessWidget {
+// ─── Main Body ────────────────────────────────────────────────────────────────
+
+class _CourseBody extends StatelessWidget {
   final CourseDetail course;
+  final bool isEnrolling;
 
-  const _CourseAppBar({required this.course});
+  const _CourseBody({required this.course, required this.isEnrolling});
 
-  LinearGradient _gradientForCategory(String cat) {
-    final lower = cat.toLowerCase();
-    if (lower.contains('info') || lower.contains('tech')) {
-      return AppColors.heroGradient;
-    } else if (lower.contains('math')) {
-      return const LinearGradient(
-          colors: [AppColors.categoryTechnology, AppColors.primaryIndigo]);
-    } else if (lower.contains('scien')) {
-      return const LinearGradient(
-          colors: [AppColors.categoryScience, AppColors.primary]);
-    } else if (lower.contains('orient')) {
-      return const LinearGradient(
-          colors: [AppColors.categoryEconomics, AppColors.successDark]);
-    } else if (lower.contains('hack')) {
-      return AppColors.secondaryGradient;
-    }
-    return AppColors.primaryGradient;
+  @override
+  Widget build(BuildContext context) {
+    final color = colorForCategory(course.category);
+
+    return Stack(
+      children: [
+        CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            // ── Hero App Bar ──
+            _HeroAppBar(course: course, color: color),
+
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Titre
+                    Text(
+                      course.title,
+                      style: AppTypography.headlineSmall.copyWith(
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.3,
+                        height: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Meta chips
+                    _MetaRow(course: course, color: color),
+                    const SizedBox(height: 20),
+
+                    // Description
+                    _DescriptionCard(description: course.description),
+
+                    // Progression si inscrit
+                    if (course.isEnrolled &&
+                        course.progressPct != null) ...[
+                      const SizedBox(height: 16),
+                      _ProgressSection(
+                        progressPct: course.progressPct!,
+                        color: color,
+                      ),
+                    ],
+
+                    const SizedBox(height: 24),
+
+                    // Header modules
+                    Row(
+                      children: [
+                        Container(
+                          width: 3,
+                          height: 18,
+                          decoration: BoxDecoration(
+                            color: color,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Programme',
+                          style: AppTypography.titleMedium.copyWith(
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          '${course.modules.length} modules',
+                          style: AppTypography.labelSmall.copyWith(
+                            color: AppColors.textTertiary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                ),
+              ),
+            ),
+
+            // ── Modules ──
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final module = course.modules[index];
+                  return _ModuleCard(
+                    module: module,
+                    moduleIndex: index,
+                    color: color,
+                    onLessonTap: (lesson) {
+                      if (!module.isLocked || lesson.isFree) {
+                        context.push('/elearning/lesson/${lesson.id}');
+                      }
+                    },
+                  );
+                },
+                childCount: course.modules.length,
+              ),
+            ),
+
+            // Espace pour le bouton fixe
+            const SliverToBoxAdapter(child: SizedBox(height: 100)),
+          ],
+        ),
+
+        // ── Bouton d'action fixe en bas ──
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: _BottomAction(
+            course: course,
+            isEnrolling: isEnrolling,
+            onEnroll: () => context
+                .read<CourseBloc>()
+                .add(EnrollCourse(course.id)),
+          ),
+        ),
+      ],
+    );
   }
+}
+
+// ─── Hero App Bar ─────────────────────────────────────────────────────────────
+
+class _HeroAppBar extends StatelessWidget {
+  final CourseDetail course;
+  final Color color;
+
+  const _HeroAppBar({required this.course, required this.color});
 
   @override
   Widget build(BuildContext context) {
     return SliverAppBar(
-      expandedHeight: 220,
+      expandedHeight: 200,
       pinned: true,
-      backgroundColor: AppColors.primary,
-      leading: Container(
-        margin: const EdgeInsets.all(AppSpacing.xs),
-        decoration: BoxDecoration(
-          color: Colors.black26,
-          borderRadius: BorderRadius.circular(AppSpacing.cardRadiusSmall),
-        ),
-        child: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-          onPressed: () => context.pop(),
+      backgroundColor: color,
+      surfaceTintColor: Colors.transparent,
+      leading: Padding(
+        padding: const EdgeInsets.all(8),
+        child: GestureDetector(
+          onTap: () => context.pop(),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              Icons.arrow_back_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
         ),
       ),
       flexibleSpace: FlexibleSpaceBar(
@@ -271,39 +284,84 @@ class _CourseAppBar extends StatelessWidget {
             ? CachedNetworkImage(
                 imageUrl: course.thumbnailUrl!,
                 fit: BoxFit.cover,
-                placeholder: (_, __) => Container(
-                  decoration: BoxDecoration(
-                    gradient: _gradientForCategory(course.category),
-                  ),
-                ),
-                errorWidget: (_, __, ___) => Container(
-                  decoration: BoxDecoration(
-                    gradient: _gradientForCategory(course.category),
-                  ),
-                  child: const Center(
-                    child: Icon(Icons.school_rounded,
-                        size: AppSpacing.iconXxl, color: Colors.white54),
-                  ),
-                ),
+                placeholder: (_, __) => _HeroGradient(color: color, course: course),
+                errorWidget: (_, __, ___) =>
+                    _HeroGradient(color: color, course: course),
               )
-            : Container(
-                decoration: BoxDecoration(
-                  gradient: _gradientForCategory(course.category),
-                ),
-                child: const Center(
-                  child: Icon(Icons.school_rounded,
-                      size: AppSpacing.iconXxl, color: Colors.white54),
-                ),
-              ),
+            : _HeroGradient(color: color, course: course),
       ),
     );
   }
 }
 
-class _CourseMetaRow extends StatelessWidget {
+class _HeroGradient extends StatelessWidget {
+  final Color color;
   final CourseDetail course;
 
-  const _CourseMetaRow({required this.course});
+  const _HeroGradient({required this.color, required this.course});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            color,
+            color.withValues(alpha: 0.7),
+          ],
+        ),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Icon(
+                iconForCategory(course.category),
+                size: 32,
+                color: Colors.white.withValues(alpha: 0.9),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 4,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                course.category,
+                style: AppTypography.labelSmall.copyWith(
+                  color: Colors.white.withValues(alpha: 0.9),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Meta Row ─────────────────────────────────────────────────────────────────
+
+class _MetaRow extends StatelessWidget {
+  final CourseDetail course;
+  final Color color;
+
+  const _MetaRow({required this.course, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -314,108 +372,66 @@ class _CourseMetaRow extends StatelessWidget {
     };
 
     return Wrap(
-      spacing: AppSpacing.xs,
-      runSpacing: AppSpacing.xxs,
+      spacing: 8,
+      runSpacing: 6,
       children: [
-        _MetaChip(
+        _Chip(
+          icon: Iconsax.chart_2,
           label: diffLabel,
           color: diffColor,
-          icon: Icons.signal_cellular_alt_rounded,
         ),
-        _MetaChip(
+        _Chip(
+          icon: Iconsax.clock,
           label: '${course.durationMinutes} min',
           color: AppColors.info,
-          icon: Icons.timer_outlined,
         ),
-        _MetaChip(
+        _Chip(
+          icon: Iconsax.medal_star5,
           label: '${course.pointsReward} pts',
           color: AppColors.secondary,
-          icon: Icons.star_rounded,
         ),
-        _MetaChip(
+        _Chip(
+          icon: Iconsax.folder_2,
           label: course.category,
           color: AppColors.textSecondary,
-          icon: Icons.folder_outlined,
         ),
       ],
     );
   }
 }
 
-class _MetaChip extends StatelessWidget {
+class _Chip extends StatelessWidget {
+  final IconData icon;
   final String label;
   final Color color;
-  final IconData icon;
 
-  const _MetaChip({
+  const _Chip({
+    required this.icon,
     required this.label,
     required this.color,
-    required this.icon,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.xs, vertical: AppSpacing.xxxs),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.15)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: AppSpacing.iconXs, color: color),
-          const SizedBox(width: AppSpacing.xxxs),
+          Icon(icon, size: 13, color: color),
+          const SizedBox(width: 5),
           Text(
             label,
-            style:
-                AppTypography.labelSmall.copyWith(color: color, fontWeight: FontWeight.w600),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _EnrolledProgressBar extends StatelessWidget {
-  final int progressPct;
-
-  const _EnrolledProgressBar({required this.progressPct});
-
-  @override
-  Widget build(BuildContext context) {
-    final progress = (progressPct / 100).clamp(0.0, 1.0);
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      decoration: BoxDecoration(
-        color: AppColors.primarySurface,
-        borderRadius: BorderRadius.circular(AppSpacing.cardRadiusSmall),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Votre progression',
-                  style: AppTypography.labelMedium.copyWith(
-                      color: AppColors.primary, fontWeight: FontWeight.w600)),
-              Text('$progressPct%',
-                  style: AppTypography.labelMedium.copyWith(
-                      color: AppColors.primary, fontWeight: FontWeight.w700)),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.xxs),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppSpacing.xs),
-            child: LinearProgressIndicator(
-              value: progress,
-              backgroundColor: AppColors.border,
-              valueColor:
-                  const AlwaysStoppedAnimation<Color>(AppColors.primary),
-              minHeight: AppSpacing.progressBarHeightLarge,
+            style: TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w600,
+              color: color,
+              letterSpacing: 0.1,
             ),
           ),
         ],
@@ -424,12 +440,520 @@ class _EnrolledProgressBar extends StatelessWidget {
   }
 }
 
-class _ActionButton extends StatelessWidget {
+// ─── Description Card ─────────────────────────────────────────────────────────
+
+class _DescriptionCard extends StatefulWidget {
+  final String description;
+
+  const _DescriptionCard({required this.description});
+
+  @override
+  State<_DescriptionCard> createState() => _DescriptionCardState();
+}
+
+class _DescriptionCardState extends State<_DescriptionCard> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final isLong = widget.description.length > 150;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Iconsax.info_circle,
+                  size: 16, color: AppColors.primary),
+              const SizedBox(width: 6),
+              Text(
+                'À propos',
+                style: AppTypography.titleSmall.copyWith(
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.1,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          AnimatedCrossFade(
+            firstChild: Text(
+              widget.description,
+              style: AppTypography.bodyMedium.copyWith(
+                height: 1.55,
+                color: AppColors.textSecondary,
+              ),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+            secondChild: Text(
+              widget.description,
+              style: AppTypography.bodyMedium.copyWith(
+                height: 1.55,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            crossFadeState: _expanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 200),
+          ),
+          if (isLong) ...[
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: () => setState(() => _expanded = !_expanded),
+              child: Text(
+                _expanded ? 'Voir moins' : 'Voir plus',
+                style: AppTypography.labelSmall.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Progress Section ─────────────────────────────────────────────────────────
+
+class _ProgressSection extends StatelessWidget {
+  final int progressPct;
+  final Color color;
+
+  const _ProgressSection({
+    required this.progressPct,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = (progressPct / 100).clamp(0.0, 1.0);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.12)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(Iconsax.chart_success,
+                      size: 16, color: color),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Votre progression',
+                    style: AppTypography.labelMedium.copyWith(
+                      color: color,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              Text(
+                '$progressPct%',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: progress,
+              backgroundColor: color.withValues(alpha: 0.1),
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+              minHeight: 6,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Module Card ──────────────────────────────────────────────────────────────
+
+class _ModuleCard extends StatefulWidget {
+  final CourseModule module;
+  final int moduleIndex;
+  final Color color;
+  final void Function(LessonSummary lesson) onLessonTap;
+
+  const _ModuleCard({
+    required this.module,
+    required this.moduleIndex,
+    required this.color,
+    required this.onLessonTap,
+  });
+
+  @override
+  State<_ModuleCard> createState() => _ModuleCardState();
+}
+
+class _ModuleCardState extends State<_ModuleCard>
+    with SingleTickerProviderStateMixin {
+  late bool _expanded;
+  late AnimationController _iconController;
+
+  @override
+  void initState() {
+    super.initState();
+    _expanded = !widget.module.isLocked;
+    _iconController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+      value: _expanded ? 1.0 : 0.0,
+    );
+  }
+
+  @override
+  void dispose() {
+    _iconController.dispose();
+    super.dispose();
+  }
+
+  void _toggle() {
+    setState(() {
+      _expanded = !_expanded;
+      if (_expanded) {
+        _iconController.forward();
+      } else {
+        _iconController.reverse();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isLocked = widget.module.isLocked;
+    final completedCount = widget.module.lessons
+        .where((l) => l.status == LessonStatus.completed)
+        .length;
+    final totalLessons = widget.module.lessons.length;
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+      decoration: BoxDecoration(
+        color: isLocked ? AppColors.surface : AppColors.card,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isLocked
+              ? AppColors.border
+              : completedCount == totalLessons && totalLessons > 0
+                  ? AppColors.success.withValues(alpha: 0.3)
+                  : AppColors.border,
+        ),
+        boxShadow: isLocked
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+      ),
+      child: Column(
+        children: [
+          // Module header
+          InkWell(
+            onTap: _toggle,
+            borderRadius: BorderRadius.circular(14),
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                children: [
+                  // Numéro du module
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: isLocked
+                          ? AppColors.textTertiary.withValues(alpha: 0.1)
+                          : widget.color.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Center(
+                      child: isLocked
+                          ? Icon(Iconsax.lock,
+                              size: 16, color: AppColors.textTertiary)
+                          : Text(
+                              '${widget.moduleIndex + 1}',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                color: widget.color,
+                              ),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.module.title,
+                          style: AppTypography.titleSmall.copyWith(
+                            color: isLocked
+                                ? AppColors.textTertiary
+                                : AppColors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          isLocked
+                              ? '$totalLessons leçons'
+                              : '$completedCount/$totalLessons complétées',
+                          style: AppTypography.labelSmall.copyWith(
+                            color: isLocked
+                                ? AppColors.textTertiary
+                                : completedCount == totalLessons &&
+                                        totalLessons > 0
+                                    ? AppColors.success
+                                    : AppColors.textTertiary,
+                            fontWeight: completedCount == totalLessons &&
+                                    totalLessons > 0
+                                ? FontWeight.w600
+                                : FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  RotationTransition(
+                    turns: Tween(begin: 0.0, end: 0.5)
+                        .animate(_iconController),
+                    child: Icon(
+                      Icons.expand_more_rounded,
+                      size: 20,
+                      color: AppColors.textTertiary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Lessons
+          AnimatedCrossFade(
+            firstChild: const SizedBox(width: double.infinity),
+            secondChild: Column(
+              children: [
+                Container(
+                  height: 1,
+                  color: AppColors.border,
+                  margin: const EdgeInsets.symmetric(horizontal: 14),
+                ),
+                ...widget.module.lessons.asMap().entries.map(
+                      (entry) => _LessonRow(
+                        lesson: entry.value,
+                        lessonIndex: entry.key,
+                        isModuleLocked: isLocked,
+                        color: widget.color,
+                        isLast:
+                            entry.key == widget.module.lessons.length - 1,
+                        onTap: () => widget.onLessonTap(entry.value),
+                      ),
+                    ),
+              ],
+            ),
+            crossFadeState: _expanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 200),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Lesson Row ───────────────────────────────────────────────────────────────
+
+class _LessonRow extends StatelessWidget {
+  final LessonSummary lesson;
+  final int lessonIndex;
+  final bool isModuleLocked;
+  final Color color;
+  final bool isLast;
+  final VoidCallback onTap;
+
+  const _LessonRow({
+    required this.lesson,
+    required this.lessonIndex,
+    required this.isModuleLocked,
+    required this.color,
+    required this.isLast,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isAccessible = !isModuleLocked || lesson.isFree;
+    final isCompleted = lesson.status == LessonStatus.completed;
+    final isInProgress = lesson.status == LessonStatus.in_progress;
+
+    return InkWell(
+      onTap: isAccessible ? onTap : null,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          14,
+          lessonIndex == 0 ? 10 : 6,
+          14,
+          isLast ? 14 : 6,
+        ),
+        child: Row(
+          children: [
+            // Status indicator
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: isCompleted
+                    ? AppColors.success.withValues(alpha: 0.1)
+                    : isInProgress
+                        ? color.withValues(alpha: 0.1)
+                        : AppColors.surface,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isCompleted
+                      ? AppColors.success.withValues(alpha: 0.3)
+                      : isInProgress
+                          ? color.withValues(alpha: 0.3)
+                          : AppColors.border,
+                  width: 1.5,
+                ),
+              ),
+              child: Center(
+                child: Icon(
+                  isCompleted
+                      ? Icons.check_rounded
+                      : isInProgress
+                          ? Icons.play_arrow_rounded
+                          : Icons.circle,
+                  size: isCompleted || isInProgress ? 14 : 6,
+                  color: isCompleted
+                      ? AppColors.success
+                      : isInProgress
+                          ? color
+                          : AppColors.textTertiary,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+
+            // Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    lesson.title,
+                    style: AppTypography.labelLarge.copyWith(
+                      color: isAccessible
+                          ? AppColors.textPrimary
+                          : AppColors.textTertiary,
+                      fontWeight:
+                          isInProgress ? FontWeight.w600 : FontWeight.w500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 3),
+                  Row(
+                    children: [
+                      LessonTypeBadge(
+                        lessonType: lesson.lessonType,
+                        compact: false,
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(Iconsax.clock,
+                          size: 12, color: AppColors.textTertiary),
+                      const SizedBox(width: 3),
+                      Text(
+                        '${lesson.durationMinutes} min',
+                        style: AppTypography.labelSmall,
+                      ),
+                      if (lesson.isFree && isModuleLocked) ...[
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.successLight,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            'Gratuit',
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.success,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(width: 8),
+            Icon(
+              isAccessible
+                  ? Icons.chevron_right_rounded
+                  : Iconsax.lock,
+              size: 18,
+              color: AppColors.textTertiary,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Bottom Action ────────────────────────────────────────────────────────────
+
+class _BottomAction extends StatelessWidget {
   final CourseDetail course;
   final bool isEnrolling;
   final VoidCallback onEnroll;
 
-  const _ActionButton({
+  const _BottomAction({
     required this.course,
     required this.isEnrolling,
     required this.onEnroll,
@@ -437,6 +961,48 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        border: Border(
+          top: BorderSide(color: AppColors.border),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: _buildButton(context),
+      ),
+    );
+  }
+
+  Widget _buildButton(BuildContext context) {
+    if (isEnrolling) {
+      return Container(
+        height: 52,
+        decoration: BoxDecoration(
+          gradient: AppColors.primaryGradient,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: const Center(
+          child: SizedBox(
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(
+              strokeWidth: 2.5,
+              color: Colors.white,
+            ),
+          ),
+        ),
+      );
+    }
+
     if (course.isEnrolled) {
       String? nextLessonId;
       outer:
@@ -451,8 +1017,10 @@ class _ActionButton extends StatelessWidget {
       }
 
       return GradientButton(
-        text: nextLessonId != null ? 'Continuer' : 'Cours terminé',
-        icon: Icons.play_arrow_rounded,
+        text: nextLessonId != null ? 'Continuer le cours' : 'Cours terminé',
+        icon: nextLessonId != null
+            ? Iconsax.play
+            : Iconsax.tick_circle,
         showArrow: nextLessonId != null,
         onPressed: nextLessonId != null
             ? () => context.push('/elearning/lesson/$nextLessonId')
@@ -460,259 +1028,151 @@ class _ActionButton extends StatelessWidget {
       );
     }
 
-    if (isEnrolling) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-
     return GradientButton(
-      text: 'S\'inscrire',
-      icon: Icons.school_rounded,
+      text: 'S\'inscrire au cours',
+      icon: Iconsax.book_1,
       onPressed: onEnroll,
     );
   }
 }
 
-class _ModuleSection extends StatefulWidget {
-  final CourseModule module;
-  final bool isLocked;
-  final void Function(LessonSummary lesson) onLessonTap;
+// ─── Shimmer ──────────────────────────────────────────────────────────────────
 
-  const _ModuleSection({
-    required this.module,
-    required this.isLocked,
-    required this.onLessonTap,
-  });
-
-  @override
-  State<_ModuleSection> createState() => _ModuleSectionState();
-}
-
-class _ModuleSectionState extends State<_ModuleSection> {
-  bool _expanded = true;
-
-  @override
-  void initState() {
-    super.initState();
-    // Collapse locked modules by default
-    _expanded = !widget.isLocked;
-  }
+class _DetailShimmer extends StatelessWidget {
+  const _DetailShimmer();
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        0,
-        AppSpacing.md,
-        AppSpacing.sm,
-      ),
-      decoration: BoxDecoration(
-        color: widget.isLocked
-            ? AppColors.surface
-            : AppColors.card,
-        borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-        border: Border.all(color: AppColors.border),
-        boxShadow: widget.isLocked ? null : AppColors.cardShadow,
-      ),
+    return Shimmer.fromColors(
+      baseColor: AppColors.surface,
+      highlightColor: AppColors.card,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Module header
-          InkWell(
-            onTap: () => setState(() => _expanded = !_expanded),
-            borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.sm),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(AppSpacing.xxs),
+          Container(height: 200, color: Colors.white),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: double.infinity,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  width: 200,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  width: double.infinity,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                ...List.generate(
+                  3,
+                  (_) => Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    height: 70,
                     decoration: BoxDecoration(
-                      color: widget.isLocked
-                          ? AppColors.textTertiary.withValues(alpha: 0.15)
-                          : AppColors.primary.withValues(alpha: 0.12),
-                      borderRadius:
-                          BorderRadius.circular(AppSpacing.cardRadiusSmall),
-                    ),
-                    child: Icon(
-                      widget.isLocked
-                          ? Icons.lock_rounded
-                          : Icons.folder_open_rounded,
-                      size: AppSpacing.iconSm,
-                      color: widget.isLocked
-                          ? AppColors.textTertiary
-                          : AppColors.primary,
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.module.title,
-                          style: AppTypography.titleSmall.copyWith(
-                            color: widget.isLocked
-                                ? AppColors.textTertiary
-                                : AppColors.textPrimary,
-                          ),
-                        ),
-                        Text(
-                          '${widget.module.lessons.length} leçons',
-                          style: AppTypography.labelSmall,
-                        ),
-                      ],
-                    ),
-                  ),
-                  Icon(
-                    _expanded
-                        ? Icons.expand_less_rounded
-                        : Icons.expand_more_rounded,
-                    color: AppColors.textSecondary,
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-
-          // Lessons
-          if (_expanded)
-            ...widget.module.lessons.map((lesson) => _LessonTile(
-                  lesson: lesson,
-                  isModuleLocked: widget.isLocked,
-                  onTap: () => widget.onLessonTap(lesson),
-                )),
         ],
       ),
     );
   }
 }
 
-class _LessonTile extends StatelessWidget {
-  final LessonSummary lesson;
-  final bool isModuleLocked;
-  final VoidCallback onTap;
+// ─── Detail Error ─────────────────────────────────────────────────────────────
 
-  const _LessonTile({
-    required this.lesson,
-    required this.isModuleLocked,
-    required this.onTap,
+class _DetailError extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+  final VoidCallback onBack;
+
+  const _DetailError({
+    required this.message,
+    required this.onRetry,
+    required this.onBack,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isAccessible = !isModuleLocked || lesson.isFree;
-    final isCompleted = lesson.status == LessonStatus.completed;
-    final isInProgress = lesson.status == LessonStatus.in_progress;
-
-    return InkWell(
-      onTap: isAccessible ? onTap : null,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.sm,
-          vertical: AppSpacing.xs,
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded),
+          onPressed: onBack,
         ),
-        decoration: BoxDecoration(
-          border: Border(
-            top: BorderSide(color: AppColors.border, width: 0.5),
-          ),
-        ),
-        child: Row(
-          children: [
-            // Status icon
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: isCompleted
-                    ? AppColors.successLight
-                    : isInProgress
-                        ? AppColors.primarySurface
-                        : AppColors.surface,
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Icon(
-                  isCompleted
-                      ? Icons.check_rounded
-                      : isInProgress
-                          ? Icons.play_arrow_rounded
-                          : Icons.radio_button_unchecked_rounded,
-                  size: AppSpacing.iconSm,
-                  color: isCompleted
-                      ? AppColors.success
-                      : isInProgress
-                          ? AppColors.primary
-                          : AppColors.textTertiary,
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 40),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: AppColors.errorLight,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Iconsax.warning_2,
+                  size: 32,
+                  color: AppColors.error,
                 ),
               ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-
-            // Lesson info
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    lesson.title,
-                    style: AppTypography.labelLarge.copyWith(
-                      color: isAccessible
-                          ? AppColors.textPrimary
-                          : AppColors.textTertiary,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: AppSpacing.xxxs),
-                  Row(
-                    children: [
-                      LessonTypeBadge(
-                        lessonType: lesson.lessonType,
-                        compact: false,
-                      ),
-                      const SizedBox(width: AppSpacing.xs),
-                      Icon(Icons.timer_outlined,
-                          size: AppSpacing.iconXs,
-                          color: AppColors.textTertiary),
-                      const SizedBox(width: AppSpacing.xxxs),
-                      Text('${lesson.durationMinutes} min',
-                          style: AppTypography.labelSmall),
-                      const Spacer(),
-                      if (lesson.isFree && isModuleLocked)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.xxs),
-                          decoration: BoxDecoration(
-                            color: AppColors.successLight,
-                            borderRadius:
-                                BorderRadius.circular(AppSpacing.xs),
-                          ),
-                          child: Text(
-                            'Gratuit',
-                            style: AppTypography.labelSmall
-                                .copyWith(color: AppColors.success),
-                          ),
-                        ),
-                    ],
-                  ),
-                ],
+              const SizedBox(height: 16),
+              Text(
+                'Impossible de charger le cours',
+                style: AppTypography.titleSmall.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
               ),
-            ),
-
-            const SizedBox(width: AppSpacing.xs),
-            Icon(
-              isAccessible
-                  ? Icons.chevron_right_rounded
-                  : Icons.lock_rounded,
-              size: AppSpacing.iconSm,
-              color: AppColors.textTertiary,
-            ),
-          ],
+              const SizedBox(height: 6),
+              Text(
+                message,
+                style: AppTypography.bodySmall.copyWith(
+                  color: AppColors.textTertiary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              GradientButton(
+                text: 'Réessayer',
+                icon: Iconsax.refresh,
+                showArrow: false,
+                isSmall: true,
+                width: 160,
+                onPressed: onRetry,
+              ),
+            ],
+          ),
         ),
       ),
     );

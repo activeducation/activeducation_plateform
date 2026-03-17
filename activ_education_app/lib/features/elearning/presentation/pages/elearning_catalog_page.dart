@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:iconsax/iconsax.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/constants/constants.dart';
 import '../../../../core/di/injection_container.dart';
-import '../../../../shared/widgets/inputs/filter_chip_bar.dart';
 import '../../../../shared/widgets/buttons/gradient_button.dart';
 import '../../domain/entities/course.dart';
 import '../bloc/catalog_bloc.dart';
@@ -32,6 +32,8 @@ class _CatalogView extends StatefulWidget {
 
 class _CatalogViewState extends State<_CatalogView> {
   int _selectedIndex = 0;
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
 
   static const _categories = [
     'Tous',
@@ -42,96 +44,319 @@ class _CatalogViewState extends State<_CatalogView> {
     'Hackathons',
   ];
 
+  static const _categoryIcons = <IconData>[
+    Iconsax.element_4,
+    Iconsax.monitor,
+    Iconsax.math,
+    Iconsax.discover_1,
+    Iconsax.routing_2,
+    Iconsax.code,
+  ];
+
   List<Course> _filterCourses(List<Course> courses) {
-    if (_selectedIndex == 0) return courses;
-    final category = _categories[_selectedIndex];
-    return courses
-        .where((c) =>
-            c.category.toLowerCase().contains(category.toLowerCase()))
-        .toList();
+    var filtered = courses;
+
+    // Filtre par catégorie
+    if (_selectedIndex > 0) {
+      final category = _categories[_selectedIndex];
+      filtered = filtered
+          .where(
+              (c) => c.category.toLowerCase().contains(category.toLowerCase()))
+          .toList();
+    }
+
+    // Filtre par recherche
+    if (_searchQuery.isNotEmpty) {
+      final q = _searchQuery.toLowerCase();
+      filtered = filtered
+          .where((c) =>
+              c.title.toLowerCase().contains(q) ||
+              c.description.toLowerCase().contains(q) ||
+              c.category.toLowerCase().contains(q))
+          .toList();
+    }
+
+    return filtered;
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.card,
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.pop(),
-        ),
-        title: Text(
-          'E-Learning',
-          style: AppTypography.titleLarge,
-        ),
-      ),
       body: BlocBuilder<CatalogBloc, CatalogState>(
         builder: (context, state) {
           if (state is CatalogLoading) {
-            return _ShimmerLoading();
+            return const _ShimmerLoading();
           }
 
           if (state is CatalogError) {
             return _ErrorView(
               message: state.message,
-              onRetry: () =>
-                  context.read<CatalogBloc>().add(LoadCatalog()),
+              onRetry: () => context.read<CatalogBloc>().add(LoadCatalog()),
             );
           }
 
           if (state is CatalogLoaded) {
             final filteredCourses = _filterCourses(state.courses);
             return CustomScrollView(
+              physics: const BouncingScrollPhysics(),
               slivers: [
-                // Filter chips
+                // ── App Bar ──
+                SliverAppBar(
+                  backgroundColor: AppColors.background,
+                  elevation: 0,
+                  scrolledUnderElevation: 0,
+                  surfaceTintColor: Colors.transparent,
+                  floating: true,
+                  snap: true,
+                  toolbarHeight: 56,
+                  automaticallyImplyLeading: false,
+                  leading: GoRouter.of(context).canPop()
+                      ? IconButton(
+                          icon: Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(
+                              Icons.arrow_back_rounded,
+                              size: 20,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          onPressed: () => context.pop(),
+                        )
+                      : null,
+                  title: Text(
+                    'E-Learning',
+                    style: AppTypography.titleLarge.copyWith(
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                  actions: [
+                    Container(
+                      margin: const EdgeInsets.only(right: 16),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: AppColors.primarySurface,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Iconsax.book_1,
+                              size: 15, color: AppColors.primary),
+                          const SizedBox(width: 5),
+                          Text(
+                            '${state.courses.length}',
+                            style: AppTypography.labelSmall.copyWith(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                // ── Search Bar ──
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.pagePaddingHorizontal,
-                      AppSpacing.md,
-                      AppSpacing.pagePaddingHorizontal,
-                      AppSpacing.sm,
-                    ),
-                    child: FilterChipBar(
-                      filters: _categories
-                          .map((c) => FilterChipItem(label: c))
-                          .toList(),
-                      selectedIndex: _selectedIndex,
-                      onSelected: (index) =>
-                          setState(() => _selectedIndex = index),
+                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+                    child: Container(
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: AppColors.card,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.border),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.03),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: (v) => setState(() => _searchQuery = v),
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.textPrimary,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'Rechercher un cours...',
+                          hintStyle: AppTypography.bodyMedium.copyWith(
+                            color: AppColors.textTertiary,
+                          ),
+                          prefixIcon: Icon(
+                            Iconsax.search_normal_1,
+                            size: 18,
+                            color: AppColors.textTertiary,
+                          ),
+                          suffixIcon: _searchQuery.isNotEmpty
+                              ? IconButton(
+                                  icon: Icon(Icons.close_rounded,
+                                      size: 18,
+                                      color: AppColors.textTertiary),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    setState(() => _searchQuery = '');
+                                  },
+                                )
+                              : null,
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
 
-                // My Courses section
+                // ── Category chips ──
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: 38,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      itemCount: _categories.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 8),
+                      itemBuilder: (context, index) {
+                        final isSelected = index == _selectedIndex;
+                        return GestureDetector(
+                          onTap: () =>
+                              setState(() => _selectedIndex = index),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            curve: Curves.easeOut,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? AppColors.primary
+                                  : AppColors.card,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: isSelected
+                                    ? AppColors.primary
+                                    : AppColors.border,
+                              ),
+                              boxShadow: isSelected
+                                  ? [
+                                      BoxShadow(
+                                        color: AppColors.primary
+                                            .withValues(alpha: 0.2),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ]
+                                  : null,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  _categoryIcons[index],
+                                  size: 14,
+                                  color: isSelected
+                                      ? Colors.white
+                                      : AppColors.textSecondary,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  _categories[index],
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: isSelected
+                                        ? FontWeight.w600
+                                        : FontWeight.w500,
+                                    color: isSelected
+                                        ? Colors.white
+                                        : AppColors.textSecondary,
+                                    letterSpacing: 0.1,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 20)),
+
+                // ── Mes cours (section horizontale) ──
                 if (state.myCourses.isNotEmpty) ...[
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.pagePaddingHorizontal,
-                        AppSpacing.md,
-                        AppSpacing.pagePaddingHorizontal,
-                        AppSpacing.sm,
-                      ),
-                      child: Text(
-                        'Mes cours',
-                        style: AppTypography.titleLarge.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      padding:
+                          const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 3,
+                            height: 18,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Continuer',
+                            style: AppTypography.titleMedium.copyWith(
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.2,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 7,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primarySurface,
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            child: Text(
+                              '${state.myCourses.length}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
                   SliverToBoxAdapter(
                     child: SizedBox(
-                      height: 170,
+                      height: 160,
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.pagePaddingHorizontal,
-                        ),
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
                         itemCount: state.myCourses.length,
                         separatorBuilder: (_, __) =>
                             const SizedBox(width: 12),
@@ -149,44 +374,39 @@ class _CatalogViewState extends State<_CatalogView> {
                       ),
                     ),
                   ),
-                  const SliverToBoxAdapter(
-                    child: SizedBox(height: AppSpacing.md),
-                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 24)),
                 ],
 
-                // All courses section header
+                // ── Section "Catalogue" ──
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.pagePaddingHorizontal,
-                      AppSpacing.xs,
-                      AppSpacing.pagePaddingHorizontal,
-                      AppSpacing.sm,
-                    ),
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
                     child: Row(
                       children: [
+                        Container(
+                          width: 3,
+                          height: 18,
+                          decoration: BoxDecoration(
+                            color: AppColors.secondary,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
                         Text(
-                          'Tous les cours',
-                          style: AppTypography.titleLarge.copyWith(
-                            fontWeight: FontWeight.bold,
+                          _selectedIndex == 0
+                              ? 'Tous les cours'
+                              : _categories[_selectedIndex],
+                          style: AppTypography.titleMedium.copyWith(
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.2,
                           ),
                         ),
                         const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            '${filteredCourses.length} cours',
-                            style: AppTypography.labelSmall.copyWith(
-                              color: AppColors.textSecondary,
-                              fontWeight: FontWeight.w500,
-                            ),
+                        Text(
+                          '${filteredCourses.length} cours',
+                          style: AppTypography.labelSmall.copyWith(
+                            color: AppColors.textTertiary,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
@@ -194,59 +414,28 @@ class _CatalogViewState extends State<_CatalogView> {
                   ),
                 ),
 
-                // Grid of courses
+                // ── Grille de cours ──
                 if (filteredCourses.isEmpty)
                   SliverFillRemaining(
-                    child: Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.xl,
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.search_off_rounded,
-                              size: AppSpacing.iconXl,
-                              color: AppColors.textTertiary,
-                            ),
-                            const SizedBox(height: AppSpacing.sm),
-                            Text(
-                              'Aucun cours dans cette catégorie',
-                              style: AppTypography.bodyMedium.copyWith(
-                                color: AppColors.textSecondary,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: AppSpacing.lg),
-                            GradientButton(
-                              text: 'Voir tous les cours',
-                              isSmall: true,
-                              width: 200,
-                              showArrow: false,
-                              onPressed: () =>
-                                  setState(() => _selectedIndex = 0),
-                            ),
-                          ],
-                        ),
-                      ),
+                    child: _EmptyState(
+                      query: _searchQuery,
+                      onReset: () => setState(() {
+                        _selectedIndex = 0;
+                        _searchController.clear();
+                        _searchQuery = '';
+                      }),
                     ),
                   )
                 else
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.pagePaddingHorizontal,
-                      0,
-                      AppSpacing.pagePaddingHorizontal,
-                      AppSpacing.pagePaddingBottom,
-                    ),
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
                     sliver: SliverGrid(
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
                         crossAxisSpacing: 12,
                         mainAxisSpacing: 12,
-                        childAspectRatio: 0.78,
+                        childAspectRatio: 0.72,
                       ),
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {
@@ -275,46 +464,65 @@ class _CatalogViewState extends State<_CatalogView> {
   }
 }
 
-class _ShimmerLoading extends StatelessWidget {
+// ─── Empty State ──────────────────────────────────────────────────────────────
+
+class _EmptyState extends StatelessWidget {
+  final String query;
+  final VoidCallback onReset;
+
+  const _EmptyState({required this.query, required this.onReset});
+
   @override
   Widget build(BuildContext context) {
-    return Shimmer.fromColors(
-      baseColor: AppColors.surface,
-      highlightColor: AppColors.card,
+    return Center(
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.pagePaddingHorizontal),
+        padding: const EdgeInsets.symmetric(horizontal: 40),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const SizedBox(height: AppSpacing.md),
             Container(
-              width: 120,
-              height: 20,
+              width: 72,
+              height: 72,
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(AppSpacing.xs),
+                color: AppColors.surface,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                query.isNotEmpty
+                    ? Iconsax.search_status
+                    : Iconsax.book,
+                size: 32,
+                color: AppColors.textTertiary,
               ),
             ),
-            const SizedBox(height: AppSpacing.sm),
-            Expanded(
-              child: GridView.builder(
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate:
-                    const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 0.78,
-                ),
-                itemCount: 6,
-                itemBuilder: (context, index) => Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius:
-                        BorderRadius.circular(AppSpacing.cardRadius),
-                  ),
-                ),
+            const SizedBox(height: 16),
+            Text(
+              query.isNotEmpty
+                  ? 'Aucun résultat'
+                  : 'Aucun cours disponible',
+              style: AppTypography.titleSmall.copyWith(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
               ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              query.isNotEmpty
+                  ? 'Essayez avec d\'autres mots-clés'
+                  : 'Revenez plus tard pour découvrir de nouveaux cours',
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.textTertiary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            GradientButton(
+              text: 'Réinitialiser',
+              isSmall: true,
+              width: 160,
+              showArrow: false,
+              icon: Iconsax.refresh,
+              onPressed: onReset,
             ),
           ],
         ),
@@ -322,6 +530,90 @@ class _ShimmerLoading extends StatelessWidget {
     );
   }
 }
+
+// ─── Shimmer Loading ──────────────────────────────────────────────────────────
+
+class _ShimmerLoading extends StatelessWidget {
+  const _ShimmerLoading();
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Shimmer.fromColors(
+        baseColor: AppColors.surface,
+        highlightColor: AppColors.card,
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 12),
+              // Fake search bar
+              Container(
+                height: 46,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Fake chips
+              Row(
+                children: List.generate(
+                  4,
+                  (i) => Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: Container(
+                      width: 80,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              // Section header
+              Container(
+                width: 120,
+                height: 16,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Grid
+              Expanded(
+                child: GridView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate:
+                      const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 0.72,
+                  ),
+                  itemCount: 6,
+                  itemBuilder: (context, index) => Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Error View ───────────────────────────────────────────────────────────────
 
 class _ErrorView extends StatelessWidget {
   final String message;
@@ -333,36 +625,48 @@ class _ErrorView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding:
-            const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+        padding: const EdgeInsets.symmetric(horizontal: 40),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.error_outline_rounded,
-              size: AppSpacing.iconXl,
-              color: AppColors.error,
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: AppColors.errorLight,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Iconsax.warning_2,
+                size: 32,
+                color: AppColors.error,
+              ),
             ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: 16),
             Text(
               'Une erreur est survenue',
-              style: AppTypography.titleMedium,
+              style: AppTypography.titleSmall.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: AppSpacing.xs),
+            const SizedBox(height: 6),
             Text(
               message,
               style: AppTypography.bodySmall.copyWith(
-                color: AppColors.textSecondary,
+                color: AppColors.textTertiary,
               ),
               textAlign: TextAlign.center,
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: 20),
             GradientButton(
               text: 'Réessayer',
-              icon: Icons.refresh_rounded,
+              icon: Iconsax.refresh,
+              showArrow: false,
+              isSmall: true,
+              width: 160,
               onPressed: onRetry,
             ),
           ],

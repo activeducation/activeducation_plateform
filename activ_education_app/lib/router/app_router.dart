@@ -75,6 +75,11 @@ class AppRouter {
                 const NoTransitionPage(child: TestSelectionPage()),
           ),
           GoRoute(
+            path: '/elearning',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: ElearningCatalogPage()),
+          ),
+          GoRoute(
             path: '/schools',
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: SchoolDirectoryPage()),
@@ -116,13 +121,7 @@ class AppRouter {
           return ChatPage(args: args);
         },
       ),
-      // E-Learning
-      GoRoute(
-        path: '/elearning',
-        builder: (BuildContext context, GoRouterState state) {
-          return const ElearningCatalogPage();
-        },
-      ),
+      // E-Learning (detail routes outside shell)
       GoRoute(
         path: '/elearning/course/:id',
         builder: (BuildContext context, GoRouterState state) {
@@ -259,7 +258,7 @@ class _MainShellWrapperState extends State<_MainShellWrapper> {
               activeIcon: Icons.play_lesson_rounded,
               label: 'Cours',
               isActive: _currentIndex == 2,
-              onTap: () => context.push('/elearning'),
+              onTap: () => context.go('/elearning'),
             ),
             _SideNavItem(
               icon: Icons.business_outlined,
@@ -347,7 +346,7 @@ class _MainShellWrapperState extends State<_MainShellWrapper> {
                 activeIcon: Icons.play_lesson_rounded,
                 label: 'Cours',
                 isActive: _currentIndex == 2,
-                onTap: () => context.push('/elearning'),
+                onTap: () => context.go('/elearning'),
               ),
               _NavItem(
                 icon: Icons.business_outlined,

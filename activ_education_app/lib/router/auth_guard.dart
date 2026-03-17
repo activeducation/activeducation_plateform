@@ -31,6 +31,7 @@ class AuthGuard {
   static const List<String> publicPrefixes = [
     '/home',
     '/orientation',
+    '/elearning',
     '/schools',
     '/chat',
   ];
