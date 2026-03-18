@@ -55,12 +55,12 @@ class _CatalogViewState extends State<_CatalogView> {
   ];
 
   static const _categoryColors = <Color>[
-    AppColors.primary,
-    AppColors.primary,
-    AppColors.categoryTechnology,
-    AppColors.categoryScience,
-    AppColors.categoryEconomics,
-    AppColors.secondary,
+    AppColors.secondary,           // Tous → orange logo
+    AppColors.primary,             // Informatique → bleu logo
+    AppColors.categoryTechnology,  // Mathématiques
+    AppColors.categoryScience,     // Sciences
+    AppColors.categoryEconomics,   // Orientation
+    Color(0xFF1060CF),             // Hackathons → bleu accent logo
   ];
 
   List<Course> _filterCourses(List<Course> courses) {
@@ -115,7 +115,7 @@ class _CatalogViewState extends State<_CatalogView> {
                   pinned: true,
                   floating: false,
                   snap: false,
-                  backgroundColor: AppColors.darkBg,
+                  backgroundColor: AppColors.primary,
                   surfaceTintColor: Colors.transparent,
                   elevation: 0,
                   automaticallyImplyLeading: false,
@@ -182,7 +182,7 @@ class _CatalogViewState extends State<_CatalogView> {
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [AppColors.darkBg, AppColors.darkBg3],
+                          colors: [AppColors.primary, Color(0xFF1060CF)],
                         ),
                       ),
                       child: Stack(
@@ -196,7 +196,7 @@ class _CatalogViewState extends State<_CatalogView> {
                               height: 150,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: AppColors.primary.withValues(alpha: 0.08),
+                                color: Colors.white.withValues(alpha: 0.08),
                               ),
                             ),
                           ),
@@ -208,7 +208,7 @@ class _CatalogViewState extends State<_CatalogView> {
                               height: 100,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: AppColors.secondary.withValues(alpha: 0.06),
+                                color: AppColors.secondary.withValues(alpha: 0.22),
                               ),
                             ),
                           ),
@@ -223,10 +223,10 @@ class _CatalogViewState extends State<_CatalogView> {
                                   width: 40,
                                   height: 40,
                                   decoration: BoxDecoration(
-                                    color: AppColors.primary.withValues(alpha: 0.2),
+                                    color: Colors.white.withValues(alpha: 0.18),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: AppColors.primary.withValues(alpha: 0.35),
+                                      color: Colors.white.withValues(alpha: 0.3),
                                     ),
                                   ),
                                   child: const Icon(
@@ -684,10 +684,10 @@ class _ShimmerLoading extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Dark hero shimmer
+        // Hero shimmer
         Container(
           height: 156,
-          color: AppColors.darkBg2,
+          color: AppColors.primary,
         ),
         Expanded(
           child: Shimmer.fromColors(
