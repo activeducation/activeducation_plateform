@@ -457,7 +457,7 @@ class _SidebarItemState extends State<_SidebarItem> {
                         width: 3,
                         height: 20,
                         decoration: BoxDecoration(
-                          color: AppColors.secondary,
+                          color: AppColors.primary,
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
