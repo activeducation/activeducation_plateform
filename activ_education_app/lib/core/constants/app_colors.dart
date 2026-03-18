@@ -8,7 +8,7 @@ class AppColors {
   // ============================================
   // PRIMARY — Bleu Royal (couleur logo)
   // ============================================
-  static const Color primary = Color(0xFF2245E8);
+  static const Color primary = Color(0xFF1060CF);
   static const Color primaryLight = Color(0xFF4D6EF0);
   static const Color primaryDark = Color(0xFF1530C4);
   static const Color primarySurface = Color(0xFFEAEEFD);
@@ -152,7 +152,7 @@ class AppColors {
   static const LinearGradient heroGradientBlue = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF0C1828), Color(0xFF2245E8)],
+    colors: [Color(0xFF0C1828), Color(0xFF1060CF)],
   );
 
   static const LinearGradient heroGradientAlt = LinearGradient(
