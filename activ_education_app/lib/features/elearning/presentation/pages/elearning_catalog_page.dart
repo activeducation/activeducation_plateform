@@ -31,9 +31,10 @@ class _CatalogView extends StatefulWidget {
 }
 
 class _CatalogViewState extends State<_CatalogView> {
-  int _selectedIndex = 0;
+  int _selectedCategoryIndex = 0;
   final _searchController = TextEditingController();
   String _searchQuery = '';
+  bool _searchFocused = false;
 
   static const _categories = [
     'Tous',
@@ -53,19 +54,23 @@ class _CatalogViewState extends State<_CatalogView> {
     Iconsax.code,
   ];
 
+  static const _categoryColors = <Color>[
+    AppColors.primary,
+    AppColors.primary,
+    AppColors.categoryTechnology,
+    AppColors.categoryScience,
+    AppColors.categoryEconomics,
+    AppColors.secondary,
+  ];
+
   List<Course> _filterCourses(List<Course> courses) {
     var filtered = courses;
-
-    // Filtre par catégorie
-    if (_selectedIndex > 0) {
-      final category = _categories[_selectedIndex];
+    if (_selectedCategoryIndex > 0) {
+      final category = _categories[_selectedCategoryIndex];
       filtered = filtered
-          .where(
-              (c) => c.category.toLowerCase().contains(category.toLowerCase()))
+          .where((c) => c.category.toLowerCase().contains(category.toLowerCase()))
           .toList();
     }
-
-    // Filtre par recherche
     if (_searchQuery.isNotEmpty) {
       final q = _searchQuery.toLowerCase();
       filtered = filtered
@@ -75,7 +80,6 @@ class _CatalogViewState extends State<_CatalogView> {
               c.category.toLowerCase().contains(q))
           .toList();
     }
-
     return filtered;
   }
 
@@ -91,9 +95,7 @@ class _CatalogViewState extends State<_CatalogView> {
       backgroundColor: AppColors.background,
       body: BlocBuilder<CatalogBloc, CatalogState>(
         builder: (context, state) {
-          if (state is CatalogLoading) {
-            return const _ShimmerLoading();
-          }
+          if (state is CatalogLoading) return const _ShimmerLoading();
 
           if (state is CatalogError) {
             return _ErrorView(
@@ -107,15 +109,15 @@ class _CatalogViewState extends State<_CatalogView> {
             return CustomScrollView(
               physics: const BouncingScrollPhysics(),
               slivers: [
-                // ── App Bar ──
+                // ── Hero App Bar ──
                 SliverAppBar(
-                  backgroundColor: AppColors.background,
-                  elevation: 0,
-                  scrolledUnderElevation: 0,
+                  expandedHeight: 156,
+                  pinned: true,
+                  floating: false,
+                  snap: false,
+                  backgroundColor: AppColors.darkBg,
                   surfaceTintColor: Colors.transparent,
-                  floating: true,
-                  snap: true,
-                  toolbarHeight: 56,
+                  elevation: 0,
                   automaticallyImplyLeading: false,
                   leading: GoRouter.of(context).canPop()
                       ? IconButton(
@@ -123,102 +125,239 @@ class _CatalogViewState extends State<_CatalogView> {
                             width: 36,
                             height: 36,
                             decoration: BoxDecoration(
-                              color: AppColors.surface,
+                              color: Colors.white.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: const Icon(
                               Icons.arrow_back_rounded,
                               size: 20,
-                              color: AppColors.textPrimary,
+                              color: Colors.white,
                             ),
                           ),
                           onPressed: () => context.pop(),
                         )
                       : null,
-                  title: Text(
-                    'E-Learning',
-                    style: AppTypography.titleLarge.copyWith(
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.3,
-                    ),
-                  ),
                   actions: [
                     Container(
                       margin: const EdgeInsets.only(right: 16),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 5),
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
-                        color: AppColors.primarySurface,
+                        color: AppColors.secondary.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: AppColors.secondary.withValues(alpha: 0.3),
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Iconsax.book_1,
-                              size: 15, color: AppColors.primary),
+                          Icon(Iconsax.book_1, size: 13, color: AppColors.secondary),
                           const SizedBox(width: 5),
                           Text(
                             '${state.courses.length}',
-                            style: AppTypography.labelSmall.copyWith(
-                              color: AppColors.primary,
+                            style: TextStyle(
+                              fontSize: 12,
                               fontWeight: FontWeight.w700,
+                              color: AppColors.secondary,
                             ),
                           ),
                         ],
                       ),
                     ),
                   ],
+                  flexibleSpace: FlexibleSpaceBar(
+                    collapseMode: CollapseMode.parallax,
+                    titlePadding: const EdgeInsets.only(left: 20, bottom: 14),
+                    title: Text(
+                      'E-Learning',
+                      style: AppTypography.titleMedium.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    background: Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [AppColors.darkBg, AppColors.darkBg3],
+                        ),
+                      ),
+                      child: Stack(
+                        children: [
+                          // Decorative orbs
+                          Positioned(
+                            top: -24,
+                            right: -20,
+                            child: Container(
+                              width: 150,
+                              height: 150,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: AppColors.primary.withValues(alpha: 0.08),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: -16,
+                            left: -16,
+                            child: Container(
+                              width: 100,
+                              height: 100,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: AppColors.secondary.withValues(alpha: 0.06),
+                              ),
+                            ),
+                          ),
+                          // Content
+                          Positioned(
+                            bottom: 20,
+                            left: 20,
+                            right: 20,
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: AppColors.primary.withValues(alpha: 0.35),
+                                    ),
+                                  ),
+                                  child: const Icon(
+                                    Iconsax.book_1,
+                                    color: Colors.white,
+                                    size: 19,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'Bibliothèque',
+                                        style: AppTypography.heroTitle.copyWith(
+                                          fontSize: 20,
+                                          letterSpacing: -0.5,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        state.myCourses.isNotEmpty
+                                            ? '${state.myCourses.length} en cours · ${state.courses.length} disponibles'
+                                            : '${state.courses.length} cours disponibles',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: AppColors.darkTextSecondary,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if (state.myCourses.isNotEmpty) ...[
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.xpGold.withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: AppColors.xpGold.withValues(alpha: 0.3),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Text('🔥', style: TextStyle(fontSize: 13)),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          '${state.myCourses.length}',
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w800,
+                                            color: AppColors.xpGold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
 
                 // ── Search Bar ──
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                     child: Container(
-                      height: 46,
+                      height: 48,
                       decoration: BoxDecoration(
                         color: AppColors.card,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.border),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: _searchFocused
+                              ? AppColors.primary.withValues(alpha: 0.4)
+                              : AppColors.border,
+                          width: _searchFocused ? 1.5 : 1.0,
+                        ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.03),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
+                            color: _searchFocused
+                                ? AppColors.primary.withValues(alpha: 0.07)
+                                : Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 12,
+                            offset: const Offset(0, 3),
                           ),
                         ],
                       ),
-                      child: TextField(
-                        controller: _searchController,
-                        onChanged: (v) => setState(() => _searchQuery = v),
-                        style: AppTypography.bodyMedium.copyWith(
-                          color: AppColors.textPrimary,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: 'Rechercher un cours...',
-                          hintStyle: AppTypography.bodyMedium.copyWith(
-                            color: AppColors.textTertiary,
-                          ),
-                          prefixIcon: Icon(
-                            Iconsax.search_normal_1,
-                            size: 18,
-                            color: AppColors.textTertiary,
-                          ),
-                          suffixIcon: _searchQuery.isNotEmpty
-                              ? IconButton(
-                                  icon: Icon(Icons.close_rounded,
+                      child: Focus(
+                        onFocusChange: (v) => setState(() => _searchFocused = v),
+                        child: TextField(
+                          controller: _searchController,
+                          onChanged: (v) => setState(() => _searchQuery = v),
+                          style: AppTypography.bodyMedium
+                              .copyWith(color: AppColors.textPrimary),
+                          decoration: InputDecoration(
+                            hintText: 'Rechercher un cours...',
+                            hintStyle: AppTypography.bodyMedium
+                                .copyWith(color: AppColors.textTertiary),
+                            prefixIcon: Icon(
+                              Iconsax.search_normal_1,
+                              size: 18,
+                              color: _searchFocused
+                                  ? AppColors.primary
+                                  : AppColors.textTertiary,
+                            ),
+                            suffixIcon: _searchQuery.isNotEmpty
+                                ? IconButton(
+                                    icon: Icon(
+                                      Icons.close_rounded,
                                       size: 18,
-                                      color: AppColors.textTertiary),
-                                  onPressed: () {
-                                    _searchController.clear();
-                                    setState(() => _searchQuery = '');
-                                  },
-                                )
-                              : null,
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
+                                      color: AppColors.textTertiary,
+                                    ),
+                                    onPressed: () {
+                                      _searchController.clear();
+                                      setState(() => _searchQuery = '');
+                                    },
+                                  )
+                                : null,
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 14),
                           ),
                         ),
                       ),
@@ -226,44 +365,42 @@ class _CatalogViewState extends State<_CatalogView> {
                   ),
                 ),
 
+                const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
                 // ── Category chips ──
                 SliverToBoxAdapter(
                   child: SizedBox(
-                    height: 38,
+                    height: 40,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
                       itemCount: _categories.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 8),
+                      separatorBuilder: (_, _) => const SizedBox(width: 8),
                       itemBuilder: (context, index) {
-                        final isSelected = index == _selectedIndex;
+                        final isSelected = index == _selectedCategoryIndex;
+                        final catColor = _categoryColors[index];
                         return GestureDetector(
                           onTap: () =>
-                              setState(() => _selectedIndex = index),
+                              setState(() => _selectedCategoryIndex = index),
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
                             curve: Curves.easeOut,
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 8,
-                            ),
+                                horizontal: 14, vertical: 9),
                             decoration: BoxDecoration(
-                              color: isSelected
-                                  ? AppColors.primary
-                                  : AppColors.card,
+                              color: isSelected ? catColor : AppColors.card,
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
-                                color: isSelected
-                                    ? AppColors.primary
-                                    : AppColors.border,
+                                color:
+                                    isSelected ? catColor : AppColors.border,
                               ),
                               boxShadow: isSelected
                                   ? [
                                       BoxShadow(
-                                        color: AppColors.primary
-                                            .withValues(alpha: 0.2),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 2),
+                                        color: catColor.withValues(alpha: 0.30),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 3),
                                       ),
                                     ]
                                   : null,
@@ -273,7 +410,7 @@ class _CatalogViewState extends State<_CatalogView> {
                               children: [
                                 Icon(
                                   _categoryIcons[index],
-                                  size: 14,
+                                  size: 13,
                                   color: isSelected
                                       ? Colors.white
                                       : AppColors.textSecondary,
@@ -284,12 +421,11 @@ class _CatalogViewState extends State<_CatalogView> {
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: isSelected
-                                        ? FontWeight.w600
+                                        ? FontWeight.w700
                                         : FontWeight.w500,
                                     color: isSelected
                                         ? Colors.white
                                         : AppColors.textSecondary,
-                                    letterSpacing: 0.1,
                                   ),
                                 ),
                               ],
@@ -301,65 +437,30 @@ class _CatalogViewState extends State<_CatalogView> {
                   ),
                 ),
 
-                const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                const SliverToBoxAdapter(child: SizedBox(height: 26)),
 
                 // ── Mes cours (section horizontale) ──
                 if (state.myCourses.isNotEmpty) ...[
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding:
-                          const EdgeInsets.fromLTRB(20, 0, 20, 12),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 3,
-                            height: 18,
-                            decoration: BoxDecoration(
-                              color: AppColors.primary,
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Continuer',
-                            style: AppTypography.titleMedium.copyWith(
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: -0.2,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 7,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.primarySurface,
-                              borderRadius: BorderRadius.circular(5),
-                            ),
-                            child: Text(
-                              '${state.myCourses.length}',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                          ),
-                        ],
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+                      child: _SectionTitle(
+                        title: 'Continuer',
+                        badge: '${state.myCourses.length}',
+                        icon: Iconsax.play_cricle,
+                        color: AppColors.primary,
                       ),
                     ),
                   ),
                   SliverToBoxAdapter(
                     child: SizedBox(
-                      height: 160,
+                      height: 148,
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         physics: const BouncingScrollPhysics(),
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
                         itemCount: state.myCourses.length,
-                        separatorBuilder: (_, __) =>
-                            const SizedBox(width: 12),
+                        separatorBuilder: (_, __) => const SizedBox(width: 12),
                         itemBuilder: (context, index) {
                           final course = state.myCourses[index];
                           return CourseCard(
@@ -374,32 +475,21 @@ class _CatalogViewState extends State<_CatalogView> {
                       ),
                     ),
                   ),
-                  const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                  const SliverToBoxAdapter(child: SizedBox(height: 28)),
                 ],
 
-                // ── Section "Catalogue" ──
+                // ── Catalogue section header ──
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
                     child: Row(
                       children: [
-                        Container(
-                          width: 3,
-                          height: 18,
-                          decoration: BoxDecoration(
-                            color: AppColors.secondary,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          _selectedIndex == 0
+                        _SectionTitle(
+                          title: _selectedCategoryIndex == 0
                               ? 'Tous les cours'
-                              : _categories[_selectedIndex],
-                          style: AppTypography.titleMedium.copyWith(
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.2,
-                          ),
+                              : _categories[_selectedCategoryIndex],
+                          icon: Iconsax.book_1,
+                          color: AppColors.secondary,
                         ),
                         const Spacer(),
                         Text(
@@ -420,7 +510,7 @@ class _CatalogViewState extends State<_CatalogView> {
                     child: _EmptyState(
                       query: _searchQuery,
                       onReset: () => setState(() {
-                        _selectedIndex = 0;
+                        _selectedCategoryIndex = 0;
                         _searchController.clear();
                         _searchQuery = '';
                       }),
@@ -428,13 +518,13 @@ class _CatalogViewState extends State<_CatalogView> {
                   )
                 else
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
                     sliver: SliverGrid(
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
                         crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
+                        mainAxisSpacing: 14,
                         childAspectRatio: 0.72,
                       ),
                       delegate: SliverChildBuilderDelegate(
@@ -464,6 +554,66 @@ class _CatalogViewState extends State<_CatalogView> {
   }
 }
 
+// ─── Section Title ────────────────────────────────────────────────────────────
+
+class _SectionTitle extends StatelessWidget {
+  final String title;
+  final String? badge;
+  final IconData icon;
+  final Color color;
+
+  const _SectionTitle({
+    required this.title,
+    this.badge,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 30,
+          height: 30,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, size: 14, color: color),
+        ),
+        const SizedBox(width: 10),
+        Text(
+          title,
+          style: AppTypography.titleMedium.copyWith(
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.2,
+          ),
+        ),
+        if (badge != null) ...[
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(5),
+            ),
+            child: Text(
+              badge!,
+              style: TextStyle(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
 // ─── Empty State ──────────────────────────────────────────────────────────────
 
 class _EmptyState extends StatelessWidget {
@@ -488,18 +638,14 @@ class _EmptyState extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                query.isNotEmpty
-                    ? Iconsax.search_status
-                    : Iconsax.book,
+                query.isNotEmpty ? Iconsax.search_status : Iconsax.book,
                 size: 32,
                 color: AppColors.textTertiary,
               ),
             ),
             const SizedBox(height: 16),
             Text(
-              query.isNotEmpty
-                  ? 'Aucun résultat'
-                  : 'Aucun cours disponible',
+              query.isNotEmpty ? 'Aucun résultat' : 'Aucun cours disponible',
               style: AppTypography.titleSmall.copyWith(
                 color: AppColors.textSecondary,
                 fontWeight: FontWeight.w600,
@@ -510,9 +656,7 @@ class _EmptyState extends StatelessWidget {
               query.isNotEmpty
                   ? 'Essayez avec d\'autres mots-clés'
                   : 'Revenez plus tard pour découvrir de nouveaux cours',
-              style: AppTypography.bodySmall.copyWith(
-                color: AppColors.textTertiary,
-              ),
+              style: AppTypography.bodySmall.copyWith(color: AppColors.textTertiary),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
@@ -538,77 +682,82 @@ class _ShimmerLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Shimmer.fromColors(
-        baseColor: AppColors.surface,
-        highlightColor: AppColors.card,
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 12),
-              // Fake search bar
-              Container(
-                height: 46,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Fake chips
-              Row(
-                children: List.generate(
-                  4,
-                  (i) => Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: Container(
-                      width: 80,
-                      height: 34,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
+    return Column(
+      children: [
+        // Dark hero shimmer
+        Container(
+          height: 156,
+          color: AppColors.darkBg2,
+        ),
+        Expanded(
+          child: Shimmer.fromColors(
+            baseColor: AppColors.surface,
+            highlightColor: AppColors.card,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 8),
+                  Container(
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: List.generate(
+                      4,
+                      (i) => Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: Container(
+                          width: 80,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              // Section header
-              Container(
-                width: 120,
-                height: 16,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Grid
-              Expanded(
-                child: GridView.builder(
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 0.72,
-                  ),
-                  itemCount: 6,
-                  itemBuilder: (context, index) => Container(
+                  const SizedBox(height: 24),
+                  Container(
+                    width: 130,
+                    height: 16,
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(4),
                     ),
                   ),
-                ),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: GridView.builder(
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 14,
+                        childAspectRatio: 0.72,
+                      ),
+                      itemCount: 6,
+                      itemBuilder: (context, index) => Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
-      ),
+      ],
     );
   }
 }
