@@ -6,24 +6,24 @@ class AppColors {
   AppColors._();
 
   // ============================================
-  // PRIMARY — Bleu Royal
+  // PRIMARY — Bleu Royal (couleur logo)
   // ============================================
-  static const Color primary = Color(0xFF1060CF);
-  static const Color primaryLight = Color(0xFF4A8BE8);
-  static const Color primaryDark = Color(0xFF0A45A0);
-  static const Color primarySurface = Color(0xFFE8F0FE);
-  static const Color primarySurface2 = Color(0xFFD0E3FD);
-  static const Color primaryMedium = Color(0xFF2E7CE6);
-  static const Color primaryIndigo = Color(0xFF3B49DF);
+  static const Color primary = Color(0xFF2245E8);
+  static const Color primaryLight = Color(0xFF4D6EF0);
+  static const Color primaryDark = Color(0xFF1530C4);
+  static const Color primarySurface = Color(0xFFEAEEFD);
+  static const Color primarySurface2 = Color(0xFFD4DBFB);
+  static const Color primaryMedium = Color(0xFF3355EC);
+  static const Color primaryIndigo = Color(0xFF3045E0);
 
   // ============================================
-  // SECONDARY — Ambre Chaud (Gamification)
+  // SECONDARY — Orange Vif (couleur logo)
   // ============================================
-  static const Color secondary = Color(0xFFF2A423);
-  static const Color secondaryLight = Color(0xFFF7C164);
-  static const Color secondaryDark = Color(0xFFD98E1B);
-  static const Color secondarySurface = Color(0xFFFEF3E2);
-  static const Color shimmer = Color(0xFFF5E6D0);
+  static const Color secondary = Color(0xFFFF9E18);
+  static const Color secondaryLight = Color(0xFFFFB84A);
+  static const Color secondaryDark = Color(0xFFE08010);
+  static const Color secondarySurface = Color(0xFFFFF3E0);
+  static const Color shimmer = Color(0xFFFFF0D0);
 
   // ============================================
   // DARK UI — Sidebar, headers hero, sections sombres
@@ -152,7 +152,7 @@ class AppColors {
   static const LinearGradient heroGradientBlue = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF0C1828), Color(0xFF1060CF)],
+    colors: [Color(0xFF0C1828), Color(0xFF2245E8)],
   );
 
   static const LinearGradient heroGradientAlt = LinearGradient(
