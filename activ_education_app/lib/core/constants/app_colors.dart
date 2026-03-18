@@ -1,32 +1,64 @@
 import 'package:flutter/material.dart';
 
-/// Palette de couleurs ActivEducation
-/// Design professionnel, lumineux avec bleu + orange de la marque
+/// Palette ActivEducation — Design "Deep Navy + Amber Gold"
+/// Thème premium avec sidebar sombre, contenus clairs, accents ambre gamifiés
 class AppColors {
   AppColors._();
 
   // ============================================
-  // COULEURS PRIMAIRES - Bleu Marque
+  // PRIMARY — Bleu Royal
   // ============================================
   static const Color primary = Color(0xFF1060CF);
   static const Color primaryLight = Color(0xFF4A8BE8);
-  static const Color primaryDark = Color(0xFF0D4EA6);
+  static const Color primaryDark = Color(0xFF0A45A0);
   static const Color primarySurface = Color(0xFFE8F0FE);
+  static const Color primarySurface2 = Color(0xFFD0E3FD);
+  static const Color primaryMedium = Color(0xFF2E7CE6);
+  static const Color primaryIndigo = Color(0xFF3B49DF);
 
   // ============================================
-  // COULEURS SECONDAIRES - Orange/Ambre Marque
+  // SECONDARY — Ambre Chaud (Gamification)
   // ============================================
   static const Color secondary = Color(0xFFF2A423);
   static const Color secondaryLight = Color(0xFFF7C164);
   static const Color secondaryDark = Color(0xFFD98E1B);
   static const Color secondarySurface = Color(0xFFFEF3E2);
+  static const Color shimmer = Color(0xFFF5E6D0);
 
   // ============================================
-  // COULEURS ENRICHIES
+  // DARK UI — Sidebar, headers hero, sections sombres
   // ============================================
-  static const Color primaryMedium = Color(0xFF2E7CE6);
-  static const Color primaryIndigo = Color(0xFF3B49DF);
-  static const Color shimmer = Color(0xFFF5E6D0);
+  static const Color darkBg = Color(0xFF070F1E);
+  static const Color darkBg2 = Color(0xFF0C1828);
+  static const Color darkBg3 = Color(0xFF111F34);
+  static const Color darkSurface = Color(0xFF162540);
+  static const Color darkSurface2 = Color(0xFF1C2F50);
+  static const Color darkSurface3 = Color(0xFF213860);
+  static const Color darkBorder = Color(0xFF1E3055);
+  static const Color darkBorder2 = Color(0xFF253D6A);
+  static const Color darkDivider = Color(0xFF172845);
+
+  static const Color darkTextPrimary = Color(0xFFE6EFF8);
+  static const Color darkTextSecondary = Color(0xFF7A9DB8);
+  static const Color darkTextMuted = Color(0xFF4A6880);
+  static const Color darkAccentBlue = Color(0xFF4A8BE8);
+  static const Color darkAccentAmber = Color(0xFFFFB83F);
+
+  // ============================================
+  // GAMIFICATION — XP, niveaux, streaks, badges
+  // ============================================
+  static const Color xpGold = Color(0xFFFFCA28);
+  static const Color xpGoldDark = Color(0xFFE6A800);
+  static const Color xpGoldSurface = Color(0xFFFFF8DC);
+  static const Color streakFire = Color(0xFFFF6B35);
+  static const Color streakFireLight = Color(0xFFFF9060);
+  static const Color streakFireSurface = Color(0xFFFFF0EA);
+  static const Color levelPurple = Color(0xFF8B5CF6);
+  static const Color levelPurpleSurface = Color(0xFFF3EBFF);
+  static const Color rankGold = Color(0xFFFFD700);
+  static const Color rankSilver = Color(0xFFC0C0C0);
+  static const Color rankBronze = Color(0xFFCD7F32);
+  static const Color xpBar = Color(0xFF34D399);
 
   // ============================================
   // STATUTS
@@ -48,48 +80,35 @@ class AppColors {
   static const Color infoDark = Color(0xFF1D4ED8);
 
   // ============================================
-  // FOND & SURFACES - Thème Clair
+  // FOND & SURFACES — Thème Clair
   // ============================================
-  static const Color background = Color(0xFFFAFBFD);
-  static const Color surface = Color(0xFFF0F2F5);
-  static const Color surfaceLight = Color(0xFFF5F6F8);
-
+  static const Color background = Color(0xFFF2F5FC);
+  static const Color backgroundAlt = Color(0xFFEBEFF9);
+  static const Color surface = Color(0xFFF6F8FD);
+  static const Color surfaceLight = Color(0xFFF9FAFD);
   static const Color card = Color(0xFFFFFFFF);
-  static const Color cardHover = Color(0xFFF9FAFB);
+  static const Color cardHover = Color(0xFFF5F8FF);
 
   // ============================================
   // TEXTE
   // ============================================
-  static const Color textPrimary = Color(0xFF1A1A2E);
-  static const Color textSecondary = Color(0xFF6B7280);
-  static const Color textTertiary = Color(0xFF9CA3AF);
-  static const Color textDisabled = Color(0xFFD1D5DB);
+  static const Color textPrimary = Color(0xFF0D1832);
+  static const Color textSecondary = Color(0xFF4A6280);
+  static const Color textTertiary = Color(0xFF8AAAC0);
+  static const Color textDisabled = Color(0xFFC0D0E0);
   static const Color textOnPrimary = Color(0xFFFFFFFF);
   static const Color textOnAccent = Color(0xFFFFFFFF);
 
   // ============================================
   // BORDURES & DIVIDERS
   // ============================================
-  static const Color border = Color(0xFFE5E7EB);
-  static const Color borderLight = Color(0xFFF3F4F6);
-  static const Color divider = Color(0xFFE5E7EB);
+  static const Color border = Color(0xFFDDE4F0);
+  static const Color borderLight = Color(0xFFEDF2FA);
+  static const Color divider = Color(0xFFE5EDF6);
 
-  // Kept for orientation pages compatibility
-  static const Color glassBorder = Color(0xFFE5E7EB);
+  // Kept for compatibility
+  static const Color glassBorder = Color(0xFFDDE4F0);
   static const Color accent = Color(0xFF1060CF);
-  static const Color xpGold = Color(0xFFFFD700);
-  static const Color rankSilver = Color(0xFFC0C0C0);
-  static const Color rankBronze = Color(0xFFCD7F32);
-  static const LinearGradient backgroundGradient = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [background, surface],
-  );
-  static const LinearGradient cardGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [card, surfaceLight],
-  );
 
   // ============================================
   // CATÉGORIES D'ORIENTATION
@@ -105,14 +124,14 @@ class AppColors {
   // DÉGRADÉS
   // ============================================
   static const LinearGradient primaryGradient = LinearGradient(
-    begin: Alignment.centerLeft,
-    end: Alignment.centerRight,
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
     colors: [primary, primaryDark],
   );
 
   static const LinearGradient secondaryGradient = LinearGradient(
-    begin: Alignment.centerLeft,
-    end: Alignment.centerRight,
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
     colors: [secondary, secondaryDark],
   );
 
@@ -122,16 +141,56 @@ class AppColors {
     colors: [secondary, secondaryDark],
   );
 
+  /// Dégradé hero sombre — fond de la sidebar et du header home
+  static const LinearGradient heroGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [darkBg, darkBg3],
+  );
+
+  /// Dégradé hero bleu — bannière d'orientation
+  static const LinearGradient heroGradientBlue = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF0C1828), Color(0xFF1060CF)],
+  );
+
+  static const LinearGradient heroGradientAlt = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [primary, primaryIndigo],
+  );
+
   static const LinearGradient crossBrandGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [primary, secondary],
   );
 
-  static const LinearGradient heroGradient = LinearGradient(
+  static const LinearGradient backgroundGradient = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [background, backgroundAlt],
+  );
+
+  static const LinearGradient cardGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF1060CF), Color(0xFF3B49DF)],
+    colors: [card, surfaceLight],
+  );
+
+  /// Barre XP — dégradé vert-émeraude
+  static const LinearGradient xpBarGradient = LinearGradient(
+    colors: [Color(0xFF34D399), Color(0xFF10B981)],
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+  );
+
+  /// Dégradé or pour XP/récompenses
+  static const LinearGradient xpGoldGradient = LinearGradient(
+    colors: [xpGold, xpGoldDark],
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
   );
 
   // ============================================
@@ -139,46 +198,76 @@ class AppColors {
   // ============================================
   static List<BoxShadow> get primaryShadow => [
     BoxShadow(
-      color: primary.withValues(alpha: 0.2),
-      blurRadius: 16,
-      offset: const Offset(0, 4),
+      color: primary.withValues(alpha: 0.25),
+      blurRadius: 20,
+      offset: const Offset(0, 6),
     ),
   ];
 
   static List<BoxShadow> get cardShadow => [
     BoxShadow(
-      color: Colors.black.withValues(alpha: 0.06),
-      blurRadius: 8,
-      offset: const Offset(0, 2),
+      color: const Color(0xFF0D1832).withValues(alpha: 0.07),
+      blurRadius: 14,
+      offset: const Offset(0, 4),
     ),
-  ];
-
-  static List<BoxShadow> get glowShadow => [
     BoxShadow(
-      color: primary.withValues(alpha: 0.3),
-      blurRadius: 16,
-      spreadRadius: 1,
+      color: const Color(0xFF0D1832).withValues(alpha: 0.04),
+      blurRadius: 4,
+      offset: const Offset(0, 1),
     ),
   ];
 
   static List<BoxShadow> get cardShadowMedium => [
     BoxShadow(
-      color: Colors.black.withValues(alpha: 0.1),
-      blurRadius: 16,
-      offset: const Offset(0, 4),
+      color: const Color(0xFF0D1832).withValues(alpha: 0.12),
+      blurRadius: 24,
+      offset: const Offset(0, 8),
+    ),
+  ];
+
+  static List<BoxShadow> get glowShadow => [
+    BoxShadow(
+      color: primary.withValues(alpha: 0.30),
+      blurRadius: 20,
+      spreadRadius: 2,
     ),
   ];
 
   static List<BoxShadow> get crossBrandShadow => [
     BoxShadow(
-      color: primary.withValues(alpha: 0.2),
-      blurRadius: 16,
-      offset: const Offset(0, 4),
+      color: primary.withValues(alpha: 0.20),
+      blurRadius: 20,
+      offset: const Offset(0, 6),
     ),
     BoxShadow(
-      color: secondary.withValues(alpha: 0.15),
-      blurRadius: 24,
-      offset: const Offset(0, 8),
+      color: secondary.withValues(alpha: 0.14),
+      blurRadius: 32,
+      offset: const Offset(0, 12),
+    ),
+  ];
+
+  /// Ombre portée de la sidebar sombre
+  static List<BoxShadow> get darkNavShadow => [
+    BoxShadow(
+      color: Colors.black.withValues(alpha: 0.35),
+      blurRadius: 40,
+      offset: const Offset(6, 0),
+    ),
+  ];
+
+  static List<BoxShadow> get heroShadow => [
+    BoxShadow(
+      color: primary.withValues(alpha: 0.45),
+      blurRadius: 48,
+      offset: const Offset(0, 20),
+    ),
+  ];
+
+  static List<BoxShadow> get secondaryShadow => [
+    BoxShadow(
+      color: secondary.withValues(alpha: 0.30),
+      blurRadius: 16,
+      offset: const Offset(0, 6),
     ),
   ];
 }
