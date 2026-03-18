@@ -274,17 +274,15 @@ class _DarkSidebar extends StatelessWidget {
                     width: 38,
                     height: 38,
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [AppColors.primary, AppColors.primaryLight],
-                      ),
                       borderRadius: BorderRadius.circular(11),
-                    ),
-                    child: const Icon(
-                      Icons.school_rounded,
                       color: Colors.white,
-                      size: 20,
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Image.asset(
+                      'assets/images/logo.jpeg',
+                      width: 38,
+                      height: 38,
+                      fit: BoxFit.cover,
                     ),
                   ),
                   const SizedBox(width: 11),
@@ -292,7 +290,7 @@ class _DarkSidebar extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'ActivEdu',
+                        'Activ Education',
                         style: AppTypography.titleMedium.copyWith(
                           color: AppColors.darkTextPrimary,
                           fontWeight: FontWeight.w700,
