@@ -49,13 +49,13 @@ jobs:
         working-directory: activ_education_app
         run: |
           flutter pub get
-          flutter build web --release
+          flutter build web --release --dart-define=API_BASE_URL=https://staging-api.activeducationhub.com/api/v1
 
       - name: Build admin frontend
         working-directory: admin_dashboard
         run: |
           flutter pub get
-          flutter build web --release
+          flutter build web --release --dart-define=API_BASE_URL=https://staging-api.activeducationhub.com/api/v1
 
       - name: Deploy to staging server
         uses: appleboy/ssh-action@v1

@@ -1,25 +1,63 @@
 services:
 
   # ============================================================
-  # TRAEFIK - Reverse proxy + SSL automatique (Let's Encrypt)
-  # Utilise le file provider (dynamic.yml) - pas de Docker API
-  # Compatible avec Docker Engine 29.x (MinAPIVersion=1.40)
+  # DOCKER SOCKET PROXY - isole l'acces au socket Docker
+  # Traefik ne monte PLUS /var/run/docker.sock directement: il passe
+  # par ce proxy en lecture seule (principe de moindre privilege).
+  # ============================================================
+  socket-proxy:
+    image: tecnativa/docker-socket-proxy:0.3.0
+    container_name: activeducation-socket-proxy
+    restart: unless-stopped
+    environment:
+      CONTAINERS: 1   # Traefik a besoin de lire les conteneurs
+      NETWORKS: 1     # Traefik a besoin de lire les reseaux
+      SERVICES: 0
+      TASKS: 0
+      POST: 0         # Lecture seule - aucune mutation possible
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - socket-proxy-network
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 64M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  # ============================================================
+  # TRAEFIK - reverse proxy + SSL automatique (Let's Encrypt)
   # ============================================================
   traefik:
     image: traefik:v3.2
     container_name: activeducation-traefik
     restart: unless-stopped
+    depends_on:
+      - socket-proxy
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./traefik/traefik.yml:/traefik.yml:ro           # Config statique
-      - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro  # Config dynamique (routes)
-      - ./traefik/letsencrypt:/letsencrypt               # Stockage certificats SSL
+      - ./traefik/traefik.yml:/traefik.yml:ro
+      - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
+      - ./traefik/letsencrypt:/letsencrypt
     networks:
       - app-network
+      - socket-proxy-network
     security_opt:
       - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 256M
     logging:
       driver: "json-file"
       options:
@@ -27,8 +65,7 @@ services:
         max-file: "3"
 
   # ============================================================
-  # REDIS - Cache en memoire
-  # Accelere les listes statiques (ecoles, carrieres, tests)
+  # REDIS - cache distribue (tokens, listes statiques)
   # ============================================================
   redis:
     image: redis:7.2-alpine
@@ -45,10 +82,15 @@ services:
     networks:
       - app-network
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 15s
       timeout: 5s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 160M
     logging:
       driver: "json-file"
       options:
@@ -57,7 +99,7 @@ services:
 
   # ============================================================
   # BACKEND - API FastAPI
-  # Accessible via : https://api.activeducationhub.com
+  # https://api.activeduhub.com
   # ============================================================
   backend:
     build:
@@ -70,16 +112,44 @@ services:
         condition: service_healthy
     env_file:
       - ./backend/.env.production
+    environment:
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
     expose:
       - "8000"
     networks:
       - app-network
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`api.activeduhub.com`)"
+      - "traefik.http.routers.backend.entrypoints=websecure"
+      - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.backend.loadbalancer.server.port=8000"
+      - "traefik.http.middlewares.api-headers.headers.stsSeconds=63072000"
+      - "traefik.http.middlewares.api-headers.headers.stsIncludeSubdomains=true"
+      - "traefik.http.middlewares.api-headers.headers.stsPreload=true"
+      - "traefik.http.middlewares.api-headers.headers.forceSTSHeader=true"
+      - "traefik.http.middlewares.api-headers.headers.contentTypeNosniff=true"
+      - "traefik.http.middlewares.api-headers.headers.customResponseHeaders.X-Frame-Options=DENY"
+      - "traefik.http.middlewares.api-headers.headers.customResponseHeaders.X-Permitted-Cross-Domain-Policies=none"
+      - "traefik.http.middlewares.api-headers.headers.customResponseHeaders.Permissions-Policy=geolocation=(), microphone=(), camera=()"
+      - "traefik.http.middlewares.api-headers.headers.customResponseHeaders.Content-Security-Policy=default-src 'none'; frame-ancestors 'none'"
+      # Rate limit global au niveau Traefik (par IP)
+      - "traefik.http.middlewares.api-ratelimit.ratelimit.average=100"
+      - "traefik.http.middlewares.api-ratelimit.ratelimit.burst=50"
+      - "traefik.http.routers.backend.middlewares=api-headers,api-ratelimit"
     healthcheck:
-      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" ]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1G
     logging:
       driver: "json-file"
       options:
@@ -87,14 +157,8 @@ services:
         max-file: "5"
 
   # ============================================================
-  # APP-FRONTEND - Application Etudiante (Flutter Web statique)
-  # Accessible via : https://activeducationhub.com
-  # https://www.activeducationhub.com -> redirect vers activeducationhub.com
-  #
-  # MODE LANDING PAGE (en attendant le build Flutter) :
-  #   volume: ./landing:/var/www/html:ro
-  # MODE PRODUCTION (quand l'app Flutter est buildee) :
-  #   volume: ./activ_education_app/build/web:/var/www/html:ro
+  # APP-FRONTEND - Flutter Web etudiants
+  # https://activeduhub.com (www redirige vers non-www)
   # ============================================================
   app-frontend:
     image: nginx:1.25-alpine
@@ -105,6 +169,37 @@ services:
       - ./activ_education_app/build/web:/var/www/html:ro
     networks:
       - app-network
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.app.rule=Host(`activeduhub.com`)"
+      - "traefik.http.routers.app.entrypoints=websecure"
+      - "traefik.http.routers.app.tls.certresolver=letsencrypt"
+      - "traefik.http.services.app.loadbalancer.server.port=80"
+      - "traefik.http.middlewares.app-headers.headers.stsSeconds=63072000"
+      - "traefik.http.middlewares.app-headers.headers.stsIncludeSubdomains=true"
+      - "traefik.http.middlewares.app-headers.headers.stsPreload=true"
+      - "traefik.http.middlewares.app-headers.headers.forceSTSHeader=true"
+      - "traefik.http.middlewares.app-headers.headers.contentTypeNosniff=true"
+      - "traefik.http.middlewares.app-headers.headers.browserXssFilter=true"
+      - "traefik.http.middlewares.app-headers.headers.referrerPolicy=strict-origin-when-cross-origin"
+      - "traefik.http.middlewares.app-headers.headers.customResponseHeaders.X-Frame-Options=SAMEORIGIN"
+      - "traefik.http.middlewares.app-headers.headers.customResponseHeaders.Permissions-Policy=geolocation=(), microphone=(), camera=()"
+      - "traefik.http.routers.app.middlewares=app-headers"
+      - "traefik.http.routers.app-www.rule=Host(`www.activeduhub.com`)"
+      - "traefik.http.routers.app-www.entrypoints=websecure"
+      - "traefik.http.routers.app-www.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.app-www.service=app"
+      - "traefik.http.middlewares.www-redirect.redirectregex.regex=^https://www\\.activeduhub\\.com(.*)"
+      - "traefik.http.middlewares.www-redirect.redirectregex.replacement=https://activeduhub.com$${1}"
+      - "traefik.http.middlewares.www-redirect.redirectregex.permanent=true"
+      - "traefik.http.routers.app-www.middlewares=www-redirect"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M
     logging:
       driver: "json-file"
       options:
@@ -112,8 +207,8 @@ services:
         max-file: "3"
 
   # ============================================================
-  # ADMIN-FRONTEND - Dashboard Administrateur (Flutter Web statique)
-  # Accessible via : https://admin.activeducationhub.com
+  # ADMIN-FRONTEND - Flutter Web dashboard admin
+  # https://admin.activeduhub.com
   # ============================================================
   admin-frontend:
     image: nginx:1.25-alpine
@@ -124,6 +219,29 @@ services:
       - ./admin_dashboard/build/web:/var/www/html:ro
     networks:
       - app-network
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.admin.rule=Host(`admin.activeduhub.com`)"
+      - "traefik.http.routers.admin.entrypoints=websecure"
+      - "traefik.http.routers.admin.tls.certresolver=letsencrypt"
+      - "traefik.http.services.admin.loadbalancer.server.port=80"
+      - "traefik.http.middlewares.admin-headers.headers.stsSeconds=63072000"
+      - "traefik.http.middlewares.admin-headers.headers.stsIncludeSubdomains=true"
+      - "traefik.http.middlewares.admin-headers.headers.stsPreload=true"
+      - "traefik.http.middlewares.admin-headers.headers.forceSTSHeader=true"
+      - "traefik.http.middlewares.admin-headers.headers.contentTypeNosniff=true"
+      - "traefik.http.middlewares.admin-headers.headers.browserXssFilter=true"
+      - "traefik.http.middlewares.admin-headers.headers.referrerPolicy=strict-origin-when-cross-origin"
+      - "traefik.http.middlewares.admin-headers.headers.customResponseHeaders.X-Frame-Options=DENY"
+      - "traefik.http.middlewares.admin-headers.headers.customResponseHeaders.Permissions-Policy=geolocation=(), microphone=(), camera=()"
+      - "traefik.http.routers.admin.middlewares=admin-headers"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M
     logging:
       driver: "json-file"
       options:
@@ -133,3 +251,6 @@ services:
 networks:
   app-network:
     driver: bridge
+  socket-proxy-network:
+    driver: bridge
+    internal: true   # Isole: pas d'acces sortant

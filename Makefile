@@ -16,10 +16,10 @@ backend-test:
 	cd backend && pytest tests/ --cov=app --cov-report=term-missing -v
 
 docker-up:
-	docker-compose up -d
+	docker compose up -d
 
 docker-down:
-	docker-compose down
+	docker compose down
 
 migrate-upgrade:
 	cd backend && alembic upgrade head

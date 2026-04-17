@@ -5,7 +5,8 @@
       "Bash(curl:*)",
       "Bash(flutter analyze:*)",
       "Bash(cmd /c \"cd /d d:\\\\ActivEducation\\\\activ_education_app & flutter analyze 2>&1\")",
-      "Bash(powershell -Command:*)"
+      "Bash(powershell -Command:*)",
+      "Bash([ -f deploy.sh ])"
     ]
   }
 }

@@ -39,8 +39,7 @@ jobs:
         run: flutter analyze --fatal-infos
 
       - name: Run tests with coverage
-        run: |
-          flutter test --coverage || echo "No tests yet — skipping"
+        run: flutter test --coverage
 
       - name: Upload coverage
         if: always()
@@ -74,7 +73,7 @@ jobs:
         run: flutter analyze --fatal-infos
 
       - name: Run tests
-        run: flutter test || echo "No tests yet — skipping"
+        run: flutter test
 
   build-web:
     name: Build Web (Student App)
