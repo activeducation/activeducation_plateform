@@ -93,10 +93,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       phoneNumber: event.phoneNumber,
     );
 
-    result.fold(
-      (failure) => emit(AuthError(failure.message, failure.type)),
-      (authResult) => emit(AuthAuthenticated(authResult.user)),
-    );
+    result.fold((failure) => emit(AuthError(failure.message, failure.type)), (
+      authResult,
+    ) {
+      if (authResult.tokens.accessToken.isNotEmpty) {
+        emit(AuthAuthenticated(authResult.user));
+      } else {
+        emit(AuthRegistrationSuccess(authResult.user));
+      }
+    });
   }
 
   Future<void> _onLogoutRequested(

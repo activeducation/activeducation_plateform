@@ -14,6 +14,7 @@ import 'package:activ_education_app/features/orientation/presentation/bloc/orien
 // ============================================================================
 
 class MockGetOrientationTests extends Mock implements GetOrientationTests {}
+
 class MockSubmitTest extends Mock implements SubmitTest {}
 
 // ============================================================================
@@ -66,17 +67,15 @@ void main() {
   late OrientationBloc orientationBloc;
 
   setUpAll(() {
-    registerFallbackValue(const SubmitTestParams(testId: '', responses: {}));
+    registerFallbackValue('');
+    registerFallbackValue(<String, dynamic>{});
   });
 
   setUp(() {
     mockGetOrientationTests = MockGetOrientationTests();
     mockSubmitTest = MockSubmitTest();
 
-    orientationBloc = OrientationBloc(
-      mockGetOrientationTests,
-      mockSubmitTest,
-    );
+    orientationBloc = OrientationBloc(mockGetOrientationTests, mockSubmitTest);
   });
 
   tearDown(() => orientationBloc.close());
@@ -97,15 +96,13 @@ void main() {
     blocTest<OrientationBloc, OrientationState>(
       'émet [OrientationLoading, OrientationTestsLoaded] sur succès',
       build: () {
-        when(() => mockGetOrientationTests())
-            .thenAnswer((_) async => Right(tTests));
+        when(
+          () => mockGetOrientationTests(),
+        ).thenAnswer((_) async => Right(tTests));
         return orientationBloc;
       },
       act: (bloc) => bloc.add(LoadOrientationTests()),
-      expect: () => [
-        isA<OrientationLoading>(),
-        isA<OrientationTestsLoaded>(),
-      ],
+      expect: () => [isA<OrientationLoading>(), isA<OrientationTestsLoaded>()],
       verify: (_) {
         verify(() => mockGetOrientationTests()).called(1);
       },
@@ -114,8 +111,9 @@ void main() {
     blocTest<OrientationBloc, OrientationState>(
       'OrientationTestsLoaded contient les bons tests',
       build: () {
-        when(() => mockGetOrientationTests())
-            .thenAnswer((_) async => Right(tTests));
+        when(
+          () => mockGetOrientationTests(),
+        ).thenAnswer((_) async => Right(tTests));
         return orientationBloc;
       },
       act: (bloc) => bloc.add(LoadOrientationTests()),
@@ -129,17 +127,15 @@ void main() {
     );
 
     blocTest<OrientationBloc, OrientationState>(
-      'émet [OrientationLoading, OrientationError] sur erreur réseau',
+      'émet [OrientationLoading, OrientationError] sur erreur',
       build: () {
-        when(() => mockGetOrientationTests())
-            .thenAnswer((_) async => Left(ServerFailure('Erreur réseau')));
+        when(
+          () => mockGetOrientationTests(),
+        ).thenAnswer((_) async => Left(Exception('Erreur réseau')));
         return orientationBloc;
       },
       act: (bloc) => bloc.add(LoadOrientationTests()),
-      expect: () => [
-        isA<OrientationLoading>(),
-        isA<OrientationError>(),
-      ],
+      expect: () => [isA<OrientationLoading>(), isA<OrientationError>()],
     );
   });
 
@@ -148,37 +144,31 @@ void main() {
   // --------------------------------------------------------------------------
 
   group('SubmitTestEvent', () {
-    final tEvent = SubmitTestEvent(
-      testId: 'test-riasec-1',
-      responses: const {
-        'q1': 5,
-        'q2': 3,
-        'q3': 4,
-      },
-    );
-
     blocTest<OrientationBloc, OrientationState>(
       'émet [TestSubmitting, TestCompleted] sur soumission réussie',
       build: () {
-        when(() => mockSubmitTest(any()))
-            .thenAnswer((_) async => Right(tResult));
+        when(
+          () => mockSubmitTest(any(), any()),
+        ).thenAnswer((_) async => Right(tResult));
         return orientationBloc;
       },
-      act: (bloc) => bloc.add(tEvent),
-      expect: () => [
-        isA<TestSubmitting>(),
-        isA<TestCompleted>(),
-      ],
+      act: (bloc) => bloc.add(
+        const SubmitTestEvent('test-riasec-1', {'q1': 5, 'q2': 3, 'q3': 4}),
+      ),
+      expect: () => [isA<TestSubmitting>(), isA<TestCompleted>()],
     );
 
     blocTest<OrientationBloc, OrientationState>(
       'TestCompleted contient le bon résultat',
       build: () {
-        when(() => mockSubmitTest(any()))
-            .thenAnswer((_) async => Right(tResult));
+        when(
+          () => mockSubmitTest(any(), any()),
+        ).thenAnswer((_) async => Right(tResult));
         return orientationBloc;
       },
-      act: (bloc) => bloc.add(tEvent),
+      act: (bloc) => bloc.add(
+        const SubmitTestEvent('test-riasec-1', {'q1': 5, 'q2': 3, 'q3': 4}),
+      ),
       expect: () => [
         isA<TestSubmitting>(),
         predicate<OrientationState>(
@@ -191,15 +181,15 @@ void main() {
     blocTest<OrientationBloc, OrientationState>(
       'émet [TestSubmitting, OrientationError] sur erreur de soumission',
       build: () {
-        when(() => mockSubmitTest(any()))
-            .thenAnswer((_) async => Left(ServerFailure('Erreur serveur')));
+        when(
+          () => mockSubmitTest(any(), any()),
+        ).thenAnswer((_) async => Left(Exception('Erreur serveur')));
         return orientationBloc;
       },
-      act: (bloc) => bloc.add(tEvent),
-      expect: () => [
-        isA<TestSubmitting>(),
-        isA<OrientationError>(),
-      ],
+      act: (bloc) => bloc.add(
+        const SubmitTestEvent('test-riasec-1', {'q1': 5, 'q2': 3, 'q3': 4}),
+      ),
+      expect: () => [isA<TestSubmitting>(), isA<OrientationError>()],
     );
   });
 }

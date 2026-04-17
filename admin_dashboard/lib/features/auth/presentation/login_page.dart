@@ -67,19 +67,27 @@ class _LoginPageState extends State<LoginPage> {
         String message = 'Erreur de connexion';
         if (e is DioException) {
           final statusCode = e.response?.statusCode;
+          final detail = e.response?.data;
+
           if (statusCode == 403) {
             message = 'Acces reserve aux administrateurs';
           } else if (statusCode == 401) {
             message = 'Email ou mot de passe incorrect';
           } else if (e.type == DioExceptionType.connectionError ||
-                     e.type == DioExceptionType.connectionTimeout) {
+              e.type == DioExceptionType.connectionTimeout) {
             message = 'Impossible de joindre le serveur';
+          } else if (detail is Map) {
+            final msg = detail['message'] ?? detail['detail'];
+            if (msg != null) {
+              message = msg is Map
+                  ? msg['message']?.toString() ?? message
+                  : msg.toString();
+            }
           } else {
-            final detail = e.response?.data;
-            message = detail is Map
-                ? (detail['message'] ?? detail['detail'] ?? message).toString()
-                : message;
+            message = e.message ?? message;
           }
+        } else {
+          message = e.toString();
         }
         AdminSnackbar.error(context, message);
       }
@@ -99,7 +107,11 @@ class _LoginPageState extends State<LoginPage> {
             child: Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [AppColors.primaryDark, AppColors.primary, AppColors.primaryLight],
+                  colors: [
+                    AppColors.primaryDark,
+                    AppColors.primary,
+                    AppColors.primaryLight,
+                  ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -188,10 +200,22 @@ class _LoginPageState extends State<LoginPage> {
                             runSpacing: 12,
                             alignment: WrapAlignment.center,
                             children: [
-                              _FeaturePill(icon: Icons.school_rounded, label: 'Ecoles'),
-                              _FeaturePill(icon: Icons.quiz_rounded, label: 'Tests'),
-                              _FeaturePill(icon: Icons.emoji_events_rounded, label: 'Gamification'),
-                              _FeaturePill(icon: Icons.people_rounded, label: 'Mentors'),
+                              _FeaturePill(
+                                icon: Icons.school_rounded,
+                                label: 'Ecoles',
+                              ),
+                              _FeaturePill(
+                                icon: Icons.quiz_rounded,
+                                label: 'Tests',
+                              ),
+                              _FeaturePill(
+                                icon: Icons.emoji_events_rounded,
+                                label: 'Gamification',
+                              ),
+                              _FeaturePill(
+                                icon: Icons.people_rounded,
+                                label: 'Mentors',
+                              ),
                             ],
                           ),
                         ],
@@ -237,17 +261,23 @@ class _LoginPageState extends State<LoginPage> {
                         const SizedBox(height: 40),
 
                         // Email
-                        Text('Email', style: GoogleFonts.outfit(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.textSecondary,
-                        )),
+                        Text(
+                          'Email',
+                          style: GoogleFonts.outfit(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
                         const SizedBox(height: 8),
                         TextFormField(
                           controller: _emailController,
                           decoration: InputDecoration(
                             hintText: 'admin@activeducation.com',
-                            prefixIcon: const Icon(Icons.email_outlined, size: 20),
+                            prefixIcon: const Icon(
+                              Icons.email_outlined,
+                              size: 20,
+                            ),
                             prefixIconColor: AppColors.textMuted,
                           ),
                           keyboardType: TextInputType.emailAddress,
@@ -257,17 +287,23 @@ class _LoginPageState extends State<LoginPage> {
                         const SizedBox(height: 20),
 
                         // Password
-                        Text('Mot de passe', style: GoogleFonts.outfit(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.textSecondary,
-                        )),
+                        Text(
+                          'Mot de passe',
+                          style: GoogleFonts.outfit(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
                         const SizedBox(height: 8),
                         TextFormField(
                           controller: _passwordController,
                           decoration: InputDecoration(
                             hintText: 'Votre mot de passe',
-                            prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20),
+                            prefixIcon: const Icon(
+                              Icons.lock_outline_rounded,
+                              size: 20,
+                            ),
                             prefixIconColor: AppColors.textMuted,
                             suffixIcon: IconButton(
                               icon: Icon(
@@ -277,13 +313,15 @@ class _LoginPageState extends State<LoginPage> {
                                 size: 20,
                               ),
                               color: AppColors.textMuted,
-                              onPressed: () =>
-                                  setState(() => _obscurePassword = !_obscurePassword),
+                              onPressed: () => setState(
+                                () => _obscurePassword = !_obscurePassword,
+                              ),
                             ),
                           ),
                           obscureText: _obscurePassword,
-                          validator: (v) =>
-                              v == null || v.isEmpty ? 'Mot de passe requis' : null,
+                          validator: (v) => v == null || v.isEmpty
+                              ? 'Mot de passe requis'
+                              : null,
                           onFieldSubmitted: (_) => _login(),
                         ),
                         const SizedBox(height: 32),
@@ -308,10 +346,13 @@ class _LoginPageState extends State<LoginPage> {
                                       color: Colors.white,
                                     ),
                                   )
-                                : Text('Se connecter', style: GoogleFonts.outfit(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                  )),
+                                : Text(
+                                    'Se connecter',
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
                           ),
                         ),
                         const SizedBox(height: 24),
@@ -352,20 +393,21 @@ class _FeaturePill extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.15),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 16, color: Colors.white.withValues(alpha: 0.8)),
           const SizedBox(width: 8),
-          Text(label, style: GoogleFonts.outfit(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: Colors.white.withValues(alpha: 0.9),
-          )),
+          Text(
+            label,
+            style: GoogleFonts.outfit(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: Colors.white.withValues(alpha: 0.9),
+            ),
+          ),
         ],
       ),
     );

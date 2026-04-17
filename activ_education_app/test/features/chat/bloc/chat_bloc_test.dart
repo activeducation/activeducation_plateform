@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:activ_education_app/features/ai_chat/data/datasources/chat_local_datasource.dart';
+import 'package:activ_education_app/features/ai_chat/data/models/chat_message_model.dart';
 import 'package:activ_education_app/features/ai_chat/domain/entities/chat_message.dart';
 import 'package:activ_education_app/features/ai_chat/domain/repositories/chat_repository.dart';
 import 'package:activ_education_app/features/ai_chat/presentation/bloc/chat_bloc.dart';
@@ -12,22 +13,24 @@ import 'package:activ_education_app/features/ai_chat/presentation/bloc/chat_bloc
 // ============================================================================
 
 class MockChatRepository extends Mock implements ChatRepository {}
+
 class MockChatLocalDataSource extends Mock implements ChatLocalDataSource {}
 
 // ============================================================================
 // Fixtures
 // ============================================================================
 
-final tUserMessage = ChatMessage(
+final tUserMessage = ChatMessageModel(
   id: 'msg-1',
   content: 'Quelles filières correspondent à mon profil RSI ?',
   role: MessageRole.user,
   timestamp: DateTime(2025, 3, 12, 10, 0),
 );
 
-final tAssistantMessage = ChatMessage(
+final tAssistantMessage = ChatMessageModel(
   id: 'msg-2',
-  content: 'Avec un profil RSI, je vous recommande les filières en ingénierie sociale, '
+  content:
+      'Avec un profil RSI, je vous recommande les filières en ingénierie sociale, '
       'médecine communautaire ou travail social technique.',
   role: MessageRole.assistant,
   timestamp: DateTime(2025, 3, 12, 10, 0, 1),
@@ -53,15 +56,15 @@ void main() {
     mockRepository = MockChatRepository();
     mockLocalDataSource = MockChatLocalDataSource();
 
-    // Defaults
-    when(() => mockLocalDataSource.getSessionId(any()))
-        .thenAnswer((_) async => tSessionId);
-    when(() => mockLocalDataSource.getMessages(any()))
-        .thenAnswer((_) async => []);
-    when(() => mockLocalDataSource.saveMessages(any(), any()))
-        .thenAnswer((_) async {});
-    when(() => mockLocalDataSource.saveSessionId(any(), any()))
-        .thenAnswer((_) async {});
+    // Defaults — loadMessages et loadSessionId sont synchrones
+    when(() => mockLocalDataSource.loadSessionId(any())).thenReturn(null);
+    when(() => mockLocalDataSource.loadMessages(any())).thenReturn([]);
+    when(
+      () => mockLocalDataSource.saveMessages(any(), any()),
+    ).thenAnswer((_) async {});
+    when(
+      () => mockLocalDataSource.saveSessionId(any(), any()),
+    ).thenAnswer((_) async {});
 
     chatBloc = ChatBloc(mockRepository, mockLocalDataSource);
   });
@@ -82,10 +85,10 @@ void main() {
 
   group('LoadChatHistory', () {
     blocTest<ChatBloc, ChatState>(
-      'émet ChatReady avec historique vide pour une nouvelle session',
+      'émet ChatReady avec message de bienvenue pour une nouvelle session',
       build: () {
-        when(() => mockLocalDataSource.getMessages(any()))
-            .thenAnswer((_) async => []);
+        when(() => mockLocalDataSource.loadMessages(any())).thenReturn([]);
+        when(() => mockLocalDataSource.loadSessionId(any())).thenReturn(null);
         return chatBloc;
       },
       act: (bloc) => bloc.add(LoadChatHistory(tUserId)),
@@ -100,14 +103,19 @@ void main() {
     blocTest<ChatBloc, ChatState>(
       'émet ChatReady avec historique existant',
       build: () {
-        when(() => mockLocalDataSource.getMessages(any()))
-            .thenAnswer((_) async => [tUserMessage, tAssistantMessage]);
+        when(
+          () => mockLocalDataSource.loadMessages(any()),
+        ).thenReturn([tUserMessage, tAssistantMessage]);
+        when(
+          () => mockLocalDataSource.loadSessionId(any()),
+        ).thenReturn(tSessionId);
         return chatBloc;
       },
       act: (bloc) => bloc.add(LoadChatHistory(tUserId)),
       expect: () => [
         predicate<ChatState>(
-          (s) => s is ChatReady && s.messages.any((m) => m.id == tUserMessage.id),
+          (s) =>
+              s is ChatReady && s.messages.any((m) => m.id == tUserMessage.id),
           'ChatReady avec messages existants',
         ),
       ],
@@ -122,14 +130,16 @@ void main() {
     blocTest<ChatBloc, ChatState>(
       'émet [ChatReady(loading=true), ChatReady(loading=false)] sur succès',
       build: () {
-        when(() => mockLocalDataSource.getMessages(any()))
-            .thenAnswer((_) async => []);
-        when(() => mockRepository.sendMessage(
-              message: any(named: 'message'),
-              sessionId: any(named: 'sessionId'),
-              orientationContext: any(named: 'orientationContext'),
-              history: any(named: 'history'),
-            )).thenAnswer((_) async => tAssistantMessage);
+        when(() => mockLocalDataSource.loadMessages(any())).thenReturn([]);
+        when(() => mockLocalDataSource.loadSessionId(any())).thenReturn(null);
+        when(
+          () => mockRepository.sendMessage(
+            message: any(named: 'message'),
+            sessionId: any(named: 'sessionId'),
+            orientationContext: any(named: 'orientationContext'),
+            history: any(named: 'history'),
+          ),
+        ).thenAnswer((_) async => tAssistantMessage);
         return chatBloc;
       },
       seed: () => ChatReady(messages: [tUserMessage]),
@@ -149,14 +159,16 @@ void main() {
     blocTest<ChatBloc, ChatState>(
       'émet ChatReady avec error sur erreur réseau',
       build: () {
-        when(() => mockLocalDataSource.getMessages(any()))
-            .thenAnswer((_) async => []);
-        when(() => mockRepository.sendMessage(
-              message: any(named: 'message'),
-              sessionId: any(named: 'sessionId'),
-              orientationContext: any(named: 'orientationContext'),
-              history: any(named: 'history'),
-            )).thenThrow(Exception('Réseau indisponible'));
+        when(() => mockLocalDataSource.loadMessages(any())).thenReturn([]);
+        when(() => mockLocalDataSource.loadSessionId(any())).thenReturn(null);
+        when(
+          () => mockRepository.sendMessage(
+            message: any(named: 'message'),
+            sessionId: any(named: 'sessionId'),
+            orientationContext: any(named: 'orientationContext'),
+            history: any(named: 'history'),
+          ),
+        ).thenThrow(Exception('Réseau indisponible'));
         return chatBloc;
       },
       seed: () => ChatReady(messages: []),
@@ -179,10 +191,16 @@ void main() {
     blocTest<ChatBloc, ChatState>(
       'efface les messages et crée une nouvelle session',
       build: () {
-        when(() => mockRepository.clearSession(any()))
-            .thenAnswer((_) async {});
-        when(() => mockLocalDataSource.clearMessages(any()))
-            .thenAnswer((_) async {});
+        when(
+          () => mockLocalDataSource.loadMessages(any()),
+        ).thenReturn([tUserMessage, tAssistantMessage]);
+        when(
+          () => mockLocalDataSource.loadSessionId(any()),
+        ).thenReturn(tSessionId);
+        when(() => mockRepository.clearSession(any())).thenAnswer((_) async {});
+        when(
+          () => mockLocalDataSource.clearHistory(any()),
+        ).thenAnswer((_) async {});
         return chatBloc;
       },
       seed: () => ChatReady(messages: [tUserMessage, tAssistantMessage]),

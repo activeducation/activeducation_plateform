@@ -1,5 +1,7 @@
+import 'package:equatable/equatable.dart';
+
 /// Représente une erreur dans le domaine admin.
-class AdminFailure {
+class AdminFailure extends Equatable implements Exception {
   final String message;
   final int? statusCode;
 
@@ -7,4 +9,7 @@ class AdminFailure {
 
   @override
   String toString() => 'AdminFailure($message)';
+
+  @override
+  List<Object?> get props => [message, statusCode];
 }

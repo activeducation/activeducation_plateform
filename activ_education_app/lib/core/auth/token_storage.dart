@@ -1,11 +1,17 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Stockage securise des tokens d'authentification.
 ///
-/// Utilise SharedPreferences pour la persistance.
-/// En production, envisager flutter_secure_storage pour plus de securite.
+/// Utilise flutter_secure_storage (Keychain iOS / Keystore Android / DPAPI Web)
+/// pour les donnees sensibles (access & refresh tokens). Les metadonnees non
+/// sensibles (expiration, user id) restent dans SharedPreferences.
+///
+/// Migration automatique: au premier acces, si d'anciens tokens existent dans
+/// SharedPreferences (versions <= 1.x), ils sont transferes vers le stockage
+/// securise et supprimes du stockage en clair.
 @lazySingleton
 class TokenStorage {
   static const String _accessTokenKey = 'auth_access_token';
@@ -13,22 +19,60 @@ class TokenStorage {
   static const String _tokenExpiryKey = 'auth_token_expiry';
   static const String _userIdKey = 'auth_user_id';
 
+  final FlutterSecureStorage _secure;
   SharedPreferences? _prefs;
+  bool _migrationChecked = false;
+
+  TokenStorage({FlutterSecureStorage? secureStorage})
+      : _secure = secureStorage ??
+            const FlutterSecureStorage(
+              aOptions: AndroidOptions(encryptedSharedPreferences: true),
+              iOptions: IOSOptions(
+                accessibility: KeychainAccessibility.first_unlock,
+              ),
+            );
 
   /// Initialise le stockage (doit etre appele au demarrage).
   Future<void> init() async {
     _prefs ??= await SharedPreferences.getInstance();
+    await _migrateLegacyTokensIfNeeded();
   }
 
   /// Verifie si le stockage est initialise.
   bool get isInitialized => _prefs != null;
 
-  /// Assure l'initialisation avant toute operation.
   Future<SharedPreferences> _ensureInitialized() async {
     if (_prefs == null) {
       await init();
     }
     return _prefs!;
+  }
+
+  /// Migre les tokens des versions precedentes (SharedPreferences plaintext)
+  /// vers flutter_secure_storage, puis les supprime du stockage non chiffre.
+  Future<void> _migrateLegacyTokensIfNeeded() async {
+    if (_migrationChecked) return;
+    _migrationChecked = true;
+
+    final prefs = _prefs!;
+    final legacyAccess = prefs.getString(_accessTokenKey);
+    final legacyRefresh = prefs.getString(_refreshTokenKey);
+
+    if (legacyAccess == null && legacyRefresh == null) return;
+
+    try {
+      if (legacyAccess != null) {
+        await _secure.write(key: _accessTokenKey, value: legacyAccess);
+      }
+      if (legacyRefresh != null) {
+        await _secure.write(key: _refreshTokenKey, value: legacyRefresh);
+      }
+      await prefs.remove(_accessTokenKey);
+      await prefs.remove(_refreshTokenKey);
+      debugPrint('[TokenStorage] Migrated legacy tokens to secure storage');
+    } catch (e) {
+      debugPrint('[TokenStorage] Legacy token migration failed: $e');
+    }
   }
 
   /// Sauvegarde les tokens d'authentification.
@@ -41,26 +85,24 @@ class TokenStorage {
     final prefs = await _ensureInitialized();
 
     await Future.wait([
-      prefs.setString(_accessTokenKey, accessToken),
-      prefs.setString(_refreshTokenKey, refreshToken),
+      _secure.write(key: _accessTokenKey, value: accessToken),
+      _secure.write(key: _refreshTokenKey, value: refreshToken),
       if (expiresAt != null)
         prefs.setInt(_tokenExpiryKey, expiresAt.millisecondsSinceEpoch),
       if (userId != null) prefs.setString(_userIdKey, userId),
     ]);
-
-    debugPrint('[TokenStorage] Tokens saved successfully');
   }
 
   /// Recupere le token d'acces.
   Future<String?> getAccessToken() async {
-    final prefs = await _ensureInitialized();
-    return prefs.getString(_accessTokenKey);
+    await _ensureInitialized();
+    return _secure.read(key: _accessTokenKey);
   }
 
   /// Recupere le token de rafraichissement.
   Future<String?> getRefreshToken() async {
-    final prefs = await _ensureInitialized();
-    return prefs.getString(_refreshTokenKey);
+    await _ensureInitialized();
+    return _secure.read(key: _refreshTokenKey);
   }
 
   /// Recupere l'ID utilisateur stocke.
@@ -77,12 +119,10 @@ class TokenStorage {
     return DateTime.fromMillisecondsSinceEpoch(expiryMs);
   }
 
-  /// Verifie si le token est expire.
+  /// Verifie si le token est expire (avec buffer 5 min).
   Future<bool> isTokenExpired() async {
     final expiry = await getTokenExpiry();
     if (expiry == null) return true;
-
-    // Considerer comme expire 5 minutes avant l'expiration reelle
     final bufferTime = expiry.subtract(const Duration(minutes: 5));
     return DateTime.now().isAfter(bufferTime);
   }
@@ -91,13 +131,7 @@ class TokenStorage {
   Future<bool> hasValidTokens() async {
     final accessToken = await getAccessToken();
     final refreshToken = await getRefreshToken();
-
-    if (accessToken == null || refreshToken == null) {
-      return false;
-    }
-
-    // Meme si le access token est expire, on peut rafraichir
-    return true;
+    return accessToken != null && refreshToken != null;
   }
 
   /// Supprime tous les tokens (deconnexion).
@@ -105,24 +139,21 @@ class TokenStorage {
     final prefs = await _ensureInitialized();
 
     await Future.wait([
-      prefs.remove(_accessTokenKey),
-      prefs.remove(_refreshTokenKey),
+      _secure.delete(key: _accessTokenKey),
+      _secure.delete(key: _refreshTokenKey),
       prefs.remove(_tokenExpiryKey),
       prefs.remove(_userIdKey),
     ]);
-
-    debugPrint('[TokenStorage] Tokens cleared');
   }
 
   /// Met a jour uniquement le token d'acces (apres refresh).
-  Future<void> updateAccessToken(String accessToken, {DateTime? expiresAt}) async {
+  Future<void> updateAccessToken(String accessToken,
+      {DateTime? expiresAt}) async {
     final prefs = await _ensureInitialized();
 
-    await prefs.setString(_accessTokenKey, accessToken);
+    await _secure.write(key: _accessTokenKey, value: accessToken);
     if (expiresAt != null) {
       await prefs.setInt(_tokenExpiryKey, expiresAt.millisecondsSinceEpoch);
     }
-
-    debugPrint('[TokenStorage] Access token updated');
   }
 }

@@ -4,10 +4,9 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_typography.dart';
 import '../../../core/constants/app_spacing.dart';
-import '../../../core/constants/api_endpoints.dart';
 import '../../../core/di/injection_container.dart';
 import '../../../core/auth/token_storage.dart';
-import '../../../core/network/api_client.dart';
+import '../domain/repositories/dashboard_repository.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -19,6 +18,7 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   Map<String, dynamic>? _stats;
   bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -27,15 +27,22 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<void> _loadStats() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
     try {
-      final api = getIt<ApiClient>();
-      final response = await api.get(ApiEndpoints.dashboardStats);
+      final repository = getIt<DashboardRepository>();
+      final stats = await repository.getDashboardStats();
       setState(() {
-        _stats = response.data as Map<String, dynamic>;
+        _stats = stats;
         _isLoading = false;
       });
     } catch (e) {
-      setState(() => _isLoading = false);
+      setState(() {
+        _isLoading = false;
+        _error = e.toString();
+      });
     }
   }
 
@@ -55,7 +62,11 @@ class _DashboardPageState extends State<DashboardPage> {
             padding: const EdgeInsets.all(28),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [AppColors.primaryDark, AppColors.primary, AppColors.primaryLight],
+                colors: [
+                  AppColors.primaryDark,
+                  AppColors.primary,
+                  AppColors.primaryLight,
+                ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -94,7 +105,11 @@ class _DashboardPageState extends State<DashboardPage> {
                     color: AppColors.secondary,
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: const Icon(Icons.insights_rounded, color: Colors.white, size: 28),
+                  child: const Icon(
+                    Icons.insights_rounded,
+                    color: Colors.white,
+                    size: 28,
+                  ),
                 ),
               ],
             ),
@@ -105,6 +120,41 @@ class _DashboardPageState extends State<DashboardPage> {
             const SizedBox(
               height: 300,
               child: Center(child: CircularProgressIndicator()),
+            )
+          else if (_error != null)
+            SizedBox(
+              height: 300,
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.error_outline_rounded,
+                      size: 48,
+                      color: AppColors.error,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Erreur de chargement',
+                      style: AppTypography.heading3.copyWith(
+                        color: AppColors.error,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _error!,
+                      style: AppTypography.bodySmall,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: _loadStats,
+                      icon: const Icon(Icons.refresh_rounded),
+                      label: const Text('Réessayer'),
+                    ),
+                  ],
+                ),
+              ),
             )
           else ...[
             // Stat cards
@@ -232,7 +282,11 @@ class _DashboardPageState extends State<DashboardPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.pie_chart_outline_rounded, size: 48, color: AppColors.textMuted),
+            Icon(
+              Icons.pie_chart_outline_rounded,
+              size: 48,
+              color: AppColors.textMuted,
+            ),
             const SizedBox(height: 12),
             Text('Aucune donnee disponible', style: AppTypography.bodySmall),
           ],
@@ -241,8 +295,12 @@ class _DashboardPageState extends State<DashboardPage> {
     }
 
     final colors = [
-      AppColors.primary, AppColors.secondary, AppColors.success,
-      AppColors.info, AppColors.error, AppColors.warning,
+      AppColors.primary,
+      AppColors.secondary,
+      AppColors.success,
+      AppColors.info,
+      AppColors.error,
+      AppColors.warning,
     ];
 
     return Row(
@@ -338,7 +396,11 @@ class _DashboardPageState extends State<DashboardPage> {
                   color: AppColors.surfaceVariant,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.person_outline_rounded, size: 16, color: AppColors.textSecondary),
+                child: const Icon(
+                  Icons.person_outline_rounded,
+                  size: 16,
+                  color: AppColors.textSecondary,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -347,7 +409,10 @@ class _DashboardPageState extends State<DashboardPage> {
                   children: [
                     Text(
                       entry['user_name'] ?? 'Utilisateur',
-                      style: AppTypography.body.copyWith(fontWeight: FontWeight.w500, fontSize: 13),
+                      style: AppTypography.body.copyWith(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 13,
+                      ),
                     ),
                     Text(
                       '${entry['action'] ?? ''} ${entry['entity'] ?? ''}',
@@ -444,11 +509,15 @@ class _StatCardState extends State<_StatCard> {
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: _hovering ? widget.color.withValues(alpha: 0.3) : AppColors.border.withValues(alpha: 0.6),
+              color: _hovering
+                  ? widget.color.withValues(alpha: 0.3)
+                  : AppColors.border.withValues(alpha: 0.6),
             ),
             boxShadow: [
               BoxShadow(
-                color: _hovering ? widget.color.withValues(alpha: 0.08) : AppColors.cardShadow,
+                color: _hovering
+                    ? widget.color.withValues(alpha: 0.08)
+                    : AppColors.cardShadow,
                 blurRadius: _hovering ? 16 : 8,
                 offset: const Offset(0, 4),
               ),
@@ -510,7 +579,10 @@ class _QuickStatCard extends StatelessWidget {
             Icon(icon, color: color, size: 20),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(label, style: AppTypography.body.copyWith(fontSize: 13)),
+              child: Text(
+                label,
+                style: AppTypography.body.copyWith(fontSize: 13),
+              ),
             ),
             Text(
               value,

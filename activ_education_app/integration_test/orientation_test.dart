@@ -13,8 +13,6 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'package:activ_education_app/features/auth/domain/entities/user.dart';
 import 'package:activ_education_app/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:activ_education_app/features/auth/presentation/bloc/auth_event.dart';
-import 'package:activ_education_app/features/auth/presentation/bloc/auth_state.dart';
 import 'package:activ_education_app/features/orientation/presentation/bloc/orientation_bloc.dart';
 import 'package:activ_education_app/features/orientation/domain/entities/orientation_test.dart';
 import 'package:activ_education_app/features/orientation/domain/entities/test_result.dart';
@@ -27,8 +25,7 @@ import 'package:activ_education_app/core/theme/theme.dart';
 
 class MockAuthBloc extends MockBloc<AuthEvent, AuthState> implements AuthBloc {}
 
-class MockOrientationBloc
-    extends MockBloc<OrientationEvent, OrientationState>
+class MockOrientationBloc extends MockBloc<OrientationEvent, OrientationState>
     implements OrientationBloc {}
 
 // ============================================================================
@@ -59,6 +56,7 @@ final _mockResult = TestResult(
   scores: const {'R': 85, 'I': 72, 'A': 68, 'S': 45, 'E': 38, 'C': 30},
   dominantTraits: const ['Réaliste', 'Investigateur', 'Artistique'],
   recommendations: const [],
+  interpretation: const ProfileInterpretation(profileSummary: 'Profil RIA'),
 );
 
 // ============================================================================
@@ -112,18 +110,21 @@ void main() {
 
   group('Parcours Orientation E2E', () {
     testWidgets('Affiche la liste des tests disponibles', (tester) async {
-      when(() => mockOrientationBloc.state)
-          .thenReturn(OrientationTestsLoaded(_mockTests));
+      when(
+        () => mockOrientationBloc.state,
+      ).thenReturn(OrientationTestsLoaded(_mockTests));
       whenListen(
         mockOrientationBloc,
         Stream.fromIterable([OrientationTestsLoaded(_mockTests)]),
         initialState: OrientationTestsLoaded(_mockTests),
       );
 
-      await tester.pumpWidget(buildOrientationTestApp(
-        authBloc: mockAuthBloc,
-        orientationBloc: mockOrientationBloc,
-      ));
+      await tester.pumpWidget(
+        buildOrientationTestApp(
+          authBloc: mockAuthBloc,
+          orientationBloc: mockOrientationBloc,
+        ),
+      );
       await tester.pumpAndSettle(const Duration(seconds: 2));
 
       expect(
@@ -144,10 +145,12 @@ void main() {
         initialState: OrientationLoading(),
       );
 
-      await tester.pumpWidget(buildOrientationTestApp(
-        authBloc: mockAuthBloc,
-        orientationBloc: mockOrientationBloc,
-      ));
+      await tester.pumpWidget(
+        buildOrientationTestApp(
+          authBloc: mockAuthBloc,
+          orientationBloc: mockOrientationBloc,
+        ),
+      );
       await tester.pump();
 
       expect(
@@ -158,21 +161,25 @@ void main() {
       );
     });
 
-    testWidgets("Affiche un message d'erreur sur échec de chargement",
-        (tester) async {
+    testWidgets("Affiche un message d'erreur sur échec de chargement", (
+      tester,
+    ) async {
       const errorMsg = 'Erreur de connexion';
-      when(() => mockOrientationBloc.state)
-          .thenReturn(const OrientationError(errorMsg));
+      when(
+        () => mockOrientationBloc.state,
+      ).thenReturn(const OrientationError(errorMsg));
       whenListen(
         mockOrientationBloc,
         Stream.fromIterable([const OrientationError(errorMsg)]),
         initialState: const OrientationError(errorMsg),
       );
 
-      await tester.pumpWidget(buildOrientationTestApp(
-        authBloc: mockAuthBloc,
-        orientationBloc: mockOrientationBloc,
-      ));
+      await tester.pumpWidget(
+        buildOrientationTestApp(
+          authBloc: mockAuthBloc,
+          orientationBloc: mockOrientationBloc,
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(
@@ -195,14 +202,17 @@ void main() {
         initialState: OrientationInitial(),
       );
 
-      await tester.pumpWidget(buildOrientationTestApp(
-        authBloc: mockAuthBloc,
-        orientationBloc: mockOrientationBloc,
-      ));
+      await tester.pumpWidget(
+        buildOrientationTestApp(
+          authBloc: mockAuthBloc,
+          orientationBloc: mockOrientationBloc,
+        ),
+      );
       await tester.pumpAndSettle();
 
-      verify(() => mockOrientationBloc
-          .add(any(that: isA<LoadOrientationTests>()))).called(1);
+      verify(
+        () => mockOrientationBloc.add(any(that: isA<LoadOrientationTests>())),
+      ).called(1);
     });
   });
 }

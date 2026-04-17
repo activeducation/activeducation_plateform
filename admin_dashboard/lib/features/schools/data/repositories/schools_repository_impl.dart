@@ -21,8 +21,8 @@ class SchoolsRepositoryImpl implements SchoolsRepository {
       final params = <String, dynamic>{
         'page': page,
         'per_page': perPage,
-        if (search != null && search.isNotEmpty) 'search': search,
-        if (verified != null) 'verified': verified,
+        if (search?.isNotEmpty == true) 'search': search,
+        'verified': verified,
       };
       final response = await _apiClient.get<Map<String, dynamic>>(
         ApiEndpoints.adminSchools,

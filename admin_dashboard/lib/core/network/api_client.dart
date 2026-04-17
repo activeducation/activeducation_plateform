@@ -22,36 +22,32 @@ class ApiClient {
     );
 
     dio.interceptors.add(AuthInterceptor(_tokenStorage));
-    dio.interceptors.add(LogInterceptor(
-      requestBody: true,
-      responseBody: true,
-      logPrint: (o) => debugPrint('[API] $o'),
-    ));
+    if (kDebugMode) {
+      dio.interceptors.add(
+        LogInterceptor(
+          requestBody: true,
+          responseBody: true,
+          logPrint: (o) => debugPrint('[API] $o'),
+        ),
+      );
+    }
   }
 
   Future<Response<T>> get<T>(
     String path, {
     Map<String, dynamic>? queryParameters,
-  }) =>
-      dio.get<T>(path, queryParameters: queryParameters);
+  }) => dio.get<T>(path, queryParameters: queryParameters);
 
   Future<Response<T>> post<T>(
     String path, {
     dynamic data,
     Map<String, dynamic>? queryParameters,
-  }) =>
-      dio.post<T>(path, data: data, queryParameters: queryParameters);
+  }) => dio.post<T>(path, data: data, queryParameters: queryParameters);
 
-  Future<Response<T>> put<T>(
-    String path, {
-    dynamic data,
-  }) =>
+  Future<Response<T>> put<T>(String path, {dynamic data}) =>
       dio.put<T>(path, data: data);
 
-  Future<Response<T>> patch<T>(
-    String path, {
-    dynamic data,
-  }) =>
+  Future<Response<T>> patch<T>(String path, {dynamic data}) =>
       dio.patch<T>(path, data: data);
 
   Future<Response<T>> delete<T>(String path) => dio.delete<T>(path);

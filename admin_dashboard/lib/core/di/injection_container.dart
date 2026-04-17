@@ -2,6 +2,10 @@ import 'package:get_it/get_it.dart';
 import '../auth/token_storage.dart';
 import '../network/api_client.dart';
 
+// Dashboard
+import '../../features/dashboard/data/repositories/dashboard_repository_impl.dart';
+import '../../features/dashboard/domain/repositories/dashboard_repository.dart';
+
 // Users
 import '../../features/users/data/repositories/users_repository_impl.dart';
 import '../../features/users/domain/repositories/users_repository.dart';
@@ -44,6 +48,12 @@ Future<void> configureDependencies() async {
 
   final apiClient = ApiClient(tokenStorage);
   getIt.registerSingleton<ApiClient>(apiClient);
+
+  // ── Dashboard ──────────────────────────────────────────────────────────────
+
+  getIt.registerLazySingleton<DashboardRepository>(
+    () => DashboardRepositoryImpl(getIt<ApiClient>()),
+  );
 
   // ── Users ─────────────────────────────────────────────────────────────────
 
@@ -92,9 +102,7 @@ Future<void> configureDependencies() async {
   getIt.registerFactory<GetTestsUseCase>(
     () => GetTestsUseCase(getIt<TestsRepository>()),
   );
-  getIt.registerFactory<TestsBloc>(
-    () => TestsBloc(getIt<GetTestsUseCase>()),
-  );
+  getIt.registerFactory<TestsBloc>(() => TestsBloc(getIt<GetTestsUseCase>()));
 
   // ── Gamification ──────────────────────────────────────────────────────────
 

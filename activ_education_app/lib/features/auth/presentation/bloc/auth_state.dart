@@ -43,3 +43,13 @@ class AuthPasswordResetSent extends AuthState {}
 
 /// Mot de passe reinitialise avec succes.
 class AuthPasswordResetSuccess extends AuthState {}
+
+/// Inscription reussie (en attente de confirmation email).
+class AuthRegistrationSuccess extends AuthState {
+  final User user;
+
+  const AuthRegistrationSuccess(this.user);
+
+  @override
+  List<Object> get props => [user];
+}

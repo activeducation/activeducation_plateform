@@ -63,9 +63,7 @@ class ResultsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: AppColors.backgroundGradient,
-        ),
+        decoration: const BoxDecoration(gradient: AppColors.backgroundGradient),
         child: SafeArea(
           child: CustomScrollView(
             slivers: [
@@ -78,12 +76,7 @@ class ResultsPage extends StatelessWidget {
                   icon: const Icon(Icons.close),
                   onPressed: () => context.go('/home'),
                 ),
-                actions: [
-                  IconButton(
-                    icon: const Icon(Icons.share_outlined),
-                    onPressed: () => _shareResults(context),
-                  ),
-                ],
+                actions: [],
               ),
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(
@@ -145,7 +138,9 @@ class ResultsPage extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: AppColors.cardGradient,
         borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-        border: Border.all(color: AppColors.primaryLight.withValues(alpha: 0.5)),
+        border: Border.all(
+          color: AppColors.primaryLight.withValues(alpha: 0.5),
+        ),
         boxShadow: AppColors.glowShadow,
       ),
       child: Column(
@@ -164,7 +159,9 @@ class ResultsPage extends StatelessWidget {
             const SizedBox(height: AppSpacing.xs),
             Text(
               traits,
-              style: AppTypography.titleMedium.copyWith(color: AppColors.textPrimary),
+              style: AppTypography.titleMedium.copyWith(
+                color: AppColors.textPrimary,
+              ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -172,7 +169,9 @@ class ResultsPage extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             Text(
               summary,
-              style: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary),
+              style: AppTypography.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
+              ),
               textAlign: TextAlign.center,
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
@@ -215,18 +214,23 @@ class ResultsPage extends StatelessWidget {
           // Forces
           if (strengths.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.md),
-            ...strengths.map((s) => Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(Icons.check_circle_outline,
-                          color: AppColors.success, size: 16),
-                      const SizedBox(width: AppSpacing.xs),
-                      Expanded(child: Text(s, style: AppTypography.bodyMedium)),
-                    ],
-                  ),
-                )),
+            ...strengths.map(
+              (s) => Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      Icons.check_circle_outline,
+                      color: AppColors.success,
+                      size: 16,
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    Expanded(child: Text(s, style: AppTypography.bodyMedium)),
+                  ],
+                ),
+              ),
+            ),
           ],
 
           // Conseil
@@ -237,14 +241,18 @@ class ResultsPage extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.accent.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(AppSpacing.cardRadiusSmall),
-                border:
-                    Border.all(color: AppColors.accent.withValues(alpha: 0.2)),
+                border: Border.all(
+                  color: AppColors.accent.withValues(alpha: 0.2),
+                ),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.lightbulb_outline,
-                      color: AppColors.accent, size: 18),
+                  const Icon(
+                    Icons.lightbulb_outline,
+                    color: AppColors.accent,
+                    size: 18,
+                  ),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Text(advice, style: AppTypography.bodyMedium),
@@ -294,12 +302,14 @@ class ResultsPage extends StatelessWidget {
         const SizedBox(height: AppSpacing.xs),
         Text(
           'Touchez une filière pour découvrir les métiers associés',
-          style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+          style: AppTypography.bodySmall.copyWith(
+            color: AppColors.textSecondary,
+          ),
         ),
         const SizedBox(height: AppSpacing.md),
         ...filieres.asMap().entries.map(
-              (e) => _buildFiliereCard(context, e.value, e.key),
-            ),
+          (e) => _buildFiliereCard(context, e.value, e.key),
+        ),
       ],
     );
   }
@@ -331,7 +341,9 @@ class ResultsPage extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppSpacing.cardRadiusSmall),
           child: Padding(
             padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md, vertical: 14),
+              horizontal: AppSpacing.md,
+              vertical: 14,
+            ),
             child: Row(
               children: [
                 Container(
@@ -345,7 +357,9 @@ class ResultsPage extends StatelessWidget {
                   ),
                   child: Icon(
                     _getIconForSector(sector),
-                    color: isFirst ? AppColors.primary : AppColors.textSecondary,
+                    color: isFirst
+                        ? AppColors.primary
+                        : AppColors.textSecondary,
                     size: 22,
                   ),
                 ),
@@ -357,8 +371,12 @@ class ResultsPage extends StatelessWidget {
                       Text(
                         sector,
                         style: AppTypography.bodyLarge.copyWith(
-                          fontWeight: isFirst ? FontWeight.w700 : FontWeight.w600,
-                          color: isFirst ? AppColors.primary : AppColors.textPrimary,
+                          fontWeight: isFirst
+                              ? FontWeight.w700
+                              : FontWeight.w600,
+                          color: isFirst
+                              ? AppColors.primary
+                              : AppColors.textPrimary,
                         ),
                       ),
                       if (count > 0) ...[
@@ -391,7 +409,10 @@ class ResultsPage extends StatelessWidget {
   // =========================================================================
 
   void _showCareersBottomSheet(
-      BuildContext context, String sector, List<Career> careers) {
+    BuildContext context,
+    String sector,
+    List<Career> careers,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -404,8 +425,7 @@ class ResultsPage extends StatelessWidget {
         builder: (_, scrollController) => Container(
           decoration: BoxDecoration(
             color: AppColors.background,
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(20)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             border: Border.all(color: AppColors.glassBorder),
           ),
           child: Column(
@@ -423,7 +443,11 @@ class ResultsPage extends StatelessWidget {
               // Header
               Padding(
                 padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.md, AppSpacing.md, AppSpacing.xs, AppSpacing.sm),
+                  AppSpacing.md,
+                  AppSpacing.md,
+                  AppSpacing.xs,
+                  AppSpacing.sm,
+                ),
                 child: Row(
                   children: [
                     Container(
@@ -432,21 +456,27 @@ class ResultsPage extends StatelessWidget {
                         color: AppColors.primary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Icon(_getIconForSector(sector),
-                          color: AppColors.primary, size: 20),
+                      child: Icon(
+                        _getIconForSector(sector),
+                        color: AppColors.primary,
+                        size: 20,
+                      ),
                     ),
                     const SizedBox(width: AppSpacing.sm),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(sector,
-                              style: AppTypography.titleMedium,
-                              overflow: TextOverflow.ellipsis),
+                          Text(
+                            sector,
+                            style: AppTypography.titleMedium,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                           Text(
                             '${careers.length} métier${careers.length > 1 ? 's' : ''} associé${careers.length > 1 ? 's' : ''}',
-                            style: AppTypography.bodySmall
-                                .copyWith(color: AppColors.textSecondary),
+                            style: AppTypography.bodySmall.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
                           ),
                         ],
                       ),
@@ -504,16 +534,18 @@ class ResultsPage extends StatelessWidget {
                     children: [
                       Text(
                         career.name,
-                        style: AppTypography.bodyLarge
-                            .copyWith(fontWeight: FontWeight.w600),
+                        style: AppTypography.bodyLarge.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         career.description.length > 90
                             ? '${career.description.substring(0, 90)}...'
                             : career.description,
-                        style: AppTypography.bodySmall
-                            .copyWith(color: AppColors.textSecondary),
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -545,8 +577,11 @@ class ResultsPage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
-                const Icon(Icons.arrow_forward_ios,
-                    size: 14, color: AppColors.textTertiary),
+                const Icon(
+                  Icons.arrow_forward_ios,
+                  size: 14,
+                  color: AppColors.textTertiary,
+                ),
               ],
             ),
           ),
@@ -608,15 +643,6 @@ class ResultsPage extends StatelessWidget {
   // HELPERS
   // =========================================================================
 
-  void _shareResults(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Fonctionnalité de partage à venir !'),
-        backgroundColor: AppColors.info,
-      ),
-    );
-  }
-
   Widget _buildMiniTag(String text, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -631,8 +657,7 @@ class ResultsPage extends StatelessWidget {
           const SizedBox(width: 2),
           Text(
             text,
-            style:
-                AppTypography.labelSmall.copyWith(color: color, fontSize: 9),
+            style: AppTypography.labelSmall.copyWith(color: color, fontSize: 9),
           ),
         ],
       ),
@@ -657,32 +682,37 @@ class ResultsPage extends StatelessWidget {
         s.contains('système') ||
         s.contains('data') ||
         s.contains('numérique') ||
-        s.contains('digital')) return Icons.computer;
+        s.contains('digital'))
+      return Icons.computer;
     if (s.contains('santé') ||
         s.contains('infirmi') ||
         s.contains('médecine') ||
         s.contains('biologie') ||
         s.contains('pharmacie') ||
-        s.contains('clinique')) return Icons.local_hospital;
+        s.contains('clinique'))
+      return Icons.local_hospital;
     if (s.contains('enseigne') ||
         s.contains('éducation') ||
         s.contains('formation') ||
         s.contains('pédago') ||
-        s.contains('communautaire')) return Icons.school;
+        s.contains('communautaire'))
+      return Icons.school;
     if (s.contains('finance') ||
         s.contains('banque') ||
         s.contains('comptabi') ||
         s.contains('audit') ||
         s.contains('statistiques') ||
         s.contains('actuariat') ||
-        s.contains('assurance')) return Icons.account_balance;
+        s.contains('assurance'))
+      return Icons.account_balance;
     if (s.contains('commerce') ||
         s.contains('entrepre') ||
         s.contains('marketing') ||
         s.contains('vente') ||
         s.contains('management') ||
         s.contains('secrétariat') ||
-        s.contains('logistique')) return Icons.store;
+        s.contains('logistique'))
+      return Icons.store;
     if (s.contains('génie') ||
         s.contains('btp') ||
         s.contains('mécanique') ||
@@ -690,12 +720,14 @@ class ResultsPage extends StatelessWidget {
         s.contains('topographie') ||
         s.contains('maintenance') ||
         s.contains('physique') ||
-        s.contains('architecture')) return Icons.engineering;
+        s.contains('architecture'))
+      return Icons.engineering;
     if (s.contains('agriculture') ||
         s.contains('agroalimentaire') ||
         s.contains('environnement') ||
         s.contains('vétérinaire') ||
-        s.contains('écologie')) return Icons.agriculture;
+        s.contains('écologie'))
+      return Icons.agriculture;
     if (s.contains('design') ||
         s.contains('graphique') ||
         s.contains('journalisme') ||
@@ -703,14 +735,16 @@ class ResultsPage extends StatelessWidget {
         s.contains('cinéma') ||
         s.contains('arts') ||
         s.contains('ux') ||
-        s.contains('créa')) return Icons.palette;
+        s.contains('créa'))
+      return Icons.palette;
     if (s.contains('droit') ||
         s.contains('administration') ||
         s.contains('juridique') ||
         s.contains('ressources humaines') ||
         s.contains('psychologie') ||
         s.contains('coaching') ||
-        s.contains('fiscalité')) return Icons.gavel;
+        s.contains('fiscalité'))
+      return Icons.gavel;
     return Icons.work_outline;
   }
 }

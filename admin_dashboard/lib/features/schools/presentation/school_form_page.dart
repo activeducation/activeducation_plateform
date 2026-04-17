@@ -84,7 +84,9 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
     setState(() => _isLoading = true);
     try {
       final api = getIt<ApiClient>();
-      final response = await api.get(ApiEndpoints.adminSchoolById(widget.schoolId!));
+      final response = await api.get(
+        ApiEndpoints.adminSchoolById(widget.schoolId!),
+      );
       final data = response.data as Map<String, dynamic>;
 
       _nameCtrl.text = data['name'] ?? '';
@@ -121,20 +123,34 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
       'name': _nameCtrl.text.trim(),
       'type': _type,
       'city': _cityCtrl.text.trim(),
-      'address': _addressCtrl.text.trim().isEmpty ? null : _addressCtrl.text.trim(),
+      'address': _addressCtrl.text.trim().isEmpty
+          ? null
+          : _addressCtrl.text.trim(),
       'phone': _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
       'email': _emailCtrl.text.trim().isEmpty ? null : _emailCtrl.text.trim(),
-      'website': _websiteCtrl.text.trim().isEmpty ? null : _websiteCtrl.text.trim(),
-      'description': _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
+      'website': _websiteCtrl.text.trim().isEmpty
+          ? null
+          : _websiteCtrl.text.trim(),
+      'description': _descCtrl.text.trim().isEmpty
+          ? null
+          : _descCtrl.text.trim(),
       'is_public': _isPublic,
       'logo_url': _logoUrl,
       'cover_image_url': _coverImageUrl,
-      'tuition_range': _tuitionRangeCtrl.text.trim().isEmpty ? null : _tuitionRangeCtrl.text.trim(),
-      'admission_requirements': _admissionReqCtrl.text.trim().isEmpty ? null : _admissionReqCtrl.text.trim(),
+      'tuition_range': _tuitionRangeCtrl.text.trim().isEmpty
+          ? null
+          : _tuitionRangeCtrl.text.trim(),
+      'admission_requirements': _admissionReqCtrl.text.trim().isEmpty
+          ? null
+          : _admissionReqCtrl.text.trim(),
       'accreditations': _accreditations,
       'programs_offered': _programsOffered,
-      'founding_year': _foundingYearCtrl.text.trim().isEmpty ? null : int.tryParse(_foundingYearCtrl.text.trim()),
-      'student_count': _studentCountCtrl.text.trim().isEmpty ? null : int.tryParse(_studentCountCtrl.text.trim()),
+      'founding_year': _foundingYearCtrl.text.trim().isEmpty
+          ? null
+          : int.tryParse(_foundingYearCtrl.text.trim()),
+      'student_count': _studentCountCtrl.text.trim().isEmpty
+          ? null
+          : int.tryParse(_studentCountCtrl.text.trim()),
     };
 
     if (_isEditing) {
@@ -144,12 +160,18 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
     try {
       final api = getIt<ApiClient>();
       if (_isEditing) {
-        await api.put(ApiEndpoints.adminSchoolById(widget.schoolId!), data: data);
+        await api.put(
+          ApiEndpoints.adminSchoolById(widget.schoolId!),
+          data: data,
+        );
       } else {
         await api.post(ApiEndpoints.adminSchools, data: data);
       }
       if (mounted) {
-        AdminSnackbar.success(context, _isEditing ? 'Ecole modifiee' : 'Ecole creee');
+        AdminSnackbar.success(
+          context,
+          _isEditing ? 'Ecole modifiee' : 'Ecole creee',
+        );
         context.go('/schools');
       }
     } catch (e) {
@@ -174,8 +196,11 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
     if (file.bytes == null) return;
 
     setState(() {
-      if (isLogo) _isUploadingLogo = true;
-      else _isUploadingCover = true;
+      if (isLogo) {
+        _isUploadingLogo = true;
+      } else {
+        _isUploadingCover = true;
+      }
     });
 
     try {
@@ -185,9 +210,11 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
           file.bytes!,
           filename: file.name,
           contentType: DioMediaType.parse(
-            file.extension == 'png' ? 'image/png'
-            : file.extension == 'webp' ? 'image/webp'
-            : 'image/jpeg',
+            file.extension == 'png'
+                ? 'image/png'
+                : file.extension == 'webp'
+                ? 'image/webp'
+                : 'image/jpeg',
           ),
         ),
       });
@@ -200,8 +227,11 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
 
       final url = (response.data as Map<String, dynamic>)['url'] as String;
       setState(() {
-        if (isLogo) _logoUrl = url;
-        else _coverImageUrl = url;
+        if (isLogo) {
+          _logoUrl = url;
+        } else {
+          _coverImageUrl = url;
+        }
       });
       if (mounted) AdminSnackbar.success(context, 'Image uploadee');
     } catch (e) {
@@ -209,8 +239,11 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
     }
 
     setState(() {
-      if (isLogo) _isUploadingLogo = false;
-      else _isUploadingCover = false;
+      if (isLogo) {
+        _isUploadingLogo = false;
+      } else {
+        _isUploadingCover = false;
+      }
     });
   }
 
@@ -223,27 +256,42 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
     final result = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(isAccreditation ? 'Ajouter une accreditation' : 'Ajouter un domaine de formation'),
+        title: Text(
+          isAccreditation
+              ? 'Ajouter une accreditation'
+              : 'Ajouter un domaine de formation',
+        ),
         content: TextField(
           controller: ctrl,
           autofocus: true,
           decoration: InputDecoration(
-            labelText: isAccreditation ? 'Ex: CAMES, HCERES' : 'Ex: Informatique, Droit',
+            labelText: isAccreditation
+                ? 'Ex: CAMES, HCERES'
+                : 'Ex: Informatique, Droit',
           ),
           onSubmitted: (v) => Navigator.pop(ctx, v),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
-          ElevatedButton(onPressed: () => Navigator.pop(ctx, ctrl.text), child: const Text('Ajouter')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, ctrl.text),
+            child: const Text('Ajouter'),
+          ),
         ],
       ),
     );
+    ctrl.dispose();
     if (result == null || result.trim().isEmpty) return;
     setState(() {
       if (isAccreditation) {
-        if (!_accreditations.contains(result.trim())) _accreditations.add(result.trim());
+        if (!_accreditations.contains(result.trim()))
+          _accreditations.add(result.trim());
       } else {
-        if (!_programsOffered.contains(result.trim())) _programsOffered.add(result.trim());
+        if (!_programsOffered.contains(result.trim()))
+          _programsOffered.add(result.trim());
       }
     });
   }
@@ -273,7 +321,9 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
                 TextField(
                   controller: nameCtrl,
                   autofocus: true,
-                  decoration: const InputDecoration(labelText: 'Nom de la filiere *'),
+                  decoration: const InputDecoration(
+                    labelText: 'Nom de la filiere *',
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -283,18 +333,26 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: level,
+                  initialValue: level,
                   decoration: const InputDecoration(labelText: 'Niveau'),
-                  items: AdminConstants.programLevels.map((l) => DropdownMenuItem(
-                    value: l,
-                    child: Text(AdminConstants.programLevelLabels[l] ?? l),
-                  )).toList(),
+                  items: AdminConstants.programLevels
+                      .map(
+                        (l) => DropdownMenuItem(
+                          value: l,
+                          child: Text(
+                            AdminConstants.programLevelLabels[l] ?? l,
+                          ),
+                        ),
+                      )
+                      .toList(),
                   onChanged: (v) => setDialogState(() => level = v!),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: durationCtrl,
-                  decoration: const InputDecoration(labelText: 'Duree (annees)'),
+                  decoration: const InputDecoration(
+                    labelText: 'Duree (annees)',
+                  ),
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 ),
@@ -302,13 +360,18 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Annuler'),
+            ),
             ElevatedButton(
               onPressed: () {
                 if (nameCtrl.text.trim().isEmpty) return;
                 Navigator.pop(ctx, {
                   'name': nameCtrl.text.trim(),
-                  'description': descCtrl.text.trim().isEmpty ? null : descCtrl.text.trim(),
+                  'description': descCtrl.text.trim().isEmpty
+                      ? null
+                      : descCtrl.text.trim(),
                   'level': level,
                   'duration_years': int.tryParse(durationCtrl.text),
                 });
@@ -320,6 +383,9 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
       ),
     );
 
+    nameCtrl.dispose();
+    descCtrl.dispose();
+    durationCtrl.dispose();
     if (result == null) return;
 
     try {
@@ -341,7 +407,9 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
     final nameCtrl = TextEditingController(text: program['name'] ?? '');
     final descCtrl = TextEditingController(text: program['description'] ?? '');
     String level = program['level'] ?? 'licence';
-    final durationCtrl = TextEditingController(text: program['duration_years']?.toString() ?? '');
+    final durationCtrl = TextEditingController(
+      text: program['duration_years']?.toString() ?? '',
+    );
 
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
@@ -355,7 +423,9 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
               children: [
                 TextField(
                   controller: nameCtrl,
-                  decoration: const InputDecoration(labelText: 'Nom de la filiere *'),
+                  decoration: const InputDecoration(
+                    labelText: 'Nom de la filiere *',
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -365,18 +435,28 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: AdminConstants.programLevels.contains(level) ? level : 'licence',
+                  initialValue: AdminConstants.programLevels.contains(level)
+                      ? level
+                      : 'licence',
                   decoration: const InputDecoration(labelText: 'Niveau'),
-                  items: AdminConstants.programLevels.map((l) => DropdownMenuItem(
-                    value: l,
-                    child: Text(AdminConstants.programLevelLabels[l] ?? l),
-                  )).toList(),
+                  items: AdminConstants.programLevels
+                      .map(
+                        (l) => DropdownMenuItem(
+                          value: l,
+                          child: Text(
+                            AdminConstants.programLevelLabels[l] ?? l,
+                          ),
+                        ),
+                      )
+                      .toList(),
                   onChanged: (v) => setDialogState(() => level = v!),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: durationCtrl,
-                  decoration: const InputDecoration(labelText: 'Duree (annees)'),
+                  decoration: const InputDecoration(
+                    labelText: 'Duree (annees)',
+                  ),
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 ),
@@ -384,13 +464,18 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Annuler'),
+            ),
             ElevatedButton(
               onPressed: () {
                 if (nameCtrl.text.trim().isEmpty) return;
                 Navigator.pop(ctx, {
                   'name': nameCtrl.text.trim(),
-                  'description': descCtrl.text.trim().isEmpty ? null : descCtrl.text.trim(),
+                  'description': descCtrl.text.trim().isEmpty
+                      ? null
+                      : descCtrl.text.trim(),
                   'level': level,
                   'duration_years': int.tryParse(durationCtrl.text),
                 });
@@ -402,6 +487,9 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
       ),
     );
 
+    nameCtrl.dispose();
+    descCtrl.dispose();
+    durationCtrl.dispose();
     if (result == null) return;
 
     try {
@@ -429,7 +517,9 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
 
     try {
       final api = getIt<ApiClient>();
-      await api.delete(ApiEndpoints.adminSchoolProgramById(widget.schoolId!, programId));
+      await api.delete(
+        ApiEndpoints.adminSchoolProgramById(widget.schoolId!, programId),
+      );
       if (mounted) AdminSnackbar.success(context, 'Filiere supprimee');
       _loadSchool();
     } catch (e) {
@@ -455,14 +545,27 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
             // Header
             Row(
               children: [
-                IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.go('/schools')),
+                IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () => context.go('/schools'),
+                ),
                 const SizedBox(width: 8),
-                Text(_isEditing ? 'Modifier l\'ecole' : 'Nouvelle ecole', style: AppTypography.heading1),
+                Text(
+                  _isEditing ? 'Modifier l\'ecole' : 'Nouvelle ecole',
+                  style: AppTypography.heading1,
+                ),
                 const Spacer(),
                 ElevatedButton(
                   onPressed: _isSaving ? null : _save,
                   child: _isSaving
-                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
                       : Text(_isEditing ? 'Sauvegarder' : 'Creer'),
                 ),
               ],
@@ -530,20 +633,29 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _nameCtrl,
-              decoration: const InputDecoration(labelText: 'Nom de l\'etablissement *'),
-              validator: (v) => v == null || v.trim().isEmpty ? 'Le nom est requis' : null,
+              decoration: const InputDecoration(
+                labelText: 'Nom de l\'etablissement *',
+              ),
+              validator: (v) =>
+                  v == null || v.trim().isEmpty ? 'Le nom est requis' : null,
             ),
             const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: _type,
+                    initialValue: _type,
                     decoration: const InputDecoration(labelText: 'Type *'),
-                    items: AdminConstants.schoolTypes.map((t) => DropdownMenuItem(
-                      value: t,
-                      child: Text(AdminConstants.schoolTypeLabels[t] ?? t),
-                    )).toList(),
+                    items: AdminConstants.schoolTypes
+                        .map(
+                          (t) => DropdownMenuItem(
+                            value: t,
+                            child: Text(
+                              AdminConstants.schoolTypeLabels[t] ?? t,
+                            ),
+                          ),
+                        )
+                        .toList(),
                     onChanged: (v) => setState(() => _type = v!),
                   ),
                 ),
@@ -552,7 +664,9 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
                   child: TextFormField(
                     controller: _cityCtrl,
                     decoration: const InputDecoration(labelText: 'Ville *'),
-                    validator: (v) => v == null || v.trim().isEmpty ? 'La ville est requise' : null,
+                    validator: (v) => v == null || v.trim().isEmpty
+                        ? 'La ville est requise'
+                        : null,
                   ),
                 ),
               ],
@@ -568,7 +682,10 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
                 Expanded(
                   child: TextFormField(
                     controller: _phoneCtrl,
-                    decoration: const InputDecoration(labelText: 'Telephone', hintText: '+228 XX XX XX XX'),
+                    decoration: const InputDecoration(
+                      labelText: 'Telephone',
+                      hintText: '+228 XX XX XX XX',
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -577,7 +694,8 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
                     controller: _emailCtrl,
                     decoration: const InputDecoration(labelText: 'Email'),
                     validator: (v) {
-                      if (v != null && v.isNotEmpty && !v.contains('@')) return 'Email invalide';
+                      if (v != null && v.isNotEmpty && !v.contains('@'))
+                        return 'Email invalide';
                       return null;
                     },
                   ),
@@ -587,12 +705,18 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _websiteCtrl,
-              decoration: const InputDecoration(labelText: 'Site web', hintText: 'https://...'),
+              decoration: const InputDecoration(
+                labelText: 'Site web',
+                hintText: 'https://...',
+              ),
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _descCtrl,
-              decoration: const InputDecoration(labelText: 'Description', alignLabelWithHint: true),
+              decoration: const InputDecoration(
+                labelText: 'Description',
+                alignLabelWithHint: true,
+              ),
               maxLines: 5,
             ),
             const SizedBox(height: 12),
@@ -601,13 +725,16 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
                 Expanded(
                   child: TextFormField(
                     controller: _foundingYearCtrl,
-                    decoration: const InputDecoration(labelText: 'Annee de fondation'),
+                    decoration: const InputDecoration(
+                      labelText: 'Annee de fondation',
+                    ),
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     validator: (v) {
                       if (v != null && v.isNotEmpty) {
                         final year = int.tryParse(v);
-                        if (year == null || year < 1800 || year > 2100) return 'Annee invalide';
+                        if (year == null || year < 1800 || year > 2100)
+                          return 'Annee invalide';
                       }
                       return null;
                     },
@@ -617,7 +744,9 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
                 Expanded(
                   child: TextFormField(
                     controller: _studentCountCtrl,
-                    decoration: const InputDecoration(labelText: 'Nombre d\'etudiants'),
+                    decoration: const InputDecoration(
+                      labelText: 'Nombre d\'etudiants',
+                    ),
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   ),
@@ -680,14 +809,20 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
             const SizedBox(height: 12),
             SwitchListTile(
               title: const Text('Etablissement public'),
-              subtitle: Text(_isPublic ? 'Publique' : 'Privee', style: AppTypography.bodySmall),
+              subtitle: Text(
+                _isPublic ? 'Publique' : 'Privee',
+                style: AppTypography.bodySmall,
+              ),
               value: _isPublic,
               onChanged: (v) => setState(() => _isPublic = v),
             ),
             if (_isEditing)
               SwitchListTile(
                 title: const Text('Actif'),
-                subtitle: Text(_isActive ? 'Visible dans l\'app' : 'Masque', style: AppTypography.bodySmall),
+                subtitle: Text(
+                  _isActive ? 'Visible dans l\'app' : 'Masque',
+                  style: AppTypography.bodySmall,
+                ),
                 value: _isActive,
                 onChanged: (v) => setState(() => _isActive = v),
               ),
@@ -712,7 +847,12 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
             const SizedBox(height: 16),
 
             // Logo
-            Text('Logo', style: AppTypography.bodySmall.copyWith(fontWeight: FontWeight.w600)),
+            Text(
+              'Logo',
+              style: AppTypography.bodySmall.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             const SizedBox(height: 8),
             _buildImageUpload(
               url: _logoUrl,
@@ -725,7 +865,12 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
             const SizedBox(height: 20),
 
             // Cover
-            Text('Banniere', style: AppTypography.bodySmall.copyWith(fontWeight: FontWeight.w600)),
+            Text(
+              'Banniere',
+              style: AppTypography.bodySmall.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             const SizedBox(height: 8),
             _buildImageUpload(
               url: _coverImageUrl,
@@ -771,7 +916,9 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
               errorBuilder: (_, __, ___) => Container(
                 height: height,
                 color: AppColors.surfaceVariant,
-                child: const Center(child: Icon(Icons.broken_image, color: AppColors.textMuted)),
+                child: const Center(
+                  child: Icon(Icons.broken_image, color: AppColors.textMuted),
+                ),
               ),
             ),
           ),
@@ -799,7 +946,10 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
         decoration: BoxDecoration(
           color: AppColors.surfaceVariant,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppColors.textMuted.withValues(alpha: 0.3), style: BorderStyle.solid),
+          border: Border.all(
+            color: AppColors.textMuted.withValues(alpha: 0.3),
+            style: BorderStyle.solid,
+          ),
         ),
         child: const Center(
           child: Column(
@@ -807,7 +957,10 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
             children: [
               Icon(Icons.cloud_upload_outlined, color: AppColors.textMuted),
               SizedBox(height: 4),
-              Text('Cliquer pour uploader', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
+              Text(
+                'Cliquer pour uploader',
+                style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+              ),
             ],
           ),
         ),
@@ -815,7 +968,11 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
     );
   }
 
-  Widget _miniIconButton(IconData icon, VoidCallback onPressed, {Color? color}) {
+  Widget _miniIconButton(
+    IconData icon,
+    VoidCallback onPressed, {
+    Color? color,
+  }) {
     return Material(
       color: Colors.white.withValues(alpha: 0.9),
       borderRadius: BorderRadius.circular(4),
@@ -858,13 +1015,18 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: _accreditations.map((a) => Chip(
-                label: Text(a),
-                onDeleted: () => setState(() => _accreditations.remove(a)),
-                backgroundColor: AppColors.success.withValues(alpha: 0.1),
-                labelStyle: TextStyle(color: AppColors.success),
-                deleteIconColor: AppColors.success,
-              )).toList(),
+              children: _accreditations
+                  .map(
+                    (a) => Chip(
+                      label: Text(a),
+                      onDeleted: () =>
+                          setState(() => _accreditations.remove(a)),
+                      backgroundColor: AppColors.success.withValues(alpha: 0.1),
+                      labelStyle: TextStyle(color: AppColors.success),
+                      deleteIconColor: AppColors.success,
+                    ),
+                  )
+                  .toList(),
             ),
           ],
         ),
@@ -900,10 +1062,15 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: _programsOffered.map((p) => Chip(
-                label: Text(p),
-                onDeleted: () => setState(() => _programsOffered.remove(p)),
-              )).toList(),
+              children: _programsOffered
+                  .map(
+                    (p) => Chip(
+                      label: Text(p),
+                      onDeleted: () =>
+                          setState(() => _programsOffered.remove(p)),
+                    ),
+                  )
+                  .toList(),
             ),
           ],
         ),
@@ -924,13 +1091,21 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
           children: [
             Row(
               children: [
-                Text('Filieres (${_programs.length})', style: AppTypography.heading3),
+                Text(
+                  'Filieres (${_programs.length})',
+                  style: AppTypography.heading3,
+                ),
                 const Spacer(),
                 ElevatedButton.icon(
                   onPressed: _addProgram,
                   icon: const Icon(Icons.add, size: 16),
                   label: const Text('Ajouter'),
-                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -954,7 +1129,10 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
   }
 
   Widget _buildProgramTile(Map<String, dynamic> program) {
-    final levelLabel = AdminConstants.programLevelLabels[program['level']] ?? program['level'] ?? '';
+    final levelLabel =
+        AdminConstants.programLevelLabels[program['level']] ??
+        program['level'] ??
+        '';
     final duration = program['duration_years'];
     final subtitle = [
       if (levelLabel.isNotEmpty) levelLabel,
@@ -963,13 +1141,20 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
 
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 4),
-      title: Text(program['name'] ?? '', style: const TextStyle(fontWeight: FontWeight.w600)),
+      title: Text(
+        program['name'] ?? '',
+        style: const TextStyle(fontWeight: FontWeight.w600),
+      ),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (subtitle.isNotEmpty)
-            Text(subtitle, style: TextStyle(color: AppColors.primary, fontSize: 12)),
-          if (program['description'] != null && (program['description'] as String).isNotEmpty)
+            Text(
+              subtitle,
+              style: TextStyle(color: AppColors.primary, fontSize: 12),
+            ),
+          if (program['description'] != null &&
+              (program['description'] as String).isNotEmpty)
             Text(
               program['description'],
               style: AppTypography.bodySmall,

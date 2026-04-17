@@ -30,6 +30,10 @@ dependencies:
 
   # Storage
   shared_preferences: ^2.3.4
+  flutter_secure_storage: ^9.2.2
+
+  # Observability (activation conditionnelle via SENTRY_DSN)
+  sentry_flutter: ^8.12.0
 
   # UI
   google_fonts: ^6.2.1

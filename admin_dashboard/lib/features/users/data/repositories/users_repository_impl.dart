@@ -21,8 +21,8 @@ class UsersRepositoryImpl implements UsersRepository {
       final params = <String, dynamic>{
         'page': page,
         'per_page': perPage,
-        if (search != null && search.isNotEmpty) 'search': search,
-        if (role != null) 'role': role,
+        if (search?.isNotEmpty == true) 'search': search,
+        'role': role,
       };
       final response = await _apiClient.get<Map<String, dynamic>>(
         ApiEndpoints.adminUsers,

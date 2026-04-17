@@ -57,9 +57,12 @@ class AuthRepositoryImpl implements AuthRepository {
         phoneNumber: phoneNumber,
       );
 
-      // Sauvegarder les tokens et l'utilisateur
-      await _saveTokens(result.tokens);
-      await _saveUser(result.user);
+      // Only save tokens if we have them (email confirmation disabled or already confirmed)
+      if (result.tokens.accessToken.isNotEmpty &&
+          result.tokens.refreshToken.isNotEmpty) {
+        await _saveTokens(result.tokens);
+        await _saveUser(result.user);
+      }
 
       return Right(result.toEntity());
     } on AuthException catch (e) {
@@ -154,16 +157,18 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<AuthFailure, UserProfile>> getCurrentUserProfile() async {
     try {
       final profile = await _remoteDataSource.getCurrentUserProfile();
-      await _saveUser(UserModel(
-        id: profile.id,
-        email: profile.email,
-        firstName: profile.firstName,
-        lastName: profile.lastName,
-        displayName: profile.displayName,
-        phoneNumber: profile.phoneNumber,
-        avatarUrl: profile.avatarUrl,
-        createdAt: profile.createdAt,
-      ));
+      await _saveUser(
+        UserModel(
+          id: profile.id,
+          email: profile.email,
+          firstName: profile.firstName,
+          lastName: profile.lastName,
+          displayName: profile.displayName,
+          phoneNumber: profile.phoneNumber,
+          avatarUrl: profile.avatarUrl,
+          createdAt: profile.createdAt,
+        ),
+      );
       return Right(profile.toEntity());
     } on AuthException catch (e) {
       return Left(_mapAuthException(e));
@@ -188,7 +193,8 @@ class AuthRepositoryImpl implements AuthRepository {
       if (lastName != null) data['last_name'] = lastName;
       if (displayName != null) data['display_name'] = displayName;
       if (phoneNumber != null) data['phone_number'] = phoneNumber;
-      if (dateOfBirth != null) data['date_of_birth'] = dateOfBirth.toIso8601String();
+      if (dateOfBirth != null)
+        data['date_of_birth'] = dateOfBirth.toIso8601String();
       if (schoolName != null) data['school_name'] = schoolName;
       if (classLevel != null) data['class_level'] = classLevel;
 

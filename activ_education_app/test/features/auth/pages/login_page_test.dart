@@ -5,8 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:activ_education_app/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:activ_education_app/features/auth/presentation/bloc/auth_event.dart';
-import 'package:activ_education_app/features/auth/presentation/bloc/auth_state.dart';
 import 'package:activ_education_app/features/auth/presentation/pages/login_page.dart';
 
 // ============================================================================
@@ -21,10 +19,7 @@ class MockAuthBloc extends MockBloc<AuthEvent, AuthState> implements AuthBloc {}
 
 Widget buildTestApp(AuthBloc bloc) {
   return MaterialApp(
-    home: BlocProvider<AuthBloc>.value(
-      value: bloc,
-      child: const LoginPage(),
-    ),
+    home: BlocProvider<AuthBloc>.value(value: bloc, child: const LoginPage()),
   );
 }
 
@@ -54,16 +49,27 @@ void main() {
 
       // Cherche le bouton de connexion (texte en français)
       expect(
-        find.widgetWithText(ElevatedButton, 'Connexion').evaluate().isNotEmpty ||
-            find.widgetWithText(FilledButton, 'Se connecter').evaluate().isNotEmpty ||
-            find.widgetWithText(TextButton, 'Connexion').evaluate().isNotEmpty ||
+        find
+                .widgetWithText(ElevatedButton, 'Connexion')
+                .evaluate()
+                .isNotEmpty ||
+            find
+                .widgetWithText(FilledButton, 'Se connecter')
+                .evaluate()
+                .isNotEmpty ||
+            find
+                .widgetWithText(TextButton, 'Connexion')
+                .evaluate()
+                .isNotEmpty ||
             find.byType(ElevatedButton).evaluate().isNotEmpty,
         isTrue,
         reason: 'Un bouton de connexion doit être présent',
       );
     });
 
-    testWidgets('affiche un indicateur de chargement quand AuthLoading', (tester) async {
+    testWidgets('affiche un indicateur de chargement quand AuthLoading', (
+      tester,
+    ) async {
       when(() => mockAuthBloc.state).thenReturn(AuthLoading());
       whenListen(
         mockAuthBloc,
@@ -77,7 +83,9 @@ void main() {
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
     });
 
-    testWidgets('dispatche AuthLoginRequested avec les bons paramètres', (tester) async {
+    testWidgets('dispatche AuthLoginRequested avec les bons paramètres', (
+      tester,
+    ) async {
       when(() => mockAuthBloc.state).thenReturn(AuthInitial());
 
       await tester.pumpWidget(buildTestApp(mockAuthBloc));
@@ -96,7 +104,9 @@ void main() {
         await tester.tap(submitButton);
         await tester.pump();
 
-        verify(() => mockAuthBloc.add(any(that: isA<AuthLoginRequested>()))).called(1);
+        verify(
+          () => mockAuthBloc.add(any(that: isA<AuthLoginRequested>())),
+        ).called(1);
       }
     });
 

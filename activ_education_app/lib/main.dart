@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'app.dart';
 import 'core/di/injection_container.dart';
+import 'core/observability/sentry_bootstrap.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Force l'orientation portrait sur mobile uniquement
   if (!kIsWeb) {
     await SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
@@ -15,8 +15,12 @@ void main() async {
     ]);
   }
 
-  // Initialisation des dépendances
   await configureDependencies();
 
-  runApp(const ActivEducationApp());
+  await initSentryAndRun(
+    release: 'activ-education-app@1.0.0',
+    appRunner: () => runApp(
+      wrapWithSentryIfEnabled(const ActivEducationApp()),
+    ),
+  );
 }

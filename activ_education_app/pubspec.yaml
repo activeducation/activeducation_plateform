@@ -33,6 +33,7 @@ dependencies:
   hive: ^2.2.3
   hive_flutter: ^1.1.0
   shared_preferences: ^2.3.4
+  flutter_secure_storage: ^9.2.2
   
   # Navigation
   go_router: ^17.1.0
@@ -64,6 +65,9 @@ dependencies:
   bloc: ^9.0.0
   lottie: ^3.3.2
   url_launcher: ^6.2.5
+
+  # Observability (activation conditionnelle via SENTRY_DSN)
+  sentry_flutter: ^8.12.0
 
 dev_dependencies:
   flutter_test:

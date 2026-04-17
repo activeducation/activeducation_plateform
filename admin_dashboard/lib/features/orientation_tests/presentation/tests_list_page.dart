@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_typography.dart';
@@ -8,6 +9,7 @@ import '../../../core/di/injection_container.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/widgets/feedback/admin_snackbar.dart';
 import '../../../shared/widgets/dialogs/confirm_dialog.dart';
+import 'bloc/tests_bloc.dart';
 
 class TestsListPage extends StatefulWidget {
   const TestsListPage({super.key});
@@ -17,31 +19,19 @@ class TestsListPage extends StatefulWidget {
 }
 
 class _TestsListPageState extends State<TestsListPage> {
-  List<dynamic> _tests = [];
-  int _total = 0;
-  int _page = 1;
-  bool _isLoading = true;
+  late final TestsBloc _bloc;
 
   @override
   void initState() {
     super.initState();
-    _loadTests();
+    _bloc = getIt<TestsBloc>();
+    _bloc.add(const LoadTests());
   }
 
-  Future<void> _loadTests() async {
-    setState(() => _isLoading = true);
-    try {
-      final api = getIt<ApiClient>();
-      final response = await api.get(ApiEndpoints.adminTests, queryParameters: {'page': _page, 'per_page': 20});
-      final data = response.data as Map<String, dynamic>;
-      setState(() {
-        _tests = data['items'] as List? ?? [];
-        _total = data['total'] as int? ?? 0;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
-    }
+  @override
+  void dispose() {
+    _bloc.close();
+    super.dispose();
   }
 
   Future<void> _duplicateTest(String id) async {
@@ -49,22 +39,26 @@ class _TestsListPageState extends State<TestsListPage> {
       final api = getIt<ApiClient>();
       await api.post(ApiEndpoints.adminTestDuplicate(id));
       if (mounted) AdminSnackbar.success(context, 'Test duplique');
-      _loadTests();
+      _bloc.add(const LoadTests());
     } catch (e) {
       if (mounted) AdminSnackbar.error(context, 'Erreur');
     }
   }
 
   Future<void> _deleteTest(String id) async {
-    final confirmed = await ConfirmDialog.show(context,
-        title: 'Supprimer', message: 'Supprimer ce test et toutes ses questions ?',
-        confirmLabel: 'Supprimer', isDanger: true);
+    final confirmed = await ConfirmDialog.show(
+      context,
+      title: 'Supprimer',
+      message: 'Supprimer ce test et toutes ses questions ?',
+      confirmLabel: 'Supprimer',
+      isDanger: true,
+    );
     if (confirmed != true) return;
     try {
       final api = getIt<ApiClient>();
       await api.delete(ApiEndpoints.adminTestById(id));
       if (mounted) AdminSnackbar.success(context, 'Test supprime');
-      _loadTests();
+      _bloc.add(const LoadTests());
     } catch (e) {
       if (mounted) AdminSnackbar.error(context, 'Erreur');
     }
@@ -72,42 +66,69 @@ class _TestsListPageState extends State<TestsListPage> {
 
   @override
   Widget build(BuildContext context) {
-    final totalPages = (_total / 20).ceil();
+    return BlocProvider.value(
+      value: _bloc,
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.contentPadding),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            BlocBuilder<TestsBloc, TestsState>(
+              builder: (context, state) {
+                final total = state is TestsLoaded ? state.data.total : 0;
+                return Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Tests d\'orientation',
+                            style: AppTypography.heading1,
+                          ),
+                          Text('$total tests', style: AppTypography.subtitle),
+                        ],
+                      ),
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: () => context.go('/tests/new'),
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text('Nouveau test'),
+                    ),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 24),
+            Expanded(
+              child: Card(
+                child: BlocBuilder<TestsBloc, TestsState>(
+                  builder: (context, state) {
+                    if (state is TestsLoading || state is TestsInitial) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
 
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.contentPadding),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Tests d\'orientation', style: AppTypography.heading1),
-                  Text('$_total tests', style: AppTypography.subtitle),
-                ],
-              )),
-              ElevatedButton.icon(
-                onPressed: () => context.go('/tests/new'),
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text('Nouveau test'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Expanded(
-            child: Card(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : Column(
+                    if (state is TestsError) {
+                      return Center(
+                        child: Text(state.message, style: AppTypography.body),
+                      );
+                    }
+
+                    final data = (state as TestsLoaded).data;
+                    final tests = data.items;
+                    final page = data.page;
+                    final totalPages = (data.total / data.perPage).ceil();
+
+                    return Column(
                       children: [
                         Expanded(
                           child: SingleChildScrollView(
                             child: SizedBox(
                               width: double.infinity,
                               child: DataTable(
-                                headingRowColor: WidgetStateProperty.all(AppColors.surfaceVariant),
+                                headingRowColor: WidgetStateProperty.all(
+                                  AppColors.surfaceVariant,
+                                ),
                                 columns: const [
                                   DataColumn(label: Text('Nom')),
                                   DataColumn(label: Text('Type')),
@@ -117,32 +138,63 @@ class _TestsListPageState extends State<TestsListPage> {
                                   DataColumn(label: Text('Actif')),
                                   DataColumn(label: Text('Actions')),
                                 ],
-                                rows: _tests.map((t) {
-                                  final test = t as Map<String, dynamic>;
-                                  return DataRow(cells: [
-                                    DataCell(Text(test['name'] ?? '')),
-                                    DataCell(Text(test['type'] ?? '')),
-                                    DataCell(Text('${test['duration_minutes'] ?? 15} min')),
-                                    DataCell(Text('${test['questions_count'] ?? 0}')),
-                                    DataCell(Text('${test['sessions_count'] ?? 0}')),
-                                    DataCell(Icon(
-                                      test['is_active'] == true ? Icons.check_circle : Icons.cancel,
-                                      color: test['is_active'] == true ? AppColors.success : AppColors.textMuted,
-                                      size: 20,
-                                    )),
-                                    DataCell(Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        IconButton(icon: const Icon(Icons.edit, size: 18),
-                                            onPressed: () => context.go('/tests/${test['id']}/edit')),
-                                        IconButton(icon: const Icon(Icons.copy, size: 18),
-                                            onPressed: () => _duplicateTest(test['id']),
-                                            tooltip: 'Dupliquer'),
-                                        IconButton(icon: const Icon(Icons.delete, size: 18, color: AppColors.error),
-                                            onPressed: () => _deleteTest(test['id'])),
-                                      ],
-                                    )),
-                                  ]);
+                                rows: tests.map((test) {
+                                  return DataRow(
+                                    cells: [
+                                      DataCell(Text(test.name)),
+                                      DataCell(Text(test.type)),
+                                      DataCell(
+                                        Text('${test.durationMinutes} min'),
+                                      ),
+                                      DataCell(Text('${test.questionCount}')),
+                                      DataCell(const Text('-')),
+                                      DataCell(
+                                        Icon(
+                                          test.isActive == true
+                                              ? Icons.check_circle
+                                              : Icons.cancel,
+                                          color: test.isActive == true
+                                              ? AppColors.success
+                                              : AppColors.textMuted,
+                                          size: 20,
+                                        ),
+                                      ),
+                                      DataCell(
+                                        Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            IconButton(
+                                              icon: const Icon(
+                                                Icons.edit,
+                                                size: 18,
+                                              ),
+                                              onPressed: () => context.go(
+                                                '/tests/${test.id}/edit',
+                                              ),
+                                            ),
+                                            IconButton(
+                                              icon: const Icon(
+                                                Icons.copy,
+                                                size: 18,
+                                              ),
+                                              onPressed: () =>
+                                                  _duplicateTest(test.id),
+                                              tooltip: 'Dupliquer',
+                                            ),
+                                            IconButton(
+                                              icon: const Icon(
+                                                Icons.delete,
+                                                size: 18,
+                                                color: AppColors.error,
+                                              ),
+                                              onPressed: () =>
+                                                  _deleteTest(test.id),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  );
                                 }).toList(),
                               ),
                             ),
@@ -154,19 +206,35 @@ class _TestsListPageState extends State<TestsListPage> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
-                                Text('Page $_page / $totalPages', style: AppTypography.bodySmall),
-                                IconButton(icon: const Icon(Icons.chevron_left),
-                                    onPressed: _page > 1 ? () { _page--; _loadTests(); } : null),
-                                IconButton(icon: const Icon(Icons.chevron_right),
-                                    onPressed: _page < totalPages ? () { _page++; _loadTests(); } : null),
+                                Text(
+                                  'Page $page / $totalPages',
+                                  style: AppTypography.bodySmall,
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.chevron_left),
+                                  onPressed: page > 1
+                                      ? () =>
+                                            _bloc.add(LoadTests(page: page - 1))
+                                      : null,
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.chevron_right),
+                                  onPressed: page < totalPages
+                                      ? () =>
+                                            _bloc.add(LoadTests(page: page + 1))
+                                      : null,
+                                ),
                               ],
                             ),
                           ),
                       ],
-                    ),
+                    );
+                  },
+                ),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

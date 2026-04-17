@@ -10,8 +10,6 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:activ_education_app/features/auth/domain/entities/user.dart';
 import 'package:activ_education_app/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:activ_education_app/features/auth/presentation/bloc/auth_event.dart';
-import 'package:activ_education_app/features/auth/presentation/bloc/auth_state.dart';
 import 'package:activ_education_app/features/auth/presentation/pages/login_page.dart';
 import 'package:activ_education_app/features/home/presentation/pages/home_page.dart';
 import 'package:activ_education_app/core/theme/theme.dart';
@@ -76,10 +74,7 @@ class MockAppRunner {
       when(() => mockAuthBloc.state).thenReturn(AuthInitial());
       whenListen(
         mockAuthBloc,
-        Stream.fromIterable([
-          AuthLoading(),
-          AuthAuthenticated(_testUser),
-        ]),
+        Stream.fromIterable([AuthLoading(), AuthAuthenticated(_testUser)]),
         initialState: AuthInitial(),
       );
     }
@@ -99,10 +94,7 @@ class _MockApp extends StatelessWidget {
   final AuthBloc authBloc;
   final bool startAuthenticated;
 
-  const _MockApp({
-    required this.authBloc,
-    required this.startAuthenticated,
-  });
+  const _MockApp({required this.authBloc, required this.startAuthenticated});
 
   @override
   Widget build(BuildContext context) {
@@ -117,10 +109,7 @@ class _MockApp extends StatelessWidget {
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        supportedLocales: const [
-          Locale('fr', 'FR'),
-          Locale('en', 'US'),
-        ],
+        supportedLocales: const [Locale('fr', 'FR'), Locale('en', 'US')],
         home: BlocBuilder<AuthBloc, AuthState>(
           builder: (context, state) {
             if (state is AuthAuthenticated) {
@@ -185,9 +174,7 @@ class _ProfileMenu extends StatelessWidget {
             title: const Text('Déconnexion'),
             onTap: () {
               Navigator.pop(context);
-              parentContext
-                  .read<AuthBloc>()
-                  .add(const AuthLogoutRequested());
+              parentContext.read<AuthBloc>().add(const AuthLogoutRequested());
             },
           ),
         ],

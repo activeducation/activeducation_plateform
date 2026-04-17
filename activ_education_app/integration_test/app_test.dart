@@ -4,6 +4,7 @@
 /// Utilise des mocks complets pour ne pas dépendre du backend réel.
 library;
 
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
@@ -44,9 +45,7 @@ void main() {
     });
 
     testWidgets('Déconnexion depuis l\'accueil', (tester) async {
-      await tester.pumpWidget(
-        MockAppRunner.build(startAuthenticated: true),
-      );
+      await tester.pumpWidget(MockAppRunner.build(startAuthenticated: true));
       await tester.pumpAndSettle(const Duration(seconds: 2));
 
       // 1. Ouvrir le menu profil
@@ -92,7 +91,8 @@ void main() {
         find.byType(SnackBar).evaluate().isNotEmpty ||
             find.byKey(const Key('auth_error_message')).evaluate().isNotEmpty,
         isTrue,
-        reason: 'Un message d\'erreur doit être affiché sur mauvais identifiants',
+        reason:
+            'Un message d\'erreur doit être affiché sur mauvais identifiants',
       );
     });
   });

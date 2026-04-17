@@ -21,8 +21,8 @@ class CareersRepositoryImpl implements CareersRepository {
       final params = <String, dynamic>{
         'page': page,
         'per_page': perPage,
-        if (search != null && search.isNotEmpty) 'search': search,
-        if (sector != null) 'sector': sector,
+        if (search?.isNotEmpty == true) 'search': search,
+        'sector': sector,
       };
       final response = await _apiClient.get<Map<String, dynamic>>(
         ApiEndpoints.adminCareers,

@@ -10,24 +10,26 @@ import 'package:activ_education_app/features/auth/domain/usecases/logout_usecase
 import 'package:activ_education_app/features/auth/domain/usecases/register_usecase.dart';
 import 'package:activ_education_app/features/auth/domain/usecases/get_current_user_usecase.dart';
 import 'package:activ_education_app/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:activ_education_app/features/auth/presentation/bloc/auth_event.dart';
-import 'package:activ_education_app/features/auth/presentation/bloc/auth_state.dart';
 
 // ============================================================================
 // Mocks
 // ============================================================================
 
 class MockLoginUseCase extends Mock implements LoginUseCase {}
+
 class MockRegisterUseCase extends Mock implements RegisterUseCase {}
+
 class MockLogoutUseCase extends Mock implements LogoutUseCase {}
+
 class MockGetCurrentUserUseCase extends Mock implements GetCurrentUserUseCase {}
+
 class MockAuthRepository extends Mock implements AuthRepository {}
 
 // ============================================================================
 // Fixtures
 // ============================================================================
 
-final tUser = User(
+final tUser = UserProfile(
   id: 'user-123',
   email: 'test@activeeducation.com',
   firstName: 'Kofi',
@@ -56,13 +58,7 @@ void main() {
   late AuthBloc authBloc;
 
   setUpAll(() {
-    registerFallbackValue(const LoginParams(email: '', password: ''));
-    registerFallbackValue(const RegisterParams(
-      email: '',
-      password: '',
-      firstName: '',
-      lastName: '',
-    ));
+    registerFallbackValue('');
   });
 
   setUp(() {
@@ -71,6 +67,14 @@ void main() {
     mockLogoutUseCase = MockLogoutUseCase();
     mockGetCurrentUserUseCase = MockGetCurrentUserUseCase();
     mockAuthRepository = MockAuthRepository();
+
+    // Defaults pour AuthCheckRequested
+    when(
+      () => mockAuthRepository.isAuthenticated(),
+    ).thenAnswer((_) async => false);
+    when(
+      () => mockAuthRepository.getCachedUser(),
+    ).thenAnswer((_) async => null);
 
     authBloc = AuthBloc(
       mockLoginUseCase,
@@ -99,32 +103,28 @@ void main() {
     blocTest<AuthBloc, AuthState>(
       'émet [AuthLoading, AuthAuthenticated] quand un utilisateur est connecté',
       build: () {
-        when(() => mockGetCurrentUserUseCase())
-            .thenAnswer((_) async => Right(tUser));
+        when(
+          () => mockAuthRepository.isAuthenticated(),
+        ).thenAnswer((_) async => true);
+        when(
+          () => mockAuthRepository.getCachedUser(),
+        ).thenAnswer((_) async => tUser);
         return authBloc;
       },
       act: (bloc) => bloc.add(const AuthCheckRequested()),
-      expect: () => [
-        isA<AuthLoading>(),
-        isA<AuthAuthenticated>(),
-      ],
-      verify: (_) {
-        verify(() => mockGetCurrentUserUseCase()).called(1);
-      },
+      expect: () => [isA<AuthLoading>(), isA<AuthAuthenticated>()],
     );
 
     blocTest<AuthBloc, AuthState>(
       'émet [AuthLoading, AuthUnauthenticated] quand aucun utilisateur connecté',
       build: () {
-        when(() => mockGetCurrentUserUseCase())
-            .thenAnswer((_) async => Left(AuthFailure('Non connecté')));
+        when(
+          () => mockAuthRepository.isAuthenticated(),
+        ).thenAnswer((_) async => false);
         return authBloc;
       },
       act: (bloc) => bloc.add(const AuthCheckRequested()),
-      expect: () => [
-        isA<AuthLoading>(),
-        isA<AuthUnauthenticated>(),
-      ],
+      expect: () => [isA<AuthLoading>(), isA<AuthUnauthenticated>()],
     );
   });
 
@@ -133,40 +133,52 @@ void main() {
   // --------------------------------------------------------------------------
 
   group('AuthLoginRequested', () {
-    const tEvent = AuthLoginRequested(
-      email: 'test@activeeducation.com',
-      password: 'SecurePass123!',
-    );
-
     blocTest<AuthBloc, AuthState>(
       'émet [AuthLoading, AuthAuthenticated] sur login réussi',
       build: () {
-        when(() => mockLoginUseCase(any()))
-            .thenAnswer((_) async => Right(tAuthResult));
+        when(
+          () => mockLoginUseCase(
+            email: any(named: 'email'),
+            password: any(named: 'password'),
+          ),
+        ).thenAnswer((_) async => Right(tAuthResult));
         return authBloc;
       },
-      act: (bloc) => bloc.add(tEvent),
-      expect: () => [
-        isA<AuthLoading>(),
-        isA<AuthAuthenticated>(),
-      ],
+      act: (bloc) => bloc.add(
+        const AuthLoginRequested(
+          email: 'test@activeeducation.com',
+          password: 'SecurePass123!',
+        ),
+      ),
+      expect: () => [isA<AuthLoading>(), isA<AuthAuthenticated>()],
       verify: (_) {
-        verify(() => mockLoginUseCase(any())).called(1);
+        verify(
+          () => mockLoginUseCase(
+            email: any(named: 'email'),
+            password: any(named: 'password'),
+          ),
+        ).called(1);
       },
     );
 
     blocTest<AuthBloc, AuthState>(
       'émet [AuthLoading, AuthError] sur login échoué',
       build: () {
-        when(() => mockLoginUseCase(any()))
-            .thenAnswer((_) async => Left(AuthFailure('Email ou mot de passe incorrect')));
+        when(
+          () => mockLoginUseCase(
+            email: any(named: 'email'),
+            password: any(named: 'password'),
+          ),
+        ).thenAnswer((_) async => Left(AuthFailure.invalidCredentials()));
         return authBloc;
       },
-      act: (bloc) => bloc.add(tEvent),
-      expect: () => [
-        isA<AuthLoading>(),
-        isA<AuthError>(),
-      ],
+      act: (bloc) => bloc.add(
+        const AuthLoginRequested(
+          email: 'test@activeeducation.com',
+          password: 'wrong',
+        ),
+      ),
+      expect: () => [isA<AuthLoading>(), isA<AuthError>()],
       verify: (_) {
         final errorState = authBloc.state;
         if (errorState is AuthError) {
@@ -178,11 +190,20 @@ void main() {
     blocTest<AuthBloc, AuthState>(
       'AuthAuthenticated contient le bon utilisateur',
       build: () {
-        when(() => mockLoginUseCase(any()))
-            .thenAnswer((_) async => Right(tAuthResult));
+        when(
+          () => mockLoginUseCase(
+            email: any(named: 'email'),
+            password: any(named: 'password'),
+          ),
+        ).thenAnswer((_) async => Right(tAuthResult));
         return authBloc;
       },
-      act: (bloc) => bloc.add(tEvent),
+      act: (bloc) => bloc.add(
+        const AuthLoginRequested(
+          email: 'test@activeeducation.com',
+          password: 'SecurePass123!',
+        ),
+      ),
       expect: () => [
         isA<AuthLoading>(),
         predicate<AuthState>(
@@ -198,39 +219,54 @@ void main() {
   // --------------------------------------------------------------------------
 
   group('AuthRegisterRequested', () {
-    const tEvent = AuthRegisterRequested(
-      email: 'nouveau@activeeducation.com',
-      password: 'SecurePass123!',
-      firstName: 'Ama',
-      lastName: 'Koffi',
-    );
-
     blocTest<AuthBloc, AuthState>(
       'émet [AuthLoading, AuthAuthenticated] sur inscription réussie',
       build: () {
-        when(() => mockRegisterUseCase(any()))
-            .thenAnswer((_) async => Right(tAuthResult));
+        when(
+          () => mockRegisterUseCase(
+            email: any(named: 'email'),
+            password: any(named: 'password'),
+            firstName: any(named: 'firstName'),
+            lastName: any(named: 'lastName'),
+            phoneNumber: any(named: 'phoneNumber'),
+          ),
+        ).thenAnswer((_) async => Right(tAuthResult));
         return authBloc;
       },
-      act: (bloc) => bloc.add(tEvent),
-      expect: () => [
-        isA<AuthLoading>(),
-        isA<AuthAuthenticated>(),
-      ],
+      act: (bloc) => bloc.add(
+        const AuthRegisterRequested(
+          email: 'nouveau@activeeducation.com',
+          password: 'SecurePass123!',
+          firstName: 'Ama',
+          lastName: 'Koffi',
+        ),
+      ),
+      expect: () => [isA<AuthLoading>(), isA<AuthAuthenticated>()],
     );
 
     blocTest<AuthBloc, AuthState>(
       'émet [AuthLoading, AuthError] si email déjà utilisé',
       build: () {
-        when(() => mockRegisterUseCase(any()))
-            .thenAnswer((_) async => Left(AuthFailure('Email déjà utilisé')));
+        when(
+          () => mockRegisterUseCase(
+            email: any(named: 'email'),
+            password: any(named: 'password'),
+            firstName: any(named: 'firstName'),
+            lastName: any(named: 'lastName'),
+            phoneNumber: any(named: 'phoneNumber'),
+          ),
+        ).thenAnswer((_) async => Left(AuthFailure.emailAlreadyExists()));
         return authBloc;
       },
-      act: (bloc) => bloc.add(tEvent),
-      expect: () => [
-        isA<AuthLoading>(),
-        isA<AuthError>(),
-      ],
+      act: (bloc) => bloc.add(
+        const AuthRegisterRequested(
+          email: 'nouveau@activeeducation.com',
+          password: 'SecurePass123!',
+          firstName: 'Ama',
+          lastName: 'Koffi',
+        ),
+      ),
+      expect: () => [isA<AuthLoading>(), isA<AuthError>()],
     );
   });
 
@@ -242,14 +278,13 @@ void main() {
     blocTest<AuthBloc, AuthState>(
       'émet [AuthLoading, AuthUnauthenticated] sur déconnexion',
       build: () {
-        when(() => mockLogoutUseCase()).thenAnswer((_) async => const Right(null));
+        when(
+          () => mockLogoutUseCase(),
+        ).thenAnswer((_) async => const Right(null));
         return authBloc;
       },
       act: (bloc) => bloc.add(const AuthLogoutRequested()),
-      expect: () => [
-        isA<AuthLoading>(),
-        isA<AuthUnauthenticated>(),
-      ],
+      expect: () => [isA<AuthLoading>(), isA<AuthUnauthenticated>()],
     );
   });
 }

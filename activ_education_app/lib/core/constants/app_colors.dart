@@ -6,49 +6,51 @@ class AppColors {
   AppColors._();
 
   // ============================================
-  // PRIMARY — Bleu Royal (couleur logo)
+  // PRIMARY — Bleu Royal (couleur logo exacte)
   // ============================================
   static const Color primary = Color(0xFF1060CF);
-  static const Color primaryLight = Color(0xFF4D6EF0);
-  static const Color primaryDark = Color(0xFF1530C4);
-  static const Color primarySurface = Color(0xFFEAEEFD);
-  static const Color primarySurface2 = Color(0xFFD4DBFB);
-  static const Color primaryMedium = Color(0xFF3355EC);
-  static const Color primaryIndigo = Color(0xFF3045E0);
+  static const Color primaryLight = Color(0xFF4A8AE5);
+  static const Color primaryMid = Color(0xFF1752B8);
+  static const Color primaryDark = Color(0xFF0A45A0);
+  static const Color primarySurface = Color(0xFFE8F0FE);
+  static const Color primarySurface2 = Color(0xFFCFDEFA);
+  static const Color primaryMedium = Color(0xFF2B6ED4);
+  static const Color primaryIndigo = Color(0xFF1060CF);
 
   // ============================================
-  // SECONDARY — Orange Vif (couleur logo)
+  // SECONDARY — Or Ambré (couleur logo exacte #F2A423)
   // ============================================
-  static const Color secondary = Color(0xFFFF9E18);
-  static const Color secondaryLight = Color(0xFFFFB84A);
-  static const Color secondaryDark = Color(0xFFE08010);
-  static const Color secondarySurface = Color(0xFFFFF3E0);
+  static const Color secondary = Color(0xFFF2A423);
+  static const Color secondaryLight = Color(0xFFFFD166);
+  static const Color secondaryDark = Color(0xFFCC8800);
+  static const Color secondarySurface = Color(0xFFFFF5E0);
   static const Color shimmer = Color(0xFFFFF0D0);
 
   // ============================================
   // DARK UI — Sidebar, headers hero, sections sombres
+  // Aligné avec la landing page (#060E1E)
   // ============================================
-  static const Color darkBg = Color(0xFF070F1E);
-  static const Color darkBg2 = Color(0xFF0C1828);
-  static const Color darkBg3 = Color(0xFF111F34);
-  static const Color darkSurface = Color(0xFF162540);
-  static const Color darkSurface2 = Color(0xFF1C2F50);
-  static const Color darkSurface3 = Color(0xFF213860);
-  static const Color darkBorder = Color(0xFF1E3055);
-  static const Color darkBorder2 = Color(0xFF253D6A);
-  static const Color darkDivider = Color(0xFF172845);
+  static const Color darkBg = Color(0xFF060E1E);
+  static const Color darkBg2 = Color(0xFF0B1C3C);
+  static const Color darkBg3 = Color(0xFF0F2550);
+  static const Color darkSurface = Color(0xFF142240);
+  static const Color darkSurface2 = Color(0xFF1A2E55);
+  static const Color darkSurface3 = Color(0xFF1F3868);
+  static const Color darkBorder = Color(0xFF1B2E52);
+  static const Color darkBorder2 = Color(0xFF243B68);
+  static const Color darkDivider = Color(0xFF152748);
 
-  static const Color darkTextPrimary = Color(0xFFE6EFF8);
-  static const Color darkTextSecondary = Color(0xFF7A9DB8);
-  static const Color darkTextMuted = Color(0xFF4A6880);
-  static const Color darkAccentBlue = Color(0xFF4A8BE8);
-  static const Color darkAccentAmber = Color(0xFFFFB83F);
+  static const Color darkTextPrimary = Color(0xFFE4EEF8);
+  static const Color darkTextSecondary = Color(0xFF7AA0BC);
+  static const Color darkTextMuted = Color(0xFF4A6B85);
+  static const Color darkAccentBlue = Color(0xFF4A8AE5);
+  static const Color darkAccentAmber = Color(0xFFF2A423);
 
   // ============================================
   // GAMIFICATION — XP, niveaux, streaks, badges
   // ============================================
-  static const Color xpGold = Color(0xFFFFCA28);
-  static const Color xpGoldDark = Color(0xFFE6A800);
+  static const Color xpGold = Color(0xFFF2A423);
+  static const Color xpGoldDark = Color(0xFFCC8800);
   static const Color xpGoldSurface = Color(0xFFFFF8DC);
   static const Color streakFire = Color(0xFFFF6B35);
   static const Color streakFireLight = Color(0xFFFF9060);
@@ -145,26 +147,27 @@ class AppColors {
   static const LinearGradient heroGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [darkBg, darkBg3],
+    colors: [darkBg, darkBg2],
   );
 
   /// Dégradé hero bleu — bannière d'orientation
   static const LinearGradient heroGradientBlue = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF0C1828), Color(0xFF1060CF)],
+    colors: [Color(0xFF0B1C3C), Color(0xFF1060CF)],
   );
 
   static const LinearGradient heroGradientAlt = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [primary, primaryIndigo],
+    colors: [primaryDark, primary],
   );
 
+  /// Dégradé cross-brand bleu→or (identique à la landing page)
   static const LinearGradient crossBrandGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [primary, secondary],
+    begin: Alignment(-1.0, -0.6),
+    end: Alignment(1.0, 0.6),
+    colors: [primaryLight, secondary],
   );
 
   static const LinearGradient backgroundGradient = LinearGradient(

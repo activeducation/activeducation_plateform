@@ -32,37 +32,44 @@ class AuthInterceptor extends Interceptor {
     '/orientation/mobile/',
   ];
 
-  AuthInterceptor(
-    this._tokenStorage,
-    @Named('refreshClient') this._refreshDio,
-  );
+  AuthInterceptor(this._tokenStorage, @Named('refreshClient') this._refreshDio);
 
   @override
   Future<void> onRequest(
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    // Skip auth for public routes
     if (_isPublicRoute(options.path)) {
       return handler.next(options);
     }
 
-    // Proactive token refresh: check expiry BEFORE sending the request
     final isExpired = await _tokenStorage.isTokenExpired();
     if (isExpired) {
       debugPrint('[AuthInterceptor] Token expired, proactively refreshing...');
       final refreshed = await _handleTokenRefresh();
       if (!refreshed) {
-        debugPrint('[AuthInterceptor] Proactive refresh failed — proceeding without token');
+        debugPrint(
+          '[AuthInterceptor] Proactive refresh failed — clearing tokens',
+        );
+        await _tokenStorage.clearTokens();
+        return handler.reject(
+          DioException(
+            requestOptions: options,
+            type: DioExceptionType.badResponse,
+            response: Response(requestOptions: options, statusCode: 401),
+            message: 'Session expired',
+          ),
+        );
       }
     }
 
-    // Add auth header
     final accessToken = await _tokenStorage.getAccessToken();
     if (accessToken != null) {
       options.headers['Authorization'] = 'Bearer $accessToken';
     } else {
-      debugPrint('[AuthInterceptor] No access token available for ${options.path}');
+      debugPrint(
+        '[AuthInterceptor] No access token available for ${options.path}',
+      );
     }
 
     return handler.next(options);
@@ -74,7 +81,8 @@ class AuthInterceptor extends Interceptor {
     ErrorInterceptorHandler handler,
   ) async {
     // Handle 401 Unauthorized
-    if (err.response?.statusCode == 401 && !_isPublicRoute(err.requestOptions.path)) {
+    if (err.response?.statusCode == 401 &&
+        !_isPublicRoute(err.requestOptions.path)) {
       // Try to refresh token
       final refreshed = await _handleTokenRefresh();
 
@@ -132,7 +140,10 @@ class AuthInterceptor extends Interceptor {
           expiresAt = DateTime.now().add(Duration(seconds: expiresIn));
         }
 
-        await _tokenStorage.updateAccessToken(newAccessToken, expiresAt: expiresAt);
+        await _tokenStorage.updateAccessToken(
+          newAccessToken,
+          expiresAt: expiresAt,
+        );
 
         // Si un nouveau refresh token est fourni, le sauvegarder
         if (data['refresh_token'] != null) {
@@ -187,10 +198,12 @@ class AuthInterceptor extends Interceptor {
 extension AuthDioExtension on Dio {
   /// Cree un client Dio pour les requetes de refresh.
   static Dio createRefreshClient(String baseUrl) {
-    return Dio(BaseOptions(
-      baseUrl: baseUrl,
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 10),
-    ));
+    return Dio(
+      BaseOptions(
+        baseUrl: baseUrl,
+        connectTimeout: const Duration(seconds: 10),
+        receiveTimeout: const Duration(seconds: 10),
+      ),
+    );
   }
 }

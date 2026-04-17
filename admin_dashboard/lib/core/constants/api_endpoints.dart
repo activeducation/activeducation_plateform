@@ -3,7 +3,7 @@ class ApiEndpoints {
 
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://localhost:8000/api/v1',
+    defaultValue: 'https://localhost:8000/api/v1',
   );
 
   // Admin Auth
@@ -23,7 +23,8 @@ class ApiEndpoints {
   static const String adminSchools = '/admin/schools';
   static String adminSchoolById(String id) => '/admin/schools/$id';
   static String adminSchoolVerify(String id) => '/admin/schools/$id/verify';
-  static String adminSchoolToggleActive(String id) => '/admin/schools/$id/toggle-active';
+  static String adminSchoolToggleActive(String id) =>
+      '/admin/schools/$id/toggle-active';
   static String adminSchoolPrograms(String id) => '/admin/schools/$id/programs';
   static String adminSchoolProgramById(String schoolId, String programId) =>
       '/admin/schools/$schoolId/programs/$programId';
@@ -49,15 +50,18 @@ class ApiEndpoints {
 
   // Gamification
   static const String adminAchievements = '/admin/gamification/achievements';
-  static String adminAchievementById(String id) => '/admin/gamification/achievements/$id';
+  static String adminAchievementById(String id) =>
+      '/admin/gamification/achievements/$id';
   static const String adminChallenges = '/admin/gamification/challenges';
-  static String adminChallengeById(String id) => '/admin/gamification/challenges/$id';
+  static String adminChallengeById(String id) =>
+      '/admin/gamification/challenges/$id';
 
   // Mentors
   static const String adminMentors = '/admin/mentors';
   static String adminMentorById(String id) => '/admin/mentors/$id';
   static String adminMentorVerify(String id) => '/admin/mentors/$id/verify';
-  static String adminMentorToggleActive(String id) => '/admin/mentors/$id/toggle-active';
+  static String adminMentorToggleActive(String id) =>
+      '/admin/mentors/$id/toggle-active';
 
   // Settings
   static const String adminSettings = '/admin/settings';

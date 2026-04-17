@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_typography.dart';
+import '../../../../core/widgets/app_input_decoration.dart';
 import '../../../../shared/widgets/buttons/gradient_button.dart';
 import '../bloc/auth_bloc.dart';
 
@@ -34,14 +35,23 @@ class _RegisterPageState extends State<RegisterPage> {
   bool get _hasSpecialChar =>
       _password.contains(RegExp(r'[!@#\$%^&*(),.?":{}|<>_\-+=\[\]\\/~`]'));
   bool get _isPasswordValid =>
-      _hasMinLength && _hasUppercase && _hasLowercase && _hasDigit && _hasSpecialChar;
+      _hasMinLength &&
+      _hasUppercase &&
+      _hasLowercase &&
+      _hasDigit &&
+      _hasSpecialChar;
+
+  void _updatePassword() {
+    final text = _passwordController.text;
+    if (text != _password) {
+      setState(() => _password = text);
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-    _passwordController.addListener(() {
-      setState(() => _password = _passwordController.text);
-    });
+    _passwordController.addListener(_updatePassword);
   }
 
   @override
@@ -58,7 +68,9 @@ class _RegisterPageState extends State<RegisterPage> {
     if (!_acceptTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Veuillez accepter les conditions d\'utilisation'),
+          content: const Text(
+            'Veuillez accepter les conditions d\'utilisation',
+          ),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
         ),
@@ -68,53 +80,14 @@ class _RegisterPageState extends State<RegisterPage> {
 
     if (_formKey.currentState?.validate() ?? false) {
       context.read<AuthBloc>().add(
-            AuthRegisterRequested(
-              email: _emailController.text.trim(),
-              password: _passwordController.text,
-              firstName: _firstNameController.text.trim(),
-              lastName: _lastNameController.text.trim(),
-            ),
-          );
+        AuthRegisterRequested(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+          firstName: _firstNameController.text.trim(),
+          lastName: _lastNameController.text.trim(),
+        ),
+      );
     }
-  }
-
-  InputDecoration _inputDecoration({
-    required String label,
-    String? hint,
-    Widget? prefixIcon,
-    Widget? suffixIcon,
-  }) {
-    return InputDecoration(
-      labelText: label,
-      hintText: hint,
-      prefixIcon: prefixIcon,
-      suffixIcon: suffixIcon,
-      labelStyle: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary),
-      hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.textTertiary),
-      filled: true,
-      fillColor: AppColors.surface,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.border),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.border),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.error),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.error, width: 1.5),
-      ),
-    );
   }
 
   @override
@@ -125,7 +98,10 @@ class _RegisterPageState extends State<RegisterPage> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          icon: const Icon(
+            Icons.arrow_back_rounded,
+            color: AppColors.textPrimary,
+          ),
           onPressed: () => context.pop(),
         ),
       ),
@@ -133,6 +109,17 @@ class _RegisterPageState extends State<RegisterPage> {
         listener: (context, state) {
           if (state is AuthAuthenticated) {
             context.go('/home');
+          } else if (state is AuthRegistrationSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text(
+                  'Compte cree ! Veuillez confirmer votre email pour vous connecter.',
+                ),
+                backgroundColor: AppColors.success,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+            context.go('/login');
           } else if (state is AuthError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -210,11 +197,16 @@ class _RegisterPageState extends State<RegisterPage> {
             controller: _firstNameController,
             textInputAction: TextInputAction.next,
             textCapitalization: TextCapitalization.words,
-            style: AppTypography.bodyMedium.copyWith(color: AppColors.textPrimary),
-            decoration: _inputDecoration(
+            style: AppTypography.bodyMedium.copyWith(
+              color: AppColors.textPrimary,
+            ),
+            decoration: appInputDecoration(
               label: 'Prénom',
-              prefixIcon: const Icon(Icons.person_outline,
-                  color: AppColors.textSecondary, size: 20),
+              prefixIcon: const Icon(
+                Icons.person_outline,
+                color: AppColors.textSecondary,
+                size: 20,
+              ),
             ),
             validator: (value) {
               if (value == null || value.isEmpty) return 'Requis';
@@ -229,8 +221,10 @@ class _RegisterPageState extends State<RegisterPage> {
             controller: _lastNameController,
             textInputAction: TextInputAction.next,
             textCapitalization: TextCapitalization.words,
-            style: AppTypography.bodyMedium.copyWith(color: AppColors.textPrimary),
-            decoration: _inputDecoration(label: 'Nom'),
+            style: AppTypography.bodyMedium.copyWith(
+              color: AppColors.textPrimary,
+            ),
+            decoration: appInputDecoration(label: 'Nom'),
             validator: (value) {
               if (value == null || value.isEmpty) return 'Requis';
               if (value.length < 2) return 'Min 2 caractères';
@@ -248,15 +242,19 @@ class _RegisterPageState extends State<RegisterPage> {
       keyboardType: TextInputType.emailAddress,
       textInputAction: TextInputAction.next,
       style: AppTypography.bodyMedium.copyWith(color: AppColors.textPrimary),
-      decoration: _inputDecoration(
+      decoration: appInputDecoration(
         label: 'Email',
         hint: 'votre@email.com',
-        prefixIcon: const Icon(Icons.email_outlined,
-            color: AppColors.textSecondary, size: 20),
+        prefixIcon: const Icon(
+          Icons.email_outlined,
+          color: AppColors.textSecondary,
+          size: 20,
+        ),
       ),
       validator: (value) {
-        if (value == null || value.isEmpty) return 'Veuillez entrer votre email';
-        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+        if (value == null || value.isEmpty)
+          return 'Veuillez entrer votre email';
+        if (!RegExp(r'^[\w\-\.]+@([\w\-]+\.)+[\w\-]{2,63}$').hasMatch(value)) {
           return 'Veuillez entrer un email valide';
         }
         return null;
@@ -270,11 +268,14 @@ class _RegisterPageState extends State<RegisterPage> {
       obscureText: _obscurePassword,
       textInputAction: TextInputAction.next,
       style: AppTypography.bodyMedium.copyWith(color: AppColors.textPrimary),
-      decoration: _inputDecoration(
+      decoration: appInputDecoration(
         label: 'Mot de passe',
         hint: 'Min 8 caractères',
-        prefixIcon: const Icon(Icons.lock_outline,
-            color: AppColors.textSecondary, size: 20),
+        prefixIcon: const Icon(
+          Icons.lock_outline,
+          color: AppColors.textSecondary,
+          size: 20,
+        ),
         suffixIcon: IconButton(
           icon: Icon(
             _obscurePassword
@@ -287,7 +288,8 @@ class _RegisterPageState extends State<RegisterPage> {
         ),
       ),
       validator: (value) {
-        if (value == null || value.isEmpty) return 'Veuillez entrer un mot de passe';
+        if (value == null || value.isEmpty)
+          return 'Veuillez entrer un mot de passe';
         if (!_isPasswordValid) return 'Veuillez remplir toutes les conditions';
         return null;
       },
@@ -329,7 +331,9 @@ class _RegisterPageState extends State<RegisterPage> {
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 200),
           child: Icon(
-            isMet ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+            isMet
+                ? Icons.check_circle_rounded
+                : Icons.radio_button_unchecked_rounded,
             key: ValueKey(isMet),
             size: 18,
             color: isMet ? AppColors.success : AppColors.textTertiary,
@@ -354,10 +358,13 @@ class _RegisterPageState extends State<RegisterPage> {
       textInputAction: TextInputAction.done,
       onFieldSubmitted: (_) => _onRegister(),
       style: AppTypography.bodyMedium.copyWith(color: AppColors.textPrimary),
-      decoration: _inputDecoration(
+      decoration: appInputDecoration(
         label: 'Confirmer le mot de passe',
-        prefixIcon: const Icon(Icons.lock_outline,
-            color: AppColors.textSecondary, size: 20),
+        prefixIcon: const Icon(
+          Icons.lock_outline,
+          color: AppColors.textSecondary,
+          size: 20,
+        ),
         suffixIcon: IconButton(
           icon: Icon(
             _obscureConfirmPassword
@@ -366,13 +373,16 @@ class _RegisterPageState extends State<RegisterPage> {
             color: AppColors.textSecondary,
             size: 20,
           ),
-          onPressed: () =>
-              setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+          onPressed: () => setState(
+            () => _obscureConfirmPassword = !_obscureConfirmPassword,
+          ),
         ),
       ),
       validator: (value) {
-        if (value == null || value.isEmpty) return 'Veuillez confirmer le mot de passe';
-        if (value != _passwordController.text) return 'Les mots de passe ne correspondent pas';
+        if (value == null || value.isEmpty)
+          return 'Veuillez confirmer le mot de passe';
+        if (value != _passwordController.text)
+          return 'Les mots de passe ne correspondent pas';
         return null;
       },
     );
@@ -388,7 +398,9 @@ class _RegisterPageState extends State<RegisterPage> {
           child: Checkbox(
             value: _acceptTerms,
             activeColor: AppColors.primary,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(4),
+            ),
             onChanged: (value) => setState(() => _acceptTerms = value ?? false),
           ),
         ),
@@ -457,7 +469,9 @@ class _RegisterPageState extends State<RegisterPage> {
       children: [
         Text(
           'Déjà un compte ? ',
-          style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+          style: AppTypography.bodySmall.copyWith(
+            color: AppColors.textSecondary,
+          ),
         ),
         TextButton(
           onPressed: () => context.pop(),

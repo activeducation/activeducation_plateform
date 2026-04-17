@@ -33,10 +33,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     try {
       final response = await _dio.post(
         ApiEndpoints.login,
-        data: {
-          'email': email,
-          'password': password,
-        },
+        data: {'email': email, 'password': password},
       );
       return AuthResultModel.fromJson(response.data);
     } on DioException catch (e) {
@@ -94,10 +91,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<void> forgotPassword(String email) async {
     try {
-      await _dio.post(
-        ApiEndpoints.forgotPassword,
-        data: {'email': email},
-      );
+      await _dio.post(ApiEndpoints.forgotPassword, data: {'email': email});
     } on DioException catch (e) {
       throw _handleDioError(e);
     }
@@ -108,10 +102,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     try {
       await _dio.post(
         ApiEndpoints.resetPassword,
-        data: {
-          'token': token,
-          'new_password': newPassword,
-        },
+        data: {'token': token, 'new_password': newPassword},
       );
     } on DioException catch (e) {
       throw _handleDioError(e);
@@ -149,10 +140,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<UserProfileModel> updateProfile(Map<String, dynamic> data) async {
     try {
-      final response = await _dio.patch(
-        '${ApiEndpoints.auth}/me',
-        data: data,
-      );
+      final response = await _dio.patch('${ApiEndpoints.auth}/me', data: data);
       return UserProfileModel.fromJson(response.data);
     } on DioException catch (e) {
       throw _handleDioError(e);
@@ -176,6 +164,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       }
 
       switch (statusCode) {
+        case 400:
+          return AuthException(AuthExceptionType.validation, message);
         case 401:
           return AuthException(AuthExceptionType.unauthorized, message);
         case 403:
@@ -201,7 +191,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       return AuthException(AuthExceptionType.network, 'Erreur de connexion');
     }
 
-    return AuthException(AuthExceptionType.unknown, e.message ?? 'Erreur inconnue');
+    return AuthException(
+      AuthExceptionType.unknown,
+      e.message ?? 'Erreur inconnue',
+    );
   }
 }
 

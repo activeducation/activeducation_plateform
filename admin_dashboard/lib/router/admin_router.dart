@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../core/di/injection_container.dart';
 import '../core/auth/token_storage.dart';
+import '../core/auth/auth_interceptor.dart';
 import '../shared/layouts/admin_shell_layout.dart';
 import '../features/auth/presentation/login_page.dart';
 import '../features/dashboard/presentation/dashboard_page.dart';
@@ -22,12 +23,11 @@ import '../features/settings/presentation/settings_page.dart';
 import '../features/settings/presentation/announcements_page.dart';
 import '../features/settings/presentation/audit_log_page.dart';
 
-final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 GoRouter createAdminRouter() {
   return GoRouter(
-    navigatorKey: _rootNavigatorKey,
+    navigatorKey: authNavigatorKey,
     initialLocation: '/dashboard',
     redirect: (context, state) {
       final tokenStorage = getIt<TokenStorage>();
@@ -36,13 +36,21 @@ GoRouter createAdminRouter() {
 
       if (!isLoggedIn && !isLoginRoute) return '/login';
       if (isLoggedIn && isLoginRoute) return '/dashboard';
+
+      final superAdminOnlyRoutes = [
+        '/settings',
+        '/audit-log',
+        '/announcements',
+      ];
+      if (superAdminOnlyRoutes.contains(state.matchedLocation) &&
+          !tokenStorage.isSuperAdmin) {
+        return '/dashboard';
+      }
+
       return null;
     },
     routes: [
-      GoRoute(
-        path: '/login',
-        builder: (context, state) => const LoginPage(),
-      ),
+      GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
       ShellRoute(
         navigatorKey: _shellNavigatorKey,
         builder: (context, state, child) => AdminShellLayout(child: child),

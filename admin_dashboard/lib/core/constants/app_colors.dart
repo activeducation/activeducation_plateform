@@ -3,32 +3,33 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  // Primary palette – Bleu ActivEducation
+  // Primary palette – Bleu Royal ActivEducation (couleur logo exacte)
   static const Color primary = Color(0xFF1060CF);
   static const Color primaryLight = Color(0xFF4A8AE5);
-  static const Color primaryDark = Color(0xFF0A4299);
+  static const Color primaryMid = Color(0xFF1752B8);
+  static const Color primaryDark = Color(0xFF0A45A0);
   static const Color primarySurface = Color(0xFFE8F0FE);
 
-  // Secondary / accent – Orange ActivEducation
+  // Secondary / accent – Or Ambré ActivEducation (couleur logo exacte)
   static const Color secondary = Color(0xFFF2A423);
-  static const Color secondaryLight = Color(0xFFFFBF4D);
+  static const Color secondaryLight = Color(0xFFFFD166);
   static const Color secondaryDark = Color(0xFFCC8800);
   static const Color secondarySurface = Color(0xFFFFF5E0);
 
-  // Backgrounds
-  static const Color background = Color(0xFFF7F8FC);
-  static const Color surface = Colors.white;
-  static const Color surfaceVariant = Color(0xFFF1F3F9);
-  static const Color surfaceHover = Color(0xFFF5F7FA);
+  // Backgrounds – légèrement teintés bleu pour cohérence
+  static const Color background = Color(0xFFF5F7FC);
+  static const Color surface = Color(0xFFFFFFFF);
+  static const Color surfaceVariant = Color(0xFFF0F4FA);
+  static const Color surfaceHover = Color(0xFFEBF0F8);
 
-  // Sidebar – Bleu ActivEducation
-  static const Color sidebarBg = Color(0xFF0A4299);
-  static const Color sidebarBgLight = Color(0xFF1060CF);
-  static const Color sidebarText = Colors.white;
-  static const Color sidebarTextMuted = Color(0xFFB0CCEF);
+  // Sidebar – Bleu ActivEducation profond (aligné landing page)
+  static const Color sidebarBg = Color(0xFF060E1E);
+  static const Color sidebarBgLight = Color(0xFF0B1C3C);
+  static const Color sidebarText = Color(0xFFE4EEF8);
+  static const Color sidebarTextMuted = Color(0xFF7AA0BC);
   static const Color sidebarItemHover = Color(0xFF1060CF);
   static const Color sidebarItemActive = Color(0xFFF2A423);
-  static const Color sidebarDivider = Color(0xFF1A6ADB);
+  static const Color sidebarDivider = Color(0xFF1B2E52);
 
   // Text
   static const Color textPrimary = Color(0xFF0F172A);

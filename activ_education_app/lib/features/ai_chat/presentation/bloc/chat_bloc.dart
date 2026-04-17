@@ -89,11 +89,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   late String _sessionId;
   String? _userId;
 
-  ChatBloc(
-    this._repository,
-    this._localStorage, {
-    this.orientationContext,
-  }) : super(ChatInitial()) {
+  ChatBloc(this._repository, this._localStorage, {this.orientationContext})
+    : super(ChatInitial()) {
     on<LoadChatHistory>(_onLoadHistory);
     on<SendMessage>(_onSendMessage);
     on<ClearChatSession>(_onClearSession);
@@ -125,8 +122,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         content: orientationContext != null
             ? _buildWelcomeWithContext(orientationContext!)
             : 'Bonjour ! Je suis **AÏDA**, votre conseillère d\'orientation. '
-                'Posez-moi toutes vos questions sur les filières, les métiers '
-                'ou votre avenir professionnel. Je suis là pour vous guider !',
+                  'Posez-moi toutes vos questions sur les filières, les métiers '
+                  'ou votre avenir professionnel. Je suis là pour vous guider !',
         role: MessageRole.assistant,
         timestamp: DateTime.now(),
       );
@@ -142,19 +139,19 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     SendMessage event,
     Emitter<ChatState> emit,
   ) async {
-    final current = state is ChatReady
-        ? state as ChatReady
-        : const ChatReady();
+    final current = state is ChatReady ? state as ChatReady : const ChatReady();
 
     // Ajouter le message utilisateur immédiatement
     final userMsg = ChatMessageModel.fromUser(event.message);
     final messagesWithUser = [...current.messages, userMsg];
 
-    emit(current.copyWith(
-      messages: messagesWithUser,
-      isLoading: true,
-      clearError: true,
-    ));
+    emit(
+      current.copyWith(
+        messages: messagesWithUser,
+        isLoading: true,
+        clearError: true,
+      ),
+    );
 
     try {
       final reply = await _repository.sendMessage(
@@ -164,33 +161,32 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         history: _buildBackendHistory(messagesWithUser),
       );
 
-      final updated = state as ChatReady;
+      final updated = state is ChatReady
+          ? state as ChatReady
+          : const ChatReady();
       final allMessages = [...updated.messages, reply];
 
-      emit(updated.copyWith(
-        messages: allMessages,
-        isLoading: false,
-      ));
+      emit(updated.copyWith(messages: allMessages, isLoading: false));
 
       // Persister après chaque échange
       if (_userId != null) {
-        final models = allMessages
-            .whereType<ChatMessageModel>()
-            .toList();
+        final models = allMessages.whereType<ChatMessageModel>().toList();
         await _localStorage.saveMessages(_userId!, models);
       }
     } catch (e) {
-      final updated = state as ChatReady;
-      emit(updated.copyWith(
-        isLoading: false,
-        error: 'Impossible de contacter AÏDA. Vérifiez votre connexion.',
-      ));
+      final updated = state is ChatReady
+          ? state as ChatReady
+          : const ChatReady();
+      emit(
+        updated.copyWith(
+          isLoading: false,
+          error: 'Impossible de contacter AÏDA. Vérifiez votre connexion.',
+        ),
+      );
 
       // Sauvegarder quand même le message utilisateur
       if (_userId != null) {
-        final models = messagesWithUser
-            .whereType<ChatMessageModel>()
-            .toList();
+        final models = messagesWithUser.whereType<ChatMessageModel>().toList();
         await _localStorage.saveMessages(_userId!, models);
       }
     }
@@ -242,10 +238,14 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         ? messages.sublist(messages.length - _maxBackendHistory)
         : messages;
 
-    return recent.map((m) => {
-      'role': m.role == MessageRole.user ? 'user' : 'assistant',
-      'content': m.content,
-    }).toList();
+    return recent
+        .map(
+          (m) => {
+            'role': m.role == MessageRole.user ? 'user' : 'assistant',
+            'content': m.content,
+          },
+        )
+        .toList();
   }
 
   String _buildWelcomeWithContext(Map<String, dynamic> ctx) {
