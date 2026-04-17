@@ -1,25 +1,30 @@
-"""Supabase Auth migration - nettoyage schema
+"""Supabase Auth cleanup - remove legacy JWT artifacts
 
-Revision ID: 002_supabase_auth
-Revises: 001_initial
+Revision ID: 006
+Revises: 005
 Create Date: 2024-01-15 00:00:00.000000
 
-Supprime les colonnes et tables liees au JWT maison
-maintenant que Supabase Auth gere l'authentification.
+Nettoyage post-migration vers Supabase Auth natif.
+
+NOTE: Cette migration etait initialement numerotee 002_supabase_auth avec un
+down_revision '001_initial' inexistant (le chainon reel est '001'). Resultat:
+la migration etait orpheline et n'etait jamais appliquee. Elle est desormais
+positionnee en tete de chaine (apres 005) afin d'etre executee par
+`alembic upgrade head`.
 
 Changements:
 - Suppression de user_profiles.password_hash (Supabase Auth gere ca)
 - Suppression de user_profiles.reset_token / reset_token_expires
 - Suppression de la table auth_refresh_tokens (Supabase gere ca)
-- Ajout FK optionnelle vers auth.users si disponible
+- Ajout de last_login_at, is_active, role si absents
 """
 
 from alembic import op
 import sqlalchemy as sa
 
 
-revision = '002_supabase_auth'
-down_revision = '001_initial'
+revision = '006'
+down_revision = '005'
 branch_labels = None
 depends_on = None
 

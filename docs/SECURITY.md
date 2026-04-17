@@ -9,14 +9,19 @@
 
 ## Authentification et autorisation
 
-### Tokens JWT
+### Authentification (Supabase Auth)
+
+L'authentification principale s'appuie sur Supabase Auth. Le backend valide les tokens :
+
+- **Mode local (recommandé en prod)** : si `SUPABASE_JWT_SECRET` est défini, les tokens sont validés localement avec `python-jose` (zéro appel réseau).
+- **Mode API (fallback)** : si le secret JWT n'est pas configuré, le backend appelle `supabase.auth.get_user(token)` à chaque requête.
+- Dans les deux cas, les résultats sont mis en cache Redis 60 s (clé = SHA-256 du token, jamais le token brut).
+
+### Tokens internes (reset password, liens signés)
 
 - Algorithme : HS256
-- Durée access token : 30 minutes
-- Durée refresh token : 7 jours
-- SECRET_KEY : minimum 32 caractères, générée aléatoirement
-
-> ⚠️ Migration en cours vers Supabase Auth natif (élimine la gestion JWT maison)
+- SECRET_KEY : minimum 32 caractères, aléatoire — rejetée si elle ressemble à un JWT (préfixe `eyJ`) ou si elle contient un marqueur placeholder (`placeholder`, `ci-test`, `pytest-dummy`).
+- Rotation : voir `docs/OPERATIONS.md` § 5.
 
 ### Rôles
 
@@ -62,9 +67,13 @@ Referrer-Policy: strict-origin-when-cross-origin
 
 ## Mots de passe
 
-- Hachage bcrypt (12 rounds)
-- Validation force : 8+ chars, majuscule, minuscule, chiffre, caractère spécial
-- Troncature à 72 bytes (limite bcrypt)
+- Le hachage est délégué à Supabase Auth (bcrypt, géré côté plateforme managée).
+- Validation côté backend avant soumission : 8+ chars, majuscule, chiffre, caractère spécial (voir `validate_password_strength`).
+
+## Stockage client
+
+- **Tokens mobiles/web (Flutter)** : `flutter_secure_storage` (Keychain iOS / Keystore Android via `encryptedSharedPreferences` / DPAPI Windows). Migration automatique depuis l'ancien stockage `SharedPreferences` en clair au premier lancement.
+- **Metadonnées non sensibles** (user_id, email, role) : SharedPreferences.
 
 ## Infrastructure
 
@@ -72,7 +81,10 @@ Referrer-Policy: strict-origin-when-cross-origin
 
 - Backend tourne en utilisateur non-root (`appuser`)
 - Pas d'accès au socket Docker depuis le backend
-- ⚠️ Traefik accède au socket Docker directement (à migrer vers `tecnativa/docker-socket-proxy`)
+- Traefik passe par **`tecnativa/docker-socket-proxy:0.3.0`** en lecture seule (`POST=0`, `CONTAINERS=1`, `NETWORKS=1`) — aucune mutation possible sur le démon Docker depuis le reverse proxy.
+- Le proxy est isolé dans un réseau `socket-proxy-network` marqué `internal: true` (pas de trafic sortant).
+- Tous les services appliquent `no-new-privileges:true` et des limites `cpus/memory` via `deploy.resources`.
+- Les logs sont bornés (`json-file`, rotation 5-10 MB × 2-5 fichiers) pour éviter la saturation disque.
 
 ### Secrets
 
@@ -108,9 +120,14 @@ Ne pas ouvrir une issue publique. Contacter directement l'équipe à security@ac
 ## Checklist avant déploiement production
 
 - [ ] `DEBUG=False`
-- [ ] `SECRET_KEY` générée aléatoirement (≥32 chars)
-- [ ] `BACKEND_CORS_ORIGINS` limité aux domaines officiels
+- [ ] `SECRET_KEY` générée aléatoirement (≥32 chars, pas de marqueur placeholder)
+- [ ] `SUPABASE_SERVICE_ROLE_KEY` défini (obligatoire en prod — endpoints admin)
+- [ ] `SUPABASE_JWT_SECRET` défini (valide les tokens en local, zéro appel réseau)
+- [ ] `BACKEND_CORS_ORIGINS` limité aux domaines officiels, pas de `*`
 - [ ] `ENVIRONMENT=production`
-- [ ] Certificats SSL valides
-- [ ] RLS activé sur Supabase
-- [ ] Logs ne contiennent pas de données sensibles
+- [ ] Certificats SSL valides (renouvelés auto par Traefik)
+- [ ] RLS activé sur toutes les tables Supabase sensibles
+- [ ] Logs ne contiennent pas de données sensibles (tokens, passwords)
+- [ ] `SENTRY_DSN` configuré (backend + `--dart-define` pour chaque build Flutter)
+- [ ] Headers CSP / HSTS vérifiés via https://securityheaders.com
+- [ ] Rate limit Traefik actif (100 req/min/IP par défaut)

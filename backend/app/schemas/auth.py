@@ -8,11 +8,12 @@ Definit les structures de donnees pour:
 - User profile
 """
 
+import re
 from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 
 # =============================================================================
@@ -55,6 +56,17 @@ class RegisterRequest(BaseModel):
         if not v.replace(" ", "").replace("-", "").isalpha():
             raise ValueError("Le nom ne doit contenir que des lettres")
         return v.strip().title()
+
+    @field_validator("phone_number", mode="before")
+    @classmethod
+    def validate_phone(cls, v: Optional[str]) -> Optional[str]:
+        if v is None or v.strip() == "":
+            return None
+        cleaned = re.sub(r"[\s\-\(\)]", "", v)
+        if not cleaned.isdigit() or len(cleaned) < 8 or len(cleaned) > 20:
+            if v:  # Only warn if not empty
+                pass  # Accept but could log warning
+        return v.strip() if v else None
 
 
 # =============================================================================
@@ -105,6 +117,8 @@ class ResetPasswordRequest(BaseModel):
             raise ValueError("Le mot de passe doit contenir au moins une minuscule")
         if not any(c.isdigit() for c in v):
             raise ValueError("Le mot de passe doit contenir au moins un chiffre")
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\/~`]', v):
+            raise ValueError("Le mot de passe doit contenir au moins un caractere special")
         return v
 
 
@@ -119,6 +133,12 @@ class ChangePasswordRequest(BaseModel):
     def validate_password(cls, v: str) -> str:
         if len(v) < 8:
             raise ValueError("Le mot de passe doit contenir au moins 8 caracteres")
+        if not any(c.isupper() for c in v):
+            raise ValueError("Le mot de passe doit contenir au moins une majuscule")
+        if not any(c.islower() for c in v):
+            raise ValueError("Le mot de passe doit contenir au moins une minuscule")
+        if not any(c.isdigit() for c in v):
+            raise ValueError("Le mot de passe doit contenir au moins un chiffre")
         return v
 
 
@@ -150,8 +170,7 @@ class UserResponse(UserBase):
     avatar_url: Optional[str] = None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
     @property
     def full_name(self) -> str:

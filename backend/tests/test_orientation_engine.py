@@ -19,6 +19,12 @@ from app.schemas.orientation import TestType as OrientationTestType
 from app.services.orientation_engine import OrientationEngine
 
 
+# ============================================================================
+# Les scores retournes par le moteur sont normalises en POURCENTAGES (0-100)
+# sur une echelle Likert 1-5. Les labels sont en FRANCAIS (public cible).
+# ============================================================================
+
+
 @pytest.mark.asyncio
 async def test_calculate_riasec_with_categories_from_test_data():
     engine = OrientationEngine()
@@ -33,10 +39,10 @@ async def test_calculate_riasec_with_categories_from_test_data():
 
     result = await engine.calculate_result(OrientationTestType.RIASEC, responses, test_data)
 
-    assert result.scores["Realistic"] == 5
-    assert result.scores["Investigative"] == 4
-    assert result.scores["Artistic"] == 3
-    assert result.dominant_traits[0] == "Realistic"
+    assert result.scores["Réaliste"] == 100.0
+    assert result.scores["Investigateur"] == 80.0
+    assert result.scores["Artistique"] == 60.0
+    assert result.dominant_traits[0] == "Réaliste"
     assert result.recommendations == []
 
 
@@ -47,9 +53,9 @@ async def test_calculate_riasec_legacy_question_ids_fallback():
 
     result = await engine.calculate_result(OrientationTestType.RIASEC, responses, test_data=None)
 
-    assert result.scores["Social"] == 5
-    assert result.scores["Realistic"] == 2
-    assert result.scores["Conventional"] == 1
+    assert result.scores["Social"] == 100.0
+    assert result.scores["Réaliste"] == 40.0
+    assert result.scores["Conventionnel"] == 20.0
     assert "Social" in result.dominant_traits
 
 
@@ -66,7 +72,8 @@ async def test_calculate_generic_uses_default_score_for_invalid_values():
 
     result = await engine.calculate_result(OrientationTestType.SKILLS, responses, test_data)
 
-    assert result.scores["Logic"] == 2
+    # Deux reponses invalides -> fallback 1 chacune -> (2 / 10) * 100 = 20.0
+    assert result.scores["Logic"] == 20.0
     assert result.dominant_traits == ["Logic"]
 
 
@@ -89,11 +96,14 @@ async def test_calculate_personality_mbti_dimensions_from_responses():
         test_data,
     )
 
+    # MBTI_FR conserve "Extraversion"/"Introversion" en francais identique
     assert result.scores["Extraversion"] > result.scores["Introversion"]
-    assert result.scores["Sensing"] > result.scores["Intuition"]
-    assert result.scores["Feeling"] > result.scores["Thinking"]
-    assert result.scores["Perceiving"] > result.scores["Judging"]
-    assert result.dominant_traits == ["Extraversion", "Sensing", "Feeling", "Perceiving"]
+    # Les autres dimensions sont traduites: Sensing->Sensation, Feeling->Sentiment,
+    # Perceiving->Perception
+    assert result.scores["Sensation"] > result.scores["Intuition"]
+    assert result.scores["Sentiment"] > result.scores["Pensée"]
+    assert result.scores["Perception"] > result.scores["Jugement"]
+    assert result.dominant_traits == ["Extraversion", "Sensation", "Sentiment", "Perception"]
 
 
 @pytest.mark.asyncio
@@ -114,6 +124,9 @@ async def test_calculate_personality_falls_back_to_category_scoring():
         test_data,
     )
 
-    assert result.scores["Linguistique"] == 9
-    assert result.scores["Logique"] == 3
+    # Categories non-MBTI => fallback _calculate_generic (pourcentages)
+    # Linguistique: (5+4) / (2*5) * 100 = 90.0
+    # Logique: (3) / (1*5) * 100 = 60.0
+    assert result.scores["Linguistique"] == 90.0
+    assert result.scores["Logique"] == 60.0
     assert result.dominant_traits[0] == "Linguistique"

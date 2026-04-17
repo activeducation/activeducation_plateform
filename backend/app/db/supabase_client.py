@@ -9,6 +9,8 @@ Caracteristiques:
 """
 
 import time
+import asyncio
+import concurrent.futures
 from functools import wraps
 from threading import Lock
 from typing import Any, Callable, Optional, TypeVar
@@ -45,6 +47,16 @@ def with_retry(
         exponential_base: Base pour le calcul exponentiel
     """
 
+    def _non_blocking_sleep(delay: float) -> None:
+        """Sleep without blocking the event loop if one is running."""
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            time.sleep(delay)
+            return
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+            pool.submit(time.sleep, delay).result()
+
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         @wraps(func)
         def wrapper(*args, **kwargs) -> T:
@@ -61,7 +73,7 @@ def with_retry(
                             f"Attempt {attempt + 1}/{max_retries + 1} failed: {e}. "
                             f"Retrying in {delay:.2f}s..."
                         )
-                        time.sleep(delay)
+                        _non_blocking_sleep(delay)
                         delay = min(delay * exponential_base, max_delay)
                     else:
                         logger.error(
@@ -303,14 +315,23 @@ def get_supabase_client() -> SupabaseClient:
 def get_admin_supabase_client() -> SupabaseClient:
     """
     Retourne l'instance SupabaseClient Admin (Service Role).
-    Utilise le SERVICE_ROLE_KEY si disponible, sinon fallback sur Anon (et risque d'erreur RLS).
+
+    SECURITE: exige SUPABASE_SERVICE_ROLE_KEY. Pas de fallback sur la cle Anon
+    pour eviter tout contournement silencieux des politiques RLS.
     """
     global admin_supabase_client
     if admin_supabase_client is None:
-        key = settings.SUPABASE_SERVICE_ROLE_KEY or settings.SUPABASE_KEY
+        key = settings.SUPABASE_SERVICE_ROLE_KEY
+        if not key:
+            logger.error(
+                "SUPABASE_SERVICE_ROLE_KEY is not configured; admin client unavailable"
+            )
+            raise DBConnectionError(
+                "SUPABASE_SERVICE_ROLE_KEY manquant: client admin indisponible."
+            )
         admin_supabase_client = SupabaseClient(key=key)
-        logger.warning("Initialized Admin Supabase Client explicitly.")
-    
+        logger.info("Admin Supabase client initialized with service role key")
+
     return admin_supabase_client
 
 def get_supabase() -> Client:

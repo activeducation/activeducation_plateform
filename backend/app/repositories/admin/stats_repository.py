@@ -1,7 +1,7 @@
 """Repository pour les statistiques du dashboard admin."""
 
 from typing import Any
-from app.db.supabase_client import get_supabase_client, SupabaseClient
+from app.db.supabase_client import get_admin_supabase_client, SupabaseClient
 from app.core.logging import get_logger
 from app.schemas.admin.dashboard import (
     DashboardStats,
@@ -15,7 +15,7 @@ logger = get_logger("repositories.admin.stats")
 
 class StatsRepository:
     def __init__(self):
-        self._db: SupabaseClient = get_supabase_client()
+        self._db: SupabaseClient = get_admin_supabase_client()
 
     async def get_dashboard_stats(self) -> DashboardStats:
         """Recupere les statistiques agregees."""

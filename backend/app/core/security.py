@@ -7,18 +7,16 @@ Gere:
 - Cache des tokens valides (evite d'appeler Supabase a chaque requete)
 """
 
-import re
-import time
-from threading import Lock
+import hashlib
 from typing import Any, Optional
 from uuid import UUID
-from passlib.context import CryptContext
 
 from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.core.config import settings
 from app.core.logging import get_logger
+from app.core.cache import get_cache
 from app.core.exceptions import (
     AuthenticationError,
     TokenExpiredError,
@@ -29,34 +27,59 @@ logger = get_logger("core.security")
 
 
 # =============================================================================
-# TOKEN CACHE (evite d'appeler Supabase a chaque requete)
+# TOKEN CACHE (Redis-backed avec fallback memoire)
 # =============================================================================
+# Evite de revalider un token (JWT local ou API Supabase) a chaque requete.
+# Le cache est partage entre workers en production via Redis.
 
-_token_cache: dict[str, tuple[dict, float]] = {}
-_cache_lock = Lock()
-_CACHE_TTL_SECONDS = 60  # Cache valide 60 secondes
+_TOKEN_CACHE_TTL_SECONDS = 60
+_ADMIN_LOOKUP_CACHE_TTL_SECONDS = 60
+
+
+def _token_cache_key(token: str) -> str:
+    """Cle de cache deterministe sans exposer le token brut en clair."""
+    digest = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    return f"auth:token:{digest}"
 
 
 def _get_cached_user(token: str) -> Optional[dict]:
-    """Retourne l'utilisateur si le token est en cache et non expire."""
-    with _cache_lock:
-        cached = _token_cache.get(token)
-        if cached:
-            user_data, expires_at = cached
-            if time.time() < expires_at:
-                return user_data
-            else:
-                del _token_cache[token]
-    return None
+    """Retourne l'utilisateur si le token est en cache (Redis ou memoire)."""
+    try:
+        return get_cache().get(_token_cache_key(token))
+    except Exception as e:
+        logger.warning(f"Token cache read failed: {e}")
+        return None
 
 
 def _cache_user(token: str, user_data: dict) -> None:
     """Met en cache les donnees utilisateur pour ce token."""
-    with _cache_lock:
-        # Eviter que le cache grossisse trop
-        if len(_token_cache) > 1000:
-            _token_cache.clear()
-        _token_cache[token] = (user_data, time.time() + _CACHE_TTL_SECONDS)
+    try:
+        get_cache().set(_token_cache_key(token), user_data, ttl=_TOKEN_CACHE_TTL_SECONDS)
+    except Exception as e:
+        logger.warning(f"Token cache write failed: {e}")
+
+
+def _admin_profile_cache_key(user_id: UUID) -> str:
+    return f"auth:admin_profile:{user_id}"
+
+
+def _get_cached_admin_profile(user_id: UUID) -> Optional[dict]:
+    try:
+        return get_cache().get(_admin_profile_cache_key(user_id))
+    except Exception as e:
+        logger.warning(f"Admin profile cache read failed: {e}")
+        return None
+
+
+def _cache_admin_profile(user_id: UUID, profile: dict) -> None:
+    try:
+        get_cache().set(
+            _admin_profile_cache_key(user_id),
+            profile,
+            ttl=_ADMIN_LOOKUP_CACHE_TTL_SECONDS,
+        )
+    except Exception as e:
+        logger.warning(f"Admin profile cache write failed: {e}")
 
 
 # =============================================================================
@@ -190,7 +213,10 @@ async def get_current_user_id_optional(
 ) -> Optional[UUID]:
     """
     Dependency optionnelle pour l'authentification.
-    Retourne None si pas de token au lieu de lever une exception.
+
+    - Aucun token fourni: retourne None (endpoint accessible en anonyme).
+    - Token invalide ou expire: leve l'exception correspondante (le client
+      a explicitement tente de s'authentifier, il doit savoir que ca a echoue).
     """
     if credentials is None:
         return None
@@ -198,8 +224,11 @@ async def get_current_user_id_optional(
     try:
         user_data = get_user_from_token(credentials.credentials)
         return UUID(user_data["user_id"])
-    except Exception:
-        return None
+    except (TokenExpiredError, InvalidTokenError):
+        raise
+    except Exception as e:
+        logger.error(f"Optional authentication error: {e}")
+        raise AuthenticationError("Token invalide")
 
 
 # =============================================================================
@@ -213,24 +242,38 @@ async def get_current_admin(
     """
     Dependency pour verifier que l'utilisateur est admin ou super_admin.
 
+    Le lookup BD est execute dans un threadpool (client Supabase sync) et
+    cache 60s pour eviter de bloquer l'event loop et de hammerer PostgREST.
+
     Returns:
         dict avec user_id (UUID) et role (str)
     """
+    import asyncio
+
     if credentials is None:
         raise AuthenticationError("Token d'authentification requis")
 
     try:
         user_data = get_user_from_token(credentials.credentials)
         user_id = UUID(user_data["user_id"])
-    except (TokenExpiredError, InvalidTokenError) as e:
-        raise e
+    except (TokenExpiredError, InvalidTokenError):
+        raise
     except Exception as e:
         logger.error(f"Authentication error: {e}")
         raise AuthenticationError("Token invalide")
 
-    from app.db.supabase_client import get_supabase_client
-    db = get_supabase_client()
-    user = db.fetch_one(table="user_profiles", id_column="id", id_value=str(user_id))
+    user = _get_cached_admin_profile(user_id)
+    if user is None:
+        from app.db.supabase_client import get_supabase_client
+        db = get_supabase_client()
+        user = await asyncio.to_thread(
+            db.fetch_one,
+            table="user_profiles",
+            id_column="id",
+            id_value=str(user_id),
+        )
+        if user:
+            _cache_admin_profile(user_id, user)
 
     if not user:
         raise AuthenticationError("Utilisateur non trouve")
@@ -265,49 +308,70 @@ async def get_current_super_admin(
 
 
 # =============================================================================
-# PASSWORD VALIDATION (utilisee dans les schemas Pydantic)
+# SCHOOL ADMIN DEPENDENCIES
 # =============================================================================
 
 
-def validate_password_strength(password: str) -> tuple[bool, list[str]]:
+async def get_current_school_admin(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
+) -> dict:
     """
-    Valide la force d'un mot de passe.
+    Dependency pour verifier que l'utilisateur est school_admin.
+
+    Les lookups BD sont offloads sur threadpool pour ne pas bloquer l'event loop.
 
     Returns:
-        Tuple (is_valid, list_of_errors)
+        dict avec user_id (UUID), school_id (str), email (str)
     """
-    errors = []
+    import asyncio
 
-    if len(password) < 8:
-        errors.append("Le mot de passe doit contenir au moins 8 caracteres")
-    if not any(c.isupper() for c in password):
-        errors.append("Le mot de passe doit contenir au moins une majuscule")
-    if not any(c.islower() for c in password):
-        errors.append("Le mot de passe doit contenir au moins une minuscule")
-    if not any(c.isdigit() for c in password):
-        errors.append("Le mot de passe doit contenir au moins un chiffre")
-    if not re.search(r'[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\/~`]', password):
-        errors.append("Le mot de passe doit contenir au moins un caractere special")
+    if credentials is None:
+        raise AuthenticationError("Token d'authentification requis")
 
-    return len(errors) == 0, errors
+    try:
+        user_data = get_user_from_token(credentials.credentials)
+        user_id = UUID(user_data["user_id"])
+    except (TokenExpiredError, InvalidTokenError):
+        raise
+    except Exception as e:
+        logger.error(f"Authentication error: {e}")
+        raise AuthenticationError("Token invalide")
 
+    from app.db.supabase_client import get_supabase_client
+    db = get_supabase_client()
 
+    user, admin_profile = await asyncio.gather(
+        asyncio.to_thread(
+            db.fetch_one,
+            table="user_profiles",
+            id_column="id",
+            id_value=str(user_id),
+        ),
+        asyncio.to_thread(
+            db.fetch_one,
+            table="school_admin_profiles",
+            id_column="user_id",
+            id_value=str(user_id),
+        ),
+    )
 
-# =============================================================================
-# PASSWORD HASHING (pour les utilisateurs crees via l'admin)
-# =============================================================================
+    if not user:
+        raise AuthenticationError("Utilisateur non trouve")
 
-# Context pour le hash des mots de passe
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+    role = user.get("role", "student")
+    if role != "school_admin":
+        from app.core.exceptions import AuthorizationError
+        raise AuthorizationError("Acces reserve aux administrateurs d'ecole")
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """
-    Vérifie que le mot de passe en clair correspond au hash.
-    """
-    return pwd_context.verify(plain_password, hashed_password)
+    if not user.get("is_active", True):
+        raise AuthenticationError("Compte desactive")
 
-def get_password_hash(password: str) -> str:
-    """
-    Retourne le hash d'un mot de passe.
-    """
-    return pwd_context.hash(password)
+    if not admin_profile or not admin_profile.get("is_active", False):
+        from app.core.exceptions import AuthorizationError
+        raise AuthorizationError("Profil school admin inactif ou inexistant")
+
+    return {
+        "user_id": user_id,
+        "school_id": admin_profile["school_id"],
+        "email": user.get("email"),
+    }

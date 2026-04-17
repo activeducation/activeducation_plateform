@@ -13,6 +13,14 @@ from app.api.v1.endpoints.admin import (
     settings as admin_settings,
     knowledge_base as admin_knowledge_base,
 )
+from app.api.v1.endpoints.school import (
+    auth as school_auth,
+    courses as school_courses,
+    modules as school_modules,
+    lessons as school_lessons,
+    dashboard as school_dashboard,
+    profile as school_profile,
+)
 
 api_router = APIRouter()
 
@@ -45,3 +53,14 @@ api_router.include_router(admin_gamification.router, prefix="/admin/gamification
 api_router.include_router(admin_mentors.router, prefix="/admin/mentors", tags=["admin-mentors"])
 api_router.include_router(admin_settings.router, prefix="/admin", tags=["admin-settings"])
 api_router.include_router(admin_knowledge_base.router, prefix="/admin/knowledge-base", tags=["admin-knowledge-base"])
+
+# =============================================================================
+# SCHOOL ADMIN ENDPOINTS
+# =============================================================================
+api_router.include_router(school_auth.router, prefix="/school/auth", tags=["school-auth"])
+api_router.include_router(school_courses.router, prefix="/school", tags=["school-courses"])
+api_router.include_router(school_modules.router, prefix="/school", tags=["school-modules"])
+api_router.include_router(school_lessons.router, prefix="/school", tags=["school-lessons"])
+api_router.include_router(school_dashboard.router, prefix="/school/dashboard", tags=["school-dashboard"])
+api_router.include_router(school_profile.router, prefix="/school", tags=["school-profile"])
+

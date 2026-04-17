@@ -14,7 +14,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-from app.db.supabase_client import SupabaseClient, get_supabase_client
+from app.db.supabase_client import SupabaseClient, get_admin_supabase_client
 
 logger = logging.getLogger(__name__)
 
@@ -606,4 +606,4 @@ class ElearningRepository:
 
 
 # Singleton
-elearning_repository = ElearningRepository(db=get_supabase_client())
+elearning_repository = ElearningRepository(db=get_admin_supabase_client())

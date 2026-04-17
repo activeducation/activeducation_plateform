@@ -8,11 +8,11 @@ Gere les interactions avec la base de donnees Supabase pour:
 - Carrieres
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Optional
 from uuid import UUID
 
-from app.db.supabase_client import get_supabase_client, SupabaseClient
+from app.db.supabase_client import get_admin_supabase_client, SupabaseClient
 from app.db.local_fallback import FALLBACK_TESTS
 from app.core.logging import get_logger
 from app.core.exceptions import (
@@ -30,7 +30,7 @@ class OrientationRepository:
     """Repository pour les operations liees a l'orientation."""
 
     def __init__(self):
-        self._db: SupabaseClient = get_supabase_client()
+        self._db: SupabaseClient = get_admin_supabase_client()
 
     # =========================================================================
     # TESTS D'ORIENTATION
@@ -208,7 +208,7 @@ class OrientationRepository:
                 "user_id": str(user_id),
                 "test_id": str(test_id),
                 "status": "in_progress",
-                "started_at": datetime.utcnow().isoformat(),
+                "started_at": datetime.now(timezone.utc).isoformat(),
             }
 
             result = self._db.insert(table="user_test_sessions", data=data)
@@ -222,40 +222,6 @@ class OrientationRepository:
         except Exception as e:
             logger.error(f"Error creating test session: {e}")
             raise QueryError(f"Erreur lors de la creation de la session: {str(e)}")
-
-    async def save_test_responses(
-        self,
-        session_id: UUID,
-        responses: dict[str, str],
-    ) -> dict[str, Any]:
-        """
-        Sauvegarde les reponses d'une session de test.
-
-        Args:
-            session_id: UUID de la session
-            responses: Dictionnaire {question_id: option_id}
-
-        Returns:
-            La session mise a jour
-        """
-        try:
-            result = self._db.update(
-                table="user_test_sessions",
-                id_column="id",
-                id_value=str(session_id),
-                data={"responses": responses},
-            )
-
-            if not result:
-                raise NotFoundError("Session de test", str(session_id))
-
-            return result[0]
-
-        except NotFoundError:
-            raise
-        except Exception as e:
-            logger.error(f"Error saving test responses: {e}")
-            raise QueryError(f"Erreur lors de la sauvegarde des reponses: {str(e)}")
 
     async def complete_test_session(
         self,
@@ -279,17 +245,22 @@ class OrientationRepository:
             Les resultats sauvegardes
         """
         try:
-            # Mettre a jour la session
-            self._db.update(
-                table="user_test_sessions",
-                id_column="id",
-                id_value=str(session_id),
-                data={
+            # Filtrage explicite (session_id + user_id) : defense en profondeur.
+            # Empeche un user_id A de completer la session d'un user_id B meme
+            # si session_id fuite. Double verrou en attendant la reactivation RLS.
+            update_result = (
+                self._db.client.table("user_test_sessions")
+                .update({
                     "responses": responses,
                     "status": "completed",
-                    "completed_at": datetime.utcnow().isoformat(),
-                },
+                    "completed_at": datetime.now(timezone.utc).isoformat(),
+                })
+                .eq("id", str(session_id))
+                .eq("user_id", str(user_id))
+                .execute()
             )
+            if not update_result.data:
+                raise NotFoundError("Session de test", str(session_id))
 
             # Sauvegarder les resultats
             result_data = {
@@ -313,64 +284,11 @@ class OrientationRepository:
 
             return saved_result[0]
 
+        except NotFoundError:
+            raise
         except Exception as e:
             logger.error(f"Error completing test session: {e}")
             raise QueryError(f"Erreur lors de la completion du test: {str(e)}")
-
-    async def get_user_sessions(
-        self,
-        user_id: UUID,
-        status: Optional[str] = None,
-    ) -> list[dict[str, Any]]:
-        """
-        Recupere les sessions de test d'un utilisateur.
-
-        Args:
-            user_id: UUID de l'utilisateur
-            status: Filtrer par statut (optionnel)
-
-        Returns:
-            Liste des sessions
-        """
-        try:
-            filters = {"user_id": str(user_id)}
-            if status:
-                filters["status"] = status
-
-            sessions = self._db.fetch_all(
-                table="user_test_sessions",
-                filters=filters,
-                order_by="created_at.desc",
-            )
-
-            return sessions
-
-        except Exception as e:
-            logger.error(f"Error fetching user sessions: {e}")
-            raise QueryError(f"Erreur lors de la recuperation des sessions: {str(e)}")
-
-    async def get_user_results(self, user_id: UUID) -> list[dict[str, Any]]:
-        """
-        Recupere tous les resultats de test d'un utilisateur.
-
-        Args:
-            user_id: UUID de l'utilisateur
-
-        Returns:
-            Liste des resultats
-        """
-        try:
-            results = self._db.fetch_all(
-                table="test_results",
-                filters={"user_id": str(user_id)},
-                order_by="calculated_at.desc",
-            )
-
-            return results
-
-        except Exception as e:
-            logger.error(f"Error fetching user results: {e}")
-            raise QueryError(f"Erreur lors de la recuperation des resultats: {str(e)}")
 
     # =========================================================================
     # CARRIERES
@@ -549,74 +467,6 @@ class OrientationRepository:
         except Exception as e:
             logger.error(f"Error fetching matching school programs: {e}")
             return []
-
-    # =========================================================================
-    # FAVORIS
-    # =========================================================================
-
-    async def add_favorite_career(
-        self,
-        user_id: UUID,
-        career_id: UUID,
-    ) -> dict[str, Any]:
-        """Ajoute une carriere aux favoris d'un utilisateur."""
-        try:
-            data = {
-                "user_id": str(user_id),
-                "career_id": str(career_id),
-            }
-            result = self._db.insert(table="user_favorite_careers", data=data)
-            return result[0]
-
-        except Exception as e:
-            # Ignorer les erreurs de doublon (deja en favori)
-            if "duplicate" in str(e).lower():
-                logger.info(f"Career {career_id} already in favorites for user {user_id}")
-                return {"already_exists": True}
-            raise QueryError(f"Erreur lors de l'ajout aux favoris: {str(e)}")
-
-    async def remove_favorite_career(
-        self,
-        user_id: UUID,
-        career_id: UUID,
-    ) -> bool:
-        """Retire une carriere des favoris d'un utilisateur."""
-        try:
-            # Utiliser le client brut pour la suppression avec 2 conditions
-            client = self._db.client
-            result = (
-                client.table("user_favorite_careers")
-                .delete()
-                .eq("user_id", str(user_id))
-                .eq("career_id", str(career_id))
-                .execute()
-            )
-            return len(result.data) > 0
-
-        except Exception as e:
-            logger.error(f"Error removing favorite career: {e}")
-            raise QueryError(f"Erreur lors du retrait des favoris: {str(e)}")
-
-    async def get_user_favorites(self, user_id: UUID) -> list[dict[str, Any]]:
-        """Recupere les carrieres favorites d'un utilisateur."""
-        try:
-            # Jointure pour recuperer les details des carrieres
-            client = self._db.client
-            result = (
-                client.table("user_favorite_careers")
-                .select("*, careers(*)")
-                .eq("user_id", str(user_id))
-                .execute()
-            )
-
-            # Extraire les carrieres des resultats
-            favorites = [item["careers"] for item in result.data if item.get("careers")]
-            return favorites
-
-        except Exception as e:
-            logger.error(f"Error fetching user favorites: {e}")
-            raise QueryError(f"Erreur lors de la recuperation des favoris: {str(e)}")
-
 
 # Instance singleton
 orientation_repo = OrientationRepository()

@@ -8,6 +8,7 @@ DELETE /api/v1/chat/session/{session_id} → Effacer l'historique
 L'assistant AÏDA utilise Groq (gratuit) avec llama-3.1-8b-instant.
 """
 
+import json
 import uuid
 from datetime import datetime, timezone
 from typing import AsyncGenerator, Optional
@@ -167,12 +168,12 @@ async def send_message_stream(
                 client_history=client_history,
             ):
                 if chunk.get("done"):
-                    yield f'data: {{"done": true, "session_id": "{session_id}"}}\n\n'
+                    yield f"data: {json.dumps({'done': True, 'session_id': session_id})}\n\n"
                 else:
-                    content = chunk.get("chunk", "").replace('"', '\\"').replace('\n', '\\n')
-                    yield f'data: {{"chunk": "{content}"}}\n\n'
+                    content = chunk.get("chunk", "")
+                    yield f"data: {json.dumps({'chunk': content})}\n\n"
         except Exception:
-            yield 'data: {"error": "Le service AÏDA est temporairement indisponible."}\n\n'
+            yield f"data: {json.dumps({'error': 'Le service AÏDA est temporairement indisponible.'})}\n\n"
 
     return StreamingResponse(
         event_generator(),
@@ -193,6 +194,13 @@ async def clear_session(
     session_id: str,
     user_id: UUID = Depends(get_current_user_id),
 ) -> SessionClearedResponse:
+    if ":" in session_id:
+        owner_id = session_id.split(":", 1)[0]
+        if owner_id != str(user_id):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Vous n'etes pas autorise a effacer cette session.",
+            )
     llm_service.clear_session(session_id)
     return SessionClearedResponse(
         message="Historique de conversation effacé.",

@@ -3,7 +3,7 @@
 from typing import Any, Optional
 from uuid import UUID
 
-from app.db.supabase_client import get_supabase_client, SupabaseClient
+from app.db.supabase_client import get_admin_supabase_client, SupabaseClient
 from app.core.logging import get_logger
 from app.core.exceptions import NotFoundError
 from app.schemas.admin.schools import (
@@ -24,7 +24,7 @@ logger = get_logger("repositories.admin.schools")
 
 class SchoolsAdminRepository:
     def __init__(self):
-        self._db: SupabaseClient = get_supabase_client()
+        self._db: SupabaseClient = get_admin_supabase_client()
 
     async def list_schools(
         self,

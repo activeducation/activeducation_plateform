@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 from uuid import UUID
 
-from app.db.supabase_client import get_supabase_client, SupabaseClient
+from app.db.supabase_client import get_admin_supabase_client, SupabaseClient
 from app.core.logging import get_logger
 from app.core.exceptions import (
     NotFoundError,
@@ -25,7 +25,7 @@ class UsersRepository:
     """Repository pour les operations sur les profils utilisateurs."""
 
     def __init__(self):
-        self._db: SupabaseClient = get_supabase_client()
+        self._db: SupabaseClient = get_admin_supabase_client()
 
     # =========================================================================
     # READ OPERATIONS
@@ -50,27 +50,6 @@ class UsersRepository:
         except Exception as e:
             logger.error(f"Error fetching user {user_id}: {e}")
             raise QueryError(f"Erreur lors de la recuperation de l'utilisateur: {str(e)}")
-
-    async def get_by_email(self, email: str) -> Optional[dict[str, Any]]:
-        """
-        Recupere un profil utilisateur par son email.
-
-        Args:
-            email: Email de l'utilisateur
-
-        Returns:
-            Donnees profil ou None
-        """
-        try:
-            users = self._db.fetch_all(
-                table="user_profiles",
-                filters={"email": email.lower()},
-                limit=1,
-            )
-            return users[0] if users else None
-        except Exception as e:
-            logger.error(f"Error fetching user by email: {e}")
-            raise QueryError(f"Erreur lors de la recherche de l'utilisateur: {str(e)}")
 
     # =========================================================================
     # CREATE / UPDATE OPERATIONS
@@ -174,10 +153,6 @@ class UsersRepository:
             logger.warning(f"Could not update last_login for user {user_id}: {e}")
             return False
 
-    async def update_avatar(self, user_id: UUID, avatar_url: str) -> dict[str, Any]:
-        """Met a jour l'avatar d'un utilisateur."""
-        return await self.update_profile(user_id, {"avatar_url": avatar_url})
-
     # =========================================================================
     # DELETE
     # =========================================================================
@@ -202,22 +177,6 @@ class UsersRepository:
     # =========================================================================
     # SEARCH
     # =========================================================================
-
-    async def search(self, query: str, limit: int = 10) -> list[dict[str, Any]]:
-        """Recherche des utilisateurs par nom ou email."""
-        try:
-            result = (
-                self._db.client.table("user_profiles")
-                .select("id, email, first_name, last_name, display_name, avatar_url")
-                .or_(f"email.ilike.%{query}%,first_name.ilike.%{query}%,last_name.ilike.%{query}%")
-                .limit(limit)
-                .execute()
-            )
-            return result.data
-        except Exception as e:
-            logger.error(f"Error searching users: {e}")
-            return []
-
 
 # Instance singleton
 users_repo = UsersRepository()

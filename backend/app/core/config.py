@@ -62,6 +62,11 @@ class Settings(BaseSettings):
             raise ValueError("SECRET_KEY doit contenir au moins 32 caracteres")
         if v == "YOUR_SECRET_KEY_HERE_FOR_DEV":
             raise ValueError("SECRET_KEY par defaut non autorise. Generez une cle securisee.")
+        if v.startswith("eyJ"):
+            raise ValueError(
+                "SECRET_KEY ressemble a un JWT (commence par 'eyJ'). "
+                "Utilisez une cle secrete aleatoire, pas un token JWT."
+            )
         return v
 
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
@@ -83,6 +88,27 @@ class Settings(BaseSettings):
                 raise ValueError("BACKEND_CORS_ORIGINS doit etre configure en production")
             if "*" in self.BACKEND_CORS_ORIGINS:
                 raise ValueError("CORS wildcard '*' interdit en production")
+
+            # Refuser les valeurs placeholder heritees du CI (protege contre un
+            # deploiement accidentel avec des secrets factices).
+            placeholder_markers = ("placeholder", "ci-test", "pytest-dummy")
+            suspect_fields = {
+                "SUPABASE_URL": self.SUPABASE_URL,
+                "SUPABASE_KEY": self.SUPABASE_KEY,
+                "SUPABASE_SERVICE_ROLE_KEY": self.SUPABASE_SERVICE_ROLE_KEY or "",
+                "SECRET_KEY": self.SECRET_KEY,
+            }
+            for field_name, value in suspect_fields.items():
+                lowered = (value or "").lower()
+                if any(marker in lowered for marker in placeholder_markers):
+                    raise ValueError(
+                        f"{field_name} contient une valeur placeholder non autorisee en production"
+                    )
+            if not self.SUPABASE_SERVICE_ROLE_KEY:
+                raise ValueError(
+                    "SUPABASE_SERVICE_ROLE_KEY est requis en production (endpoints admin)"
+                )
+
         # En developpement, permettre le wildcard "*"
         if "*" in self.BACKEND_CORS_ORIGINS and self.ENVIRONMENT != "production":
             self.BACKEND_CORS_ORIGINS = ["*"]

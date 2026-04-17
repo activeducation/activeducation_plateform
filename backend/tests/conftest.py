@@ -20,7 +20,7 @@ if str(BACKEND_ROOT) not in sys.path:
 
 from app.main import app
 from app.api.v1.endpoints.orientation import get_repo
-from app.core.security import get_current_user_id
+from app.core.security import get_current_user_id, get_current_user_id_optional
 
 
 class FakeOrientationRepo:
@@ -83,6 +83,28 @@ def auth_client():
 
     app.dependency_overrides[get_repo] = _get_repo
     app.dependency_overrides[get_current_user_id] = _get_current_user
+    app.dependency_overrides[get_current_user_id_optional] = _get_current_user
+
+    with TestClient(app) as c:
+        yield c, fake_repo
+
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def anon_client():
+    """Client avec repo mocke mais sans authentification utilisateur."""
+    app.dependency_overrides.clear()
+    fake_repo = FakeOrientationRepo()
+
+    def _get_repo():
+        return fake_repo
+
+    async def _anon_user():
+        return None
+
+    app.dependency_overrides[get_repo] = _get_repo
+    app.dependency_overrides[get_current_user_id_optional] = _anon_user
 
     with TestClient(app) as c:
         yield c, fake_repo

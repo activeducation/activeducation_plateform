@@ -29,9 +29,10 @@ if str(BACKEND_ROOT) not in sys.path:
 
 def test_token_cache_stores_and_retrieves():
     """Le cache token stocke et recupere les donnees correctement."""
-    from app.core.security import _cache_user, _get_cached_user, _token_cache
+    from app.core.security import _cache_user, _get_cached_user
+    from app.core.cache import get_cache
 
-    _token_cache.clear()
+    get_cache().clear()
 
     token = "test_token_abc"
     user_data = {"user_id": "11111111-1111-1111-1111-111111111111", "email": "test@example.com"}
@@ -42,87 +43,26 @@ def test_token_cache_stores_and_retrieves():
     assert cached == user_data
 
 
-def test_token_cache_expires():
-    """Le cache token expire correctement."""
-    import time
-    from app.core.security import _cache_user, _get_cached_user, _token_cache, _cache_lock
+def test_token_cache_miss_returns_none():
+    """Un token jamais cache retourne None."""
+    from app.core.security import _get_cached_user
+    from app.core.cache import get_cache
 
-    _token_cache.clear()
+    get_cache().clear()
 
-    token = "test_expiring_token"
-    user_data = {"user_id": "test-id"}
-
-    # Forcer une expiration immediate
-    with _cache_lock:
-        _token_cache[token] = (user_data, time.time() - 1)
-
-    cached = _get_cached_user(token)
-    assert cached is None  # Doit etre expire
+    assert _get_cached_user("token_jamais_vu") is None
 
 
-def test_token_cache_clears_when_too_large():
-    """Le cache se vide quand il depasse 1000 entrees."""
-    from app.core.security import _cache_user, _token_cache
+def test_token_cache_key_hashes_token():
+    """La cle de cache ne contient pas le token brut (SHA256)."""
+    from app.core.security import _token_cache_key
 
-    _token_cache.clear()
+    token = "super_secret_jwt"
+    key = _token_cache_key(token)
 
-    # Remplir le cache a 1001 entrees
-    for i in range(1001):
-        _cache_user(f"token_{i}", {"user_id": f"user_{i}"})
-
-    # Le cache doit avoir ete vide puis rempli avec 1 entree
-    # (clear() + 1 nouvelle entree)
-    assert len(_token_cache) <= 1
-
-
-# =============================================================================
-# PASSWORD VALIDATION TESTS
-# =============================================================================
-
-
-def test_validate_password_strength_valid():
-    """Mot de passe fort valide correctement."""
-    from app.core.security import validate_password_strength
-
-    is_valid, errors = validate_password_strength("SecurePass123!")
-    assert is_valid is True
-    assert len(errors) == 0
-
-
-def test_validate_password_strength_too_short():
-    """Mot de passe trop court retourne erreur."""
-    from app.core.security import validate_password_strength
-
-    is_valid, errors = validate_password_strength("Ab1!")
-    assert is_valid is False
-    assert any("8" in e for e in errors)
-
-
-def test_validate_password_strength_no_uppercase():
-    """Mot de passe sans majuscule retourne erreur."""
-    from app.core.security import validate_password_strength
-
-    is_valid, errors = validate_password_strength("securepass123!")
-    assert is_valid is False
-    assert any("majuscule" in e for e in errors)
-
-
-def test_validate_password_strength_no_digit():
-    """Mot de passe sans chiffre retourne erreur."""
-    from app.core.security import validate_password_strength
-
-    is_valid, errors = validate_password_strength("SecurePassWord!")
-    assert is_valid is False
-    assert any("chiffre" in e for e in errors)
-
-
-def test_validate_password_strength_no_special():
-    """Mot de passe sans caractere special retourne erreur."""
-    from app.core.security import validate_password_strength
-
-    is_valid, errors = validate_password_strength("SecurePass123")
-    assert is_valid is False
-    assert any("special" in e for e in errors)
+    assert token not in key
+    assert key.startswith("auth:token:")
+    assert len(key) == len("auth:token:") + 64  # hex SHA256
 
 
 # =============================================================================
@@ -132,9 +72,10 @@ def test_validate_password_strength_no_special():
 
 def test_get_user_from_token_via_supabase_api():
     """Validation de token via API Supabase quand JWT secret absent."""
-    from app.core.security import _validate_token_via_supabase, _token_cache
+    from app.core.security import _validate_token_via_supabase
+    from app.core.cache import get_cache
 
-    _token_cache.clear()
+    get_cache().clear()
 
     fake_user = MagicMock()
     fake_user.id = "11111111-1111-1111-1111-111111111111"
@@ -145,7 +86,7 @@ def test_get_user_from_token_via_supabase_api():
     fake_response.user = fake_user
 
     with patch("app.core.security.settings") as mock_settings, \
-         patch("app.core.security.get_supabase_client") as mock_db_factory:
+         patch("app.db.supabase_client.get_supabase_client") as mock_db_factory:
 
         mock_settings.SUPABASE_JWT_SECRET = None  # Pas de JWT secret local
         mock_db = MagicMock()
@@ -160,13 +101,14 @@ def test_get_user_from_token_via_supabase_api():
 
 def test_get_user_from_token_invalid():
     """Token invalide leve InvalidTokenError."""
-    from app.core.security import _validate_token_via_supabase, _token_cache
+    from app.core.security import _validate_token_via_supabase
+    from app.core.cache import get_cache
     from app.core.exceptions import InvalidTokenError
 
-    _token_cache.clear()
+    get_cache().clear()
 
     with patch("app.core.security.settings") as mock_settings, \
-         patch("app.core.security.get_supabase_client") as mock_db_factory:
+         patch("app.db.supabase_client.get_supabase_client") as mock_db_factory:
 
         mock_settings.SUPABASE_JWT_SECRET = None
         mock_db = MagicMock()
@@ -179,13 +121,14 @@ def test_get_user_from_token_invalid():
 
 def test_get_user_from_token_expired():
     """Token expire leve TokenExpiredError."""
-    from app.core.security import _validate_token_via_supabase, _token_cache
+    from app.core.security import _validate_token_via_supabase
+    from app.core.cache import get_cache
     from app.core.exceptions import TokenExpiredError
 
-    _token_cache.clear()
+    get_cache().clear()
 
     with patch("app.core.security.settings") as mock_settings, \
-         patch("app.core.security.get_supabase_client") as mock_db_factory:
+         patch("app.db.supabase_client.get_supabase_client") as mock_db_factory:
 
         mock_settings.SUPABASE_JWT_SECRET = None
         mock_db = MagicMock()

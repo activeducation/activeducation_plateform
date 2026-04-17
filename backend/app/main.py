@@ -141,10 +141,45 @@ async def health_check(request: Request):
     Endpoint de sante pour les load balancers et monitoring.
     Retourne l'etat de l'API et des services dependants.
     """
+    checks = {}
+    all_ok = True
+
+    # Check Supabase
+    try:
+        from app.db.supabase_client import get_supabase_client
+        db = get_supabase_client()
+        result = db.health_check()
+        checks["supabase"] = result
+        if result.get("status") != "healthy":
+            all_ok = False
+    except Exception as e:
+        checks["supabase"] = {"status": "unhealthy", "error": str(e)}
+        all_ok = False
+
+    # Check Redis
+    try:
+        import redis.asyncio as aioredis
+        r = aioredis.from_url(settings.REDIS_URL, socket_timeout=2)
+        await r.ping()
+        await r.close()
+        checks["redis"] = {"status": "healthy"}
+    except Exception as e:
+        checks["redis"] = {"status": "unhealthy", "error": str(e)}
+        all_ok = False
+
+    any_up = any(c.get("status") == "healthy" for c in checks.values())
+    if all_ok:
+        overall = "healthy"
+    elif any_up:
+        overall = "degraded"
+    else:
+        overall = "unhealthy"
+
     return {
-        "status": "healthy",
+        "status": overall,
         "version": settings.VERSION,
         "environment": settings.ENVIRONMENT,
+        "checks": checks,
         "correlation_id": getattr(request.state, "correlation_id", None),
     }
 
@@ -152,6 +187,30 @@ async def health_check(request: Request):
 # ============================================================================
 # EXCEPTION HANDLERS GLOBAUX
 # ============================================================================
+
+
+def _apply_cors_headers(request: Request, response: JSONResponse) -> JSONResponse:
+    """
+    Ajoute les headers CORS sur les reponses d'erreur.
+
+    Les exception handlers FastAPI court-circuitent le CORSMiddleware dans
+    certaines configurations Starlette (BaseHTTPMiddleware + ExceptionMiddleware).
+    Ce helper garantit que les headers CORS sont toujours presents, meme sur 4xx/5xx.
+    """
+    origin = request.headers.get("origin")
+    if not origin:
+        return response
+
+    allowed_origins = settings.BACKEND_CORS_ORIGINS or []
+    if origin in allowed_origins or "*" in allowed_origins:
+        if "*" in allowed_origins:
+            response.headers["Access-Control-Allow-Origin"] = "*"
+        else:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Vary"] = "Origin"
+
+    return response
 
 
 @app.exception_handler(AppException)
@@ -175,10 +234,11 @@ async def app_exception_handler(request: Request, exc: AppException):
     response_content = exc.to_dict()
     response_content["correlation_id"] = correlation_id
 
-    return JSONResponse(
+    response = JSONResponse(
         status_code=exc.status_code,
         content=response_content,
     )
+    return _apply_cors_headers(request, response)
 
 
 @app.exception_handler(Exception)
@@ -201,7 +261,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 
     # En production, ne pas exposer les details de l'erreur
     if settings.is_production:
-        return JSONResponse(
+        response = JSONResponse(
             status_code=500,
             content={
                 "error": "internal_server_error",
@@ -209,14 +269,16 @@ async def global_exception_handler(request: Request, exc: Exception):
                 "correlation_id": correlation_id,
             },
         )
+    else:
+        # En developpement, inclure plus de details
+        response = JSONResponse(
+            status_code=500,
+            content={
+                "error": "internal_server_error",
+                "message": str(exc),
+                "type": type(exc).__name__,
+                "correlation_id": correlation_id,
+            },
+        )
 
-    # En developpement, inclure plus de details
-    return JSONResponse(
-        status_code=500,
-        content={
-            "error": "internal_server_error",
-            "message": str(exc),
-            "type": type(exc).__name__,
-            "correlation_id": correlation_id,
-        },
-    )
+    return _apply_cors_headers(request, response)

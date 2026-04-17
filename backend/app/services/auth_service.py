@@ -164,8 +164,13 @@ class AuthService:
         Deconnecte un utilisateur (invalide la session Supabase).
         """
         try:
-            if hasattr(self._db.client.auth, 'admin'):
-                self._db.client.auth.admin.sign_out(str(user_id))
+            refresh_token = self._db.fetch_one(
+                table="auth_refresh_tokens",
+                id_column="user_id",
+                id_value=str(user_id),
+            )
+            if refresh_token:
+                self._db.client.auth.sign_out()
         except Exception as e:
             logger.warning(f"Could not invalidate Supabase session for {user_id}: {e}")
 
