@@ -69,9 +69,9 @@ class TokenStorage {
       }
       await prefs.remove(_accessTokenKey);
       await prefs.remove(_refreshTokenKey);
-      debugPrint('[TokenStorage] Migrated legacy tokens to secure storage');
+      if (kDebugMode) debugPrint('[TokenStorage] Migrated legacy tokens to secure storage');
     } catch (e) {
-      debugPrint('[TokenStorage] Legacy token migration failed: $e');
+      if (kDebugMode) debugPrint('[TokenStorage] Legacy token migration failed: $e');
     }
   }
 

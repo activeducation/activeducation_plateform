@@ -4,10 +4,11 @@ SessionManager — Gestion de l'historique des conversations AÏDA.
 Stocke les sessions en mémoire avec éviction LRU quand la limite est atteinte.
 """
 
-import logging
 from typing import Optional
 
-logger = logging.getLogger(__name__)
+from app.core.logging import get_logger
+
+logger = get_logger("services.llm.session")
 
 MAX_SESSIONS = 1000
 MAX_HISTORY = 10  # Messages conservés par session (5 échanges)

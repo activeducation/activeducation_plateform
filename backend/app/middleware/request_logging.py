@@ -8,12 +8,12 @@ import uuid
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
-import logging
 from typing import Callable
 
 from app.core.config import settings
+from app.core.logging import get_logger
 
-logger = logging.getLogger("activeducation.requests")
+logger = get_logger("requests")
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
@@ -61,6 +61,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                     "error": str(e),
                     "process_time_ms": round(process_time * 1000, 2),
                 },
+                exc_info=True,
             )
             raise
 

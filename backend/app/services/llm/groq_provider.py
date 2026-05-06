@@ -7,13 +7,14 @@ Gère :
 - Streaming SSE via générateurs asynchrones
 """
 
-import logging
 import os
 from typing import AsyncGenerator, Optional
 
 import httpx
 
-logger = logging.getLogger(__name__)
+from app.core.logging import get_logger
+
+logger = get_logger("services.llm.groq")
 
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 GROQ_MODEL = "llama-3.1-8b-instant"
@@ -112,7 +113,7 @@ class GroqProvider:
             code = exc.response.status_code
             logger.warning("Groq erreur %s — fallback Ollama: %s", code, exc.response.text[:200])
             if code == 401:
-                logger.error("GROQ_API_KEY invalide ou expirée")
+                logger.error("GROQ_API_KEY invalide ou expirée", exc_info=True)
             return None
         except (httpx.TimeoutException, httpx.ConnectError):
             logger.warning("Groq timeout/connect error — fallback Ollama")

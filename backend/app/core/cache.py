@@ -18,6 +18,8 @@ from functools import wraps
 
 from app.core.logging import get_logger
 
+_REDIS_RETRY_INTERVAL = 30  # secondes avant de retenter Redis après un échec
+
 logger = get_logger("core.cache")
 
 
@@ -47,30 +49,39 @@ class CacheClient:
     def __init__(self):
         self._redis = None
         self._memory_cache: dict[str, tuple[Any, float]] = {}
-        self._initialized = False
+        self._redis_failed_at: float = 0.0
 
     def _get_redis(self):
-        """Obtient ou initialise la connexion Redis."""
+        """
+        Obtient ou initialise la connexion Redis.
+        Circuit breaker : après un échec, ne retente qu'après _REDIS_RETRY_INTERVAL s.
+        """
         if self._redis is not None:
             return self._redis
+
+        # Ne pas retenter trop souvent après un échec
+        if self._redis_failed_at and time.time() - self._redis_failed_at < _REDIS_RETRY_INTERVAL:
+            return None
 
         try:
             import redis
             from app.core.config import settings
 
             redis_url = getattr(settings, "REDIS_URL", "redis://redis:6379/0")
-            self._redis = redis.from_url(
+            client = redis.from_url(
                 redis_url,
                 decode_responses=True,
                 socket_connect_timeout=2,
                 socket_timeout=2,
             )
-            self._redis.ping()
+            client.ping()
+            self._redis = client
+            self._redis_failed_at = 0.0
             logger.info(f"Redis connected: {redis_url}")
             return self._redis
         except Exception as e:
+            self._redis_failed_at = time.time()
             logger.warning(f"Redis unavailable, using memory cache: {e}")
-            self._redis = None
             return None
 
     def get(self, key: str) -> Optional[Any]:
@@ -93,6 +104,8 @@ class CacheClient:
                 return None
             except Exception as e:
                 logger.warning(f"Redis get error for '{key}': {e}")
+                self._redis = None
+                self._redis_failed_at = time.time()
                 # Fallback vers memoire
 
         # Cache memoire
@@ -123,6 +136,8 @@ class CacheClient:
                 return
             except Exception as e:
                 logger.warning(f"Redis set error for '{key}': {e}")
+                self._redis = None
+                self._redis_failed_at = time.time()
                 # Fallback vers memoire
 
         # Cache memoire (eviter overflow)

@@ -9,16 +9,16 @@ Orchestre :
 """
 
 import uuid
-import logging
 from typing import AsyncGenerator, Optional
 
+from app.core.logging import get_logger
 from app.services.llm.session_manager import SessionManager
 from app.services.llm.prompt_builder import PromptBuilder
 from app.services.llm.safety_filter import SafetyFilter
 from app.services.llm.groq_provider import GroqProvider
 from app.repositories.knowledge_base_repository import knowledge_base_repository
 
-logger = logging.getLogger(__name__)
+logger = get_logger("services.llm")
 
 MAX_HISTORY = 10
 

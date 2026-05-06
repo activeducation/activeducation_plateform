@@ -45,12 +45,10 @@ class AuthInterceptor extends Interceptor {
 
     final isExpired = await _tokenStorage.isTokenExpired();
     if (isExpired) {
-      debugPrint('[AuthInterceptor] Token expired, proactively refreshing...');
+      if (kDebugMode) debugPrint('[AuthInterceptor] Token expired, proactively refreshing...');
       final refreshed = await _handleTokenRefresh();
       if (!refreshed) {
-        debugPrint(
-          '[AuthInterceptor] Proactive refresh failed — clearing tokens',
-        );
+        if (kDebugMode) debugPrint('[AuthInterceptor] Proactive refresh failed — clearing tokens');
         await _tokenStorage.clearTokens();
         return handler.reject(
           DioException(
@@ -67,9 +65,7 @@ class AuthInterceptor extends Interceptor {
     if (accessToken != null) {
       options.headers['Authorization'] = 'Bearer $accessToken';
     } else {
-      debugPrint(
-        '[AuthInterceptor] No access token available for ${options.path}',
-      );
+      if (kDebugMode) debugPrint('[AuthInterceptor] No access token available for ${options.path}');
     }
 
     return handler.next(options);
@@ -92,7 +88,7 @@ class AuthInterceptor extends Interceptor {
           final response = await _retryRequest(err.requestOptions);
           return handler.resolve(response);
         } catch (retryError) {
-          debugPrint('[AuthInterceptor] Retry failed: $retryError');
+          if (kDebugMode) debugPrint('[AuthInterceptor] Retry failed: $retryError');
         }
       }
     }
@@ -109,7 +105,7 @@ class AuthInterceptor extends Interceptor {
   Future<bool> _handleTokenRefresh() async {
     // Eviter les rafraichissements multiples simultanes
     if (_isRefreshing) {
-      debugPrint('[AuthInterceptor] Token refresh already in progress');
+      if (kDebugMode) debugPrint('[AuthInterceptor] Token refresh already in progress');
       return false;
     }
 
@@ -118,12 +114,12 @@ class AuthInterceptor extends Interceptor {
     try {
       final refreshToken = await _tokenStorage.getRefreshToken();
       if (refreshToken == null) {
-        debugPrint('[AuthInterceptor] No refresh token available');
+        if (kDebugMode) debugPrint('[AuthInterceptor] No refresh token available');
         await _tokenStorage.clearTokens();
         return false;
       }
 
-      debugPrint('[AuthInterceptor] Refreshing access token...');
+      if (kDebugMode) debugPrint('[AuthInterceptor] Refreshing access token...');
 
       final response = await _refreshDio.post(
         ApiEndpoints.refreshToken,
@@ -154,18 +150,18 @@ class AuthInterceptor extends Interceptor {
           );
         }
 
-        debugPrint('[AuthInterceptor] Token refreshed successfully');
+        if (kDebugMode) debugPrint('[AuthInterceptor] Token refreshed successfully');
         return true;
       }
     } on DioException catch (e) {
-      debugPrint('[AuthInterceptor] Token refresh failed: ${e.message}');
+      if (kDebugMode) debugPrint('[AuthInterceptor] Token refresh failed: ${e.message}');
 
       // Si le refresh echoue avec 401, les tokens sont invalides
       if (e.response?.statusCode == 401) {
         await _tokenStorage.clearTokens();
       }
     } catch (e) {
-      debugPrint('[AuthInterceptor] Token refresh error: $e');
+      if (kDebugMode) debugPrint('[AuthInterceptor] Token refresh error: $e');
     } finally {
       _isRefreshing = false;
     }

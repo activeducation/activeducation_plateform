@@ -5,12 +5,12 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="ActivEducation - Plateforme d'orientation scolaire et professionnelle gamifiee">
+  <meta name="description" content="ActivEducation - Plateforme d'orientation scolaire et professionnelle gamifiée">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="ActivEducation">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
@@ -21,85 +21,282 @@
   <link rel="manifest" href="manifest.json">
 
   <style>
-    body {
-      margin: 0;
-      padding: 0;
-      background-color: #FAFBFD;
-      overflow: hidden;
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Sora:wght@700;800&display=swap');
+
+    :root {
+      --navy-0: #030812;
+      --navy-1: #060E1E;
+      --navy-2: #0B1C3C;
+      --navy-3: #142240;
+      --navy-4: #1A2E55;
+      --blue:   #1060CF;
+      --blue-l: #4A8AE5;
+      --amber:  #F2A423;
+      --text-p: #E4EEF8;
+      --text-s: #7AA0BC;
+      --text-m: #4A6B85;
     }
 
-    /* Loading screen */
-    .loading-container {
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: var(--navy-0);
+    }
+
+    /* ── Full-screen loading shell ── */
+    #loading {
+      position: fixed; inset: 0;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    }
-
-    .loading-logo {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 32px;
-    }
-
-    .loading-logo-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 14px;
-      background: linear-gradient(135deg, #1060CF, #F2A423);
-      display: flex;
       align-items: center;
       justify-content: center;
-      color: white;
-      font-size: 24px;
-      font-weight: bold;
+      background: linear-gradient(135deg, var(--navy-0) 0%, var(--navy-1) 50%, var(--navy-2) 100%);
+      font-family: 'Outfit', 'Segoe UI', system-ui, sans-serif;
+      z-index: 9999;
+      transition: opacity 0.5s ease;
     }
 
-    .loading-logo-text {
-      font-size: 28px;
-      font-weight: 700;
-      color: #1A1A2E;
+    /* ── Ambient orbs ── */
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      filter: blur(60px);
+    }
+    .orb-1 {
+      width: 420px; height: 420px;
+      top: -120px; right: -80px;
+      background: radial-gradient(circle, rgba(16,96,207,.18) 0%, transparent 70%);
+    }
+    .orb-2 {
+      width: 380px; height: 380px;
+      bottom: -120px; left: -80px;
+      background: radial-gradient(circle, rgba(242,164,35,.09) 0%, transparent 70%);
+    }
+    .orb-3 {
+      width: 260px; height: 260px;
+      top: 40%; left: -60px;
+      background: radial-gradient(circle, rgba(74,138,229,.08) 0%, transparent 70%);
     }
 
-    .loading-logo-text span {
-      color: #F2A423;
-    }
-
-    .loading-bar {
-      width: 200px;
-      height: 4px;
-      background-color: #E8F0FE;
-      border-radius: 2px;
+    /* ── Floating particles ── */
+    .particles {
+      position: absolute; inset: 0;
+      pointer-events: none;
       overflow: hidden;
     }
-
-    .loading-bar-inner {
-      width: 40%;
-      height: 100%;
-      background: linear-gradient(90deg, #1060CF, #F2A423);
-      border-radius: 2px;
-      animation: loading 1.2s ease-in-out infinite;
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      animation: floatPulse var(--dur, 5s) ease-in-out var(--delay, 0s) infinite;
+    }
+    @keyframes floatPulse {
+      0%, 100% { transform: translateY(0); opacity: var(--op-lo, .08); }
+      50%       { transform: translateY(-14px); opacity: var(--op-hi, .40); }
     }
 
-    @keyframes loading {
-      0% { transform: translateX(-100%); }
-      100% { transform: translateX(350%); }
+    /* ── Logo area ── */
+    .logo-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 148px; height: 148px;
+      margin-bottom: 36px;
+      animation: revealScale .9s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    @keyframes revealScale {
+      from { opacity: 0; transform: scale(.65); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    /* Pulsing glow halo */
+    .glow-ring {
+      position: absolute; inset: 0;
+      border-radius: 50%;
+      background: transparent;
+      box-shadow: 0 0 60px 20px rgba(16,96,207,.30);
+      animation: pulseGlow 2s ease-in-out infinite alternate;
+    }
+    @keyframes pulseGlow {
+      from { box-shadow: 0 0 40px 10px rgba(16,96,207,.20); }
+      to   { box-shadow: 0 0 80px 30px rgba(16,96,207,.45); }
+    }
+
+    /* Dashed orbit ring */
+    .orbit-container {
+      position: absolute; inset: 0;
+      border-radius: 50%;
+      border: 1.5px dashed rgba(74,138,229,.28);
+      animation: spin 8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Orbiting amber dot */
+    .orbit-dot {
+      position: absolute;
+      top: -5px; left: 50%;
+      transform: translateX(-50%);
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--amber);
+      box-shadow: 0 0 10px 4px rgba(242,164,35,.60);
+    }
+
+    /* Logo card */
+    .logo-card {
+      position: relative;
+      width: 96px; height: 96px;
+      border-radius: 28px;
+      background: linear-gradient(135deg, var(--blue-l), var(--blue));
+      box-shadow:
+        0 20px 50px rgba(16,96,207,.55),
+        0 0   20px rgba(74,138,229,.25) inset;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* SVG icon inside logo card */
+    .logo-card svg {
+      width: 52px; height: 52px;
+      fill: white;
+    }
+
+    /* ── App name ── */
+    .app-name {
+      font-family: 'Sora', 'Outfit', sans-serif;
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.8px;
+      color: var(--text-p);
+      animation: revealUp .7s .3s ease-out both;
+      background: linear-gradient(180deg, #ffffff 0%, #c8dcf0 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    @keyframes revealUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Tagline ── */
+    .tagline {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--text-s);
+      font-style: italic;
+      letter-spacing: 0.2px;
+      animation: revealUp .7s .5s ease-out both;
+    }
+    .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--amber);
+      flex-shrink: 0;
+    }
+
+    /* ── Shimmer progress bar ── */
+    .bar-wrap {
+      margin-top: 60px;
+      width: 180px; height: 3px;
+      background: var(--navy-4);
+      border-radius: 2px;
+      overflow: hidden;
+      animation: revealUp .5s .75s ease-out both;
+    }
+    .bar-inner {
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        var(--blue)  30%,
+        var(--blue-l) 50%,
+        var(--amber) 70%,
+        transparent 100%
+      );
+      background-size: 300% 100%;
+      animation: shimmer 1.8s ease-in-out infinite;
+      border-radius: 2px;
+    }
+    @keyframes shimmer {
+      0%   { background-position: 200% center; }
+      100% { background-position: -100% center; }
+    }
+
+    /* ── Loading label ── */
+    .load-label {
+      margin-top: 14px;
+      font-size: 11px;
+      letter-spacing: 1.8px;
+      color: var(--text-m);
+      text-transform: uppercase;
+      animation: revealUp .5s .9s ease-out both;
     }
   </style>
 </head>
 <body>
-  <div class="loading-container" id="loading">
-    <div class="loading-logo">
-      <div class="loading-logo-icon">A</div>
-      <div class="loading-logo-text">Activ<span>Education</span></div>
+  <div id="loading">
+
+    <!-- Ambient orbs -->
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <!-- Floating particles -->
+    <div class="particles">
+      <div class="particle" style="left:14%;top:22%;width:3px;height:3px;background:#4A8AE5;--dur:5.2s;--delay:0s;--op-lo:.08;--op-hi:.45;"></div>
+      <div class="particle" style="left:82%;top:16%;width:2px;height:2px;background:#F2A423;--dur:4.8s;--delay:.6s;--op-lo:.06;--op-hi:.38;"></div>
+      <div class="particle" style="left:7%; top:64%;width:2.5px;height:2.5px;background:#4A8AE5;--dur:6.1s;--delay:1s;--op-lo:.07;--op-hi:.42;"></div>
+      <div class="particle" style="left:91%;top:70%;width:2px;height:2px;background:#F2A423;--dur:5.5s;--delay:.3s;--op-lo:.06;--op-hi:.35;"></div>
+      <div class="particle" style="left:44%;top:8%; width:2px;height:2px;background:#4A8AE5;--dur:4.5s;--delay:.9s;--op-lo:.07;--op-hi:.40;"></div>
+      <div class="particle" style="left:70%;top:83%;width:3px;height:3px;background:#F2A423;--dur:5.8s;--delay:.2s;--op-lo:.08;--op-hi:.45;"></div>
+      <div class="particle" style="left:28%;top:88%;width:1.5px;height:1.5px;background:#4A8AE5;--dur:6.3s;--delay:.7s;--op-lo:.05;--op-hi:.30;"></div>
+      <div class="particle" style="left:58%;top:4%; width:2px;height:2px;background:#F2A423;--dur:4.9s;--delay:1.2s;--op-lo:.06;--op-hi:.38;"></div>
+      <div class="particle" style="left:4%; top:38%;width:2.5px;height:2.5px;background:#4A8AE5;--dur:5.4s;--delay:.4s;--op-lo:.07;--op-hi:.42;"></div>
+      <div class="particle" style="left:96%;top:43%;width:1.5px;height:1.5px;background:#F2A423;--dur:5.0s;--delay:.8s;--op-lo:.05;--op-hi:.32;"></div>
     </div>
-    <div class="loading-bar">
-      <div class="loading-bar-inner"></div>
+
+    <!-- Logo -->
+    <div class="logo-wrap">
+      <div class="glow-ring"></div>
+      <div class="orbit-container">
+        <div class="orbit-dot"></div>
+      </div>
+      <div class="logo-card">
+        <!-- Graduation cap / school icon -->
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zM5 13.18V17l7 4 7-4v-3.82l-7 3.82-7-3.82z"/>
+        </svg>
+      </div>
     </div>
+
+    <!-- App name -->
+    <div class="app-name">ActivEducation</div>
+
+    <!-- Tagline -->
+    <div class="tagline">
+      <div class="dot"></div>
+      <span>Découvrez votre voie, jouez votre avenir.</span>
+      <div class="dot"></div>
+    </div>
+
+    <!-- Shimmer bar -->
+    <div class="bar-wrap">
+      <div class="bar-inner"></div>
+    </div>
+
+    <!-- Label -->
+    <div class="load-label">Chargement…</div>
+
   </div>
+
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

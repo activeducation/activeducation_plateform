@@ -204,7 +204,7 @@ async def get_current_user_id(
     except (TokenExpiredError, InvalidTokenError) as e:
         raise e
     except Exception as e:
-        logger.error(f"Authentication error: {e}")
+        logger.error(f"Authentication error: {e}", exc_info=True)
         raise AuthenticationError("Token invalide")
 
 
@@ -227,7 +227,7 @@ async def get_current_user_id_optional(
     except (TokenExpiredError, InvalidTokenError):
         raise
     except Exception as e:
-        logger.error(f"Optional authentication error: {e}")
+        logger.error(f"Optional authentication error: {e}", exc_info=True)
         raise AuthenticationError("Token invalide")
 
 
@@ -259,7 +259,7 @@ async def get_current_admin(
     except (TokenExpiredError, InvalidTokenError):
         raise
     except Exception as e:
-        logger.error(f"Authentication error: {e}")
+        logger.error(f"Authentication error: {e}", exc_info=True)
         raise AuthenticationError("Token invalide")
 
     user = _get_cached_admin_profile(user_id)
@@ -334,7 +334,7 @@ async def get_current_school_admin(
     except (TokenExpiredError, InvalidTokenError):
         raise
     except Exception as e:
-        logger.error(f"Authentication error: {e}")
+        logger.error(f"Authentication error: {e}", exc_info=True)
         raise AuthenticationError("Token invalide")
 
     from app.db.supabase_client import get_supabase_client

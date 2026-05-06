@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -45,16 +46,18 @@ abstract class RegisterModule {
     // Ajouter l'intercepteur d'authentification
     dio.interceptors.add(AuthInterceptor(tokenStorage, refreshDio));
 
-    // Ajouter un intercepteur de logging en debug
-    dio.interceptors.add(LogInterceptor(
-      request: true,
-      requestHeader: false,
-      requestBody: true,
-      responseHeader: false,
-      responseBody: true,
-      error: true,
-      logPrint: (object) => print('[Dio] $object'),
-    ));
+    // Logging Dio uniquement en debug (évite de logguer les headers Authorization)
+    if (kDebugMode) {
+      dio.interceptors.add(LogInterceptor(
+        request: true,
+        requestHeader: false,
+        requestBody: true,
+        responseHeader: false,
+        responseBody: true,
+        error: true,
+        logPrint: (object) => debugPrint('[Dio] $object'),
+      ));
+    }
 
     return dio;
   }

@@ -8,10 +8,11 @@ Assemble le prompt système à partir :
 - du contexte d'orientation de l'élève (optionnel)
 """
 
-import logging
 from typing import Optional
 
-logger = logging.getLogger(__name__)
+from app.core.logging import get_logger
+
+logger = get_logger("services.llm.prompt_builder")
 
 _PERSONA = """\
 Tu es AÏDA, conseillère d'orientation virtuelle de la plateforme ActivEducation, \

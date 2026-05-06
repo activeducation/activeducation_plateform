@@ -7,9 +7,10 @@ Vérifie les messages utilisateurs avant de les envoyer au LLM pour détecter :
 """
 
 import re
-import logging
 
-logger = logging.getLogger(__name__)
+from app.core.logging import get_logger
+
+logger = get_logger("services.llm.safety")
 
 # Patterns d'injection de prompt courants
 _INJECTION_PATTERNS = [

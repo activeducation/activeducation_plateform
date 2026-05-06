@@ -77,7 +77,8 @@ def with_retry(
                         delay = min(delay * exponential_base, max_delay)
                     else:
                         logger.error(
-                            f"All {max_retries + 1} attempts failed for {func.__name__}"
+                            f"All {max_retries + 1} attempts failed for {func.__name__}",
+                            exc_info=True,
                         )
 
             raise last_exception
@@ -130,7 +131,7 @@ class SupabaseClient:
             logger.info("Supabase client initialized successfully")
 
         except Exception as e:
-            logger.error(f"Failed to initialize Supabase client: {e}")
+            logger.error(f"Failed to initialize Supabase client: {e}", exc_info=True)
             raise DBConnectionError(
                 f"Impossible d'initialiser le client Supabase: {str(e)}"
             )
@@ -217,7 +218,7 @@ class SupabaseClient:
             return result.data
 
         except APIError as e:
-            logger.error(f"Query error on table {table}: {e}")
+            logger.error(f"Query error on table {table}: {e}", exc_info=True)
             raise QueryError(f"Erreur lors de la requete sur {table}: {str(e)}")
 
     @with_retry(max_retries=2)
@@ -240,7 +241,7 @@ class SupabaseClient:
             return result.data[0] if result.data else None
 
         except APIError as e:
-            logger.error(f"Query error on table {table}: {e}")
+            logger.error(f"Query error on table {table}: {e}", exc_info=True)
             raise QueryError(f"Erreur lors de la requete sur {table}: {str(e)}")
 
     @with_retry(max_retries=2)
@@ -255,7 +256,7 @@ class SupabaseClient:
             return result.data
 
         except APIError as e:
-            logger.error(f"Insert error on table {table}: {e}")
+            logger.error(f"Insert error on table {table}: {e}", exc_info=True)
             raise QueryError(f"Erreur lors de l'insertion dans {table}: {str(e)}")
 
     @with_retry(max_retries=2)
@@ -277,7 +278,7 @@ class SupabaseClient:
             return result.data
 
         except APIError as e:
-            logger.error(f"Update error on table {table}: {e}")
+            logger.error(f"Update error on table {table}: {e}", exc_info=True)
             raise QueryError(f"Erreur lors de la mise a jour dans {table}: {str(e)}")
 
     @with_retry(max_retries=2)
@@ -298,7 +299,7 @@ class SupabaseClient:
             return result.data
 
         except APIError as e:
-            logger.error(f"Delete error on table {table}: {e}")
+            logger.error(f"Delete error on table {table}: {e}", exc_info=True)
             raise QueryError(f"Erreur lors de la suppression dans {table}: {str(e)}")
 
 
@@ -323,9 +324,7 @@ def get_admin_supabase_client() -> SupabaseClient:
     if admin_supabase_client is None:
         key = settings.SUPABASE_SERVICE_ROLE_KEY
         if not key:
-            logger.error(
-                "SUPABASE_SERVICE_ROLE_KEY is not configured; admin client unavailable"
-            )
+            logger.error("SUPABASE_SERVICE_ROLE_KEY is not configured; admin client unavailable")
             raise DBConnectionError(
                 "SUPABASE_SERVICE_ROLE_KEY manquant: client admin indisponible."
             )

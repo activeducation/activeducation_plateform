@@ -65,10 +65,7 @@ async def login(
     """
     result = await service.login(body)
 
-    logger.info(
-        "User logged in",
-        extra={"email": body.email},
-    )
+    logger.info("User logged in")
 
     return result
 
@@ -87,10 +84,7 @@ async def register(
     """
     result = await service.register(body)
 
-    logger.info(
-        "New user registered",
-        extra={"email": body.email},
-    )
+    logger.info("New user registered")
 
     return result
 

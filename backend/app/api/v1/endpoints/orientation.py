@@ -90,7 +90,7 @@ async def get_available_tests(
         return summaries
 
     except Exception as e:
-        logger.error(f"Error retrieving tests: {e}")
+        logger.error(f"Error retrieving tests: {e}", exc_info=True)
         raise QueryError("Impossible de recuperer la liste des tests")
 
 
@@ -111,7 +111,7 @@ async def get_test(
     except TestNotFoundError:
         raise
     except Exception as e:
-        logger.error(f"Error retrieving test {test_id}: {e}")
+        logger.error(f"Error retrieving test {test_id}: {e}", exc_info=True)
         raise QueryError("Impossible de recuperer ce test")
 
 
@@ -136,7 +136,7 @@ async def get_mobile_tests(
         logger.info(f"Retrieved {len(mobile_tests)} mobile tests")
         return mobile_tests
     except Exception as e:
-        logger.error(f"Error retrieving mobile tests: {e}")
+        logger.error(f"Error retrieving mobile tests: {e}", exc_info=True)
         raise QueryError("Impossible de recuperer les tests mobile")
 
 
@@ -156,7 +156,7 @@ async def get_mobile_test(
     except TestNotFoundError:
         raise
     except Exception as e:
-        logger.error(f"Error retrieving mobile test {test_id}: {e}")
+        logger.error(f"Error retrieving mobile test {test_id}: {e}", exc_info=True)
         raise TestNotFoundError(str(test_id))
 
 
@@ -176,7 +176,7 @@ async def get_mobile_careers(
         careers = await repo.get_all_careers(sector=sector, limit=limit)
         return [_convert_db_career_to_mobile(c) for c in careers]
     except Exception as e:
-        logger.error(f"Error fetching mobile careers: {e}")
+        logger.error(f"Error fetching mobile careers: {e}", exc_info=True)
         raise QueryError("Impossible de recuperer les carrieres mobile")
 
 
@@ -293,7 +293,7 @@ async def get_careers(
             for c in careers
         ]
     except Exception as e:
-        logger.error(f"Error fetching careers: {e}")
+        logger.error(f"Error fetching careers: {e}", exc_info=True)
         raise QueryError("Impossible de recuperer les carrieres")
 
 
@@ -348,7 +348,7 @@ async def get_recommendations(
             for c in careers
         ]
     except Exception as e:
-        logger.error(f"Error fetching recommendations: {e}")
+        logger.error(f"Error fetching recommendations: {e}", exc_info=True)
         raise QueryError("Impossible de recuperer les recommandations")
 
 

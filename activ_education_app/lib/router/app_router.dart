@@ -3,6 +3,11 @@ import 'package:go_router/go_router.dart';
 import '../features/auth/presentation/pages/splash_page.dart';
 import '../features/auth/presentation/pages/login_page.dart';
 import '../features/auth/presentation/pages/register_page.dart';
+import '../features/onboarding/presentation/pages/onboarding_intro_page.dart';
+import '../features/onboarding/presentation/pages/onboarding_profile_page.dart';
+import '../features/onboarding/presentation/pages/onboarding_interests_page.dart';
+import '../features/onboarding/presentation/pages/onboarding_goals_page.dart';
+import '../features/onboarding/presentation/pages/onboarding_complete_page.dart';
 import '../features/home/presentation/pages/home_page.dart';
 import '../features/schools/presentation/pages/school_directory_page.dart';
 import '../features/orientation/presentation/pages/test_selection_page.dart';
@@ -52,6 +57,36 @@ class AppRouter {
         path: '/register',
         builder: (BuildContext context, GoRouterState state) {
           return const RegisterPage();
+        },
+      ),
+      GoRoute(
+        path: '/onboarding',
+        builder: (BuildContext context, GoRouterState state) {
+          return const OnboardingIntroPage();
+        },
+      ),
+      GoRoute(
+        path: '/onboarding/profile',
+        builder: (BuildContext context, GoRouterState state) {
+          return const OnboardingProfilePage();
+        },
+      ),
+      GoRoute(
+        path: '/onboarding/interests',
+        builder: (BuildContext context, GoRouterState state) {
+          return const OnboardingInterestsPage();
+        },
+      ),
+      GoRoute(
+        path: '/onboarding/goals',
+        builder: (BuildContext context, GoRouterState state) {
+          return const OnboardingGoalsPage();
+        },
+      ),
+      GoRoute(
+        path: '/onboarding/complete',
+        builder: (BuildContext context, GoRouterState state) {
+          return const OnboardingCompletePage();
         },
       ),
       ShellRoute(

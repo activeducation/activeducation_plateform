@@ -9,11 +9,11 @@ Gere:
 """
 
 from app.schemas.orientation import TestResult, TestType
-import logging
+from app.core.logging import get_logger
 from collections import defaultdict
 from uuid import UUID
 
-logger = logging.getLogger(__name__)
+logger = get_logger("services.orientation_engine")
 DEFAULT_TEST_ID = UUID("00000000-0000-0000-0000-000000000000")
 
 # ============================================================================
@@ -171,7 +171,7 @@ class OrientationEngine:
                 logger.warning(f"Unknown test type {test_type}, using generic calculation")
                 return self._calculate_generic(responses, question_categories)
         except Exception as e:
-            logger.error(f"Error calculating result for {test_type}: {e}")
+            logger.error(f"Error calculating result for {test_type}: {e}", exc_info=True)
             return TestResult(
                 test_id=DEFAULT_TEST_ID,
                 scores={},

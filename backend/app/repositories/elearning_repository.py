@@ -10,13 +10,13 @@ Gere les interactions avec Supabase pour:
 - Attribution de points
 """
 
-import logging
 from datetime import datetime, timezone
 from typing import Any, Optional
 
+from app.core.logging import get_logger
 from app.db.supabase_client import SupabaseClient, get_admin_supabase_client
 
-logger = logging.getLogger(__name__)
+logger = get_logger("repositories.elearning")
 
 
 class ElearningRepository:
@@ -76,7 +76,7 @@ class ElearningRepository:
             return courses
 
         except Exception as e:
-            logger.error(f"Error fetching published courses: {e}")
+            logger.error(f"Error fetching published courses: {e}", exc_info=True)
             raise
 
     async def get_course_detail(
@@ -181,7 +181,7 @@ class ElearningRepository:
             return course
 
         except Exception as e:
-            logger.error(f"Error fetching course detail for {course_id}: {e}")
+            logger.error(f"Error fetching course detail for {course_id}: {e}", exc_info=True)
             raise
 
     # =========================================================================
@@ -242,7 +242,7 @@ class ElearningRepository:
             return lesson
 
         except Exception as e:
-            logger.error(f"Error fetching lesson detail for {lesson_id}: {e}")
+            logger.error(f"Error fetching lesson detail for {lesson_id}: {e}", exc_info=True)
             raise
 
     # =========================================================================
@@ -295,7 +295,7 @@ class ElearningRepository:
         except ValueError:
             raise
         except Exception as e:
-            logger.error(f"Error enrolling user {user_id} in course {course_id}: {e}")
+            logger.error(f"Error enrolling user {user_id} in course {course_id}: {e}", exc_info=True)
             raise
 
     async def get_user_enrollments(self, user_id: str) -> list[dict[str, Any]]:
@@ -394,7 +394,7 @@ class ElearningRepository:
             return result
 
         except Exception as e:
-            logger.error(f"Error fetching enrollments for user {user_id}: {e}")
+            logger.error(f"Error fetching enrollments for user {user_id}: {e}", exc_info=True)
             raise
 
     # =========================================================================
@@ -600,7 +600,8 @@ class ElearningRepository:
 
         except Exception as e:
             logger.error(
-                f"Error marking lesson {lesson_id} complete for user {user_id}: {e}"
+                f"Error marking lesson {lesson_id} complete for user {user_id}: {e}",
+                exc_info=True,
             )
             raise
 

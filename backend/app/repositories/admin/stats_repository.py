@@ -94,7 +94,7 @@ class StatsRepository:
             )
 
         except Exception as e:
-            logger.error(f"Error fetching dashboard stats: {e}")
+            logger.error(f"Error fetching dashboard stats: {e}", exc_info=True)
             return DashboardStats()
 
 

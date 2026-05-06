@@ -48,7 +48,7 @@ class UsersRepository:
                 id_value=str(user_id),
             )
         except Exception as e:
-            logger.error(f"Error fetching user {user_id}: {e}")
+            logger.error(f"Error fetching user {user_id}: {e}", exc_info=True)
             raise QueryError(f"Erreur lors de la recuperation de l'utilisateur: {str(e)}")
 
     # =========================================================================
@@ -100,7 +100,7 @@ class UsersRepository:
         except Exception as e:
             if "duplicate" in str(e).lower() or "unique" in str(e).lower():
                 raise AlreadyExistsError("Utilisateur", "email", email)
-            logger.error(f"Error creating profile: {e}")
+            logger.error(f"Error creating profile: {e}", exc_info=True)
             raise QueryError(f"Erreur lors de la creation du profil: {str(e)}")
 
     async def update_profile(
@@ -136,7 +136,7 @@ class UsersRepository:
         except NotFoundError:
             raise
         except Exception as e:
-            logger.error(f"Error updating user profile: {e}")
+            logger.error(f"Error updating user profile: {e}", exc_info=True)
             raise QueryError(f"Erreur lors de la mise a jour du profil: {str(e)}")
 
     async def update_last_login(self, user_id: UUID) -> bool:
@@ -171,7 +171,7 @@ class UsersRepository:
             )
             return len(result) > 0
         except Exception as e:
-            logger.error(f"Error deleting user profile: {e}")
+            logger.error(f"Error deleting user profile: {e}", exc_info=True)
             raise QueryError(f"Erreur lors de la suppression du profil: {str(e)}")
 
     # =========================================================================

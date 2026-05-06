@@ -9,6 +9,9 @@ from slowapi.errors import RateLimitExceeded
 from fastapi import Request
 from fastapi.responses import JSONResponse
 from app.core.config import settings
+from app.core.logging import get_logger
+
+logger = get_logger("middleware.rate_limiter")
 
 
 def get_client_ip(request: Request) -> str:
@@ -28,11 +31,25 @@ def get_client_ip(request: Request) -> str:
     return get_remote_address(request)
 
 
+def _get_storage_uri() -> str:
+    """
+    Utilise Redis en production pour partager les compteurs entre workers.
+    Fallback memoire si Redis n'est pas configure.
+    """
+    redis_url = getattr(settings, "REDIS_URL", None)
+    if redis_url and settings.ENVIRONMENT != "development":
+        uri = f"redis+sentinel://{redis_url}" if "sentinel" in redis_url else redis_url
+        logger.info("Rate limiter storage: Redis (%s)", redis_url)
+        return redis_url
+    logger.info("Rate limiter storage: memory (dev mode)")
+    return "memory://"
+
+
 # Initialisation du limiter avec extraction d'IP personnalisee
 limiter = Limiter(
     key_func=get_client_ip,
     default_limits=[f"{settings.RATE_LIMIT_PER_MINUTE}/minute"],
-    storage_uri="memory://",  # Utilise la memoire locale (Redis recommande en prod)
+    storage_uri=_get_storage_uri(),
     strategy="fixed-window",
 )
 

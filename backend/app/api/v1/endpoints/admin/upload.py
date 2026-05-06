@@ -86,7 +86,7 @@ async def upload_image(
         return {"url": public_url, "path": filename, "bucket": bucket}
 
     except Exception as e:
-        logger.error(f"Upload error: {e}")
+        logger.error(f"Upload error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Erreur lors de l'upload: {str(e)}")
 
 
@@ -113,7 +113,7 @@ async def delete_image(
         return {"success": True, "message": "Image supprimee"}
 
     except Exception as e:
-        logger.error(f"Delete error: {e}")
+        logger.error(f"Delete error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression: {str(e)}")
 
 

@@ -8,13 +8,13 @@ Gere les interactions avec Supabase pour:
 - Profil ecole
 """
 
-import logging
 from datetime import datetime, timezone
 from typing import Any, Optional
 
+from app.core.logging import get_logger
 from app.db.supabase_client import SupabaseClient, get_admin_supabase_client
 
-logger = logging.getLogger(__name__)
+logger = get_logger("repositories.school_admin")
 
 
 class SchoolAdminRepository:

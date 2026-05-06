@@ -9,15 +9,15 @@ Gère :
 """
 
 import random
-import logging
 from typing import Optional
 from uuid import UUID
 
+from app.core.logging import get_logger
 from app.schemas.orientation import CareerSummary, TestResult
 from app.services.orientation_engine import orientation_engine, EN_TO_FR, CODE_TO_FR
 from app.repositories.orientation_repository import OrientationRepository
 
-logger = logging.getLogger(__name__)
+logger = get_logger("services.career_matcher")
 
 # Variantes d'accentuation connues
 _NO_ACCENT_TO_ACCENT = {"Realiste": "Réaliste"}
@@ -122,7 +122,7 @@ class CareerMatcherService:
         try:
             careers = await repo.get_careers_by_traits(result.dominant_traits, limit=25)
         except Exception as e:
-            logger.error("Erreur récupération carrières par traits : %s", e)
+            logger.error("Erreur récupération carrières par traits : %s", e, exc_info=True)
             return []
 
         enriched: list[CareerSummary] = []
@@ -153,7 +153,7 @@ class CareerMatcherService:
                 return []
             return await repo.get_matching_school_programs(sectors, limit=8)
         except Exception as e:
-            logger.error("Erreur récupération programmes scolaires : %s", e)
+            logger.error("Erreur récupération programmes scolaires : %s", e, exc_info=True)
             return []
 
 

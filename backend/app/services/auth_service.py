@@ -71,9 +71,9 @@ class AuthService:
         except Exception as e:
             error_msg = str(e).lower()
             if any(k in error_msg for k in ("invalid", "incorrect", "credentials", "not found")):
-                logger.warning(f"Failed login attempt for: {request.email}")
+                logger.warning("Failed login attempt")
                 raise AuthenticationError("Email ou mot de passe incorrect")
-            logger.error(f"Login error for {request.email}: {e}")
+            logger.error(f"Login error: {e}", exc_info=True)
             raise AuthenticationError("Erreur lors de la connexion")
 
         user_id = UUID(response.user.id)
@@ -89,7 +89,7 @@ class AuthService:
 
         await self._users_repo.update_last_login(user_id)
 
-        logger.info(f"User logged in: {request.email}")
+        logger.info("User logged in", extra={"user_id": str(user_id)})
 
         return AuthResponse(
             user=self._to_user_response(profile, response.user.email),
@@ -128,7 +128,7 @@ class AuthService:
             error_msg = str(e).lower()
             if any(k in error_msg for k in ("already", "exists", "duplicate")):
                 raise AlreadyExistsError("Utilisateur", "email", request.email)
-            logger.error(f"Register error for {request.email}: {e}")
+            logger.error(f"Register error: {e}", exc_info=True)
             raise AuthenticationError("Erreur lors de l'inscription")
 
         user_id = UUID(response.user.id)
@@ -143,7 +143,7 @@ class AuthService:
             phone_number=request.phone_number,
         )
 
-        logger.info(f"New user registered: {request.email}")
+        logger.info("New user registered", extra={"user_id": str(user_id)})
 
         # Supabase peut envoyer un email de confirmation (session peut etre None)
         access_token = session.access_token if session else ""
@@ -209,7 +209,7 @@ class AuthService:
             error_msg = str(e).lower()
             if any(k in error_msg for k in ("expired", "invalid")):
                 raise InvalidTokenError("Refresh token invalide ou expire")
-            logger.error(f"Token refresh error: {e}")
+            logger.error(f"Token refresh error: {e}", exc_info=True)
             raise InvalidTokenError("Erreur lors du rafraichissement du token")
 
     # =========================================================================
@@ -227,9 +227,9 @@ class AuthService:
                 email.lower(),
                 options={"redirect_to": "https://activeducationhub.com/reset-password"},
             )
-            logger.info(f"Password reset email sent for: {email}")
+            logger.info("Password reset email sent")
         except Exception as e:
-            logger.warning(f"Password reset request failed for {email}: {e}")
+            logger.warning(f"Password reset request failed: {e}")
 
         return True
 
@@ -254,13 +254,13 @@ class AuthService:
                 {"password": new_password},
             )
 
-            logger.info(f"Password reset successful for: {response.user.email}")
+            logger.info("Password reset successful")
             return True
 
         except InvalidTokenError:
             raise
         except Exception as e:
-            logger.error(f"Password reset error: {e}")
+            logger.error(f"Password reset error: {e}", exc_info=True)
             raise InvalidTokenError("Erreur lors de la reinitialisation du mot de passe")
 
     async def change_password(
@@ -298,7 +298,7 @@ class AuthService:
             logger.info(f"Password changed for user: {user_id}")
             return True
         except Exception as e:
-            logger.error(f"Error changing password for {user_id}: {e}")
+            logger.error(f"Error changing password for user: {e}", exc_info=True)
             raise AuthenticationError("Erreur lors du changement de mot de passe")
 
     # =========================================================================

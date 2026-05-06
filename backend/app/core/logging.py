@@ -29,6 +29,7 @@ class JSONFormatter(logging.Formatter):
         "refresh_token",
         "credit_card",
         "ssn",
+        "email",
     }
 
     def format(self, record: logging.LogRecord) -> str:
@@ -106,8 +107,8 @@ class ColoredFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         color = self.COLORS.get(record.levelname, self.RESET)
 
-        # Format de base
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        # Format de base (UTC pour cohérence avec JSONFormatter)
+        timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
         base_msg = f"{color}{timestamp} | {record.levelname:8s}{self.RESET} | {record.name} | {record.getMessage()}"
 
         # Ajouter les extras pertinents

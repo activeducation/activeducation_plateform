@@ -5,11 +5,12 @@ Charge les entrées depuis Supabase (table knowledge_base) avec cache Redis 1h.
 Fallback sur la KB statique embarquée si Supabase ou Redis est indisponible.
 """
 
-import logging
 import time
 from typing import Optional
 
-logger = logging.getLogger(__name__)
+from app.core.logging import get_logger
+
+logger = get_logger("repositories.knowledge_base")
 
 # Cache mémoire local (fallback si Redis indisponible)
 _memory_cache: dict = {}

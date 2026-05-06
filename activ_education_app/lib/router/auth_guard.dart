@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -18,6 +19,11 @@ class AuthGuard {
     '/register',
     '/forgot-password',
     '/reset-password',
+    '/onboarding',
+    '/onboarding/profile',
+    '/onboarding/interests',
+    '/onboarding/goals',
+    '/onboarding/complete',
   ];
 
   /// Routes d'authentification (rediriger vers home si deja connecte).
@@ -68,27 +74,32 @@ class AuthGuard {
     try {
       isAuthenticated = await _tokenStorage.hasValidTokens();
     } catch (e) {
-      debugPrint('[AuthGuard] Error checking auth: $e');
+      if (kDebugMode) debugPrint('[AuthGuard] Error checking auth: $e');
       isAuthenticated = false;
     }
 
-    debugPrint('[AuthGuard] Location: $location, isPublic: $isPublic, isAuth: $isAuth, isAuthenticated: $isAuthenticated');
+    if (kDebugMode) debugPrint('[AuthGuard] Location: $location, isPublic: $isPublic, isAuth: $isAuth, isAuthenticated: $isAuthenticated');
 
     // Si non authentifie et route protegee -> login
     if (!isAuthenticated && !isPublic) {
-      debugPrint('[AuthGuard] Redirecting to /login');
+      if (kDebugMode) debugPrint('[AuthGuard] Redirecting to /login');
       return '/login';
     }
 
     // Si authentifie et sur une route d'auth -> home
     if (isAuthenticated && isAuth) {
-      debugPrint('[AuthGuard] Redirecting to /home');
+      if (kDebugMode) debugPrint('[AuthGuard] Redirecting to /home');
       return '/home';
     }
 
     // Si sur splash et authentifie -> home
     if (location == '/' && isAuthenticated) {
       return '/home';
+    }
+
+    // Si sur splash et non authentifie -> onboarding
+    if (location == '/' && !isAuthenticated) {
+      return '/onboarding';
     }
 
     // Pas de redirection necessaire
@@ -119,6 +130,10 @@ class AuthGuard {
 
     if (location == '/' && isAuthenticated) {
       return '/home';
+    }
+
+    if (location == '/' && isAuthenticated == false) {
+      return '/onboarding';
     }
 
     return null;

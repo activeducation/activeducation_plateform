@@ -107,7 +107,7 @@ class OrientationRepository:
             if any(kw in error_msg for kw in ("getaddrinfo", "Connection refused", "ConnectionError", "ConnectTimeout")):
                 logger.warning(f"Supabase inaccessible, utilisation du fallback local: {error_msg}")
                 return [t for t in FALLBACK_TESTS if not active_only or t.get("is_active", True)]
-            logger.error(f"Error fetching orientation tests: {e}")
+            logger.error(f"Error fetching orientation tests: {e}", exc_info=True)
             raise QueryError(f"Erreur lors de la recuperation des tests: {str(e)}")
 
     async def get_test_by_id(self, test_id: UUID) -> dict[str, Any]:
@@ -149,7 +149,7 @@ class OrientationRepository:
                     if t["id"] == test_id_str:
                         return t
                 raise TestNotFoundError(str(test_id))
-            logger.error(f"Error fetching test {test_id}: {e}")
+            logger.error(f"Error fetching test {test_id}: {e}", exc_info=True)
             raise QueryError(f"Erreur lors de la recuperation du test: {str(e)}")
 
     async def _get_test_questions(self, test_id: str) -> list[dict[str, Any]]:
@@ -220,7 +220,7 @@ class OrientationRepository:
             return result[0]
 
         except Exception as e:
-            logger.error(f"Error creating test session: {e}")
+            logger.error(f"Error creating test session: {e}", exc_info=True)
             raise QueryError(f"Erreur lors de la creation de la session: {str(e)}")
 
     async def complete_test_session(
@@ -287,7 +287,7 @@ class OrientationRepository:
         except NotFoundError:
             raise
         except Exception as e:
-            logger.error(f"Error completing test session: {e}")
+            logger.error(f"Error completing test session: {e}", exc_info=True)
             raise QueryError(f"Erreur lors de la completion du test: {str(e)}")
 
     # =========================================================================
@@ -324,7 +324,7 @@ class OrientationRepository:
             return careers
 
         except Exception as e:
-            logger.error(f"Error fetching careers: {e}")
+            logger.error(f"Error fetching careers: {e}", exc_info=True)
             raise QueryError(f"Erreur lors de la recuperation des carrieres: {str(e)}")
 
     async def get_career_by_id(self, career_id: UUID) -> dict[str, Any]:
@@ -355,7 +355,7 @@ class OrientationRepository:
         except CareerNotFoundError:
             raise
         except Exception as e:
-            logger.error(f"Error fetching career {career_id}: {e}")
+            logger.error(f"Error fetching career {career_id}: {e}", exc_info=True)
             raise QueryError(f"Erreur lors de la recuperation de la carriere: {str(e)}")
 
     async def get_careers_by_traits(
@@ -404,7 +404,7 @@ class OrientationRepository:
             return result.data
 
         except Exception as e:
-            logger.error(f"Error fetching careers by traits: {e}")
+            logger.error(f"Error fetching careers by traits: {e}", exc_info=True)
             raise QueryError(f"Erreur lors de la recherche de carrieres: {str(e)}")
 
     async def get_matching_school_programs(
@@ -465,7 +465,7 @@ class OrientationRepository:
             return enriched[:limit]
 
         except Exception as e:
-            logger.error(f"Error fetching matching school programs: {e}")
+            logger.error(f"Error fetching matching school programs: {e}", exc_info=True)
             return []
 
 # Instance singleton
