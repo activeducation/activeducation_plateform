@@ -31,6 +31,10 @@ TTL_LISTS = 600          # 10 min - listes ecoles/carrieres
 TTL_DETAIL = 300         # 5 min - detail ecole/carriere
 TTL_TESTS = 1800         # 30 min - tests d'orientation (tres statiques)
 TTL_USER_PROFILE = 120   # 2 min - profils utilisateurs
+TTL_MENTORS = 300        # 5 min - liste mentors (semi-statique)
+TTL_OPPORTUNITIES = 300  # 5 min - liste opportunités (semi-statique)
+TTL_LEADERBOARD = 120    # 2 min - leaderboard (change fréquemment)
+TTL_GAMIFICATION = 60    # 1 min - profil gamification utilisateur
 
 
 # =============================================================================

@@ -49,18 +49,28 @@ class SchoolsAdminRepository:
             query = query.or_(f"name.ilike.%{search}%,city.ilike.%{search}%")
 
         result = query.order("created_at", desc=True).range(offset, offset + per_page - 1).execute()
+        schools_data = result.data or []
 
-        items = []
-        for s in (result.data or []):
-            # Count programs
-            programs_count = 0
+        # Get all program counts in one query (avoids N+1)
+        programs_count_by_school = {}
+        if schools_data:
+            school_ids = [s["id"] for s in schools_data]
             try:
-                pc = self._db.client.table("school_programs").select(
-                    "id", count="exact"
-                ).eq("school_id", s["id"]).execute()
-                programs_count = pc.count or 0
+                programs_result = (
+                    self._db.client.table("school_programs")
+                    .select("school_id")
+                    .in_("school_id", school_ids)
+                    .execute()
+                )
+                for p in (programs_result.data or []):
+                    sid = p["school_id"]
+                    programs_count_by_school[sid] = programs_count_by_school.get(sid, 0) + 1
             except Exception:
                 pass
+
+        items = []
+        for s in schools_data:
+            programs_count = programs_count_by_school.get(s["id"], 0)
 
             items.append(SchoolSummary(
                 id=s["id"],

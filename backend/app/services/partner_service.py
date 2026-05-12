@@ -1,0 +1,322 @@
+"""
+Service pour la gestion des organisations partenaires et beneficaires.
+
+Gere la logique metier pour:
+- Creation et gestion des organisations (CDEJ, ONG, etc.)
+- Creation et gestion des dossiers beneficiaires
+"""
+
+from datetime import datetime
+from typing import Optional
+from uuid import UUID
+
+from app.core.logging import get_logger
+from app.core.exceptions import (
+    NotFoundError,
+    ValidationError,
+)
+from app.schemas.partner import (
+    OrganizationCreate,
+    OrganizationUpdate,
+    OrganizationResponse,
+    OrganizationListResponse,
+    BeneficiaryCreate,
+    BeneficiaryUpdate,
+    BeneficiaryResponse,
+    BeneficiaryListResponse,
+    OrganizationWithStats,
+)
+from app.repositories.partner_repository import (
+    get_partner_repository,
+    PartnerRepository,
+)
+from app.repositories.users_repository import (
+    get_users_repository,
+    UsersRepository,
+)
+
+logger = get_logger("services.partner")
+
+
+class PartnerService:
+    """Service pour la gestion des partenaires et beneficiaires."""
+
+    def __init__(self):
+        self._partner_repo: PartnerRepository = get_partner_repository()
+        self._users_repo: UsersRepository = get_users_repository()
+
+    # =========================================================================
+    # ORGANIZATION OPERATIONS
+    # =========================================================================
+
+    async def create_organization(
+        self,
+        data: OrganizationCreate,
+        created_by: UUID,
+    ) -> OrganizationResponse:
+        """
+        Cree une nouvelle organisation partenaire.
+
+        L'utilisateur createur sera associe a l'organisation.
+        """
+        org_data = data.model_dump()
+
+        org = await self._partner_repo.create_organization(
+            data=org_data,
+            created_by=created_by,
+        )
+
+        await self._users_repo.update_profile(
+            created_by,
+            {"organization_id": str(org["id"]), "role": "partner_admin"},
+        )
+
+        logger.info(f"Organization created: {org['id']}")
+        return self._to_organization_response(org)
+
+    async def get_organization(
+        self,
+        org_id: UUID,
+    ) -> OrganizationResponse:
+        """Recupere une organisation par son ID."""
+        org = await self._partner_repo.get_organization_by_id(org_id)
+        if not org:
+            raise NotFoundError("Organisation", str(org_id))
+        return self._to_organization_response(org)
+
+    async def get_organization_by_code(
+        self,
+        code: str,
+    ) -> OrganizationResponse:
+        """Recupere une organisation par son code."""
+        org = await self._partner_repo.get_organization_by_code(code)
+        if not org:
+            raise NotFoundError("Organisation", f"code: {code}")
+        return self._to_organization_response(org)
+
+    async def update_organization(
+        self,
+        org_id: UUID,
+        data: OrganizationUpdate,
+    ) -> OrganizationResponse:
+        """Met a jour une organisation."""
+        org = await self._partner_repo.get_organization_by_id(org_id)
+        if not org:
+            raise NotFoundError("Organisation", str(org_id))
+
+        update_data = data.model_dump(exclude_unset=True)
+        updated_org = await self._partner_repo.update_organization(org_id, update_data)
+
+        logger.info(f"Organization updated: {org_id}")
+        return self._to_organization_response(updated_org)
+
+    async def approve_organization(
+        self,
+        org_id: UUID,
+        approved_by: UUID,
+    ) -> OrganizationResponse:
+        """Approuve une organisation."""
+        org = await self._partner_repo.get_organization_by_id(org_id)
+        if not org:
+            raise NotFoundError("Organisation", str(org_id))
+
+        approved_org = await self._partner_repo.approve_organization(org_id, approved_by)
+
+        logger.info(f"Organization approved: {org_id}")
+        return self._to_organization_response(approved_org)
+
+    async def list_organizations(
+        self,
+        page: int = 1,
+        page_size: int = 20,
+        is_active: Optional[bool] = None,
+        is_approved: Optional[bool] = None,
+        org_type: Optional[str] = None,
+    ) -> OrganizationListResponse:
+        """Liste les organisations avec pagination."""
+        organizations, total = await self._partner_repo.list_organizations(
+            page=page,
+            page_size=page_size,
+            is_active=is_active,
+            is_approved=is_approved,
+            org_type=org_type,
+        )
+
+        return OrganizationListResponse(
+            organizations=[self._to_organization_response(org) for org in organizations],
+            total=total,
+            page=page,
+            page_size=page_size,
+        )
+
+    async def get_organization_with_stats(
+        self,
+        org_id: UUID,
+    ) -> OrganizationWithStats:
+        """Recupere une organisation avec des statistiques sur les beneficiaires."""
+        org = await self._partner_repo.get_organization_by_id(org_id)
+        if not org:
+            raise NotFoundError("Organisation", str(org_id))
+
+        total = await self._partner_repo.count_beneficiaries(org_id)
+        active = await self._partner_repo.count_beneficiaries(org_id, status="active")
+        completed = await self._partner_repo.count_beneficiaries(org_id, status="completed")
+
+        return OrganizationWithStats(
+            organization=self._to_organization_response(org),
+            total_beneficiaries=total,
+            active_beneficiaries=active,
+            completed_beneficiaries=completed,
+        )
+
+    # =========================================================================
+    # BENEFICIARY OPERATIONS
+    # =========================================================================
+
+    async def create_beneficiary(
+        self,
+        organization_id: UUID,
+        data: BeneficiaryCreate,
+        referred_by: UUID,
+    ) -> BeneficiaryResponse:
+        """Cree un nouveau dossier de beneficiaire."""
+        org = await self._partner_repo.get_organization_by_id(organization_id)
+        if not org:
+            raise NotFoundError("Organisation", str(organization_id))
+
+        beneficiary_data = data.model_dump()
+        beneficiary = await self._partner_repo.create_beneficiary(
+            organization_id=organization_id,
+            data=beneficiary_data,
+            referred_by=referred_by,
+        )
+
+        logger.info(f"Beneficiary dossier created: {beneficiary['dossier_number']}")
+        return self._to_beneficiary_response(beneficiary)
+
+    async def get_beneficiary(
+        self,
+        beneficiary_id: UUID,
+    ) -> BeneficiaryResponse:
+        """Recupere un beneficiaire par son ID."""
+        beneficiary = await self._partner_repo.get_beneficiary_by_id(beneficiary_id)
+        if not beneficiary:
+            raise NotFoundError("Beneficiaire", str(beneficiary_id))
+        return self._to_beneficiary_response(beneficiary)
+
+    async def update_beneficiary(
+        self,
+        beneficiary_id: UUID,
+        data: BeneficiaryUpdate,
+    ) -> BeneficiaryResponse:
+        """Met a jour un beneficiaire."""
+        beneficiary = await self._partner_repo.get_beneficiary_by_id(beneficiary_id)
+        if not beneficiary:
+            raise NotFoundError("Beneficiaire", str(beneficiary_id))
+
+        update_data = data.model_dump(exclude_unset=True)
+        updated_beneficiary = await self._partner_repo.update_beneficiary(
+            beneficiary_id, update_data
+        )
+
+        logger.info(f"Beneficiary updated: {beneficiary_id}")
+        return self._to_beneficiary_response(updated_beneficiary)
+
+    async def list_beneficiaries(
+        self,
+        organization_id: UUID,
+        page: int = 1,
+        page_size: int = 20,
+        status: Optional[str] = None,
+    ) -> BeneficiaryListResponse:
+        """Liste les beneficiaires d'une organisation."""
+        org = await self._partner_repo.get_organization_by_id(organization_id)
+        if not org:
+            raise NotFoundError("Organisation", str(organization_id))
+
+        beneficiaries, total = await self._partner_repo.list_beneficiaries(
+            organization_id=organization_id,
+            page=page,
+            page_size=page_size,
+            status=status,
+        )
+
+        return BeneficiaryListResponse(
+            beneficiaries=[self._to_beneficiary_response(b) for b in beneficiaries],
+            total=total,
+            page=page,
+            page_size=page_size,
+        )
+
+    async def delete_beneficiary(
+        self,
+        beneficiary_id: UUID,
+    ) -> bool:
+        """Desactive un beneficiaire."""
+        beneficiary = await self._partner_repo.get_beneficiary_by_id(beneficiary_id)
+        if not beneficiary:
+            raise NotFoundError("Beneficiaire", str(beneficiary_id))
+
+        await self._partner_repo.delete_beneficiary(beneficiary_id)
+        logger.info(f"Beneficiary deactivated: {beneficiary_id}")
+        return True
+
+    # =========================================================================
+    # HELPERS
+    # =========================================================================
+
+    def _to_organization_response(self, org: dict) -> OrganizationResponse:
+        """Convertit les donnees en OrganizationResponse."""
+        return OrganizationResponse(
+            id=UUID(org["id"]),
+            name=org.get("name", ""),
+            type=org.get("type", "cdej"),
+            partner_code=org.get("partner_code"),
+            description=org.get("description"),
+            contact_email=org.get("contact_email"),
+            contact_phone=org.get("contact_phone"),
+            contact_person=org.get("contact_person"),
+            address=org.get("address"),
+            city=org.get("city"),
+            country=org.get("country", "TOGO"),
+            is_active=org.get("is_active", True),
+            is_approved=org.get("is_approved", False),
+            approved_at=org.get("approved_at"),
+            created_at=org.get("created_at", datetime.now()),
+            updated_at=org.get("updated_at"),
+        )
+
+    def _to_beneficiary_response(self, beneficiary: dict) -> BeneficiaryResponse:
+        """Convertit les donnees en BeneficiaryResponse."""
+        return BeneficiaryResponse(
+            id=UUID(beneficiary["id"]),
+            organization_id=UUID(beneficiary["organization_id"]),
+            dossier_number=beneficiary.get("dossier_number"),
+            first_name=beneficiary.get("first_name", ""),
+            last_name=beneficiary.get("last_name", ""),
+            date_of_birth=beneficiary.get("date_of_birth"),
+            gender=beneficiary.get("gender"),
+            place_of_birth=beneficiary.get("place_of_birth"),
+            father_name=beneficiary.get("father_name"),
+            mother_name=beneficiary.get("mother_name"),
+            guardian_name=beneficiary.get("guardian_name"),
+            guardian_phone=beneficiary.get("guardian_phone"),
+            guardian_relationship=beneficiary.get("guardian_relationship"),
+            address=beneficiary.get("address"),
+            city=beneficiary.get("city"),
+            country=beneficiary.get("country", "TOGO"),
+            photo_url=beneficiary.get("photo_url"),
+            notes=beneficiary.get("notes"),
+            status=beneficiary.get("status", "active"),
+            referred_at=beneficiary.get("referred_at", datetime.now()),
+            created_at=beneficiary.get("created_at", datetime.now()),
+            updated_at=beneficiary.get("updated_at"),
+        )
+
+
+partner_service = PartnerService()
+
+
+def get_partner_service() -> PartnerService:
+    """Retourne l'instance du service partenaire."""
+    return partner_service
