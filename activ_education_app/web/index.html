@@ -57,6 +57,7 @@
       z-index: 9999;
       transition: opacity 0.5s ease;
     }
+    #loading.hidden { opacity: 0; pointer-events: none; }
 
     /* ── Ambient orbs ── */
     .orb {
@@ -296,6 +297,37 @@
     <div class="load-label">Chargement…</div>
 
   </div>
+
+  <script>
+    // Hide the HTML splash once Flutter has painted its first frame.
+    (function () {
+      var hidden = false;
+      function hideLoading() {
+        if (hidden) return;
+        hidden = true;
+        var el = document.getElementById('loading');
+        if (!el) return;
+        el.classList.add('hidden');
+        setTimeout(function () { el.remove(); }, 500);
+      }
+
+      window.addEventListener('flutter-first-frame', hideLoading);
+
+      function flutterReady() {
+        return !!document.querySelector('flutter-view, flt-glass-pane, flt-scene-host');
+      }
+      var observer = new MutationObserver(function () {
+        if (flutterReady()) {
+          observer.disconnect();
+          hideLoading();
+        }
+      });
+      observer.observe(document.documentElement, { childList: true, subtree: true });
+
+      // Safety net: never let the splash hang longer than ~15s on slow first-loads.
+      setTimeout(hideLoading, 15000);
+    })();
+  </script>
 
   <script src="flutter_bootstrap.js" async></script>
 </body>
