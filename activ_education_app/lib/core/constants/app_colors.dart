@@ -49,6 +49,10 @@ class AppColors {
   // ============================================
   // GAMIFICATION — XP, niveaux, streaks, badges
   // ============================================
+  static const Color gold = Color(0xFFF2A423);
+  static const Color goldDark = Color(0xFFCC8800);
+  static const Color goldLight = Color(0xFFFFD166);
+  static const Color goldSurface = Color(0xFFFFF5E0);
   static const Color xpGold = Color(0xFFF2A423);
   static const Color xpGoldDark = Color(0xFFCC8800);
   static const Color xpGoldSurface = Color(0xFFFFF8DC);

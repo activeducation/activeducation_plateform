@@ -5,11 +5,46 @@ import 'package:iconsax/iconsax.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_typography.dart';
+import '../../../../core/di/injection_container.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../gamification/data/models/gamification_profile.dart';
+import '../../../gamification/data/repositories/gamification_repository.dart';
 
-/// Page de profil utilisateur
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  GamificationProfile? _gamificationProfile;
+  bool _loadingGamification = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadGamification();
+  }
+
+  Future<void> _loadGamification() async {
+    try {
+      final repo = getIt<GamificationRepository>();
+      final profile = await repo.getMyProfile();
+      if (mounted) {
+        setState(() {
+          _gamificationProfile = profile;
+          _loadingGamification = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _loadingGamification = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,150 +77,388 @@ class ProfilePage extends StatelessWidget {
               initials = state.user.initials;
             }
 
-            return SingleChildScrollView(
-              child: Column(
-                children: [
-                  // Banner gradient + avatar
-                  Stack(
-                    clipBehavior: Clip.none,
-                    alignment: Alignment.center,
-                    children: [
-                      Container(
-                        width: double.infinity,
-                        height: 130,
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [AppColors.primary, AppColors.primaryIndigo],
-                          ),
-                          borderRadius: BorderRadius.only(
-                            bottomLeft: Radius.circular(32),
-                            bottomRight: Radius.circular(32),
-                          ),
-                        ),
-                        // Motif décoratif en filigrane
-                        child: Stack(
-                          children: [
-                            Positioned(
-                              right: -20,
-                              top: -20,
-                              child: Container(
-                                width: 120,
-                                height: 120,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.white.withValues(alpha: 0.05),
-                                ),
-                              ),
-                            ),
-                            Positioned(
-                              right: 20,
-                              bottom: -10,
-                              child: Container(
-                                width: 80,
-                                height: 80,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.white.withValues(alpha: 0.06),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Positioned(
-                        bottom: -48,
-                        child: Container(
-                          width: 96,
-                          height: 96,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [AppColors.primary, AppColors.secondary],
+            return RefreshIndicator(
+              onRefresh: _loadGamification,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  children: [
+                    Stack(
+                      clipBehavior: Clip.none,
+                      alignment: Alignment.center,
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          height: 130,
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
+                              colors: [AppColors.primary, AppColors.primaryIndigo],
                             ),
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 4),
-                            boxShadow: AppColors.crossBrandShadow,
+                            borderRadius: BorderRadius.only(
+                              bottomLeft: Radius.circular(32),
+                              bottomRight: Radius.circular(32),
+                            ),
                           ),
-                          child: Center(
-                            child: Text(
-                              initials,
-                              style: AppTypography.headlineMedium.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
+                          child: Stack(
+                            children: [
+                              Positioned(
+                                right: -20,
+                                top: -20,
+                                child: Container(
+                                  width: 120,
+                                  height: 120,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.white.withValues(alpha: 0.05),
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                right: 20,
+                                bottom: -10,
+                                child: Container(
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.white.withValues(alpha: 0.06),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Positioned(
+                          bottom: -48,
+                          child: Container(
+                            width: 96,
+                            height: 96,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [AppColors.primary, AppColors.secondary],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 4),
+                              boxShadow: AppColors.crossBrandShadow,
+                            ),
+                            child: Center(
+                              child: Text(
+                                initials,
+                                style: AppTypography.headlineMedium.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 60),
-
-                  // Nom + email
-                  Text(
-                    fullName,
-                    style: AppTypography.headlineSmall.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    email,
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-
-                  const SizedBox(height: AppSpacing.xl),
-
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.pagePaddingHorizontal,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Section Accès rapide
-                        Text(
-                          'Accès rapide',
-                          style: AppTypography.titleMedium.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        _buildQuickAccessCard(context),
-
-                        const SizedBox(height: AppSpacing.xl),
-
-                        // Section Mon compte
-                        Text(
-                          'Mon compte',
-                          style: AppTypography.titleMedium.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        _buildAccountCard(context, email, fullName),
-
-                        const SizedBox(height: AppSpacing.xl),
-
-                        // Bouton déconnexion
-                        _buildLogoutButton(context),
-
-                        const SizedBox(height: AppSpacing.pagePaddingBottom),
                       ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 60),
+
+                    Text(
+                      fullName,
+                      style: AppTypography.headlineSmall.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      email,
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+
+                    const SizedBox(height: AppSpacing.lg),
+
+                    if (_loadingGamification)
+                      const Padding(
+                        padding: EdgeInsets.all(AppSpacing.lg),
+                        child: CircularProgressIndicator(),
+                      )
+                    else if (_gamificationProfile != null)
+                      _buildGamificationCard(_gamificationProfile!),
+
+                    const SizedBox(height: AppSpacing.xl),
+
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.pagePaddingHorizontal,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Accès rapide',
+                            style: AppTypography.titleMedium.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          _buildQuickAccessCard(context),
+
+                          const SizedBox(height: AppSpacing.xl),
+
+                          Text(
+                            'Mon compte',
+                            style: AppTypography.titleMedium.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          _buildAccountCard(context, email, fullName),
+
+                          const SizedBox(height: AppSpacing.xl),
+
+                          _buildLogoutButton(context),
+
+                          const SizedBox(height: AppSpacing.pagePaddingBottom),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           },
         ),
+      ),
+    );
+  }
+
+  Widget _buildGamificationCard(GamificationProfile profile) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.pagePaddingHorizontal,
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.primary.withValues(alpha: 0.08),
+              AppColors.goldSurface.withValues(alpha: 0.3),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+          border: Border.all(color: AppColors.gold.withValues(alpha: 0.2)),
+        ),
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [AppColors.gold, AppColors.goldDark],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.emoji_events_rounded,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Niveau ${profile.stats.currentLevel}',
+                        style: AppTypography.titleMedium.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        '${profile.stats.totalXp} XP',
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.gold,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (profile.stats.currentStreak > 0)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.goldSurface,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppColors.gold.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text('🔥', style: TextStyle(fontSize: 14)),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${profile.stats.currentStreak}j',
+                          style: AppTypography.labelMedium.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.goldDark,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+
+            const SizedBox(height: AppSpacing.md),
+
+            ClipRRect(
+              borderRadius: BorderRadius.circular(100),
+              child: LinearProgressIndicator(
+                value: profile.levelProgress,
+                minHeight: 8,
+                backgroundColor: AppColors.surface,
+                valueColor: const AlwaysStoppedAnimation<Color>(AppColors.xpBar),
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            Text(
+              '${profile.xpToNextLevel} XP jusqu\'au niveau ${profile.stats.currentLevel + 1}',
+              style: AppTypography.labelSmall.copyWith(
+                color: AppColors.textTertiary,
+              ),
+            ),
+
+            const SizedBox(height: AppSpacing.lg),
+
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStatItem(
+                    icon: Icons.workspace_premium_outlined,
+                    label: 'Badges',
+                    value: '${profile.stats.totalAchievements}',
+                    color: AppColors.gold,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: _buildStatItem(
+                    icon: Icons.flag_outlined,
+                    label: 'Défis',
+                    value: '${profile.stats.completedChallenges}',
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: _buildStatItem(
+                    icon: Icons.local_fire_department_outlined,
+                    label: 'Streak',
+                    value: '${profile.stats.longestStreak}j',
+                    color: AppColors.error,
+                  ),
+                ),
+              ],
+            ),
+
+            if (profile.achievements.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.lg),
+              const Divider(),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                'Derniers badges débloqués',
+                style: AppTypography.labelMedium.copyWith(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: profile.achievements.take(4).map((achievement) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.goldSurface,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppColors.gold.withValues(alpha: 0.2)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          achievement.icon,
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          achievement.displayName,
+                          style: AppTypography.labelSmall.copyWith(
+                            color: AppColors.goldDark,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatItem({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: AppTypography.titleSmall.copyWith(
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          Text(
+            label,
+            style: AppTypography.labelSmall.copyWith(
+              color: AppColors.textTertiary,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -273,7 +546,7 @@ class ProfilePage extends StatelessWidget {
                           ],
                         ),
                       ),
-                      Icon(
+                      const Icon(
                         Icons.chevron_right_rounded,
                         size: 18,
                         color: AppColors.textTertiary,

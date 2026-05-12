@@ -22,8 +22,8 @@ import '../features/ai_chat/presentation/pages/chat_page.dart';
 import '../features/elearning/presentation/pages/elearning_catalog_page.dart';
 import '../features/elearning/presentation/pages/course_detail_page.dart';
 import '../features/elearning/presentation/pages/lesson_page.dart';
+import '../features/mentors/presentation/pages/mentors_page.dart';
 import '../core/constants/app_colors.dart';
-import '../core/constants/app_spacing.dart';
 import '../core/constants/app_typography.dart';
 import 'auth_guard.dart';
 
@@ -111,6 +111,11 @@ class AppRouter {
                 const NoTransitionPage(child: ElearningCatalogPage()),
           ),
           GoRoute(
+            path: '/mentors',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: MentorsPage()),
+          ),
+          GoRoute(
             path: '/schools',
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: SchoolDirectoryPage()),
@@ -183,6 +188,7 @@ class _MainShellWrapperState extends State<_MainShellWrapper> {
     '/home',
     '/orientation',
     '/elearning',
+    '/mentors',
     '/schools',
     '/profile',
   ];
@@ -207,6 +213,12 @@ class _MainShellWrapperState extends State<_MainShellWrapper> {
       activeIcon: Icons.play_lesson_rounded,
       label: 'Cours',
       route: '/elearning',
+    ),
+    _NavItemData(
+      icon: Icons.people_outline,
+      activeIcon: Icons.people_rounded,
+      label: 'Mentors',
+      route: '/mentors',
     ),
     _NavItemData(
       icon: Icons.business_outlined,
