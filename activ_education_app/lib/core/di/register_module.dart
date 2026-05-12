@@ -10,8 +10,10 @@ import '../constants/api_endpoints.dart';
 @module
 abstract class RegisterModule {
   /// SharedPreferences pour le stockage local.
-  @preResolve
-  Future<SharedPreferences> get prefs => SharedPreferences.getInstance();
+  /// IMPORTANT: Pas de @preResolve car SharedPreferences.getInstance()
+  /// est lent sur web (IndexedDB). On le rend lazy pour un démarrage rapide.
+  @lazySingleton
+  Future<SharedPreferences> get prefs async => SharedPreferences.getInstance();
 
   /// Client Dio pour les requetes de refresh (sans intercepteur auth).
   @Named('refreshClient')
