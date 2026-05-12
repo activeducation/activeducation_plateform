@@ -22,28 +22,41 @@ import '../features/mentors/presentation/mentors_list_page.dart';
 import '../features/settings/presentation/settings_page.dart';
 import '../features/settings/presentation/announcements_page.dart';
 import '../features/settings/presentation/audit_log_page.dart';
+import '../features/elearning/presentation/courses_list_page.dart';
+import '../features/elearning/presentation/course_editor_page.dart';
+import '../features/opportunities/presentation/opportunities_list_page.dart';
+import '../features/opportunities/presentation/opportunity_editor_page.dart';
+import '../features/school_portal/presentation/school_login_page.dart';
+import '../features/school_portal/presentation/school_shell_layout.dart';
+import '../features/school_portal/presentation/school_dashboard_page.dart';
+import '../features/school_portal/presentation/school_courses_page.dart';
+import '../features/school_portal/presentation/school_course_editor_page.dart';
+import '../features/school_portal/presentation/school_profile_page.dart';
 
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
+final _schoolShellNavigatorKey = GlobalKey<NavigatorState>();
 
 GoRouter createAdminRouter() {
   return GoRouter(
     navigatorKey: authNavigatorKey,
     initialLocation: '/dashboard',
     redirect: (context, state) {
+      final path = state.matchedLocation;
       final tokenStorage = getIt<TokenStorage>();
-      final isLoggedIn = tokenStorage.isLoggedIn;
-      final isLoginRoute = state.matchedLocation == '/login';
 
-      if (!isLoggedIn && !isLoginRoute) return '/login';
-      if (isLoggedIn && isLoginRoute) return '/dashboard';
+      if (path.startsWith('/school-portal') && path != '/school-portal/login') {
+        if (!tokenStorage.isLoggedIn || !tokenStorage.isSchoolAdmin) {
+          return '/school-portal/login';
+        }
+      } else if (path != '/login' && path != '/school-portal/login') {
+        if (!tokenStorage.isLoggedIn) return '/login';
+        if (path == '/login') return '/dashboard';
+      }
 
-      final superAdminOnlyRoutes = [
-        '/settings',
-        '/audit-log',
-        '/announcements',
-      ];
-      if (superAdminOnlyRoutes.contains(state.matchedLocation) &&
-          !tokenStorage.isSuperAdmin) {
+      if (path.startsWith('/school-portal')) return null;
+
+      final superAdminOnlyRoutes = ['/settings', '/audit-log', '/announcements'];
+      if (superAdminOnlyRoutes.contains(path) && !tokenStorage.isSuperAdmin) {
         return '/dashboard';
       }
 
@@ -51,6 +64,7 @@ GoRouter createAdminRouter() {
     },
     routes: [
       GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
+      GoRoute(path: '/school-portal/login', builder: (context, state) => const SchoolLoginPage()),
       ShellRoute(
         navigatorKey: _shellNavigatorKey,
         builder: (context, state, child) => AdminShellLayout(child: child),
@@ -134,6 +148,58 @@ GoRouter createAdminRouter() {
           GoRoute(
             path: '/audit-log',
             builder: (context, state) => const AuditLogPage(),
+          ),
+          GoRoute(
+            path: '/elearning/courses',
+            builder: (context, state) => const CoursesListPage(),
+          ),
+          GoRoute(
+            path: '/elearning/courses/new',
+            builder: (context, state) => const CourseEditorPage(),
+          ),
+          GoRoute(
+            path: '/elearning/courses/:id/edit',
+            builder: (context, state) =>
+                CourseEditorPage(courseId: state.pathParameters['id']),
+          ),
+          GoRoute(
+            path: '/opportunities',
+            builder: (context, state) => const OpportunitiesListPage(),
+          ),
+          GoRoute(
+            path: '/opportunities/new',
+            builder: (context, state) => const OpportunityEditorPage(),
+          ),
+          GoRoute(
+            path: '/opportunities/:id/edit',
+            builder: (context, state) =>
+                OpportunityEditorPage(opportunityId: state.pathParameters['id']),
+          ),
+        ],
+      ),
+      ShellRoute(
+        navigatorKey: _schoolShellNavigatorKey,
+        builder: (context, state, child) => SchoolShellLayout(child: child),
+        routes: [
+          GoRoute(
+            path: '/school-portal/dashboard',
+            builder: (context, state) => const SchoolDashboardPage(),
+          ),
+          GoRoute(
+            path: '/school-portal/courses',
+            builder: (context, state) => const SchoolCoursesPage(),
+          ),
+          GoRoute(
+            path: '/school-portal/courses/new',
+            builder: (context, state) => const SchoolCourseEditorPage(),
+          ),
+          GoRoute(
+            path: '/school-portal/courses/:id/edit',
+            builder: (context, state) => SchoolCourseEditorPage(courseId: state.pathParameters['id']),
+          ),
+          GoRoute(
+            path: '/school-portal/profile',
+            builder: (context, state) => const SchoolProfilePage(),
           ),
         ],
       ),
