@@ -31,7 +31,11 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     # Cache Redis
-    REDIS_URL: str = "redis://redis:6379/0"
+    # None par defaut : evite de tenter une connexion sur un hostname Docker
+    # inexistant (ex: Railway, Heroku). Le cache et le rate-limiter savent
+    # gerer ce cas (fallback memoire). En production, on exige la valeur
+    # explicitement via le validator ci-dessous.
+    REDIS_URL: Optional[str] = None
 
     # LLM - AÏDA
     GROQ_API_KEY: Optional[str] = None
@@ -107,6 +111,21 @@ class Settings(BaseSettings):
             if not self.SUPABASE_SERVICE_ROLE_KEY:
                 raise ValueError(
                     "SUPABASE_SERVICE_ROLE_KEY est requis en production (endpoints admin)"
+                )
+
+            # REDIS_URL obligatoire en prod (rate-limiter partage entre workers,
+            # cache mutualise). Refuser le hostname Docker hérité qui ne
+            # resout pas hors d'un docker-compose local.
+            if not self.REDIS_URL:
+                raise ValueError(
+                    "REDIS_URL est requis en production "
+                    "(rate-limiter partage et cache mutualise)"
+                )
+            if "redis://redis:" in (self.REDIS_URL or ""):
+                raise ValueError(
+                    "REDIS_URL pointe vers le hostname Docker 'redis' "
+                    "(hors docker-compose il ne resout pas). "
+                    "Utilisez l'URL fournie par votre provider Redis."
                 )
 
         # En developpement, permettre le wildcard "*"
