@@ -67,7 +67,15 @@ class CacheClient:
             import redis
             from app.core.config import settings
 
-            redis_url = getattr(settings, "REDIS_URL", "redis://redis:6379/0")
+            redis_url = getattr(settings, "REDIS_URL", None)
+            if not redis_url:
+                # Pas de Redis configure : fallback memoire silencieux,
+                # un seul log pour eviter le spam.
+                if not self._redis_failed_at:
+                    logger.info("REDIS_URL not set, using memory cache")
+                self._redis_failed_at = time.time()
+                return None
+
             client = redis.from_url(
                 redis_url,
                 decode_responses=True,
