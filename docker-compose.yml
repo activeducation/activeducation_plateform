@@ -99,7 +99,7 @@ services:
 
   # ============================================================
   # BACKEND - API FastAPI
-  # https://api.activeduhub.com
+  # https://api.activeducationhub.com
   # ============================================================
   backend:
     build:
@@ -122,7 +122,7 @@ services:
       - no-new-privileges:true
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=Host(`api.activeduhub.com`)"
+      - "traefik.http.routers.backend.rule=Host(`api.activeducationhub.com`)"
       - "traefik.http.routers.backend.entrypoints=websecure"
       - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
       - "traefik.http.services.backend.loadbalancer.server.port=8000"
@@ -158,7 +158,7 @@ services:
 
   # ============================================================
   # APP-FRONTEND - Flutter Web etudiants
-  # https://activeduhub.com (www redirige vers non-www)
+  # https://activeducationhub.com (www redirige vers non-www)
   # ============================================================
   app-frontend:
     image: nginx:1.25-alpine
@@ -173,7 +173,7 @@ services:
       - no-new-privileges:true
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.app.rule=Host(`activeduhub.com`)"
+      - "traefik.http.routers.app.rule=Host(`activeducationhub.com`)"
       - "traefik.http.routers.app.entrypoints=websecure"
       - "traefik.http.routers.app.tls.certresolver=letsencrypt"
       - "traefik.http.services.app.loadbalancer.server.port=80"
@@ -187,12 +187,12 @@ services:
       - "traefik.http.middlewares.app-headers.headers.customResponseHeaders.X-Frame-Options=SAMEORIGIN"
       - "traefik.http.middlewares.app-headers.headers.customResponseHeaders.Permissions-Policy=geolocation=(), microphone=(), camera=()"
       - "traefik.http.routers.app.middlewares=app-headers"
-      - "traefik.http.routers.app-www.rule=Host(`www.activeduhub.com`)"
+      - "traefik.http.routers.app-www.rule=Host(`www.activeducationhub.com`)"
       - "traefik.http.routers.app-www.entrypoints=websecure"
       - "traefik.http.routers.app-www.tls.certresolver=letsencrypt"
       - "traefik.http.routers.app-www.service=app"
-      - "traefik.http.middlewares.www-redirect.redirectregex.regex=^https://www\\.activeduhub\\.com(.*)"
-      - "traefik.http.middlewares.www-redirect.redirectregex.replacement=https://activeduhub.com$${1}"
+      - "traefik.http.middlewares.www-redirect.redirectregex.regex=^https://www\\.activeducationhub\\.com(.*)"
+      - "traefik.http.middlewares.www-redirect.redirectregex.replacement=https://activeducationhub.com$${1}"
       - "traefik.http.middlewares.www-redirect.redirectregex.permanent=true"
       - "traefik.http.routers.app-www.middlewares=www-redirect"
     deploy:
@@ -208,7 +208,7 @@ services:
 
   # ============================================================
   # ADMIN-FRONTEND - Flutter Web dashboard admin
-  # https://admin.activeduhub.com
+  # https://admin.activeducationhub.com
   # ============================================================
   admin-frontend:
     image: nginx:1.25-alpine
@@ -223,7 +223,7 @@ services:
       - no-new-privileges:true
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.admin.rule=Host(`admin.activeduhub.com`)"
+      - "traefik.http.routers.admin.rule=Host(`admin.activeducationhub.com`)"
       - "traefik.http.routers.admin.entrypoints=websecure"
       - "traefik.http.routers.admin.tls.certresolver=letsencrypt"
       - "traefik.http.services.admin.loadbalancer.server.port=80"
