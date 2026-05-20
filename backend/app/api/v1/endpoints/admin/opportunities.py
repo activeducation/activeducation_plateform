@@ -27,15 +27,15 @@ def _get_repo():
 
 def _log_audit(admin, action, entity_type, entity_id, changes=None):
     try:
-        from app.db.supabase_client import get_supabase_client
-        db = get_supabase_client()
-        db.table("admin_audit_log").insert({
+        from app.db.supabase_client import get_admin_supabase_client
+        db = get_admin_supabase_client()
+        db.client.table("admin_audit_log").insert({
             "admin_id": str(admin["user_id"]),
             "action": action,
             "entity_type": entity_type,
             "entity_id": str(entity_id) if entity_id else None,
             "changes": changes,
-        })
+        }).execute()
     except Exception as e:
         logger.warning(f"Audit log failed: {e}")
 

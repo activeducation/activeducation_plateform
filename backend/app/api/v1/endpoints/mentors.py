@@ -111,11 +111,23 @@ async def get_mentor_reviews(
 ):
     """
     Avis sur un mentor.
+
+    Expose le display_name et avatar_url, pas le user_id.
     """
     db = get_supabase_client()
 
     result = db.client.table("mentor_reviews").select(
-        "id,user_id,rating,comment,created_at"
+        "id,rating,comment,created_at,user_profiles(display_name,avatar_url)"
     ).eq("mentor_id", str(mentor_id)).order("created_at.desc").limit(limit).execute()
 
-    return result.data or []
+    return [
+        {
+            "id": r.get("id"),
+            "rating": r.get("rating"),
+            "comment": r.get("comment"),
+            "created_at": r.get("created_at"),
+            "reviewer_name": (r.get("user_profiles") or {}).get("display_name", "Anonyme"),
+            "reviewer_avatar": (r.get("user_profiles") or {}).get("avatar_url"),
+        }
+        for r in (result.data or [])
+    ]

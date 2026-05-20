@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Optional, List
 from uuid import UUID
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from enum import Enum
 
 
@@ -42,7 +42,7 @@ class OpportunityDetail(OpportunitySummary):
     benefits: Optional[str] = None
     salary_min: Optional[int] = None
     salary_max: Optional[int] = None
-    salary_currency: str = "EUR"
+    salary_currency: str = "XOF"
     application_url: Optional[str] = None
     created_by: Optional[UUID] = None
     updated_at: datetime
@@ -61,10 +61,19 @@ class OpportunityCreate(BaseModel):
     benefits: Optional[str] = None
     salary_min: Optional[int] = Field(None, ge=0)
     salary_max: Optional[int] = Field(None, ge=0)
-    salary_currency: str = "EUR"
+    salary_currency: str = "XOF"
     application_url: Optional[str] = None
     application_deadline: Optional[datetime] = None
     school_id: Optional[UUID] = None
+
+    @field_validator("application_url")
+    @classmethod
+    def validate_application_url(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        if not v.startswith("https://"):
+            raise ValueError("L'URL de candidature doit commencer par https://")
+        return v
 
 
 class OpportunityUpdate(BaseModel):

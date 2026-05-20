@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'core/di/injection_container.dart';
 import 'core/theme/theme.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
+import 'features/partner/presentation/bloc/partner_bloc.dart';
 import 'router/app_router.dart';
 
 class ActivEducationApp extends StatelessWidget {
@@ -31,6 +32,10 @@ class ActivEducationApp extends StatelessWidget {
               lazy: false,
               create: (_) =>
                   getIt<AuthBloc>()..add(const AuthCheckRequested()),
+            ),
+            BlocProvider<PartnerBloc>(
+              lazy: true,
+              create: (_) => getIt<PartnerBloc>(),
             ),
           ],
           child: child ?? const SizedBox.shrink(),

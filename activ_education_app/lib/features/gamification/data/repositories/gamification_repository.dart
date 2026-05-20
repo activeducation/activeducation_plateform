@@ -1,3 +1,4 @@
+import 'package:injectable/injectable.dart';
 import '../models/gamification_profile.dart';
 import '../datasources/gamification_remote_datasource.dart';
 
@@ -6,6 +7,7 @@ abstract class GamificationRepository {
   Future<List<LeaderboardEntry>> getLeaderboard({int limit = 10});
 }
 
+@LazySingleton(as: GamificationRepository)
 class GamificationRepositoryImpl implements GamificationRepository {
   final GamificationRemoteDataSource _remoteDataSource;
 

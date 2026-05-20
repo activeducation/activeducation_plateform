@@ -11,16 +11,15 @@ from datetime import datetime, date
 from typing import Optional
 from uuid import UUID
 
+from enum import Enum
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 
-class OrganizationType:
+class OrganizationType(str, Enum):
     CDEJ = "cdej"
     ONG = "ong"
     SCHOOL = "school"
     OTHER = "other"
-
-    CHOICES = [CDEJ, ONG, SCHOOL, OTHER]
 
 
 class BeneficiaryStatus:
@@ -44,7 +43,7 @@ class OrganizationBase(BaseModel):
     """Base schema for organizations."""
 
     name: str = Field(..., min_length=2, max_length=200)
-    type: str = Field(default=OrganizationType.CDEJ)
+    type: OrganizationType = Field(default=OrganizationType.CDEJ)
     description: Optional[str] = Field(None, max_length=1000)
     contact_email: Optional[EmailStr] = None
     contact_phone: Optional[str] = Field(None, max_length=20)
@@ -56,13 +55,6 @@ class OrganizationBase(BaseModel):
 
 class OrganizationCreate(OrganizationBase):
     """Schema for creating an organization."""
-
-    @field_validator("type")
-    @classmethod
-    def validate_type(cls, v: str) -> str:
-        if v not in OrganizationType.CHOICES:
-            raise ValueError(f"Type doit être parmi: {', '.join(OrganizationType.CHOICES)}")
-        return v
 
     @field_validator("contact_phone", mode="before")
     @classmethod

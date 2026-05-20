@@ -7,6 +7,15 @@ abstract class PartnerEvent extends Equatable {
   List<Object?> get props => [];
 }
 
+class PartnerLoadDashboard extends PartnerEvent {
+  final String organizationId;
+
+  const PartnerLoadDashboard(this.organizationId);
+
+  @override
+  List<Object?> get props => [organizationId];
+}
+
 class PartnerLoadOrganization extends PartnerEvent {
   final String organizationId;
 

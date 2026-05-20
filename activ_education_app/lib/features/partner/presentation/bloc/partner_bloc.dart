@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../domain/entities/organization.dart';
+import '../../data/models/partner_models.dart';
 import '../../domain/repositories/partner_repository.dart';
 
 part 'partner_event.dart';
@@ -13,6 +14,7 @@ class PartnerBloc extends Bloc<PartnerEvent, PartnerState> {
   final PartnerRepository _partnerRepository;
 
   PartnerBloc(this._partnerRepository) : super(PartnerInitial()) {
+    on<PartnerLoadDashboard>(_onLoadDashboard);
     on<PartnerLoadOrganization>(_onLoadOrganization);
     on<PartnerLoadOrganizationStats>(_onLoadOrganizationStats);
     on<PartnerLoadBeneficiaries>(_onLoadBeneficiaries);
@@ -25,6 +27,35 @@ class PartnerBloc extends Bloc<PartnerEvent, PartnerState> {
 
   String? _currentOrganizationId;
   String? _currentStatusFilter;
+
+  Future<void> _onLoadDashboard(
+    PartnerLoadDashboard event,
+    Emitter<PartnerState> emit,
+  ) async {
+    emit(PartnerLoading());
+    _currentOrganizationId = event.organizationId;
+
+    try {
+      final results = await Future.wait([
+        _partnerRepository.getOrganization(event.organizationId),
+        _partnerRepository.getOrganizationWithStats(event.organizationId),
+        _partnerRepository.listBeneficiaries(
+          organizationId: event.organizationId,
+          page: 1,
+        ),
+      ]);
+
+      emit(PartnerDashboardLoaded(
+        organization: results[0] as Organization,
+        stats: results[1] as OrganizationWithStats,
+        beneficiaries: (results[2] as PaginatedBeneficiaries).beneficiaries,
+        total: (results[2] as PaginatedBeneficiaries).total,
+        hasMore: (results[2] as PaginatedBeneficiaries).hasMore,
+      ));
+    } catch (e) {
+      emit(PartnerError(e.toString()));
+    }
+  }
 
   Future<void> _onLoadOrganization(
     PartnerLoadOrganization event,
@@ -94,27 +125,58 @@ class PartnerBloc extends Bloc<PartnerEvent, PartnerState> {
     PartnerLoadMoreBeneficiaries event,
     Emitter<PartnerState> emit,
   ) async {
-    if (state is! PartnerBeneficiariesLoaded) return;
+    if (state is! PartnerDashboardLoaded && state is! PartnerBeneficiariesLoaded) return;
 
-    final currentState = state as PartnerBeneficiariesLoaded;
-    if (!currentState.hasMore || currentState.isLoadingMore) return;
+    bool hasMore = false;
+    bool isLoadingMore = false;
+    if (state is PartnerDashboardLoaded) {
+      hasMore = (state as PartnerDashboardLoaded).hasMore;
+      isLoadingMore = (state as PartnerDashboardLoaded).isLoadingMore;
+    } else {
+      hasMore = (state as PartnerBeneficiariesLoaded).hasMore;
+      isLoadingMore = (state as PartnerBeneficiariesLoaded).isLoadingMore;
+    }
+    if (!hasMore || isLoadingMore) return;
 
-    emit(currentState.copyWith(isLoadingMore: true));
+    int currentPage = 1;
+    if (state is PartnerDashboardLoaded) {
+      final s = state as PartnerDashboardLoaded;
+      emit(s.copyWith(isLoadingMore: true));
+      currentPage = s.page;
+    } else {
+      final s = state as PartnerBeneficiariesLoaded;
+      emit(s.copyWith(isLoadingMore: true));
+      currentPage = s.page;
+    }
 
     try {
       final result = await _partnerRepository.listBeneficiaries(
         organizationId: _currentOrganizationId!,
-        page: currentState.page + 1,
+        page: currentPage + 1,
         status: _currentStatusFilter,
       );
 
-      emit(PartnerBeneficiariesLoaded(
-        beneficiaries: [...currentState.beneficiaries, ...result.beneficiaries],
-        total: result.total,
-        page: result.page,
-        hasMore: result.hasMore,
-        isLoadingMore: false,
-      ));
+      if (state is PartnerDashboardLoaded) {
+        final s = state as PartnerDashboardLoaded;
+        emit(PartnerDashboardLoaded(
+          organization: s.organization,
+          stats: s.stats,
+          beneficiaries: [...s.beneficiaries, ...result.beneficiaries],
+          total: result.total,
+          page: result.page,
+          hasMore: result.hasMore,
+          isLoadingMore: false,
+        ));
+      } else {
+        final s = state as PartnerBeneficiariesLoaded;
+        emit(PartnerBeneficiariesLoaded(
+          beneficiaries: [...s.beneficiaries, ...result.beneficiaries],
+          total: result.total,
+          page: result.page,
+          hasMore: result.hasMore,
+          isLoadingMore: false,
+        ));
+      }
     } catch (e) {
       emit(PartnerError(e.toString()));
     }

@@ -14,10 +14,12 @@ from uuid import UUID
 
 from app.db.supabase_client import get_admin_supabase_client, SupabaseClient
 from app.core.logging import get_logger
+from app.schemas.partner import OrganizationType
 from app.core.exceptions import (
     NotFoundError,
     QueryError,
     AlreadyExistsError,
+    ValidationError,
 )
 
 logger = get_logger("repositories.partner")
@@ -142,19 +144,23 @@ class PartnerRepository:
         try:
             offset = (page - 1) * page_size
 
-            filters = []
-            if is_active is not None:
-                filters.append(f"is_active=eq.{str(is_active).lower()}")
-            if is_approved is not None:
-                filters.append(f"is_approved=eq.{str(is_approved).lower()}")
-            if org_type:
-                filters.append(f"type=eq.{org_type}")
-
-            filter_str = "&".join(filters) if filters else ""
-
-            response = self._db.client.table("partner_organizations").select(
+            query = self._db.client.table("partner_organizations").select(
                 "*", count="exact"
-            ).or_(filter_str).order("created_at", desc=True).range(
+            )
+
+            if is_active is not None:
+                query = query.eq("is_active", is_active)
+            if is_approved is not None:
+                query = query.eq("is_approved", is_approved)
+            if org_type is not None:
+                valid_types = list(OrganizationType)
+                if org_type not in valid_types:
+                    raise ValidationError(
+                        f"org_type invalide. Valeurs: {', '.join(valid_types)}"
+                    )
+                query = query.eq("type", org_type)
+
+            response = query.order("created_at", desc=True).range(
                 offset, offset + page_size - 1
             ).execute()
 
@@ -162,6 +168,8 @@ class PartnerRepository:
 
             return response.data or [], total
 
+        except ValidationError:
+            raise
         except Exception as e:
             logger.error(f"Error listing organizations: {e}", exc_info=True)
             raise QueryError(f"Erreur lors de la liste des organisations: {str(e)}")
@@ -321,6 +329,19 @@ class PartnerRepository:
         except Exception as e:
             logger.error(f"Error deleting beneficiary: {e}", exc_info=True)
             raise QueryError(f"Erreur lors de la suppression du beneficiaire: {str(e)}")
+
+    async def get_user_role(self, user_id: str) -> Optional[str]:
+        """Recupere le role d'un utilisateur depuis user_profiles."""
+        try:
+            response = self._db.fetch_one(
+                table="user_profiles",
+                id_column="id",
+                id_value=user_id,
+            )
+            return response.get("role") if response else None
+        except Exception as e:
+            logger.error(f"Error getting user role: {e}", exc_info=True)
+            return None
 
 
 partner_repo = PartnerRepository()

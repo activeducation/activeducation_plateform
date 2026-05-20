@@ -23,6 +23,10 @@ import '../features/elearning/presentation/pages/elearning_catalog_page.dart';
 import '../features/elearning/presentation/pages/course_detail_page.dart';
 import '../features/elearning/presentation/pages/lesson_page.dart';
 import '../features/mentors/presentation/pages/mentors_page.dart';
+import '../features/partner/presentation/pages/create_organization_page.dart';
+import '../features/partner/presentation/pages/organization_dashboard_page.dart';
+import '../features/partner/presentation/pages/beneficiary_form_page.dart';
+import '../features/opportunities/presentation/pages/opportunities_page.dart';
 import '../core/constants/app_colors.dart';
 import '../core/constants/app_typography.dart';
 import 'auth_guard.dart';
@@ -165,6 +169,45 @@ class AppRouter {
         path: '/elearning/lesson/:id',
         builder: (BuildContext context, GoRouterState state) {
           return LessonPage(lessonId: state.pathParameters['id']!);
+        },
+      ),
+      GoRoute(
+        path: '/opportunities',
+        builder: (BuildContext context, GoRouterState state) {
+          return const OpportunitiesListPage();
+        },
+      ),
+      GoRoute(
+        path: '/partner/organization/create',
+        builder: (BuildContext context, GoRouterState state) {
+          return const CreateOrganizationPage();
+        },
+      ),
+      GoRoute(
+        path: '/partner/organization/:orgId',
+        builder: (BuildContext context, GoRouterState state) {
+          return OrganizationDashboardPage(
+            organizationId: state.pathParameters['orgId']!,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/partner/beneficiary/create/:orgId',
+        builder: (BuildContext context, GoRouterState state) {
+          return BeneficiaryFormPage(
+            organizationId: state.pathParameters['orgId']!,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/partner/beneficiary/:id',
+        builder: (BuildContext context, GoRouterState state) {
+          final orgId = state.uri.queryParameters['orgId'] ?? '';
+          final beneficiaryId = state.pathParameters['id']!;
+          return BeneficiaryFormPage(
+            organizationId: orgId,
+            beneficiaryId: beneficiaryId,
+          );
         },
       ),
     ],
@@ -402,9 +445,9 @@ class _DarkSidebar extends StatelessWidget {
 
             // ── Profil ──
             _SidebarItem(
-              item: navItems[4],
-              isActive: currentIndex == 4,
-              onTap: () => onTap(navItems[4].route),
+              item: navItems[5],
+              isActive: currentIndex == 5,
+              onTap: () => onTap(navItems[5].route),
             ),
             const SizedBox(height: 16),
           ],

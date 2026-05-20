@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
+import 'package:get_it/get_it.dart';
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_typography.dart';
+import '../../../../core/di/injection_container.dart';
+
+final _getIt = getIt;
 
 class OpportunityModel {
   final String id;
@@ -95,7 +99,7 @@ class _OpportunitiesSectionState extends State<OpportunitiesSection> {
 
   Future<void> _loadOpportunities() async {
     try {
-      final dio = Dio();
+      final dio = _getIt<Dio>(instanceName: 'apiClient');
       final response = await dio.get(
         ApiEndpoints.opportunities,
         queryParameters: {'limit': 5},

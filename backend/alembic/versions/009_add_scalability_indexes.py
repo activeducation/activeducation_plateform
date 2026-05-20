@@ -26,8 +26,8 @@ def upgrade() -> None:
     op.execute("CREATE INDEX IF NOT EXISTS idx_schools_is_active ON schools(is_active)")
     op.execute("CREATE INDEX IF NOT EXISTS idx_schools_type_active ON schools(type, is_active)")
 
-    # User profiles - common queries
-    op.execute("CREATE INDEX IF NOT EXISTS idx_user_profiles_org ON user_profiles(organization_id)")
+    # User profiles - common queries (idx_user_profiles_org already in 008)
+    # op.execute("CREATE INDEX IF NOT EXISTS idx_user_profiles_org ON user_profiles(organization_id)")  # REMOVED - duplicate from 008
     op.execute("CREATE INDEX IF NOT EXISTS idx_user_profiles_created ON user_profiles(created_at DESC)")
     op.execute("CREATE INDEX IF NOT EXISTS idx_user_profiles_role ON user_profiles(role)")
 
@@ -55,7 +55,7 @@ def downgrade() -> None:
     op.execute("DROP INDEX IF EXISTS idx_schools_city_type")
     op.execute("DROP INDEX IF EXISTS idx_schools_is_active")
     op.execute("DROP INDEX IF EXISTS idx_schools_type_active")
-    op.execute("DROP INDEX IF EXISTS idx_user_profiles_org")
+    # idx_user_profiles_org NOT dropped - belongs to 008
     op.execute("DROP INDEX IF EXISTS idx_user_profiles_created")
     op.execute("DROP INDEX IF EXISTS idx_user_profiles_role")
     op.execute("DROP INDEX IF EXISTS idx_elearning_enrollments_user_course")

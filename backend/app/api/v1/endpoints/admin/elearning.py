@@ -1,13 +1,21 @@
 """Admin e-learning courses management endpoints."""
 
 from uuid import UUID
-from typing import Optional
+from typing import Optional, Literal
 
 from fastapi import APIRouter, Depends, Query
 
 from app.core.logging import get_logger
 from app.core.security import get_current_admin
 from app.db.supabase_client import get_admin_supabase_client
+from app.schemas.admin.elearning import (
+    CourseCreate,
+    CourseUpdate,
+    ModuleCreate,
+    ModuleUpdate,
+    LessonCreate,
+    LessonUpdate,
+)
 
 logger = get_logger("api.admin.elearning")
 
@@ -16,15 +24,15 @@ router = APIRouter()
 
 def _log_audit(admin, action, entity_type, entity_id, changes=None):
     try:
-        from app.db.supabase_client import get_supabase_client
-        db = get_supabase_client()
-        db.table("admin_audit_log").insert({
+        from app.db.supabase_client import get_admin_supabase_client
+        db = get_admin_supabase_client()
+        db.client.table("admin_audit_log").insert({
             "admin_id": str(admin["user_id"]),
             "action": action,
             "entity_type": entity_type,
             "entity_id": str(entity_id) if entity_id else None,
             "changes": changes,
-        })
+        }).execute()
     except Exception as e:
         logger.warning(f"Audit log failed: {e}")
 
@@ -43,45 +51,60 @@ async def list_all_courses(
     offset = (page - 1) * per_page
 
     query = db.client.table("elearning_courses").select("*", count="exact")
-
     if school_id:
         query = query.eq("school_id", school_id)
     if is_published is not None:
         query = query.eq("is_published", is_published)
     if search:
-        query = query.or_(f"title.ilike.%{search}%,description.ilike.%{search}%")
+        safe = search.replace("%", r"\%").replace("_", r"\_")
+        query = query.or_(f"title.ilike.%{safe}%,description.ilike.%{safe}%")
 
     result = query.order("created_at", desc=True).range(offset, offset + per_page - 1).execute()
-
     courses = result.data or []
     total = result.count or 0
 
-    for course in courses:
-        modules_count = 0
-        lessons_count = 0
-        try:
-            mc = db.client.table("elearning_modules").select("id", count="exact").eq("course_id", course["id"]).execute()
-            modules_count = mc.count or 0
-            lc = db.client.table("elearning_lessons").select("id", count="exact").eq("course_id", course["id"]).execute()
-            lessons_count = lc.count or 0
-        except Exception:
-            pass
-        course["modules_count"] = modules_count
-        course["lessons_count"] = lessons_count
+    if not courses:
+        return {"items": [], "total": 0, "page": page,
+                "per_page": per_page, "total_pages": 0}
 
-        if course.get("school_id"):
-            school = db.client.table("schools").select("name").eq("id", course["school_id"]).execute()
-            course["school_name"] = school.data[0]["name"] if school.data else None
+    course_ids = [c["id"] for c in courses]
+
+    # Requête 1 : comptes modules (batch)
+    mod_res = db.client.table("elearning_modules").select(
+        "course_id", count="exact"
+    ).in_("course_id", course_ids).execute()
+    modules_by_course: dict[str, int] = {}
+    for row in (mod_res.data or []):
+        cid = row["course_id"]
+        modules_by_course[cid] = modules_by_course.get(cid, 0) + 1
+
+    # Requête 2 : comptes leçons (batch)
+    les_res = db.client.table("elearning_lessons").select(
+        "course_id", count="exact"
+    ).in_("course_id", course_ids).execute()
+    lessons_by_course: dict[str, int] = {}
+    for row in (les_res.data or []):
+        cid = row["course_id"]
+        lessons_by_course[cid] = lessons_by_course.get(cid, 0) + 1
+
+    # Requête 3 : noms d'écoles (batch)
+    school_ids = list({c["school_id"] for c in courses if c.get("school_id")})
+    schools_map: dict[str, str] = {}
+    if school_ids:
+        sch_res = db.client.table("schools").select(
+            "id, name"
+        ).in_("id", school_ids).execute()
+        schools_map = {s["id"]: s["name"] for s in (sch_res.data or [])}
+
+    # Enrichissement en mémoire
+    for course in courses:
+        course["modules_count"] = modules_by_course.get(course["id"], 0)
+        course["lessons_count"] = lessons_by_course.get(course["id"], 0)
+        course["school_name"] = schools_map.get(course.get("school_id"))
 
     total_pages = (total + per_page - 1) // per_page
-
-    return {
-        "items": courses,
-        "total": total,
-        "page": page,
-        "per_page": per_page,
-        "total_pages": total_pages,
-    }
+    return {"items": courses, "total": total, "page": page,
+            "per_page": per_page, "total_pages": total_pages}
 
 
 @router.get("/courses/{course_id}")
@@ -127,8 +150,6 @@ async def delete_course(
         from app.core.exceptions import NotFoundError
         raise NotFoundError("Cours", course_id)
 
-    db.client.table("elearning_lessons").delete().eq("course_id", course_id).execute()
-    db.client.table("elearning_modules").delete().eq("course_id", course_id).execute()
     db.client.table("elearning_courses").delete().eq("id", course_id).execute()
 
     _log_audit(admin, "delete", "elearning_course", course_id)
@@ -137,26 +158,14 @@ async def delete_course(
 
 @router.post("/courses", status_code=201)
 async def create_course(
-    title: str,
-    description: str,
-    school_id: Optional[str] = None,
-    thumbnail_url: Optional[str] = None,
-    level: str = "beginner",
+    body: CourseCreate,
     admin: dict = Depends(get_current_admin),
 ):
     """Créer un nouveau cours e-learning."""
     db = get_admin_supabase_client()
 
-    course_data = {
-        "title": title,
-        "description": description,
-        "level": level,
-        "is_published": False,
-    }
-    if school_id:
-        course_data["school_id"] = school_id
-    if thumbnail_url:
-        course_data["thumbnail_url"] = thumbnail_url
+    course_data = body.model_dump()
+    course_data["is_published"] = False
 
     result = db.client.table("elearning_courses").insert(course_data).execute()
 
@@ -172,11 +181,7 @@ async def create_course(
 @router.put("/courses/{course_id}")
 async def update_course(
     course_id: str,
-    title: Optional[str] = None,
-    description: Optional[str] = None,
-    thumbnail_url: Optional[str] = None,
-    level: Optional[str] = None,
-    is_published: Optional[bool] = None,
+    body: CourseUpdate,
     admin: dict = Depends(get_current_admin),
 ):
     """Mettre à jour un cours e-learning."""
@@ -187,18 +192,7 @@ async def update_course(
         from app.core.exceptions import NotFoundError
         raise NotFoundError("Cours", course_id)
 
-    update_data = {}
-    if title is not None:
-        update_data["title"] = title
-    if description is not None:
-        update_data["description"] = description
-    if thumbnail_url is not None:
-        update_data["thumbnail_url"] = thumbnail_url
-    if level is not None:
-        update_data["level"] = level
-    if is_published is not None:
-        update_data["is_published"] = is_published
-
+    update_data = body.model_dump(exclude_unset=True)
     if not update_data:
         return existing.data[0]
 
@@ -211,9 +205,7 @@ async def update_course(
 @router.post("/courses/{course_id}/modules")
 async def create_module(
     course_id: str,
-    title: str,
-    description: Optional[str] = None,
-    display_order: int = 0,
+    body: ModuleCreate,
     admin: dict = Depends(get_current_admin),
 ):
     """Créer un module dans un cours."""
@@ -224,12 +216,8 @@ async def create_module(
         from app.core.exceptions import NotFoundError
         raise NotFoundError("Cours", course_id)
 
-    module_data = {
-        "course_id": course_id,
-        "title": title,
-        "description": description,
-        "display_order": display_order,
-    }
+    module_data = body.model_dump()
+    module_data["course_id"] = course_id
     result = db.client.table("elearning_modules").insert(module_data).execute()
 
     if not result.data:
@@ -243,9 +231,7 @@ async def create_module(
 @router.put("/modules/{module_id}")
 async def update_module(
     module_id: str,
-    title: Optional[str] = None,
-    description: Optional[str] = None,
-    display_order: Optional[int] = None,
+    body: ModuleUpdate,
     admin: dict = Depends(get_current_admin),
 ):
     """Mettre à jour un module."""
@@ -256,14 +242,7 @@ async def update_module(
         from app.core.exceptions import NotFoundError
         raise NotFoundError("Module", module_id)
 
-    update_data = {}
-    if title is not None:
-        update_data["title"] = title
-    if description is not None:
-        update_data["description"] = description
-    if display_order is not None:
-        update_data["display_order"] = display_order
-
+    update_data = body.model_dump(exclude_unset=True)
     if not update_data:
         return existing.data[0]
 
@@ -296,13 +275,13 @@ async def delete_module(
 async def create_lesson(
     module_id: str,
     title: str,
-    lesson_type: str = "text",
+    lesson_type: Literal["text", "video", "quiz", "pdf"] = "text",
     content: Optional[str] = None,
     video_url: Optional[str] = None,
     display_order: int = 0,
     admin: dict = Depends(get_current_admin),
 ):
-    """Créer une leçon dans un module."""
+    """Creer une lecon dans un module."""
     db = get_admin_supabase_client()
 
     module = db.client.table("elearning_modules").select("id, course_id").eq("id", module_id).execute()
@@ -323,7 +302,7 @@ async def create_lesson(
 
     if not result.data:
         from app.core.exceptions import BadRequestError
-        raise BadRequestError("Erreur lors de la création de la leçon")
+        raise BadRequestError("Erreur lors de la creation de la lecon")
 
     _log_audit(admin, "create", "elearning_lesson", result.data[0]["id"])
     return result.data[0]
@@ -332,11 +311,7 @@ async def create_lesson(
 @router.put("/lessons/{lesson_id}")
 async def update_lesson(
     lesson_id: str,
-    title: Optional[str] = None,
-    lesson_type: Optional[str] = None,
-    content: Optional[str] = None,
-    video_url: Optional[str] = None,
-    display_order: Optional[int] = None,
+    body: LessonUpdate,
     admin: dict = Depends(get_current_admin),
 ):
     """Mettre à jour une leçon."""
@@ -347,18 +322,7 @@ async def update_lesson(
         from app.core.exceptions import NotFoundError
         raise NotFoundError("Leçon", lesson_id)
 
-    update_data = {}
-    if title is not None:
-        update_data["title"] = title
-    if lesson_type is not None:
-        update_data["lesson_type"] = lesson_type
-    if content is not None:
-        update_data["content"] = content
-    if video_url is not None:
-        update_data["video_url"] = video_url
-    if display_order is not None:
-        update_data["display_order"] = display_order
-
+    update_data = body.model_dump(exclude_unset=True)
     if not update_data:
         return existing.data[0]
 
@@ -393,19 +357,28 @@ async def list_schools_with_courses(
     """Liste des écoles qui ont des cours e-learning."""
     db = get_admin_supabase_client()
 
-    result = db.client.table("elearning_courses").select("school_id").execute()
-    school_ids = list(set([c["school_id"] for c in (result.data or []) if c.get("school_id")]))
+    result = db.client.table("elearning_courses").select(
+        "school_id"
+    ).not_.is_("school_id", "null").execute()
 
-    schools = []
-    for sid in school_ids:
-        school = db.client.table("schools").select("id, name, city").eq("id", sid).execute()
-        if school.data:
-            courses_count = db.client.table("elearning_courses").select("id", count="exact").eq("school_id", sid).execute()
-            schools.append({
-                "id": school.data[0]["id"],
-                "name": school.data[0]["name"],
-                "city": school.data[0].get("city"),
-                "courses_count": courses_count.count or 0,
-            })
+    counts: dict[str, int] = {}
+    for row in (result.data or []):
+        sid = row["school_id"]
+        counts[sid] = counts.get(sid, 0) + 1
 
-    return schools
+    if not counts:
+        return []
+
+    sch_res = db.client.table("schools").select(
+        "id, name, city"
+    ).in_("id", list(counts.keys())).execute()
+
+    return [
+        {
+            "id": s["id"],
+            "name": s["name"],
+            "city": s.get("city"),
+            "courses_count": counts.get(s["id"], 0),
+        }
+        for s in (sch_res.data or [])
+    ]

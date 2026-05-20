@@ -11,9 +11,11 @@ from typing import Optional
 from uuid import UUID
 
 from app.core.logging import get_logger
+from app.core.cache import get_cache
 from app.core.exceptions import (
     NotFoundError,
     ValidationError,
+    AuthorizationError,
 )
 from app.schemas.partner import (
     OrganizationCreate,
@@ -44,6 +46,7 @@ class PartnerService:
     def __init__(self):
         self._partner_repo: PartnerRepository = get_partner_repository()
         self._users_repo: UsersRepository = get_users_repository()
+        self._cache = get_cache()
 
     # =========================================================================
     # ORGANIZATION OPERATIONS
@@ -68,10 +71,12 @@ class PartnerService:
 
         await self._users_repo.update_profile(
             created_by,
-            {"organization_id": str(org["id"]), "role": "partner_admin"},
+            {"organization_id": str(org["id"])},
         )
 
-        logger.info(f"Organization created: {org['id']}")
+        self._cache.delete_pattern("partner:organizations:*")
+
+        logger.info(f"Organization created (pending approval): {org['id']} by {created_by}")
         return self._to_organization_response(org)
 
     async def get_organization(
@@ -98,14 +103,19 @@ class PartnerService:
         self,
         org_id: UUID,
         data: OrganizationUpdate,
+        user_id: UUID,
     ) -> OrganizationResponse:
         """Met a jour une organisation."""
+        await self._assert_org_access(org_id, user_id)
+
         org = await self._partner_repo.get_organization_by_id(org_id)
         if not org:
             raise NotFoundError("Organisation", str(org_id))
 
         update_data = data.model_dump(exclude_unset=True)
         updated_org = await self._partner_repo.update_organization(org_id, update_data)
+
+        self._cache.delete_pattern("partner:organizations:*")
 
         logger.info(f"Organization updated: {org_id}")
         return self._to_organization_response(updated_org)
@@ -121,6 +131,17 @@ class PartnerService:
             raise NotFoundError("Organisation", str(org_id))
 
         approved_org = await self._partner_repo.approve_organization(org_id, approved_by)
+
+        # Promouvoir le créateur uniquement à l'approbation
+        if org.get("created_by"):
+            creator_id = UUID(org["created_by"])
+            await self._users_repo.update_profile(
+                creator_id,
+                {"role": "partner_admin"},
+            )
+            logger.info(f"User {creator_id} promoted to partner_admin after org approval")
+
+        self._cache.delete_pattern("partner:organizations:*")
 
         logger.info(f"Organization approved: {org_id}")
         return self._to_organization_response(approved_org)
@@ -191,6 +212,8 @@ class PartnerService:
             referred_by=referred_by,
         )
 
+        self._cache.delete_pattern("partner:organizations:*")
+
         logger.info(f"Beneficiary dossier created: {beneficiary['dossier_number']}")
         return self._to_beneficiary_response(beneficiary)
 
@@ -208,16 +231,21 @@ class PartnerService:
         self,
         beneficiary_id: UUID,
         data: BeneficiaryUpdate,
+        user_id: UUID,
     ) -> BeneficiaryResponse:
         """Met a jour un beneficiaire."""
         beneficiary = await self._partner_repo.get_beneficiary_by_id(beneficiary_id)
         if not beneficiary:
             raise NotFoundError("Beneficiaire", str(beneficiary_id))
 
+        await self._assert_org_access(UUID(beneficiary["organization_id"]), user_id)
+
         update_data = data.model_dump(exclude_unset=True)
         updated_beneficiary = await self._partner_repo.update_beneficiary(
             beneficiary_id, update_data
         )
+
+        self._cache.delete_pattern("partner:organizations:*")
 
         logger.info(f"Beneficiary updated: {beneficiary_id}")
         return self._to_beneficiary_response(updated_beneficiary)
@@ -251,15 +279,45 @@ class PartnerService:
     async def delete_beneficiary(
         self,
         beneficiary_id: UUID,
+        user_id: UUID,
     ) -> bool:
         """Desactive un beneficiaire."""
         beneficiary = await self._partner_repo.get_beneficiary_by_id(beneficiary_id)
         if not beneficiary:
             raise NotFoundError("Beneficiaire", str(beneficiary_id))
 
+        await self._assert_org_access(UUID(beneficiary["organization_id"]), user_id)
+
         await self._partner_repo.delete_beneficiary(beneficiary_id)
+
+        self._cache.delete_pattern("partner:organizations:*")
         logger.info(f"Beneficiary deactivated: {beneficiary_id}")
         return True
+
+    # =========================================================================
+    # AUTHORIZATION HELPERS
+    # =========================================================================
+
+    async def _assert_org_access(self, org_id: UUID, user_id: UUID) -> None:
+        """Verifie que l'utilisateur a accès à l'organisation."""
+        user = await self._users_repo.get_by_id(user_id)
+        if not user:
+            raise AuthorizationError("Utilisateur introuvable")
+
+        role = user.get("role", "student")
+
+        # Super admin : accès complet
+        if role == "super_admin":
+            return
+
+        # Partner admin : seulement sa propre organisation
+        user_org_id = user.get("organization_id")
+        if role == "partner_admin" and user_org_id == str(org_id):
+            return
+
+        raise AuthorizationError(
+            "Vous n'avez pas accès à cette organisation"
+        )
 
     # =========================================================================
     # HELPERS

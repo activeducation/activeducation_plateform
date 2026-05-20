@@ -17,10 +17,17 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     op.execute("""
-        ALTER TABLE user_profiles 
-        DROP CONSTRAINT user_profiles_role_check,
-        ADD CONSTRAINT user_profiles_role_check 
-        CHECK (role IN ('student', 'admin', 'super_admin', 'partner', 'partner_admin'))
+        DO $$
+        BEGIN
+            ALTER TABLE user_profiles 
+                DROP CONSTRAINT IF EXISTS user_profiles_role_check;
+        EXCEPTION WHEN others THEN
+            NULL;
+        END $$;
+        
+        ALTER TABLE user_profiles
+            ADD CONSTRAINT user_profiles_role_check
+            CHECK (role IN ('student', 'admin', 'super_admin', 'partner', 'partner_admin'))
     """)
 
     op.execute("""
@@ -90,8 +97,14 @@ def downgrade() -> None:
     op.execute("ALTER TABLE user_profiles DROP COLUMN IF EXISTS organization_id")
     op.execute("DROP TABLE IF EXISTS partner_organizations CASCADE")
     op.execute("""
-        ALTER TABLE user_profiles 
-        DROP CONSTRAINT user_profiles_role_check,
-        ADD CONSTRAINT user_profiles_role_check 
-        CHECK (role IN ('student', 'admin', 'super_admin'))
+        DO $$
+        BEGIN
+            ALTER TABLE user_profiles 
+                DROP CONSTRAINT IF EXISTS user_profiles_role_check;
+        EXCEPTION WHEN others THEN NULL;
+        END $$;
+        
+        ALTER TABLE user_profiles
+            ADD CONSTRAINT user_profiles_role_check
+            CHECK (role IN ('student', 'admin', 'super_admin'))
     """)

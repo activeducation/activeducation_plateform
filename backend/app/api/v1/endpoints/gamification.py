@@ -4,13 +4,15 @@ Endpoints API pour la gamification utilisateur.
 
 from uuid import UUID
 from typing import Optional
+import math
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, Query
 
 from app.core.logging import get_logger
 from app.core.security import get_current_user_id
 from app.core.cache import get_cache, TTL_GAMIFICATION, TTL_LEADERBOARD
 from app.db.supabase_client import get_supabase_client
+from app.middleware.rate_limiter import standard_limit
 from app.schemas.gamification import (
     GamificationProfile,
     GamificationStats,
@@ -25,20 +27,12 @@ cache = get_cache()
 
 
 def _calculate_level(total_xp: int) -> tuple[int, int, int]:
-    """
-    Calcule le niveau et les XP pour le niveau suivant.
-    Formula: level = floor(sqrt(xp / 100)) + 1
-    """
-    level = 1
-    xp_needed = 100
-    
-    while total_xp >= xp_needed:
-        level += 1
-        xp_needed = level * 100
-    
-    next_level_xp = level * 100
+    """Calcule le niveau en O(1). Cap à 100."""
+    total_xp = max(0, total_xp)
+    level = max(1, int((1 + math.sqrt(1 + 8 * total_xp / 100)) / 2))
+    level = min(level, 100)
+    next_level_xp = level * (level + 1) // 2 * 100
     xp_to_next = max(0, next_level_xp - total_xp)
-    
     return level, next_level_xp, xp_to_next
 
 
@@ -86,9 +80,6 @@ async def get_my_gamification(
     ]
     
     total_xp = user_profile.get("total_xp", 0) if user_profile else 0
-    
-    total_xp += len(completed_achievements) * 50
-    total_xp += len(completed_challenges) * 25
     
     current_streak = 0
     longest_streak = 0
@@ -164,9 +155,11 @@ async def get_my_gamification(
 
 
 @router.get("/leaderboard")
+@standard_limit()
 async def get_leaderboard(
     request: Request,
-    limit: int = 10,
+    user_id: str = Depends(get_current_user_id),
+    limit: int = Query(10, ge=1, le=50),
 ):
     """
     Recupere le classement des utilisateurs.
@@ -187,7 +180,6 @@ async def get_leaderboard(
 
     data = [
         {
-            "user_id": p.get("id"),
             "display_name": p.get("display_name") or f"{p.get('first_name', '')} {p.get('last_name', '')}".strip(),
             "avatar_url": p.get("avatar_url"),
             "total_xp": p.get("total_xp", 0),

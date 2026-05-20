@@ -11,6 +11,47 @@ class PartnerInitial extends PartnerState {}
 
 class PartnerLoading extends PartnerState {}
 
+class PartnerDashboardLoaded extends PartnerState {
+  final Organization organization;
+  final OrganizationWithStats stats;
+  final List<Beneficiary> beneficiaries;
+  final int total;
+  final int page;
+  final bool hasMore;
+  final bool isLoadingMore;
+
+  const PartnerDashboardLoaded({
+    required this.organization,
+    required this.stats,
+    required this.beneficiaries,
+    required this.total,
+    this.page = 1,
+    required this.hasMore,
+    this.isLoadingMore = false,
+  });
+
+  @override
+  List<Object?> get props => [organization, stats, beneficiaries, total, page, hasMore, isLoadingMore];
+
+  PartnerDashboardLoaded copyWith({
+    List<Beneficiary>? beneficiaries,
+    int? total,
+    int? page,
+    bool? hasMore,
+    bool? isLoadingMore,
+  }) {
+    return PartnerDashboardLoaded(
+      organization: organization,
+      stats: stats,
+      beneficiaries: beneficiaries ?? this.beneficiaries,
+      total: total ?? this.total,
+      page: page ?? this.page,
+      hasMore: hasMore ?? this.hasMore,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+    );
+  }
+}
+
 class PartnerOrganizationLoaded extends PartnerState {
   final Organization organization;
   final OrganizationWithStats? stats;

@@ -26,8 +26,7 @@ class _OrganizationDashboardPageState extends State<OrganizationDashboardPage> {
   @override
   void initState() {
     super.initState();
-    context.read<PartnerBloc>().add(PartnerLoadOrganization(widget.organizationId));
-    context.read<PartnerBloc>().add(PartnerLoadBeneficiaries(organizationId: widget.organizationId));
+    context.read<PartnerBloc>().add(PartnerLoadDashboard(widget.organizationId));
   }
 
   @override
@@ -58,7 +57,7 @@ class _OrganizationDashboardPageState extends State<OrganizationDashboardPage> {
             );
           }
 
-          if (state is PartnerOrganizationLoaded) {
+          if (state is PartnerDashboardLoaded) {
             return _buildDashboard(context, state);
           }
 
@@ -68,7 +67,7 @@ class _OrganizationDashboardPageState extends State<OrganizationDashboardPage> {
     );
   }
 
-  Widget _buildDashboard(BuildContext context, PartnerOrganizationLoaded state) {
+  Widget _buildDashboard(BuildContext context, PartnerDashboardLoaded state) {
     final organization = state.organization;
     final stats = state.stats;
 
@@ -83,16 +82,7 @@ class _OrganizationDashboardPageState extends State<OrganizationDashboardPage> {
         SliverToBoxAdapter(
           child: _buildBeneficiariesHeader(context),
         ),
-        BlocBuilder<PartnerBloc, PartnerState>(
-          builder: (context, listState) {
-            if (listState is PartnerBeneficiariesLoaded) {
-              return _buildBeneficiariesList(context, listState);
-            }
-            return const SliverToBoxAdapter(
-              child: Center(child: CircularProgressIndicator()),
-            );
-          },
-        ),
+        _buildBeneficiariesList(context, state),
       ],
     );
   }
@@ -239,7 +229,7 @@ class _OrganizationDashboardPageState extends State<OrganizationDashboardPage> {
     );
   }
 
-  Widget _buildBeneficiariesList(BuildContext context, PartnerBeneficiariesLoaded state) {
+  Widget _buildBeneficiariesList(BuildContext context, PartnerDashboardLoaded state) {
     if (state.beneficiaries.isEmpty) {
       return SliverToBoxAdapter(
         child: Padding(
@@ -298,7 +288,7 @@ class _OrganizationDashboardPageState extends State<OrganizationDashboardPage> {
             final beneficiary = state.beneficiaries[index];
             return BeneficiaryListItem(
               beneficiary: beneficiary,
-              onTap: () => context.push('/partner/beneficiary/${beneficiary.id}'),
+              onTap: () => context.push('/partner/beneficiary/${beneficiary.id}?orgId=${widget.organizationId}'),
               onDelete: () => _showDeleteDialog(context, beneficiary),
             );
           },

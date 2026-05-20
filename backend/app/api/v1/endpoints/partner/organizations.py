@@ -13,6 +13,7 @@ from fastapi import APIRouter, Depends, Request, Query
 
 from app.core.logging import get_logger
 from app.core.security import get_current_user_id
+from app.db.supabase_client import get_supabase_client
 from app.schemas.partner import (
     OrganizationCreate,
     OrganizationUpdate,
@@ -71,6 +72,16 @@ async def list_organizations(
     service: PartnerService = Depends(get_service),
 ):
     """Liste les organisations avec pagination."""
+    # Restriction RBAC : les non-admins ne voient que les organisations approuvées et actives
+    db = get_supabase_client()
+    profile = db.fetch_one("user_profiles", "id", str(user_id))
+    user_role = profile.get("role", "student") if profile else "student"
+
+    admin_roles = ("admin", "super_admin", "partner_admin")
+    if user_role not in admin_roles:
+        is_approved = True
+        is_active = True
+
     return await service.list_organizations(
         page=page,
         page_size=page_size,
@@ -114,7 +125,7 @@ async def update_organization(
     service: PartnerService = Depends(get_service),
 ):
     """Met a jour une organisation."""
-    return await service.update_organization(org_id, body)
+    return await service.update_organization(org_id, body, user_id)
 
 
 # =============================================================================
@@ -181,7 +192,7 @@ async def update_beneficiary(
     service: PartnerService = Depends(get_service),
 ):
     """Met a jour un beneficiaire."""
-    return await service.update_beneficiary(beneficiary_id, body)
+    return await service.update_beneficiary(beneficiary_id, body, user_id)
 
 
 @router.delete("/beneficiaries/{beneficiary_id}")
@@ -193,5 +204,5 @@ async def delete_beneficiary(
     service: PartnerService = Depends(get_service),
 ):
     """Desactive un beneficiaire."""
-    await service.delete_beneficiary(beneficiary_id)
+    await service.delete_beneficiary(beneficiary_id, user_id)
     return {"success": True, "message": "Beneficiaire desactive"}

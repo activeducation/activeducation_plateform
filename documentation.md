@@ -123,7 +123,7 @@ L'architecture est conçue selon le modèle **microservices léger** avec Docker
 **Flux d'une requête typique :**
 
 ```
-1. Utilisateur tape "https://activeduhub.com"
+1. Utilisateur tape "https://activeducationhub.com"
       │
 2. DNS → IP du serveur (Hostinger/VPS)
       │
@@ -135,7 +135,7 @@ L'architecture est conçue selon le modèle **microservices léger** avec Docker
       │
 6. Nginx sert les fichiers statiques (Flutter Web)
       │
-7. L'app Flutter fait un appel API vers api.activeduhub.com
+7. L'app Flutter fait un appel API vers api.activeducationhub.com
       │
 8. FastAPI traite la requête, accède à Supabase
       │
@@ -1718,8 +1718,8 @@ def calculate_level(total_xp: int) -> int:
 | Type | Nom | Valeur |
 |------|-----|--------|
 | A | activeducationhub.com | @ → IP serveur |
-| A | admin.activeduhub.com | @ → IP serveur |
-| A | api.activeduhub.com | @ → IP serveur |
+| A | admin.activeducationhub.com | @ → IP serveur |
+| A | api.activeducationhub.com | @ → IP serveur |
 | CNAME | www | → activeducationhub.com |
 
 ### 10.3 Variables d'Environnement
@@ -1751,7 +1751,7 @@ REDIS_URL=redis://:password@redis:6379/0
 GROQ_API_KEY=sk-...
 
 # CORS (adresses autorisées en production)
-BACKEND_CORS_ORIGINS=https://activeduhub.com,https://admin.activeduhub.com
+BACKEND_CORS_ORIGINS=https://activeducationhub.com,https://admin.activeducationhub.com
 
 # Monitoring (optionnel)
 SENTRY_DSN=

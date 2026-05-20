@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:get_it/get_it.dart';
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_typography.dart';
+import '../../../../core/di/injection_container.dart';
 import '../../data/models/mentor_model.dart';
+
+final _getIt = getIt;
 
 class MentorsPage extends StatefulWidget {
   const MentorsPage({super.key});
@@ -38,7 +42,7 @@ class _MentorsPageState extends State<MentorsPage> {
 
   Future<void> _loadMentors() async {
     try {
-      final dio = Dio();
+      final dio = _getIt<Dio>(instanceName: 'apiClient');
       final response = await dio.get(
         ApiEndpoints.mentorList,
         queryParameters: {
