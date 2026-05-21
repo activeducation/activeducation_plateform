@@ -1,6 +1,6 @@
 """Repository pour la gestion admin des ecoles."""
 
-from typing import Any, Optional
+from typing import Optional
 from uuid import UUID
 
 from functools import lru_cache

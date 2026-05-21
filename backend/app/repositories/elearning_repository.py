@@ -134,7 +134,7 @@ class ElearningRepository:
             # 4. Si utilisateur connecte, recuperer son statut sur toutes les lecons
             lesson_status_map: dict[str, str] = {}
             if user_id and all_lessons:
-                lesson_ids = [l["id"] for l in all_lessons]
+                lesson_ids = [lesson["id"] for lesson in all_lessons]
                 progress_result = (
                     self._db.client.table("elearning_user_progress")
                     .select("lesson_id, status")
@@ -519,7 +519,7 @@ class ElearningRepository:
                         .in_("module_id", all_module_ids)
                         .execute()
                     )
-                    all_lesson_ids = [l["id"] for l in (total_lessons_result.data or [])]
+                    all_lesson_ids = [lesson["id"] for lesson in (total_lessons_result.data or [])]
                     total_lessons = len(all_lesson_ids)
 
                     if all_lesson_ids:

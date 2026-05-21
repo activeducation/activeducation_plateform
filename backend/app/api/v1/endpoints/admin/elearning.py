@@ -1,6 +1,5 @@
 """Admin e-learning courses management endpoints."""
 
-from uuid import UUID
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query

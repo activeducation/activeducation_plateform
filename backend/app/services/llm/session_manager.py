@@ -4,7 +4,6 @@ SessionManager — Gestion de l'historique des conversations AÏDA.
 Stocke les sessions en mémoire avec éviction LRU quand la limite est atteinte.
 """
 
-from typing import Optional
 
 from app.core.logging import get_logger
 

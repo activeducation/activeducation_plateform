@@ -50,7 +50,7 @@ def with_retry(
     def _non_blocking_sleep(delay: float) -> None:
         """Sleep without blocking the event loop if one is running."""
         try:
-            loop = asyncio.get_running_loop()
+            asyncio.get_running_loop()
         except RuntimeError:
             time.sleep(delay)
             return
@@ -160,7 +160,7 @@ class SupabaseClient:
             start_time = time.perf_counter()
 
             # Essayer de lister les tables (verification basique)
-            result = self.client.table("orientation_tests").select("id").limit(1).execute()
+            self.client.table("orientation_tests").select("id").limit(1).execute()
 
             latency_ms = (time.perf_counter() - start_time) * 1000
 

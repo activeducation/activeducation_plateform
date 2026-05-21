@@ -3,7 +3,6 @@ Endpoints API pour la gamification utilisateur.
 """
 
 from uuid import UUID
-from typing import Optional
 import math
 from datetime import datetime, timezone
 

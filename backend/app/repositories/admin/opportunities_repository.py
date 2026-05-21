@@ -1,6 +1,6 @@
 """Repository for admin opportunities management."""
 
-from typing import Optional, List
+from typing import Optional
 from uuid import UUID
 from datetime import datetime
 

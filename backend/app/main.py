@@ -41,9 +41,12 @@ if _sentry_dsn:
         )
     except ImportError:
         pass  # sentry-sdk non installe - ignorer silencieusement
-from app.core.exceptions import AppException
-from app.api.v1.router import api_router
-from app.middleware import (
+
+# Imports applicatifs après init Sentry (ordre intentionnel — sinon les modules
+# importés ne seraient pas instrumentés). On muselle E402 pour ce bloc.
+from app.core.exceptions import AppException  # noqa: E402
+from app.api.v1.router import api_router  # noqa: E402
+from app.middleware import (  # noqa: E402
     limiter,
     rate_limit_exceeded_handler,
     SecurityHeadersMiddleware,

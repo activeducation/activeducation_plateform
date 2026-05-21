@@ -1,6 +1,6 @@
 """Repository pour la gestion admin des carrieres."""
 
-from typing import Any, Optional
+from typing import Optional
 from uuid import UUID
 
 from functools import lru_cache
@@ -16,7 +16,6 @@ from app.schemas.admin.careers import (
     CareerUpdate,
     SectorCreate,
     SectorUpdate,
-    SectorResponse,
 )
 
 logger = get_logger("repositories.admin.careers")

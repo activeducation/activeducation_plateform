@@ -1,9 +1,8 @@
 """Admin gamification management endpoints."""
 
 from uuid import UUID
-from typing import Optional
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, Request
 
 from app.core.logging import get_logger
 from app.core.security import get_current_admin

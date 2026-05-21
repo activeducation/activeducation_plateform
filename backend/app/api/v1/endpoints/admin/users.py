@@ -7,7 +7,6 @@ from fastapi import APIRouter, Depends, Query, Request
 
 from app.core.logging import get_logger
 from app.core.security import get_current_admin, get_current_super_admin
-from app.core.exceptions import AuthorizationError
 from app.repositories.admin.users_admin_repository import get_users_admin_repository
 from app.schemas.admin.users import (
     AdminUserListResponse,

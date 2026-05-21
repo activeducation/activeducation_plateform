@@ -20,7 +20,6 @@ from functools import lru_cache
 from app.core.exceptions import (
     NotFoundError,
     QueryError,
-    AlreadyExistsError,
     ValidationError,
 )
 

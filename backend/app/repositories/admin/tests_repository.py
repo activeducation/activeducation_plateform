@@ -1,7 +1,7 @@
 """Repository pour la gestion admin des tests d'orientation."""
 
 import uuid as uuid_lib
-from typing import Any, Optional
+from typing import Optional
 from uuid import UUID
 
 from functools import lru_cache

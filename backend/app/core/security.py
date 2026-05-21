@@ -25,6 +25,10 @@ from app.core.exceptions import (
 
 logger = get_logger("core.security")
 
+# Schema HTTP Bearer partagé — défini tôt car référencé par toutes les
+# dependencies FastAPI ci-dessous (get_current_user_role, get_current_user_id, etc.)
+bearer_scheme = HTTPBearer(auto_error=False)
+
 
 # =============================================================================
 # TOKEN CACHE (Redis-backed avec fallback memoire)
@@ -239,9 +243,6 @@ def get_user_from_token(token: str) -> dict[str, Any]:
 # =============================================================================
 # FASTAPI DEPENDENCIES
 # =============================================================================
-
-bearer_scheme = HTTPBearer(auto_error=False)
-
 
 async def get_current_user_id(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),

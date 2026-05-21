@@ -247,7 +247,7 @@ class OrientationEngine:
         secondary = dominant_traits[1] if len(dominant_traits) > 1 else None
         secondary_data = RIASEC_FR.get(secondary, {}) if secondary else {}
         tertiary = dominant_traits[2] if len(dominant_traits) > 2 else None
-        tertiary_data = RIASEC_FR.get(tertiary, {}) if tertiary else {}
+        # tertiary_data réservé pour usage futur (ex: enrichir profile_code) — voir ticket #X
 
         # Code et résumé court
         profile_code = "".join([RIASEC_FR.get(t, {}).get("code", "?") for t in dominant_traits])

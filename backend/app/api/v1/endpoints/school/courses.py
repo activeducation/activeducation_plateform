@@ -8,7 +8,6 @@ from app.core.exceptions import NotFoundError
 from app.schemas.school_admin import (
     SchoolCourseCreate,
     SchoolCourseUpdate,
-    SchoolCourseResponse,
     PublishRequest,
 )
 from app.repositories.school_admin_repository import get_school_admin_repository

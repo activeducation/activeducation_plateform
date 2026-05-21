@@ -16,7 +16,6 @@ from app.core.logging import get_logger
 from app.core.cache import get_cache
 from app.core.exceptions import (
     NotFoundError,
-    ValidationError,
     AuthorizationError,
 )
 from app.schemas.partner import (
