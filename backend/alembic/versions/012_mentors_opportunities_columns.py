@@ -28,7 +28,9 @@ def upgrade() -> None:
             ADD COLUMN IF NOT EXISTS years_experience INTEGER,
             ADD COLUMN IF NOT EXISTS available_slots  INTEGER DEFAULT 3,
             ADD COLUMN IF NOT EXISTS location      TEXT,
-            ADD COLUMN IF NOT EXISTS linkedin_url  TEXT;
+            ADD COLUMN IF NOT EXISTS linkedin_url  TEXT,
+            ADD COLUMN IF NOT EXISTS specialty     TEXT,
+            ADD COLUMN IF NOT EXISTS hourly_rate   NUMERIC(10,2);
     """)
 
     # =========================================================================
@@ -156,5 +158,7 @@ def downgrade() -> None:
             DROP COLUMN IF EXISTS years_experience,
             DROP COLUMN IF EXISTS available_slots,
             DROP COLUMN IF EXISTS location,
-            DROP COLUMN IF EXISTS linkedin_url;
+            DROP COLUMN IF EXISTS linkedin_url,
+            DROP COLUMN IF EXISTS specialty,
+            DROP COLUMN IF EXISTS hourly_rate;
     """)
