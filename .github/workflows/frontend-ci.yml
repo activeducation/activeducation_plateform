@@ -101,5 +101,10 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
+      # --no-tree-shake-icons : un IconData avec codepoint 0 (probablement
+      # dans une icône par défaut/fallback) fait planter IconTreeShaker.
+      # Coût : MaterialIcons-Regular passe de 21KB à 1.6MB (mais ~150KB
+      # compressé gzip — impact réel marginal sur web).
+      # TODO : auditer les IconData() pour trouver le codepoint 0 fautif.
       - name: Build web
-        run: flutter build web --release
+        run: flutter build web --release --no-tree-shake-icons
