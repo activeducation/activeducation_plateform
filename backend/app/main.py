@@ -8,7 +8,7 @@ Application FastAPI avec:
 """
 
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
@@ -139,10 +139,15 @@ async def root():
 
 
 @app.get("/health", tags=["Health"])
-async def health_check(request: Request):
+async def health_check(request: Request, response: Response):
     """
     Endpoint de sante pour les load balancers et monitoring.
     Retourne l'etat de l'API et des services dependants.
+
+    Status code:
+      - 200 si healthy
+      - 200 si degraded (au moins un service down mais l'API peut servir)
+      - 503 si unhealthy (tous les services critiques sont down)
     """
     checks = {}
     all_ok = True
@@ -159,16 +164,17 @@ async def health_check(request: Request):
         checks["supabase"] = {"status": "unhealthy", "error": str(e)}
         all_ok = False
 
-    # Check Redis
-    try:
-        import redis.asyncio as aioredis
-        r = aioredis.from_url(settings.REDIS_URL, socket_timeout=2)
-        await r.ping()
-        await r.close()
-        checks["redis"] = {"status": "healthy"}
-    except Exception as e:
-        checks["redis"] = {"status": "unhealthy", "error": str(e)}
-        all_ok = False
+    # Check Redis (seulement si configure)
+    if settings.REDIS_URL:
+        try:
+            import redis.asyncio as aioredis
+            r = aioredis.from_url(settings.REDIS_URL, socket_timeout=2)
+            await r.ping()
+            await r.close()
+            checks["redis"] = {"status": "healthy"}
+        except Exception as e:
+            checks["redis"] = {"status": "unhealthy", "error": str(e)}
+            all_ok = False
 
     any_up = any(c.get("status") == "healthy" for c in checks.values())
     if all_ok:
@@ -177,6 +183,7 @@ async def health_check(request: Request):
         overall = "degraded"
     else:
         overall = "unhealthy"
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
 
     return {
         "status": overall,
