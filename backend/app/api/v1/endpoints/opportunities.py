@@ -117,7 +117,7 @@ async def get_opportunity(opportunity_id: UUID):
         "benefits": o.get("benefits"),
         "salary_min": o.get("salary_min"),
         "salary_max": o.get("salary_max"),
-        "salary_currency": o.get("salary_currency", "EUR"),
+        "salary_currency": o.get("salary_currency", "XOF"),
         "application_url": o.get("application_url"),
         "application_deadline": o.get("application_deadline"),
         "is_featured": o.get("is_featured"),

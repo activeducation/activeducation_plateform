@@ -193,10 +193,27 @@ class BeneficiaryResponse(BeneficiaryBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-class BeneficiaryListResponse(BaseModel):
-    """Schema for paginated beneficiary list."""
+class BeneficiarySummary(BaseModel):
+    """Schema résumé pour les listes — exclut la PII sensible (parents, tuteur, etc.)
+    afin de respecter la minimisation RGPD sur les listings."""
 
-    beneficiaries: list[BeneficiaryResponse]
+    id: UUID
+    organization_id: UUID
+    dossier_number: Optional[str] = None
+    first_name: str
+    last_name: str
+    city: Optional[str] = None
+    status: str
+    referred_at: datetime
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class BeneficiaryListResponse(BaseModel):
+    """Schema for paginated beneficiary list (résumé sans PII sensible)."""
+
+    beneficiaries: list[BeneficiarySummary]
     total: int
     page: int
     page_size: int

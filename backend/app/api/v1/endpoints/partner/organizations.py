@@ -96,7 +96,7 @@ async def get_organization(
     service: PartnerService = Depends(get_service),
 ):
     """Recupere une organisation par son ID."""
-    return await service.get_organization(org_id)
+    return await service.get_organization(org_id, user_id=user_id)
 
 
 @router.get("/organizations/{org_id}/stats", response_model=OrganizationWithStats)

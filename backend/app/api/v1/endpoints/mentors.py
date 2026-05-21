@@ -42,9 +42,11 @@ async def list_mentors(
 
     db = get_supabase_client()
 
+    # NB : on tri par rating_avg (colonne de schema.sql) — l'ancienne colonne
+    # "rating" n'existe pas dans la table mentors actuelle.
     query = db.client.table("mentors").select(
-        "id,full_name,specialty,bio,avatar_url,years_experience,is_verified,hourly_rate,available_slots"
-    ).eq("is_active", True).eq("is_verified", True).order("rating.desc").range(offset, offset + limit - 1)
+        "id,full_name,specialty,bio,avatar_url,years_experience,is_verified,hourly_rate,available_slots,rating_avg"
+    ).eq("is_active", True).eq("is_verified", True).order("rating_avg", desc=True).range(offset, offset + limit - 1)
 
     if specialty:
         query = query.ilike("specialty", f"%{specialty}%")

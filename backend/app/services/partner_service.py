@@ -28,6 +28,7 @@ from app.schemas.partner import (
     BeneficiaryUpdate,
     BeneficiaryResponse,
     BeneficiaryListResponse,
+    BeneficiarySummary,
     OrganizationWithStats,
 )
 from app.repositories.partner_repository import (
@@ -79,11 +80,22 @@ class PartnerService:
     async def get_organization(
         self,
         org_id: UUID,
+        user_id: Optional[UUID] = None,
     ) -> OrganizationResponse:
-        """Recupere une organisation par son ID."""
+        """Recupere une organisation par son ID.
+
+        Si user_id est fourni, on filtre les non-approuvées (sauf pour admin/super_admin/
+        partner_admin de l'org). Ainsi un étudiant ne peut pas voir une org pending.
+        """
         org = await self._partner_repo.get_organization_by_id(org_id)
         if not org:
             raise NotFoundError("Organisation", str(org_id))
+
+        # Si on a un user_id et que l'org n'est pas approuvée+active,
+        # exiger un rôle admin / partner_admin de l'org
+        if user_id is not None and not (org.get("is_approved") and org.get("is_active")):
+            await self._assert_org_access(org_id, user_id)
+
         return self._to_organization_response(org)
 
     async def get_organization_by_code(
@@ -130,7 +142,7 @@ class PartnerService:
         try:
             result = await asyncio.to_thread(
                 db.rpc,
-                "approve_organization",
+                "approve_partner_organization",
                 {"p_org_id": str(org_id), "p_approved_by": str(approved_by)},
             )
         except Exception as e:
@@ -275,7 +287,7 @@ class PartnerService:
         )
 
         return BeneficiaryListResponse(
-            beneficiaries=[self._to_beneficiary_response(b) for b in beneficiaries],
+            beneficiaries=[self._to_beneficiary_summary(b) for b in beneficiaries],
             total=total,
             page=page,
             page_size=page_size,
@@ -304,9 +316,16 @@ class PartnerService:
     # =========================================================================
 
     async def _assert_org_access(self, org_id: UUID, user_id: UUID) -> None:
-        """Verifie que l'utilisateur a accès à l'organisation."""
+        """Verifie que l'utilisateur a accès à l'organisation.
+
+        En cas de refus, émet un événement Sentry tagué `security.idor_attempt`
+        pour alerter en production.
+        """
         user = await self._users_repo.get_by_id(user_id)
         if not user:
+            self._report_security_event(
+                "rbac_user_not_found", user_id=user_id, org_id=org_id, role=None,
+            )
             raise AuthorizationError("Utilisateur introuvable")
 
         role = user.get("role", "student")
@@ -320,9 +339,35 @@ class PartnerService:
         if role == "partner_admin" and user_org_id == str(org_id):
             return
 
+        # Refus : trace pour monitoring sécurité
+        self._report_security_event(
+            "idor_attempt", user_id=user_id, org_id=org_id, role=role,
+            user_org_id=user_org_id,
+        )
         raise AuthorizationError(
             "Vous n'avez pas accès à cette organisation"
         )
+
+    @staticmethod
+    def _report_security_event(event_type: str, **context) -> None:
+        """Émet un événement de sécurité vers Sentry + logs structurés.
+
+        Pas de PII, juste IDs + role pour corrélation.
+        """
+        logger.warning(
+            f"SECURITY: {event_type}",
+            extra={"security_event": event_type, **{k: str(v) for k, v in context.items()}},
+        )
+        try:
+            import sentry_sdk
+            sentry_sdk.set_tag("security_event", event_type)
+            sentry_sdk.set_context("security", {k: str(v) for k, v in context.items()})
+            sentry_sdk.capture_message(
+                f"Security event: {event_type}",
+                level="warning",
+            )
+        except ImportError:
+            pass  # sentry non installé — silencieux
 
     # =========================================================================
     # HELPERS
@@ -374,6 +419,20 @@ class PartnerService:
             referred_at=beneficiary.get("referred_at", datetime.now()),
             created_at=beneficiary.get("created_at", datetime.now()),
             updated_at=beneficiary.get("updated_at"),
+        )
+
+    def _to_beneficiary_summary(self, beneficiary: dict) -> "BeneficiarySummary":
+        """Convertit en BeneficiarySummary — exclut la PII sensible pour listings."""
+        return BeneficiarySummary(
+            id=UUID(beneficiary["id"]),
+            organization_id=UUID(beneficiary["organization_id"]),
+            dossier_number=beneficiary.get("dossier_number"),
+            first_name=beneficiary.get("first_name", ""),
+            last_name=beneficiary.get("last_name", ""),
+            city=beneficiary.get("city"),
+            status=beneficiary.get("status", "active"),
+            referred_at=beneficiary.get("referred_at", datetime.now()),
+            created_at=beneficiary.get("created_at", datetime.now()),
         )
 
 

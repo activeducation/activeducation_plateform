@@ -199,3 +199,76 @@ def test_calculate_level_monotonic():
         level, _, _ = _calculate_level(xp)
         assert level >= prev
         prev = level
+
+
+# =============================================================================
+# Sentry security event tracking sur IDOR
+# =============================================================================
+
+
+@pytest.mark.asyncio
+async def test_idor_attempt_logged_to_sentry(monkeypatch):
+    """Un refus _assert_org_access doit émettre un événement Sentry tagué."""
+    from app.services import partner_service as svc_module
+
+    captured = []
+
+    class FakeSentry:
+        def set_tag(self, k, v): captured.append(("tag", k, v))
+        def set_context(self, k, v): captured.append(("context", k, v))
+        def capture_message(self, msg, level="info"):
+            captured.append(("message", msg, level))
+
+    # Monkey-patch sentry_sdk au moment de l'import dynamique
+    import sys
+    fake = FakeSentry()
+    sys.modules["sentry_sdk"] = fake  # type: ignore
+
+    svc = _make_service(user_role="student")
+
+    with pytest.raises(Exception):  # AuthorizationError
+        await svc._assert_org_access(uuid4(), uuid4())
+
+    tags = [c for c in captured if c[0] == "tag"]
+    messages = [c for c in captured if c[0] == "message"]
+    assert any(t[1] == "security_event" and t[2] == "idor_attempt" for t in tags)
+    assert any("idor_attempt" in m[1] for m in messages)
+
+
+# =============================================================================
+# Approve organization atomique via RPC
+# =============================================================================
+
+
+@pytest.mark.asyncio
+async def test_approve_organization_calls_rpc(monkeypatch):
+    """approve_organization doit appeler le RPC postgres atomique."""
+    from app.services import partner_service as svc_module
+
+    svc = _make_service(user_role="super_admin")
+    org_id = uuid4()
+    approved_by = uuid4()
+
+    fake_db = MagicMock()
+    rpc_result = {
+        "id": str(org_id), "name": "CDEJ Lome", "type": "cdej",
+        "partner_code": "CDEJ-XYZ",
+        "is_active": True, "is_approved": True,
+        "approved_at": "2026-05-21T00:00:00+00:00",
+        "created_at": "2026-05-20T00:00:00+00:00",
+    }
+    fake_db.rpc = MagicMock(return_value=rpc_result)
+
+    monkeypatch.setattr(
+        "app.services.partner_service.get_supabase_client", lambda: fake_db
+    )
+
+    result = await svc.approve_organization(org_id, approved_by)
+
+    # Vérifie que le RPC a été appelé avec les bons params
+    fake_db.rpc.assert_called_once()
+    call_args = fake_db.rpc.call_args
+    assert call_args.args[0] == "approve_partner_organization"
+    assert call_args.args[1]["p_org_id"] == str(org_id)
+    assert call_args.args[1]["p_approved_by"] == str(approved_by)
+    assert result.is_approved is True
