@@ -55,6 +55,7 @@ class AdminDataTable extends StatelessWidget {
                           )),
                     ],
                     const Spacer(),
+                    // ignore: use_null_aware_elements
                     if (actions != null) ...actions!,
                   ],
                 ),
