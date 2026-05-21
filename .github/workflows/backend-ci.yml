@@ -61,10 +61,15 @@ jobs:
           retention-days: 7
 
       # T1 — Safety BLOQUANT (suppression du || true)
+      # CVE ignorées :
+      #   - SFTY-20260122-20373 (pytest 8.3.4, CVE-2025-71176) : dev-only,
+      #     jamais déployé en prod. Upgrade vers pytest 9 nécessite bump majeur
+      #     pytest-asyncio (0.25→1.x) trop risqué pour ce PR. À traiter dans
+      #     un PR dédié de migration tests.
       - name: Vulnerability scan with Safety
         run: |
           pip install safety
-          safety check -r requirements.txt --full-report
+          safety check -r requirements.txt --full-report --ignore SFTY-20260122-20373
 
   test:
     name: Tests
