@@ -29,7 +29,7 @@ import '../features/partner/presentation/pages/beneficiary_form_page.dart';
 import '../features/opportunities/presentation/pages/opportunities_page.dart';
 import '../core/constants/app_colors.dart';
 import '../core/constants/app_typography.dart';
-import 'auth_guard.dart';
+import 'auth_guard.dart' show AuthGuard, RoleGuard;
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',
@@ -43,7 +43,11 @@ class AppRouter {
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/',
     debugLogDiagnostics: true,
-    redirect: AuthGuard.redirect,
+    redirect: (context, state) async {
+      final authRedirect = await AuthGuard.redirect(context, state);
+      if (authRedirect != null) return authRedirect;
+      return RoleGuard.redirect(context, state);
+    },
     routes: <RouteBase>[
       GoRoute(
         path: '/',
@@ -129,6 +133,46 @@ class AppRouter {
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: ProfilePage()),
           ),
+          GoRoute(
+            path: '/elearning/course/:id',
+            builder: (context, state) =>
+                CourseDetailPage(courseId: state.pathParameters['id']!),
+          ),
+          GoRoute(
+            path: '/elearning/lesson/:id',
+            builder: (context, state) =>
+                LessonPage(lessonId: state.pathParameters['id']!),
+          ),
+          GoRoute(
+            path: '/opportunities',
+            builder: (context, state) => const OpportunitiesListPage(),
+          ),
+          GoRoute(
+            path: '/partner/organization/create',
+            builder: (context, state) => const CreateOrganizationPage(),
+          ),
+          GoRoute(
+            path: '/partner/organization/:orgId',
+            builder: (context, state) => OrganizationDashboardPage(
+              organizationId: state.pathParameters['orgId']!,
+            ),
+          ),
+          GoRoute(
+            path: '/partner/beneficiary/create/:orgId',
+            builder: (context, state) => BeneficiaryFormPage(
+              organizationId: state.pathParameters['orgId']!,
+            ),
+          ),
+          GoRoute(
+            path: '/partner/beneficiary/:id',
+            builder: (context, state) {
+              final orgId = state.uri.queryParameters['orgId'] ?? '';
+              return BeneficiaryFormPage(
+                organizationId: orgId,
+                beneficiaryId: state.pathParameters['id']!,
+              );
+            },
+          ),
         ],
       ),
       GoRoute(
@@ -157,57 +201,6 @@ class AppRouter {
         builder: (BuildContext context, GoRouterState state) {
           final args = state.extra as ChatPageArgs? ?? const ChatPageArgs();
           return ChatPage(args: args);
-        },
-      ),
-      GoRoute(
-        path: '/elearning/course/:id',
-        builder: (BuildContext context, GoRouterState state) {
-          return CourseDetailPage(courseId: state.pathParameters['id']!);
-        },
-      ),
-      GoRoute(
-        path: '/elearning/lesson/:id',
-        builder: (BuildContext context, GoRouterState state) {
-          return LessonPage(lessonId: state.pathParameters['id']!);
-        },
-      ),
-      GoRoute(
-        path: '/opportunities',
-        builder: (BuildContext context, GoRouterState state) {
-          return const OpportunitiesListPage();
-        },
-      ),
-      GoRoute(
-        path: '/partner/organization/create',
-        builder: (BuildContext context, GoRouterState state) {
-          return const CreateOrganizationPage();
-        },
-      ),
-      GoRoute(
-        path: '/partner/organization/:orgId',
-        builder: (BuildContext context, GoRouterState state) {
-          return OrganizationDashboardPage(
-            organizationId: state.pathParameters['orgId']!,
-          );
-        },
-      ),
-      GoRoute(
-        path: '/partner/beneficiary/create/:orgId',
-        builder: (BuildContext context, GoRouterState state) {
-          return BeneficiaryFormPage(
-            organizationId: state.pathParameters['orgId']!,
-          );
-        },
-      ),
-      GoRoute(
-        path: '/partner/beneficiary/:id',
-        builder: (BuildContext context, GoRouterState state) {
-          final orgId = state.uri.queryParameters['orgId'] ?? '';
-          final beneficiaryId = state.pathParameters['id']!;
-          return BeneficiaryFormPage(
-            organizationId: orgId,
-            beneficiaryId: beneficiaryId,
-          );
         },
       ),
     ],

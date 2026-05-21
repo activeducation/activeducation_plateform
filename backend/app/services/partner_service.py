@@ -10,6 +10,8 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
+from functools import lru_cache
+
 from app.core.logging import get_logger
 from app.core.cache import get_cache
 from app.core.exceptions import (
@@ -69,11 +71,6 @@ class PartnerService:
             created_by=created_by,
         )
 
-        await self._users_repo.update_profile(
-            created_by,
-            {"organization_id": str(org["id"])},
-        )
-
         self._cache.delete_pattern("partner:organizations:*")
 
         logger.info(f"Organization created (pending approval): {org['id']} by {created_by}")
@@ -125,26 +122,28 @@ class PartnerService:
         org_id: UUID,
         approved_by: UUID,
     ) -> OrganizationResponse:
-        """Approuve une organisation."""
-        org = await self._partner_repo.get_organization_by_id(org_id)
-        if not org:
-            raise NotFoundError("Organisation", str(org_id))
+        """Approuve une organisation (atomique via RPC PostgreSQL)."""
+        import asyncio
+        from app.db.supabase_client import get_supabase_client
 
-        approved_org = await self._partner_repo.approve_organization(org_id, approved_by)
-
-        # Promouvoir le créateur uniquement à l'approbation
-        if org.get("created_by"):
-            creator_id = UUID(org["created_by"])
-            await self._users_repo.update_profile(
-                creator_id,
-                {"role": "partner_admin"},
+        db = get_supabase_client()
+        try:
+            result = await asyncio.to_thread(
+                db.rpc,
+                "approve_organization",
+                {"p_org_id": str(org_id), "p_approved_by": str(approved_by)},
             )
-            logger.info(f"User {creator_id} promoted to partner_admin after org approval")
+        except Exception as e:
+            logger.error(f"Organization approval transaction failed: {e}", exc_info=True)
+            raise
+
+        if not result:
+            raise NotFoundError("Organisation", str(org_id))
 
         self._cache.delete_pattern("partner:organizations:*")
 
         logger.info(f"Organization approved: {org_id}")
-        return self._to_organization_response(approved_org)
+        return self._to_organization_response(result)
 
     async def list_organizations(
         self,
@@ -173,11 +172,13 @@ class PartnerService:
     async def get_organization_with_stats(
         self,
         org_id: UUID,
+        user_id: UUID,
     ) -> OrganizationWithStats:
-        """Recupere une organisation avec des statistiques sur les beneficiaires."""
+        """Recupere une organisation avec des statistiques (vérification d'accès)."""
         org = await self._partner_repo.get_organization_by_id(org_id)
         if not org:
             raise NotFoundError("Organisation", str(org_id))
+        await self._assert_org_access(org_id, user_id)
 
         total = await self._partner_repo.count_beneficiaries(org_id)
         active = await self._partner_repo.count_beneficiaries(org_id, status="active")
@@ -220,11 +221,13 @@ class PartnerService:
     async def get_beneficiary(
         self,
         beneficiary_id: UUID,
+        user_id: UUID,
     ) -> BeneficiaryResponse:
-        """Recupere un beneficiaire par son ID."""
+        """Recupere un beneficiaire par son ID (avec vérification d'accès)."""
         beneficiary = await self._partner_repo.get_beneficiary_by_id(beneficiary_id)
         if not beneficiary:
             raise NotFoundError("Beneficiaire", str(beneficiary_id))
+        await self._assert_org_access(UUID(beneficiary["organization_id"]), user_id)
         return self._to_beneficiary_response(beneficiary)
 
     async def update_beneficiary(
@@ -253,14 +256,16 @@ class PartnerService:
     async def list_beneficiaries(
         self,
         organization_id: UUID,
+        user_id: UUID,
         page: int = 1,
         page_size: int = 20,
         status: Optional[str] = None,
     ) -> BeneficiaryListResponse:
-        """Liste les beneficiaires d'une organisation."""
+        """Liste les beneficiaires d'une organisation (avec vérification d'accès)."""
         org = await self._partner_repo.get_organization_by_id(organization_id)
         if not org:
             raise NotFoundError("Organisation", str(organization_id))
+        await self._assert_org_access(organization_id, user_id)
 
         beneficiaries, total = await self._partner_repo.list_beneficiaries(
             organization_id=organization_id,
@@ -306,8 +311,8 @@ class PartnerService:
 
         role = user.get("role", "student")
 
-        # Super admin : accès complet
-        if role == "super_admin":
+        # Admin rôle : accès complet (admin plateforme, super_admin)
+        if role in ("admin", "super_admin"):
             return
 
         # Partner admin : seulement sa propre organisation
@@ -372,9 +377,7 @@ class PartnerService:
         )
 
 
-partner_service = PartnerService()
-
-
+@lru_cache(maxsize=1)
 def get_partner_service() -> PartnerService:
-    """Retourne l'instance du service partenaire."""
-    return partner_service
+    """Retourne l'instance (unique) du service partenaire."""
+    return PartnerService()

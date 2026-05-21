@@ -13,6 +13,8 @@ Gere les interactions avec Supabase pour:
 from datetime import datetime, timezone
 from typing import Any, Optional
 
+from functools import lru_cache
+
 from app.core.logging import get_logger
 from app.db.supabase_client import SupabaseClient, get_admin_supabase_client
 
@@ -606,5 +608,7 @@ class ElearningRepository:
             raise
 
 
-# Singleton
-elearning_repository = ElearningRepository(db=get_admin_supabase_client())
+@lru_cache(maxsize=1)
+def get_elearning_repository() -> "ElearningRepository":
+    """Retourne l'instance (unique) du repository e-learning."""
+    return ElearningRepository(db=get_admin_supabase_client())

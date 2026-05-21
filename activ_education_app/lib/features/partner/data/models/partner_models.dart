@@ -166,21 +166,21 @@ class BeneficiaryModel extends Beneficiary {
 }
 
 /// Model for paginated list response
-class PaginatedBeneficiaries {
+class PaginatedBeneficiariesModel {
   final List<BeneficiaryModel> beneficiaries;
   final int total;
   final int page;
   final int pageSize;
 
-  const PaginatedBeneficiaries({
+  const PaginatedBeneficiariesModel({
     required this.beneficiaries,
     required this.total,
     required this.page,
     required this.pageSize,
   });
 
-  factory PaginatedBeneficiaries.fromJson(Map<String, dynamic> json) {
-    return PaginatedBeneficiaries(
+  factory PaginatedBeneficiariesModel.fromJson(Map<String, dynamic> json) {
+    return PaginatedBeneficiariesModel(
       beneficiaries: (json['beneficiaries'] as List<dynamic>)
           .map((e) => BeneficiaryModel.fromJson(e as Map<String, dynamic>))
           .toList(),
@@ -190,5 +190,12 @@ class PaginatedBeneficiaries {
     );
   }
 
-  bool get hasMore => page * pageSize < total;
+  PaginatedBeneficiaries toEntity() {
+    return PaginatedBeneficiaries(
+      beneficiaries: beneficiaries.cast<Beneficiary>(),
+      total: total,
+      page: page,
+      pageSize: pageSize,
+    );
+  }
 }

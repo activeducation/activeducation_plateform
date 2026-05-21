@@ -5,6 +5,13 @@ import 'package:go_router/go_router.dart';
 import '../core/auth/token_storage.dart';
 import '../core/di/injection_container.dart';
 
+/// Rôles autorisés pour les routes partenaires.
+const List<String> _partnerAllowedRoles = [
+  'partner_admin',
+  'admin',
+  'super_admin',
+];
+
 /// Guard d'authentification pour les routes protegees.
 ///
 /// Utilise avec GoRouter pour rediriger les utilisateurs
@@ -134,6 +141,40 @@ class AuthGuard {
 
     if (location == '/' && isAuthenticated == false) {
       return '/onboarding';
+    }
+
+    return null;
+  }
+}
+
+/// Guard de vérification des rôles pour les routes protégées.
+class RoleGuard {
+  static final TokenStorage _tokenStorage = getIt<TokenStorage>();
+
+  /// Routes nécessitant un rôle spécifique (prefix → rôles autorisés).
+  static const Map<String, List<String>> _roleProtectedPrefixes = {
+    '/partner': _partnerAllowedRoles,
+  };
+
+  /// Vérifie si la route nécessite un rôle spécifique et si l'utilisateur
+  /// possède ce rôle. Retourne un chemin de redirection ou null.
+  static Future<String?> redirect(
+    BuildContext context,
+    GoRouterState state,
+  ) async {
+    final location = state.uri.toString();
+
+    for (final entry in _roleProtectedPrefixes.entries) {
+      if (location.startsWith(entry.key)) {
+        final role = await _tokenStorage.getUserRole();
+        if (role == null || !entry.value.contains(role)) {
+          if (kDebugMode) {
+            debugPrint('[RoleGuard] Redirecting from $location: role=$role not in ${entry.value}');
+          }
+          return '/home';
+        }
+        break;
+      }
     }
 
     return null;

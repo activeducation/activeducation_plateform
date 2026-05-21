@@ -164,6 +164,20 @@ class BeneficiaryUpdate(BaseModel):
     notes: Optional[str] = Field(None, max_length=2000)
     status: Optional[str] = None
 
+    @field_validator("gender")
+    @classmethod
+    def validate_gender(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v not in Gender.CHOICES:
+            raise ValueError(f"Genre doit être parmi: {', '.join(Gender.CHOICES)}")
+        return v
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v not in BeneficiaryStatus.CHOICES:
+            raise ValueError(f"Statut doit être parmi: {', '.join(BeneficiaryStatus.CHOICES)}")
+        return v
+
 
 class BeneficiaryResponse(BeneficiaryBase):
     """Schema for beneficiary response."""

@@ -4,6 +4,8 @@ from typing import Optional, List
 from uuid import UUID
 from datetime import datetime
 
+from functools import lru_cache
+
 from app.db.supabase_client import get_admin_supabase_client, SupabaseClient
 from app.core.logging import get_logger
 from app.core.exceptions import NotFoundError
@@ -185,4 +187,7 @@ class OpportunitiesAdminRepository:
         }
 
 
-opportunities_admin_repository = OpportunitiesAdminRepository()
+@lru_cache(maxsize=1)
+def get_opportunities_admin_repository() -> "OpportunitiesAdminRepository":
+    """Retourne l'instance (unique) du repository admin opportunités."""
+    return OpportunitiesAdminRepository()

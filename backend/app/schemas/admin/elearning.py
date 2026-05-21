@@ -1,6 +1,6 @@
 """Admin e-learning schemas for request/response validation."""
 
-from typing import Optional
+from typing import Optional, Literal
 from pydantic import BaseModel, Field
 
 
@@ -39,7 +39,7 @@ class ModuleUpdate(BaseModel):
 class LessonCreate(BaseModel):
     """Schema for creating a lesson."""
     title: str = Field(..., min_length=1, max_length=200)
-    lesson_type: str = "text"
+    lesson_type: Literal["text", "video", "quiz", "pdf"] = "text"
     content: Optional[str] = None
     video_url: Optional[str] = None
     display_order: int = 0
@@ -48,7 +48,7 @@ class LessonCreate(BaseModel):
 class LessonUpdate(BaseModel):
     """Schema for updating a lesson."""
     title: Optional[str] = Field(None, min_length=1, max_length=200)
-    lesson_type: Optional[str] = None
+    lesson_type: Optional[Literal["text", "video", "quiz", "pdf"]] = None
     content: Optional[str] = None
     video_url: Optional[str] = None
     display_order: Optional[int] = None

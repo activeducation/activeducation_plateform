@@ -1,7 +1,7 @@
 """Admin e-learning courses management endpoints."""
 
 from uuid import UUID
-from typing import Optional, Literal
+from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
 
@@ -33,8 +33,9 @@ def _log_audit(admin, action, entity_type, entity_id, changes=None):
             "entity_id": str(entity_id) if entity_id else None,
             "changes": changes,
         }).execute()
-    except Exception as e:
-        logger.warning(f"Audit log failed: {e}")
+    except Exception:
+        logger.error("Audit log failed, blocking action", exc_info=True)
+        raise
 
 
 @router.get("/courses")
@@ -170,8 +171,8 @@ async def create_course(
     result = db.client.table("elearning_courses").insert(course_data).execute()
 
     if not result.data:
-        from app.core.exceptions import BadRequestError
-        raise BadRequestError("Erreur lors de la création du cours")
+        from app.core.exceptions import DatabaseError
+        raise DatabaseError("Erreur lors de la création du cours", operation="insert_course")
 
     course = result.data[0]
     _log_audit(admin, "create", "elearning_course", course["id"])
@@ -221,8 +222,8 @@ async def create_module(
     result = db.client.table("elearning_modules").insert(module_data).execute()
 
     if not result.data:
-        from app.core.exceptions import BadRequestError
-        raise BadRequestError("Erreur lors de la création du module")
+        from app.core.exceptions import DatabaseError
+        raise DatabaseError("Erreur lors de la création du module", operation="insert_module")
 
     _log_audit(admin, "create", "elearning_module", result.data[0]["id"])
     return result.data[0]
@@ -264,7 +265,6 @@ async def delete_module(
         from app.core.exceptions import NotFoundError
         raise NotFoundError("Module", module_id)
 
-    db.client.table("elearning_lessons").delete().eq("module_id", module_id).execute()
     db.client.table("elearning_modules").delete().eq("id", module_id).execute()
 
     _log_audit(admin, "delete", "elearning_module", module_id)
@@ -274,11 +274,7 @@ async def delete_module(
 @router.post("/modules/{module_id}/lessons")
 async def create_lesson(
     module_id: str,
-    title: str,
-    lesson_type: Literal["text", "video", "quiz", "pdf"] = "text",
-    content: Optional[str] = None,
-    video_url: Optional[str] = None,
-    display_order: int = 0,
+    body: LessonCreate,
     admin: dict = Depends(get_current_admin),
 ):
     """Creer une lecon dans un module."""
@@ -289,20 +285,14 @@ async def create_lesson(
         from app.core.exceptions import NotFoundError
         raise NotFoundError("Module", module_id)
 
-    lesson_data = {
-        "module_id": module_id,
-        "course_id": module.data[0]["course_id"],
-        "title": title,
-        "lesson_type": lesson_type,
-        "content": content,
-        "video_url": video_url,
-        "display_order": display_order,
-    }
+    lesson_data = body.model_dump()
+    lesson_data["module_id"] = module_id
+    lesson_data["course_id"] = module.data[0]["course_id"]
     result = db.client.table("elearning_lessons").insert(lesson_data).execute()
 
     if not result.data:
-        from app.core.exceptions import BadRequestError
-        raise BadRequestError("Erreur lors de la creation de la lecon")
+        from app.core.exceptions import DatabaseError
+        raise DatabaseError("Erreur lors de la création de la leçon", operation="insert_lesson")
 
     _log_audit(admin, "create", "elearning_lesson", result.data[0]["id"])
     return result.data[0]

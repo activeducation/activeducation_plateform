@@ -302,6 +302,16 @@ class SupabaseClient:
             logger.error(f"Delete error on table {table}: {e}", exc_info=True)
             raise QueryError(f"Erreur lors de la suppression dans {table}: {str(e)}")
 
+    @with_retry(max_retries=2)
+    def rpc(self, fn: str, params: Optional[dict[str, Any]] = None) -> Any:
+        """Appelle une fonction RPC PostgreSQL."""
+        try:
+            result = self.client.rpc(fn, params).execute()
+            return result.data
+        except APIError as e:
+            logger.error(f"RPC {fn} failed: {e}", exc_info=True)
+            raise QueryError(f"Erreur lors de l'appel RPC {fn}: {str(e)}")
+
 
 # Instance singleton globale (Standard / Anon)
 supabase_client = SupabaseClient()

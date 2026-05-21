@@ -121,5 +121,6 @@ def _log_audit(admin, action, entity_type, entity_id, changes):
             "entity_id": str(entity_id),
             "changes": changes,
         })
-    except Exception as e:
-        logger.warning(f"Audit log failed: {e}")
+    except Exception:
+        logger.error("Audit log failed, blocking action", exc_info=True)
+        raise

@@ -65,6 +65,23 @@ class OrganizationWithStats {
   });
 }
 
+/// Entity for paginated beneficiaries list
+class PaginatedBeneficiaries {
+  final List<Beneficiary> beneficiaries;
+  final int total;
+  final int page;
+  final int pageSize;
+
+  const PaginatedBeneficiaries({
+    required this.beneficiaries,
+    required this.total,
+    required this.page,
+    required this.pageSize,
+  });
+
+  bool get hasMore => page * pageSize < total;
+}
+
 /// Entity for beneficiary dossier
 class Beneficiary {
   final String id;

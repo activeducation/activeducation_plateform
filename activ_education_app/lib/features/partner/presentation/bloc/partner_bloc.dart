@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../domain/entities/organization.dart';
-import '../../data/models/partner_models.dart';
 import '../../domain/repositories/partner_repository.dart';
 
 part 'partner_event.dart';
@@ -249,7 +248,7 @@ class PartnerBloc extends Bloc<PartnerEvent, PartnerState> {
       await _partnerRepository.updateBeneficiary(event.beneficiaryId, event.data);
 
       if (_currentOrganizationId != null) {
-        add(PartnerLoadBeneficiaries(organizationId: _currentOrganizationId!));
+        add(PartnerLoadDashboard(_currentOrganizationId!));
       }
     } catch (e) {
       emit(PartnerError(e.toString()));
@@ -263,13 +262,10 @@ class PartnerBloc extends Bloc<PartnerEvent, PartnerState> {
     emit(PartnerLoading());
 
     try {
-      await _partnerRepository.updateBeneficiary(
-        event.beneficiaryId,
-        {'status': 'inactive'},
-      );
+      await _partnerRepository.deleteBeneficiary(event.beneficiaryId);
 
       if (_currentOrganizationId != null) {
-        add(PartnerLoadBeneficiaries(organizationId: _currentOrganizationId!));
+        add(PartnerLoadDashboard(_currentOrganizationId!));
       }
     } catch (e) {
       emit(PartnerError(e.toString()));

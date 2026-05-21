@@ -12,8 +12,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Request, Query
 
 from app.core.logging import get_logger
-from app.core.security import get_current_user_id
-from app.db.supabase_client import get_supabase_client
+from app.core.security import get_current_user_id, get_current_user_role
 from app.schemas.partner import (
     OrganizationCreate,
     OrganizationUpdate,
@@ -69,14 +68,11 @@ async def list_organizations(
     is_approved: Optional[bool] = Query(None, description="Filter by approved status"),
     org_type: Optional[str] = Query(None, description="Filter by organization type"),
     user_id: UUID = Depends(get_current_user_id),
+    user_role: str = Depends(get_current_user_role),
     service: PartnerService = Depends(get_service),
 ):
     """Liste les organisations avec pagination."""
     # Restriction RBAC : les non-admins ne voient que les organisations approuvées et actives
-    db = get_supabase_client()
-    profile = db.fetch_one("user_profiles", "id", str(user_id))
-    user_role = profile.get("role", "student") if profile else "student"
-
     admin_roles = ("admin", "super_admin", "partner_admin")
     if user_role not in admin_roles:
         is_approved = True
@@ -112,7 +108,7 @@ async def get_organization_stats(
     service: PartnerService = Depends(get_service),
 ):
     """Recupere une organisation avec ses statistiques."""
-    return await service.get_organization_with_stats(org_id)
+    return await service.get_organization_with_stats(org_id, user_id)
 
 
 @router.patch("/organizations/{org_id}", response_model=OrganizationResponse)
@@ -164,6 +160,7 @@ async def list_beneficiaries(
     """Liste les beneficiaires d'une organisation."""
     return await service.list_beneficiaries(
         organization_id=org_id,
+        user_id=user_id,
         page=page,
         page_size=page_size,
         status=status,
@@ -179,7 +176,7 @@ async def get_beneficiary(
     service: PartnerService = Depends(get_service),
 ):
     """Recupere un beneficiaire par son ID."""
-    return await service.get_beneficiary(beneficiary_id)
+    return await service.get_beneficiary(beneficiary_id, user_id)
 
 
 @router.patch("/beneficiaries/{beneficiary_id}", response_model=BeneficiaryResponse)

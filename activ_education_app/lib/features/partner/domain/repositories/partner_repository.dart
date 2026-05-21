@@ -1,5 +1,4 @@
 import '../../domain/entities/organization.dart';
-import '../../data/models/partner_models.dart';
 
 abstract class PartnerRepository {
   Future<Organization> createOrganization({
@@ -48,6 +47,7 @@ abstract class PartnerRepository {
     String beneficiaryId,
     Map<String, dynamic> data,
   );
+  Future<void> deleteBeneficiary(String beneficiaryId);
   Future<PaginatedBeneficiaries> listBeneficiaries({
     required String organizationId,
     int page = 1,

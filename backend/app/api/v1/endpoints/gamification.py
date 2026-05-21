@@ -5,12 +5,15 @@ Endpoints API pour la gamification utilisateur.
 from uuid import UUID
 from typing import Optional
 import math
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Request, Query
 
+from functools import lru_cache
+
 from app.core.logging import get_logger
 from app.core.security import get_current_user_id
-from app.core.cache import get_cache, TTL_GAMIFICATION, TTL_LEADERBOARD
+from app.core.cache import get_cache, CacheClient, TTL_GAMIFICATION, TTL_LEADERBOARD
 from app.db.supabase_client import get_supabase_client
 from app.middleware.rate_limiter import standard_limit
 from app.schemas.gamification import (
@@ -23,7 +26,12 @@ from app.schemas.gamification import (
 logger = get_logger("api.gamification")
 
 router = APIRouter()
-cache = get_cache()
+
+
+@lru_cache(maxsize=1)
+def _cache() -> CacheClient:
+    """Retourne l'instance (unique) du cache."""
+    return get_cache()
 
 
 def _calculate_level(total_xp: int) -> tuple[int, int, int]:
@@ -46,7 +54,7 @@ async def get_my_gamification(
     """
     # Cache par utilisateur (court TTL car données personnalisées)
     cache_key = f"gamification:profile:{user_id}"
-    cached = cache.get(cache_key)
+    cached = _cache().get(cache_key)
     if cached is not None:
         return GamificationProfile(**cached)
 
@@ -87,7 +95,6 @@ async def get_my_gamification(
     if user_profile:
         last_login = user_profile.get("last_login_at")
         if last_login:
-            from datetime import datetime, timezone, timedelta
             if isinstance(last_login, str):
                 last_login = datetime.fromisoformat(last_login.replace("Z", "+00:00"))
             
@@ -150,7 +157,7 @@ async def get_my_gamification(
     )
 
     # Cache le résultat
-    cache.set(cache_key, result.model_dump(mode="json"), ttl=TTL_GAMIFICATION)
+    _cache().set(cache_key, result.model_dump(mode="json"), ttl=TTL_GAMIFICATION)
     return result
 
 
@@ -166,7 +173,7 @@ async def get_leaderboard(
     """
     # Cache leaderboard (court TTL car change fréquemment)
     cache_key = f"gamification:leaderboard:l{limit}"
-    cached = cache.get(cache_key)
+    cached = _cache().get(cache_key)
     if cached is not None:
         return cached
 
@@ -188,5 +195,5 @@ async def get_leaderboard(
         for p in (profiles or [])
     ]
 
-    cache.set(cache_key, data, ttl=TTL_LEADERBOARD)
+    _cache().set(cache_key, data, ttl=TTL_LEADERBOARD)
     return data

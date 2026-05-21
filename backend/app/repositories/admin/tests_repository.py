@@ -4,6 +4,8 @@ import uuid as uuid_lib
 from typing import Any, Optional
 from uuid import UUID
 
+from functools import lru_cache
+
 from app.db.supabase_client import get_admin_supabase_client, SupabaseClient
 from app.core.logging import get_logger
 from app.core.exceptions import NotFoundError
@@ -226,8 +228,7 @@ class TestsAdminRepository:
         self._db.delete(table="question_options", id_column="id", id_value=str(option_id))
 
 
-_tests_admin_repo = TestsAdminRepository()
-
-
+@lru_cache(maxsize=1)
 def get_tests_admin_repository() -> TestsAdminRepository:
-    return _tests_admin_repo
+    """Retourne l'instance (unique) du repository tests."""
+    return TestsAdminRepository()

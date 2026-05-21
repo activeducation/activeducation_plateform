@@ -12,6 +12,8 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 from uuid import UUID
 
+from functools import lru_cache
+
 from app.db.supabase_client import get_admin_supabase_client, SupabaseClient
 from app.db.local_fallback import FALLBACK_TESTS
 from app.core.logging import get_logger
@@ -468,10 +470,7 @@ class OrientationRepository:
             logger.error(f"Error fetching matching school programs: {e}", exc_info=True)
             return []
 
-# Instance singleton
-orientation_repo = OrientationRepository()
-
-
+@lru_cache(maxsize=1)
 def get_orientation_repository() -> OrientationRepository:
-    """Retourne l'instance du repository d'orientation."""
-    return orientation_repo
+    """Retourne l'instance (unique) du repository d'orientation."""
+    return OrientationRepository()

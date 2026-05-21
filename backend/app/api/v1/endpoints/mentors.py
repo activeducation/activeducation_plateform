@@ -6,14 +6,21 @@ from uuid import UUID
 
 from fastapi import APIRouter, Query
 
+from functools import lru_cache
+
 from app.core.logging import get_logger
-from app.core.cache import get_cache, TTL_MENTORS
+from app.core.cache import get_cache, CacheClient, TTL_MENTORS
 from app.db.supabase_client import get_supabase_client
 
 logger = get_logger("api.mentors")
 
 router = APIRouter()
-cache = get_cache()
+
+
+@lru_cache(maxsize=1)
+def _cache() -> CacheClient:
+    """Retourne l'instance (unique) du cache."""
+    return get_cache()
 
 
 @router.get("")
@@ -29,7 +36,7 @@ async def list_mentors(
     cache_key = None
     if not specialty:
         cache_key = f"mentors:list:l{limit}:o{offset}"
-        cached = cache.get(cache_key)
+        cached = _cache().get(cache_key)
         if cached is not None:
             return cached
 
@@ -60,7 +67,7 @@ async def list_mentors(
     ]
 
     if cache_key:
-        cache.set(cache_key, data, ttl=TTL_MENTORS)
+        _cache().set(cache_key, data, ttl=TTL_MENTORS)
 
     return data
 
@@ -71,7 +78,7 @@ async def get_mentor(mentor_id: UUID):
     Detail d'un mentor specifique.
     """
     cache_key = f"mentors:detail:{mentor_id}"
-    cached = cache.get(cache_key)
+    cached = _cache().get(cache_key)
     if cached is not None:
         return cached
 
@@ -100,7 +107,7 @@ async def get_mentor(mentor_id: UUID):
         "linkedin_url": m.get("linkedin_url"),
     }
 
-    cache.set(cache_key, data, ttl=TTL_MENTORS)
+    _cache().set(cache_key, data, ttl=TTL_MENTORS)
     return data
 
 

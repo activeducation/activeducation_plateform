@@ -82,6 +82,68 @@ def _cache_admin_profile(user_id: UUID, profile: dict) -> None:
         logger.warning(f"Admin profile cache write failed: {e}")
 
 
+def _role_cache_key(user_id: UUID) -> str:
+    return f"auth:user_role:{user_id}"
+
+
+def _get_cached_user_role(user_id: UUID) -> Optional[str]:
+    try:
+        return get_cache().get(_role_cache_key(user_id))
+    except Exception as e:
+        logger.warning(f"User role cache read failed: {e}")
+        return None
+
+
+def _cache_user_role(user_id: UUID, role: str) -> None:
+    try:
+        get_cache().set(
+            _role_cache_key(user_id),
+            role,
+            ttl=_ADMIN_LOOKUP_CACHE_TTL_SECONDS,
+        )
+    except Exception as e:
+        logger.warning(f"User role cache write failed: {e}")
+
+
+async def get_current_user_role(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
+) -> str:
+    """Dependency qui retourne le rôle de l'utilisateur connecté (cache 60s).
+
+    Évite un DB roundtrip par requête. Utilise le même cache que get_current_admin.
+    """
+    if credentials is None:
+        raise AuthenticationError("Token d'authentification requis")
+
+    try:
+        user_data = get_user_from_token(credentials.credentials)
+        user_id = UUID(user_data["user_id"])
+    except (TokenExpiredError, InvalidTokenError):
+        raise
+    except Exception as e:
+        logger.error(f"Authentication error: {e}", exc_info=True)
+        raise AuthenticationError("Token invalide")
+
+    role = _get_cached_user_role(user_id)
+    if role is not None:
+        return role
+
+    import asyncio
+    from app.db.supabase_client import get_supabase_client
+    db = get_supabase_client()
+    user = await asyncio.to_thread(
+        db.fetch_one,
+        table="user_profiles",
+        id_column="id",
+        id_value=str(user_id),
+    )
+    role = user.get("role", "student") if user else "student"
+    _cache_user_role(user_id, role)
+    return role
+
+
+# =============================================================================
+# CACHE DES TOKENS
 # =============================================================================
 # VALIDATION TOKEN SUPABASE
 # =============================================================================

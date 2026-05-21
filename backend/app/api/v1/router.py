@@ -16,6 +16,7 @@ from app.api.v1.endpoints.admin import (
     knowledge_base as admin_knowledge_base,
     opportunities as admin_opportunities,
     elearning as admin_elearning,
+    partner as admin_partner,
 )
 from app.api.v1.endpoints.school import (
     auth as school_auth,
@@ -71,6 +72,7 @@ api_router.include_router(admin_settings.router, prefix="/admin", tags=["admin-s
 api_router.include_router(admin_knowledge_base.router, prefix="/admin/knowledge-base", tags=["admin-knowledge-base"])
 api_router.include_router(admin_opportunities.router, prefix="/admin/opportunities", tags=["admin-opportunities"])
 api_router.include_router(admin_elearning.router, prefix="/admin/elearning", tags=["admin-elearning"])
+api_router.include_router(admin_partner.router, prefix="/admin", tags=["admin-partner"])
 
 # =============================================================================
 # SCHOOL ADMIN ENDPOINTS

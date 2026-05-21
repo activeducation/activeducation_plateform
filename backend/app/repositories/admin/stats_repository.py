@@ -1,6 +1,8 @@
 """Repository pour les statistiques du dashboard admin."""
 
 from typing import Any
+from functools import lru_cache
+
 from app.db.supabase_client import get_admin_supabase_client, SupabaseClient
 from app.core.logging import get_logger
 from app.schemas.admin.dashboard import (
@@ -98,8 +100,7 @@ class StatsRepository:
             return DashboardStats()
 
 
-_stats_repo = StatsRepository()
-
-
+@lru_cache(maxsize=1)
 def get_stats_repository() -> StatsRepository:
-    return _stats_repo
+    """Retourne l'instance (unique) du repository stats."""
+    return StatsRepository()

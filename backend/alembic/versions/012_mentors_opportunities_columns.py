@@ -50,13 +50,17 @@ def upgrade() -> None:
     """)
 
     op.execute("""
-        CREATE POLICY IF NOT EXISTS "mentor_reviews_public_read"
-        ON mentor_reviews FOR SELECT USING (true);
+        DO $$ BEGIN
+            CREATE POLICY "mentor_reviews_public_read"
+            ON mentor_reviews FOR SELECT USING (true);
+        EXCEPTION WHEN duplicate_object THEN NULL; END $$;
     """)
 
     op.execute("""
-        CREATE POLICY IF NOT EXISTS "mentor_reviews_auth_insert"
-        ON mentor_reviews FOR INSERT WITH CHECK (auth.uid() = user_id);
+        DO $$ BEGIN
+            CREATE POLICY "mentor_reviews_auth_insert"
+            ON mentor_reviews FOR INSERT WITH CHECK (auth.uid() = user_id);
+        EXCEPTION WHEN duplicate_object THEN NULL; END $$;
     """)
 
     # =========================================================================
@@ -111,16 +115,20 @@ def upgrade() -> None:
 
     # Lecture publique des opportunités publiées
     op.execute("""
-        CREATE POLICY IF NOT EXISTS "opportunities_public_read"
-        ON opportunities FOR SELECT USING (is_published = true);
+        DO $$ BEGIN
+            CREATE POLICY "opportunities_public_read"
+            ON opportunities FOR SELECT USING (is_published = true);
+        EXCEPTION WHEN duplicate_object THEN NULL; END $$;
     """)
 
     # Accès complet pour admins via service_role
     op.execute("""
-        CREATE POLICY IF NOT EXISTS "opportunities_service_role_all"
-        ON opportunities FOR ALL
-        USING (auth.role() = 'service_role')
-        WITH CHECK (auth.role() = 'service_role');
+        DO $$ BEGIN
+            CREATE POLICY "opportunities_service_role_all"
+            ON opportunities FOR ALL
+            USING (auth.role() = 'service_role')
+            WITH CHECK (auth.role() = 'service_role');
+        EXCEPTION WHEN duplicate_object THEN NULL; END $$;
     """)
 
     op.execute("CREATE INDEX IF NOT EXISTS idx_opportunities_status ON opportunities(status);")

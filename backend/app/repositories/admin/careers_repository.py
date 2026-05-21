@@ -3,6 +3,8 @@
 from typing import Any, Optional
 from uuid import UUID
 
+from functools import lru_cache
+
 from app.db.supabase_client import get_admin_supabase_client, SupabaseClient
 from app.core.logging import get_logger
 from app.core.exceptions import NotFoundError
@@ -109,8 +111,7 @@ class CareersAdminRepository:
             raise NotFoundError("Carriere", str(career_id))
 
 
-_careers_admin_repo = CareersAdminRepository()
-
-
+@lru_cache(maxsize=1)
 def get_careers_admin_repository() -> CareersAdminRepository:
-    return _careers_admin_repo
+    """Retourne l'instance (unique) du repository carrières."""
+    return CareersAdminRepository()

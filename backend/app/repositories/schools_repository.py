@@ -3,6 +3,8 @@
 from typing import Optional
 from uuid import UUID
 
+from functools import lru_cache
+
 from app.db.supabase_client import get_supabase_client, SupabaseClient
 from app.core.logging import get_logger
 from app.core.exceptions import NotFoundError
@@ -143,8 +145,7 @@ class SchoolsPublicRepository:
         )
 
 
-_schools_public_repo = SchoolsPublicRepository()
-
-
+@lru_cache(maxsize=1)
 def get_schools_public_repository() -> SchoolsPublicRepository:
-    return _schools_public_repo
+    """Retourne l'instance (unique) du repository public écoles."""
+    return SchoolsPublicRepository()

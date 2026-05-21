@@ -133,4 +133,7 @@ def get_settings() -> Settings:
     return Settings()
 
 
-settings = get_settings()
+def __getattr__(name: str):
+    if name == "settings":
+        return get_settings()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

@@ -8,6 +8,7 @@ import '../../../../core/constants/app_typography.dart';
 import '../../../../core/di/injection_container.dart';
 
 final _getIt = getIt;
+const int _pageSize = 20;
 
 class OpportunitiesListPage extends StatefulWidget {
   const OpportunitiesListPage({super.key});
@@ -19,22 +20,62 @@ class OpportunitiesListPage extends StatefulWidget {
 class _OpportunitiesListPageState extends State<OpportunitiesListPage> {
   List<Map<String, dynamic>> _opportunities = [];
   bool _loading = true;
+  bool _loadingMore = false;
+  bool _hasMore = true;
+  int _page = 1;
   String? _error;
 
   @override
   void initState() {
     super.initState();
-    _loadAll();
+    _loadPage(1);
   }
 
-  Future<void> _loadAll() async {
+  Future<void> _loadPage(int page) async {
+    if (page == 1) {
+      setState(() { _loading = true; _error = null; });
+    } else {
+      setState(() { _loadingMore = true; });
+    }
+
     try {
       final dio = _getIt<Dio>(instanceName: 'apiClient');
-      final response = await dio.get(ApiEndpoints.opportunities);
+      final response = await dio.get(
+        ApiEndpoints.opportunities,
+        queryParameters: {'limit': _pageSize, 'offset': (page - 1) * _pageSize},
+      );
+
+      final data = response.data;
+      List<Map<String, dynamic>> items;
+
+      if (data is List) {
+        items = data.cast<Map<String, dynamic>>();
+        _hasMore = items.length >= _pageSize;
+      } else if (data is Map) {
+        items = (data['data'] as List?)?.cast<Map<String, dynamic>>() ??
+                (data['items'] as List?)?.cast<Map<String, dynamic>>() ??
+                [];
+        final total = data['total'] as int?;
+        if (total != null) {
+          _hasMore = _opportunities.length + items.length < total;
+        } else {
+          _hasMore = items.length >= _pageSize;
+        }
+      } else {
+        items = [];
+        _hasMore = false;
+      }
+
       if (mounted) {
         setState(() {
-          _opportunities = (response.data as List).cast<Map<String, dynamic>>();
+          if (page == 1) {
+            _opportunities = items;
+          } else {
+            _opportunities.addAll(items);
+          }
+          _page = page;
           _loading = false;
+          _loadingMore = false;
         });
       }
     } catch (e) {
@@ -42,8 +83,15 @@ class _OpportunitiesListPageState extends State<OpportunitiesListPage> {
         setState(() {
           _error = e.toString();
           _loading = false;
+          _loadingMore = false;
         });
       }
+    }
+  }
+
+  void _loadNextPage() {
+    if (!_loadingMore && _hasMore) {
+      _loadPage(_page + 1);
     }
   }
 
@@ -95,7 +143,7 @@ class _OpportunitiesListPageState extends State<OpportunitiesListPage> {
           children: [
             Text('Erreur: $_error'),
             const SizedBox(height: 16),
-            ElevatedButton(onPressed: _loadAll, child: const Text('Réessayer')),
+            ElevatedButton(onPressed: () => _loadPage(1), child: const Text('Réessayer')),
           ],
         ),
       );
@@ -107,8 +155,22 @@ class _OpportunitiesListPageState extends State<OpportunitiesListPage> {
 
     return ListView.builder(
       padding: const EdgeInsets.all(AppSpacing.lg),
-      itemCount: _opportunities.length,
+      itemCount: _opportunities.length + (_hasMore ? 1 : 0),
       itemBuilder: (context, index) {
+        if (index == _opportunities.length) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Center(
+              child: _loadingMore
+                  ? const CircularProgressIndicator()
+                  : TextButton(
+                      onPressed: _loadNextPage,
+                      child: const Text('Charger plus'),
+                    ),
+            ),
+          );
+        }
+
         final o = _opportunities[index];
         final type = o['opportunity_type'] as String? ?? '';
         return Card(

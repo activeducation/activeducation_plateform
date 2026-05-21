@@ -51,7 +51,8 @@ abstract class PartnerRemoteDataSource {
     String beneficiaryId,
     Map<String, dynamic> data,
   );
-  Future<PaginatedBeneficiaries> listBeneficiaries({
+  Future<void> deleteBeneficiary(String beneficiaryId);
+  Future<PaginatedBeneficiariesModel> listBeneficiaries({
     required String organizationId,
     int page = 1,
     int pageSize = 20,
@@ -226,7 +227,16 @@ class PartnerRemoteDataSourceImpl implements PartnerRemoteDataSource {
   }
 
   @override
-  Future<PaginatedBeneficiaries> listBeneficiaries({
+  Future<void> deleteBeneficiary(String beneficiaryId) async {
+    try {
+      await _dio.delete(ApiEndpoints.partnerBeneficiaryById(beneficiaryId));
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  @override
+  Future<PaginatedBeneficiariesModel> listBeneficiaries({
     required String organizationId,
     int page = 1,
     int pageSize = 20,
@@ -244,7 +254,7 @@ class PartnerRemoteDataSourceImpl implements PartnerRemoteDataSource {
         queryParameters: queryParams,
       );
 
-      return PaginatedBeneficiaries.fromJson(response.data);
+      return PaginatedBeneficiariesModel.fromJson(response.data);
     } on DioException catch (e) {
       throw _handleDioError(e);
     }

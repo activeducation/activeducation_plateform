@@ -130,6 +130,11 @@ class PartnerRepositoryImpl implements PartnerRepository {
   }
 
   @override
+  Future<void> deleteBeneficiary(String beneficiaryId) async {
+    await _remoteDataSource.deleteBeneficiary(beneficiaryId);
+  }
+
+  @override
   Future<PaginatedBeneficiaries> listBeneficiaries({
     required String organizationId,
     int page = 1,
@@ -142,11 +147,6 @@ class PartnerRepositoryImpl implements PartnerRepository {
       pageSize: pageSize,
       status: status,
     );
-    return PaginatedBeneficiaries(
-      beneficiaries: model.beneficiaries,
-      total: model.total,
-      page: model.page,
-      pageSize: model.pageSize,
-    );
+    return model.toEntity();
   }
 }

@@ -3,6 +3,8 @@
 from typing import Any, Optional
 from uuid import UUID
 
+from functools import lru_cache
+
 from app.db.supabase_client import get_admin_supabase_client, SupabaseClient
 from app.core.logging import get_logger
 from app.core.exceptions import NotFoundError
@@ -200,8 +202,7 @@ class SchoolsAdminRepository:
         self._db.delete(table="school_images", id_column="id", id_value=str(image_id))
 
 
-_schools_admin_repo = SchoolsAdminRepository()
-
-
+@lru_cache(maxsize=1)
 def get_schools_admin_repository() -> SchoolsAdminRepository:
-    return _schools_admin_repo
+    """Retourne l'instance (unique) du repository admin écoles."""
+    return SchoolsAdminRepository()

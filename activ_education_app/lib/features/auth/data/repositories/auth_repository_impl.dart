@@ -157,6 +157,9 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<AuthFailure, UserProfile>> getCurrentUserProfile() async {
     try {
       final profile = await _remoteDataSource.getCurrentUserProfile();
+      if (profile.role != null) {
+        await _tokenStorage.saveUserRole(profile.role!);
+      }
       await _saveUser(
         UserModel(
           id: profile.id,
@@ -166,6 +169,7 @@ class AuthRepositoryImpl implements AuthRepository {
           displayName: profile.displayName,
           phoneNumber: profile.phoneNumber,
           avatarUrl: profile.avatarUrl,
+          role: profile.role,
           createdAt: profile.createdAt,
         ),
       );

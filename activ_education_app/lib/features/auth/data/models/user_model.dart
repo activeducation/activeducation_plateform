@@ -10,6 +10,7 @@ class UserModel extends User {
     super.displayName,
     super.phoneNumber,
     super.avatarUrl,
+    super.role,
     required super.createdAt,
   });
 
@@ -22,6 +23,7 @@ class UserModel extends User {
       displayName: json['display_name'] as String?,
       phoneNumber: json['phone_number'] as String?,
       avatarUrl: json['avatar_url'] as String?,
+      role: json['role'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
   }
@@ -35,6 +37,7 @@ class UserModel extends User {
       'display_name': displayName,
       'phone_number': phoneNumber,
       'avatar_url': avatarUrl,
+      'role': role,
       'created_at': createdAt.toIso8601String(),
     };
   }
@@ -47,6 +50,7 @@ class UserModel extends User {
         displayName: displayName,
         phoneNumber: phoneNumber,
         avatarUrl: avatarUrl,
+        role: role,
         createdAt: createdAt,
       );
 }
@@ -61,6 +65,7 @@ class UserProfileModel extends UserProfile {
     super.displayName,
     super.phoneNumber,
     super.avatarUrl,
+    super.role,
     required super.createdAt,
     super.dateOfBirth,
     super.schoolName,
@@ -78,6 +83,7 @@ class UserProfileModel extends UserProfile {
       displayName: json['display_name'] as String?,
       phoneNumber: json['phone_number'] as String?,
       avatarUrl: json['avatar_url'] as String?,
+      role: json['role'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
       dateOfBirth: json['date_of_birth'] != null
           ? DateTime.parse(json['date_of_birth'] as String)
@@ -100,6 +106,7 @@ class UserProfileModel extends UserProfile {
       'display_name': displayName,
       'phone_number': phoneNumber,
       'avatar_url': avatarUrl,
+      'role': role,
       'created_at': createdAt.toIso8601String(),
       'date_of_birth': dateOfBirth?.toIso8601String(),
       'school_name': schoolName,
@@ -117,6 +124,7 @@ class UserProfileModel extends UserProfile {
         displayName: displayName,
         phoneNumber: phoneNumber,
         avatarUrl: avatarUrl,
+        role: role,
         createdAt: createdAt,
         dateOfBirth: dateOfBirth,
         schoolName: schoolName,

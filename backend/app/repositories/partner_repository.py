@@ -15,6 +15,8 @@ from uuid import UUID
 from app.db.supabase_client import get_admin_supabase_client, SupabaseClient
 from app.core.logging import get_logger
 from app.schemas.partner import OrganizationType
+from functools import lru_cache
+
 from app.core.exceptions import (
     NotFoundError,
     QueryError,
@@ -153,10 +155,10 @@ class PartnerRepository:
             if is_approved is not None:
                 query = query.eq("is_approved", is_approved)
             if org_type is not None:
-                valid_types = list(OrganizationType)
-                if org_type not in valid_types:
+                valid_values = [t.value for t in OrganizationType]
+                if org_type not in valid_values:
                     raise ValidationError(
-                        f"org_type invalide. Valeurs: {', '.join(valid_types)}"
+                        f"org_type invalide. Valeurs: {', '.join(valid_values)}"
                     )
                 query = query.eq("type", org_type)
 
@@ -344,9 +346,7 @@ class PartnerRepository:
             return None
 
 
-partner_repo = PartnerRepository()
-
-
+@lru_cache(maxsize=1)
 def get_partner_repository() -> PartnerRepository:
-    """Retourne l'instance du repository partenaire."""
-    return partner_repo
+    """Retourne l'instance (unique) du repository partenaire."""
+    return PartnerRepository()

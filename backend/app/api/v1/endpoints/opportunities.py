@@ -7,14 +7,21 @@ from typing import Optional
 
 from fastapi import APIRouter, Query
 
+from functools import lru_cache
+
 from app.core.logging import get_logger
-from app.core.cache import get_cache, TTL_OPPORTUNITIES
+from app.core.cache import get_cache, CacheClient, TTL_OPPORTUNITIES
 from app.db.supabase_client import get_supabase_client
 
 logger = get_logger("api.opportunities")
 
 router = APIRouter()
-cache = get_cache()
+
+
+@lru_cache(maxsize=1)
+def _cache() -> CacheClient:
+    """Retourne l'instance (unique) du cache."""
+    return get_cache()
 
 
 @router.get("")
@@ -32,7 +39,7 @@ async def list_opportunities(
     cache_key = None
     if not opportunity_type and not location and not remote:
         cache_key = f"opportunities:list:l{limit}:o{offset}"
-        cached = cache.get(cache_key)
+        cached = _cache().get(cache_key)
         if cached is not None:
             return cached
 
@@ -70,7 +77,7 @@ async def list_opportunities(
     ]
 
     if cache_key:
-        cache.set(cache_key, data, ttl=TTL_OPPORTUNITIES)
+        _cache().set(cache_key, data, ttl=TTL_OPPORTUNITIES)
 
     return data
 
@@ -81,7 +88,7 @@ async def get_opportunity(opportunity_id: UUID):
     Détail d'une opportunité spécifique.
     """
     cache_key = f"opportunities:detail:{opportunity_id}"
-    cached = cache.get(cache_key)
+    cached = _cache().get(cache_key)
     if cached is not None:
         return cached
 
@@ -118,5 +125,5 @@ async def get_opportunity(opportunity_id: UUID):
         "updated_at": o.get("updated_at"),
     }
 
-    cache.set(cache_key, data, ttl=TTL_OPPORTUNITIES)
+    _cache().set(cache_key, data, ttl=TTL_OPPORTUNITIES)
     return data
