@@ -18,14 +18,14 @@ alembic==1.14.0
 psycopg2-binary==2.9.10
 
 # Security & Auth
-python-jose[cryptography]==3.3.0
+python-jose[cryptography]==3.4.0  # CVE-2024-33663/33664 (algorithm confusion)
 
 # Cache
 redis==5.2.1
 
 # Middleware
 slowapi==0.1.9
-python-multipart==0.0.20
+python-multipart==0.0.26  # CVE-2026-40347/24486 (DoS via multipart parsing)
 
 # HTTP Client
 httpx==0.28.1
@@ -40,7 +40,7 @@ python-dotenv==1.0.1
 sentry-sdk[fastapi]==2.20.0
 
 # Testing
-pytest==8.3.4
+pytest==9.0.3  # CVE-2025-71176
 pytest-asyncio==0.25.2
 pytest-cov==6.0.0
 factory-boy==3.3.1
