@@ -2,7 +2,6 @@ import 'package:injectable/injectable.dart';
 import '../../domain/entities/organization.dart';
 import '../../domain/repositories/partner_repository.dart';
 import '../datasources/partner_remote_datasource.dart';
-import '../models/partner_models.dart';
 
 @LazySingleton(as: PartnerRepository)
 class PartnerRepositoryImpl implements PartnerRepository {

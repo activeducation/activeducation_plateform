@@ -22,8 +22,8 @@ class ElearningRepositoryImpl implements ElearningRepository {
         'page': page,
         'per_page': perPage,
         if (search?.isNotEmpty == true) 'search': search,
-        if (schoolId != null) 'school_id': schoolId,
-        if (isPublished != null) 'is_published': isPublished,
+        'school_id': ?schoolId,
+        'is_published': ?isPublished,
       };
       final response = await _apiClient.get<Map<String, dynamic>>(
         ApiEndpoints.adminElearningCourses,

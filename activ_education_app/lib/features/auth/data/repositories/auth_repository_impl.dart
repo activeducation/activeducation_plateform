@@ -197,8 +197,9 @@ class AuthRepositoryImpl implements AuthRepository {
       if (lastName != null) data['last_name'] = lastName;
       if (displayName != null) data['display_name'] = displayName;
       if (phoneNumber != null) data['phone_number'] = phoneNumber;
-      if (dateOfBirth != null)
+      if (dateOfBirth != null) {
         data['date_of_birth'] = dateOfBirth.toIso8601String();
+      }
       if (schoolName != null) data['school_name'] = schoolName;
       if (classLevel != null) data['class_level'] = classLevel;
 

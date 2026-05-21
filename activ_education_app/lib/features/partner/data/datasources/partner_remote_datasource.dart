@@ -84,13 +84,13 @@ class PartnerRemoteDataSourceImpl implements PartnerRemoteDataSource {
         data: {
           'name': name,
           'type': type,
-          if (description != null) 'description': description,
-          if (contactEmail != null) 'contact_email': contactEmail,
-          if (contactPhone != null) 'contact_phone': contactPhone,
-          if (contactPerson != null) 'contact_person': contactPerson,
-          if (address != null) 'address': address,
-          if (city != null) 'city': city,
-          if (country != null) 'country': country,
+          'description': ?description,
+          'contact_email': ?contactEmail,
+          'contact_phone': ?contactPhone,
+          'contact_person': ?contactPerson,
+          'address': ?address,
+          'city': ?city,
+          'country': ?country,
         },
       );
       return OrganizationModel.fromJson(response.data);
@@ -131,9 +131,9 @@ class PartnerRemoteDataSourceImpl implements PartnerRemoteDataSource {
       final queryParams = <String, dynamic>{
         'page': page,
         'page_size': pageSize,
-        if (isActive != null) 'is_active': isActive,
-        if (isApproved != null) 'is_approved': isApproved,
-        if (orgType != null) 'org_type': orgType,
+        'is_active': ?isActive,
+        'is_approved': ?isApproved,
+        'org_type': ?orgType,
       };
 
       final response = await _dio.get(
@@ -177,19 +177,18 @@ class PartnerRemoteDataSourceImpl implements PartnerRemoteDataSource {
           'last_name': lastName,
           if (dateOfBirth != null)
             'date_of_birth': dateOfBirth.toIso8601String().split('T').first,
-          if (gender != null) 'gender': gender,
-          if (placeOfBirth != null) 'place_of_birth': placeOfBirth,
-          if (fatherName != null) 'father_name': fatherName,
-          if (motherName != null) 'mother_name': motherName,
-          if (guardianName != null) 'guardian_name': guardianName,
-          if (guardianPhone != null) 'guardian_phone': guardianPhone,
-          if (guardianRelationship != null)
-            'guardian_relationship': guardianRelationship,
-          if (address != null) 'address': address,
-          if (city != null) 'city': city,
-          if (country != null) 'country': country,
-          if (photoUrl != null) 'photo_url': photoUrl,
-          if (notes != null) 'notes': notes,
+          'gender': ?gender,
+          'place_of_birth': ?placeOfBirth,
+          'father_name': ?fatherName,
+          'mother_name': ?motherName,
+          'guardian_name': ?guardianName,
+          'guardian_phone': ?guardianPhone,
+          'guardian_relationship': ?guardianRelationship,
+          'address': ?address,
+          'city': ?city,
+          'country': ?country,
+          'photo_url': ?photoUrl,
+          'notes': ?notes,
         },
       );
       return BeneficiaryModel.fromJson(response.data);
@@ -246,7 +245,7 @@ class PartnerRemoteDataSourceImpl implements PartnerRemoteDataSource {
       final queryParams = <String, dynamic>{
         'page': page,
         'page_size': pageSize,
-        if (status != null) 'status': status,
+        'status': ?status,
       };
 
       final response = await _dio.get(

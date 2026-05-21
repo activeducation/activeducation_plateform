@@ -140,7 +140,7 @@ class _CoursesListViewState extends State<_CoursesListView> {
               SizedBox(
                 width: 200,
                 child: DropdownButtonFormField<String?>(
-                  value: _selectedSchoolId,
+                  initialValue: _selectedSchoolId,
                   decoration: const InputDecoration(
                     labelText: 'École',
                     border: OutlineInputBorder(),
@@ -163,7 +163,7 @@ class _CoursesListViewState extends State<_CoursesListView> {
               SizedBox(
                 width: 150,
                 child: DropdownButtonFormField<bool?>(
-                  value: _selectedPublished,
+                  initialValue: _selectedPublished,
                   decoration: const InputDecoration(
                     labelText: 'Statut',
                     border: OutlineInputBorder(),
@@ -246,7 +246,7 @@ class _CourseCard extends StatelessWidget {
                   width: 60,
                   height: 60,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
+                  errorBuilder: (_, _, _) => Container(
                     width: 60,
                     height: 60,
                     color: Theme.of(context).colorScheme.surfaceContainerHighest,

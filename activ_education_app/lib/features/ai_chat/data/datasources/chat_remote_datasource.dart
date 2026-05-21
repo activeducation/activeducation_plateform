@@ -40,8 +40,7 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
       final body = <String, dynamic>{
         'message': message,
         'session_id': sessionId,
-        if (orientationContext != null)
-          'orientation_context': orientationContext,
+        'orientation_context': ?orientationContext,
         if (history != null && history.isNotEmpty)
           'history': history,
       };

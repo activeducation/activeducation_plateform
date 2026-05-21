@@ -54,10 +54,10 @@ class SchoolCard extends StatelessWidget {
                             height: 100,
                             width: double.infinity,
                             fit: BoxFit.cover,
-                            placeholder: (_, __) => const Center(
+                            placeholder: (_, _) => const Center(
                               child: CircularProgressIndicator(strokeWidth: 2),
                             ),
-                            errorWidget: (_, __, ___) => Icon(
+                            errorWidget: (_, _, _) => Icon(
                               Iconsax.building_4,
                               size: 40,
                               color: AppColors.primary.withValues(alpha: 0.3),

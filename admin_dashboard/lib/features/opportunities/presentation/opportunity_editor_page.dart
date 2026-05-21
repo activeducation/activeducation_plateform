@@ -163,7 +163,7 @@ class _OpportunityEditorPageState extends State<OpportunityEditorPage> {
               Expanded(child: TextField(controller: _titleCtrl, decoration: const InputDecoration(labelText: 'Titre *'))),
               const SizedBox(width: 16),
               SizedBox(width: 150, child: DropdownButtonFormField<String>(
-                value: _type,
+                initialValue: _type,
                 decoration: const InputDecoration(labelText: 'Type'),
                 items: const [
                   DropdownMenuItem(value: 'job', child: Text('Emploi')),
@@ -195,7 +195,7 @@ class _OpportunityEditorPageState extends State<OpportunityEditorPage> {
               Expanded(child: TextField(controller: _locationCtrl, decoration: const InputDecoration(labelText: 'Lieu'))),
               const SizedBox(width: 16),
               SizedBox(width: 150, child: DropdownButtonFormField<String>(
-                value: _remote,
+                initialValue: _remote,
                 decoration: const InputDecoration(labelText: 'Type'),
                 items: const [
                   DropdownMenuItem(value: 'onsite', child: Text('Sur site')),
@@ -226,7 +226,7 @@ class _OpportunityEditorPageState extends State<OpportunityEditorPage> {
               Expanded(child: TextField(controller: _salaryMaxCtrl, decoration: const InputDecoration(labelText: 'Salaire max'), keyboardType: TextInputType.number)),
               const SizedBox(width: 16),
               SizedBox(width: 100, child: DropdownButtonFormField<String>(
-                value: _currency,
+                initialValue: _currency,
                 decoration: const InputDecoration(labelText: 'Devise'),
                 items: const [
                   DropdownMenuItem(value: 'EUR', child: Text('EUR')),

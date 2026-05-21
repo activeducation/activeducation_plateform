@@ -57,7 +57,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           'password': password,
           'first_name': firstName,
           'last_name': lastName,
-          if (phoneNumber != null) 'phone_number': phoneNumber,
+          'phone_number': ?phoneNumber,
         },
       );
       return AuthResultModel.fromJson(response.data);

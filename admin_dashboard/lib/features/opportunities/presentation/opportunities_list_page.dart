@@ -56,7 +56,7 @@ class _OpportunitiesListPageState extends State<OpportunitiesListPage> {
   Future<void> _togglePublish(String id, bool current) async {
     try {
       final api = getIt<ApiClient>();
-      await api.patch('${ApiEndpoints.adminOpportunityPublish(id)}', data: {'is_published': !current});
+      await api.patch(ApiEndpoints.adminOpportunityPublish(id), data: {'is_published': !current});
       await _load();
       if (mounted) AdminSnackbar.success(context, current ? 'Masqué' : 'Publié');
     } catch (e) {
@@ -67,7 +67,7 @@ class _OpportunitiesListPageState extends State<OpportunitiesListPage> {
   Future<void> _toggleFeatured(String id, bool current) async {
     try {
       final api = getIt<ApiClient>();
-      await api.patch('${ApiEndpoints.adminOpportunityFeatured(id)}', data: {'is_featured': !current});
+      await api.patch(ApiEndpoints.adminOpportunityFeatured(id), data: {'is_featured': !current});
       await _load();
       if (mounted) AdminSnackbar.success(context, current ? 'Retiré des featured' : 'Ajouté aux featured');
     } catch (e) {
@@ -103,7 +103,7 @@ class _OpportunitiesListPageState extends State<OpportunitiesListPage> {
         const SizedBox(height: 16),
         Row(children: [
           SizedBox(width: 150, child: DropdownButtonFormField<String?>(
-            value: _typeFilter,
+            initialValue: _typeFilter,
             decoration: const InputDecoration(labelText: 'Type', border: OutlineInputBorder(), isDense: true),
             items: const [
               DropdownMenuItem(value: null, child: Text('Tous')),
@@ -116,7 +116,7 @@ class _OpportunitiesListPageState extends State<OpportunitiesListPage> {
           )),
           const SizedBox(width: 16),
           SizedBox(width: 150, child: DropdownButtonFormField<bool?>(
-            value: _publishedFilter,
+            initialValue: _publishedFilter,
             decoration: const InputDecoration(labelText: 'Statut', border: OutlineInputBorder(), isDense: true),
             items: const [
               DropdownMenuItem(value: null, child: Text('Tous')),

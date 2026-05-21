@@ -182,7 +182,7 @@ class _CourseEditorPageState extends State<CourseEditorPage> {
               TextField(controller: titleCtrl, decoration: const InputDecoration(labelText: 'Titre *')),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: lessonType,
+                initialValue: lessonType,
                 decoration: const InputDecoration(labelText: 'Type'),
                 items: const [
                   DropdownMenuItem(value: 'text', child: Text('Texte')),
@@ -277,7 +277,7 @@ class _CourseEditorPageState extends State<CourseEditorPage> {
               Expanded(child: TextField(controller: _titleCtrl, decoration: const InputDecoration(labelText: 'Titre *'))),
               const SizedBox(width: 16),
               SizedBox(width: 150, child: DropdownButtonFormField<String>(
-                value: _level,
+                initialValue: _level,
                 decoration: const InputDecoration(labelText: 'Niveau'),
                 items: const [
                   DropdownMenuItem(value: 'beginner', child: Text('Débutant')),

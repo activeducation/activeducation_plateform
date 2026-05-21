@@ -9,6 +9,15 @@
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
+analyzer:
+  errors:
+    # Modèles avec code-gen explicite (json_serializable/freezed-like) — overrides
+    # de fields des entités sont intentionnels pour exposer le type concret.
+    overridden_fields: ignore
+    # Constants snake_case alignées avec l'API backend (ex: 'not_started',
+    # 'in_progress'). Renommer casserait la (dé)sérialisation JSON.
+    constant_identifier_names: ignore
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`

@@ -46,6 +46,9 @@ class AppRouter {
     redirect: (context, state) async {
       final authRedirect = await AuthGuard.redirect(context, state);
       if (authRedirect != null) return authRedirect;
+      // GoRouter garantit que context reste valide dans le redirect callback
+      // (pas une vraie async gap UX) — c'est le contrat de l'API.
+      // ignore: use_build_context_synchronously
       return RoleGuard.redirect(context, state);
     },
     routes: <RouteBase>[
