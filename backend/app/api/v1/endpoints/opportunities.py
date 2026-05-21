@@ -117,7 +117,9 @@ async def get_opportunity(opportunity_id: UUID):
         "benefits": o.get("benefits"),
         "salary_min": o.get("salary_min"),
         "salary_max": o.get("salary_max"),
-        "salary_currency": o.get("salary_currency", "XOF"),
+        # NB: `or` (pas `, "XOF"`) — la colonne DB peut contenir NULL explicite
+        # (vieilles lignes pré-migration 012 où DEFAULT n'avait pas été appliqué)
+        "salary_currency": o.get("salary_currency") or "XOF",
         "application_url": o.get("application_url"),
         "application_deadline": o.get("application_deadline"),
         "is_featured": o.get("is_featured"),

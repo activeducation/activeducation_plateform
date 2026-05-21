@@ -34,6 +34,9 @@ from app.repositories.partner_repository import (
     get_partner_repository,
     PartnerRepository,
 )
+import asyncio
+
+from app.db.supabase_client import get_supabase_client
 from app.repositories.users_repository import (
     get_users_repository,
     UsersRepository,
@@ -134,9 +137,6 @@ class PartnerService:
         approved_by: UUID,
     ) -> OrganizationResponse:
         """Approuve une organisation (atomique via RPC PostgreSQL)."""
-        import asyncio
-        from app.db.supabase_client import get_supabase_client
-
         db = get_supabase_client()
         try:
             result = await asyncio.to_thread(

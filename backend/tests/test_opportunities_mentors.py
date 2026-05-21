@@ -47,7 +47,11 @@ async def test_list_opportunities_filters_published_only(fake_supabase):
 
     with patch.object(opp_module, "get_supabase_client", return_value=fake_supabase), \
          patch.object(opp_module, "_cache", lambda: MagicMock(get=MagicMock(return_value=None), set=MagicMock())):
-        result = await opp_module.list_opportunities()
+        # NB: appel direct sans FastAPI = Query() non résolu → on passe les
+        # defaults explicitement pour limit/offset (int) et les filtres (None).
+        result = await opp_module.list_opportunities(
+            opportunity_type=None, location=None, remote=None, limit=20, offset=0,
+        )
 
     assert isinstance(result, list)
     assert len(result) == 1
@@ -73,7 +77,9 @@ async def test_list_opportunities_filters_by_type(fake_supabase):
 
     with patch.object(opp_module, "get_supabase_client", return_value=fake_supabase), \
          patch.object(opp_module, "_cache", lambda: MagicMock(get=MagicMock(return_value=None), set=MagicMock())):
-        await opp_module.list_opportunities(opportunity_type="scholarship")
+        await opp_module.list_opportunities(
+            opportunity_type="scholarship", location=None, remote=None, limit=20, offset=0,
+        )
 
     eq_calls = query.eq.call_args_list
     assert any(call.args == ("opportunity_type", "scholarship") for call in eq_calls)
@@ -150,7 +156,7 @@ async def test_list_mentors_filters_active_and_verified():
 
     with patch.object(mentors_module, "get_supabase_client", return_value=fake_db), \
          patch.object(mentors_module, "_cache", lambda: MagicMock(get=MagicMock(return_value=None), set=MagicMock())):
-        result = await mentors_module.list_mentors()
+        result = await mentors_module.list_mentors(specialty=None, limit=20, offset=0)
 
     assert len(result) == 1
     assert result[0]["full_name"] == "Dr. Koffi"
