@@ -12,7 +12,8 @@ filterwarnings = [
     "ignore::DeprecationWarning:supabase.*",
     "ignore::DeprecationWarning:slowapi.*",
     "ignore::pydantic.PydanticDeprecatedSince20",
-    "ignore::pydantic.PydanticDeprecatedSince212",
+    # PydanticDeprecatedSince212 retiré : n'existe que dans pydantic >= 2.12,
+    # mais le projet est pinned à 2.10.4 → AttributeError au démarrage pytest CI.
 ]
 
 [tool.coverage.run]
