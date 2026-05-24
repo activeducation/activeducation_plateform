@@ -92,8 +92,12 @@ jobs:
       ENVIRONMENT: testing
       SECRET_KEY: ${{ secrets.CI_SECRET_KEY || 'ci-test-secret-key-never-use-in-any-deployment-env-xx' }}
       SUPABASE_URL: ${{ secrets.CI_SUPABASE_URL || 'https://ci-test.supabase.co' }}
-      SUPABASE_KEY: ${{ secrets.CI_SUPABASE_KEY || 'ci-test-anon-key' }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.CI_SUPABASE_SERVICE_ROLE_KEY || 'ci-test-service-role-key' }}
+      # JWT factices au format correct (3 segments base64.base64.base64) — la
+      # librairie supabase valide le format à l'init du client (instancié au
+      # module load via app/db/supabase_client.py:317). Une simple string ne
+      # passe pas → "Invalid API key" → import crash → pytest exit 4.
+      SUPABASE_KEY: ${{ secrets.CI_SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6ImNpLXRlc3QifQ.ci-test-signature-not-validated' }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.CI_SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIiwiaXNzIjoiY2ktdGVzdCJ9.ci-test-signature-not-validated' }}
       REDIS_URL: redis://localhost:6379/0
       GROQ_API_KEY: ${{ secrets.CI_GROQ_API_KEY || '' }}
 
