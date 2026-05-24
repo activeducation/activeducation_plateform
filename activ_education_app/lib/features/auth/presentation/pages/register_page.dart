@@ -252,8 +252,9 @@ class _RegisterPageState extends State<RegisterPage> {
         ),
       ),
       validator: (value) {
-        if (value == null || value.isEmpty)
+        if (value == null || value.isEmpty) {
           return 'Veuillez entrer votre email';
+        }
         if (!RegExp(r'^[\w\-\.]+@([\w\-]+\.)+[\w\-]{2,63}$').hasMatch(value)) {
           return 'Veuillez entrer un email valide';
         }
@@ -288,8 +289,9 @@ class _RegisterPageState extends State<RegisterPage> {
         ),
       ),
       validator: (value) {
-        if (value == null || value.isEmpty)
+        if (value == null || value.isEmpty) {
           return 'Veuillez entrer un mot de passe';
+        }
         if (!_isPasswordValid) return 'Veuillez remplir toutes les conditions';
         return null;
       },
@@ -379,10 +381,12 @@ class _RegisterPageState extends State<RegisterPage> {
         ),
       ),
       validator: (value) {
-        if (value == null || value.isEmpty)
+        if (value == null || value.isEmpty) {
           return 'Veuillez confirmer le mot de passe';
-        if (value != _passwordController.text)
+        }
+        if (value != _passwordController.text) {
           return 'Les mots de passe ne correspondent pas';
+        }
         return null;
       },
     );

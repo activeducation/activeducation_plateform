@@ -1,5 +1,7 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import orientation, auth, schools, chat, elearning
+from app.api.v1.endpoints import orientation, auth, schools, chat, elearning, gamification
+from app.api.v1.endpoints import mentors, opportunities
+from app.api.v1.endpoints.partner import organizations as partner_organizations
 from app.api.v1.endpoints.admin import (
     auth as admin_auth,
     upload as admin_upload,
@@ -12,6 +14,9 @@ from app.api.v1.endpoints.admin import (
     mentors as admin_mentors,
     settings as admin_settings,
     knowledge_base as admin_knowledge_base,
+    opportunities as admin_opportunities,
+    elearning as admin_elearning,
+    partner as admin_partner,
 )
 from app.api.v1.endpoints.school import (
     auth as school_auth,
@@ -39,6 +44,18 @@ api_router.include_router(chat.router, prefix="/chat", tags=["chat-ia"])
 # E-Learning — cours, modules, lecons, progression
 api_router.include_router(elearning.router, prefix="/elearning", tags=["elearning"])
 
+# Gamification — XP, badges, challenges, leaderboard
+api_router.include_router(gamification.router, prefix="/gamification", tags=["gamification"])
+
+# Mentors — liste et detail des mentors
+api_router.include_router(mentors.router, prefix="/mentors", tags=["mentors"])
+
+# Opportunities — stages, jobs, bourses
+api_router.include_router(opportunities.router, prefix="/opportunities", tags=["opportunities"])
+
+# Partner (CDEJ, ONG) — organisations et beneficiaires
+api_router.include_router(partner_organizations.router, prefix="", tags=["partner"])
+
 # =============================================================================
 # ADMIN ENDPOINTS
 # =============================================================================
@@ -53,6 +70,9 @@ api_router.include_router(admin_gamification.router, prefix="/admin/gamification
 api_router.include_router(admin_mentors.router, prefix="/admin/mentors", tags=["admin-mentors"])
 api_router.include_router(admin_settings.router, prefix="/admin", tags=["admin-settings"])
 api_router.include_router(admin_knowledge_base.router, prefix="/admin/knowledge-base", tags=["admin-knowledge-base"])
+api_router.include_router(admin_opportunities.router, prefix="/admin/opportunities", tags=["admin-opportunities"])
+api_router.include_router(admin_elearning.router, prefix="/admin/elearning", tags=["admin-elearning"])
+api_router.include_router(admin_partner.router, prefix="/admin", tags=["admin-partner"])
 
 # =============================================================================
 # SCHOOL ADMIN ENDPOINTS

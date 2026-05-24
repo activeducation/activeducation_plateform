@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'core/di/injection_container.dart';
 import 'core/theme/theme.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
+import 'features/partner/presentation/bloc/partner_bloc.dart';
 import 'router/app_router.dart';
 
 class ActivEducationApp extends StatelessWidget {
@@ -11,34 +12,46 @@ class ActivEducationApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider<AuthBloc>(
-          create: (_) => getIt<AuthBloc>()..add(const AuthCheckRequested()),
-        ),
+    return MaterialApp.router(
+      title: 'ActivEducation',
+      debugShowCheckedModeBanner: false,
+
+      // Theme
+      theme: AppTheme.lightTheme,
+      themeMode: ThemeMode.light,
+
+      // Routing
+      routerConfig: AppRouter.router,
+
+      // Providers must wrap the Navigator's child (not MaterialApp itself) so
+      // every route built by go_router can find AuthBloc via the inherited tree.
+      builder: (context, child) {
+        return MultiBlocProvider(
+          providers: [
+            BlocProvider<AuthBloc>(
+              lazy: false,
+              create: (_) =>
+                  getIt<AuthBloc>()..add(const AuthCheckRequested()),
+            ),
+            BlocProvider<PartnerBloc>(
+              lazy: true,
+              create: (_) => getIt<PartnerBloc>(),
+            ),
+          ],
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
+
+      // Localisation
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
       ],
-      child: MaterialApp.router(
-        title: 'ActivEducation',
-        debugShowCheckedModeBanner: false,
-
-        // Theme
-        theme: AppTheme.lightTheme,
-        themeMode: ThemeMode.light,
-
-        // Routing
-        routerConfig: AppRouter.router,
-
-        // Localisation
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: const [
-          Locale('fr', 'FR'), // Francais par defaut
-          Locale('en', 'US'),
-        ],
-      ),
+      supportedLocales: const [
+        Locale('fr', 'FR'), // Francais par defaut
+        Locale('en', 'US'),
+      ],
     );
   }
 }

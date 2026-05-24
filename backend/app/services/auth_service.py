@@ -10,6 +10,8 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
+from functools import lru_cache
+
 from app.core.logging import get_logger
 from app.core.exceptions import (
     AuthenticationError,
@@ -368,10 +370,7 @@ class AuthService:
         )
 
 
-# Instance singleton
-auth_service = AuthService()
-
-
+@lru_cache(maxsize=1)
 def get_auth_service() -> AuthService:
-    """Retourne l'instance du service d'authentification."""
-    return auth_service
+    """Retourne l'instance (unique) du service d'authentification."""
+    return AuthService()

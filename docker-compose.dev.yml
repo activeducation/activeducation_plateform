@@ -1,0 +1,16 @@
+# Override de développement local — NE PAS commiter en production
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+#
+# Expose le backend sur http://localhost:8000 pour que les apps Flutter
+# puissent l'atteindre sans passer par Traefik/HTTPS.
+
+services:
+  backend:
+    ports:
+      - "8000:8000"
+    environment:
+      ENVIRONMENT: development
+      DEBUG: "true"
+      REDIS_URL: redis://:515256f512d12ba15c64633616941d5c84adae91abdd5b61b12d6bfc2f820459@redis:6379/0
+      # Surcharge CORS en format JSON pour pydantic_settings
+      BACKEND_CORS_ORIGINS: '["http://localhost:3000","http://localhost:8080","http://localhost:4200","http://localhost:8000"]'

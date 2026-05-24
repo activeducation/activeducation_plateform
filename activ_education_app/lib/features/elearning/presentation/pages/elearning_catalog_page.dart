@@ -460,7 +460,7 @@ class _CatalogViewState extends State<_CatalogView> {
                         physics: const BouncingScrollPhysics(),
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         itemCount: state.myCourses.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 12),
+                        separatorBuilder: (_, _) => const SizedBox(width: 12),
                         itemBuilder: (context, index) {
                           final course = state.myCourses[index];
                           return CourseCard(

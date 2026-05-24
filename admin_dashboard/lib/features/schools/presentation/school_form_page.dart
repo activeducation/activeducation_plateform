@@ -287,11 +287,13 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
     if (result == null || result.trim().isEmpty) return;
     setState(() {
       if (isAccreditation) {
-        if (!_accreditations.contains(result.trim()))
+        if (!_accreditations.contains(result.trim())) {
           _accreditations.add(result.trim());
+        }
       } else {
-        if (!_programsOffered.contains(result.trim()))
+        if (!_programsOffered.contains(result.trim())) {
           _programsOffered.add(result.trim());
+        }
       }
     });
   }
@@ -694,8 +696,9 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
                     controller: _emailCtrl,
                     decoration: const InputDecoration(labelText: 'Email'),
                     validator: (v) {
-                      if (v != null && v.isNotEmpty && !v.contains('@'))
+                      if (v != null && v.isNotEmpty && !v.contains('@')) {
                         return 'Email invalide';
+                      }
                       return null;
                     },
                   ),
@@ -733,8 +736,9 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
                     validator: (v) {
                       if (v != null && v.isNotEmpty) {
                         final year = int.tryParse(v);
-                        if (year == null || year < 1800 || year > 2100)
+                        if (year == null || year < 1800 || year > 2100) {
                           return 'Annee invalide';
+                        }
                       }
                       return null;
                     },
@@ -913,7 +917,7 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
               height: height,
               width: double.infinity,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
+              errorBuilder: (_, _, _) => Container(
                 height: height,
                 color: AppColors.surfaceVariant,
                 child: const Center(

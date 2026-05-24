@@ -7,7 +7,6 @@ from fastapi import APIRouter, Depends, Query, Request
 
 from app.core.logging import get_logger
 from app.core.security import get_current_admin, get_current_super_admin
-from app.core.exceptions import AuthorizationError
 from app.repositories.admin.users_admin_repository import get_users_admin_repository
 from app.schemas.admin.users import (
     AdminUserListResponse,
@@ -121,5 +120,6 @@ def _log_audit(admin, action, entity_type, entity_id, changes):
             "entity_id": str(entity_id),
             "changes": changes,
         })
-    except Exception as e:
-        logger.warning(f"Audit log failed: {e}")
+    except Exception:
+        logger.error("Audit log failed, blocking action", exc_info=True)
+        raise

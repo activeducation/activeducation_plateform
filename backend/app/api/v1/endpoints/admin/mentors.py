@@ -26,8 +26,9 @@ def _log_audit(admin, action, entity_type, entity_id, changes=None):
             "entity_id": str(entity_id) if entity_id else None,
             "changes": changes,
         })
-    except Exception as e:
-        logger.warning(f"Audit log failed: {e}")
+    except Exception:
+        logger.error("Audit log failed, blocking action", exc_info=True)
+        raise
 
 
 @router.get("")

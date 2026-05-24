@@ -266,10 +266,11 @@ class _SchoolsListPageState extends State<SchoolsListPage> {
 
                                   return DataRow(
                                     color: WidgetStateProperty.resolveWith((_) {
-                                      if (!isActive)
+                                      if (!isActive) {
                                         return AppColors.error.withValues(
                                           alpha: 0.05,
                                         );
+                                      }
                                       return null;
                                     }),
                                     cells: [
@@ -301,8 +302,8 @@ class _SchoolsListPageState extends State<SchoolsListPage> {
                                                         errorBuilder:
                                                             (
                                                               _,
-                                                              __,
-                                                              ___,
+                                                              _,
+                                                              _,
                                                             ) => const Icon(
                                                               Icons.school,
                                                               size: 16,

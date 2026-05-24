@@ -130,7 +130,7 @@ class ResultsPage extends StatelessWidget {
     // Garder seulement la 1ère phrase
     final dot = summary.indexOf('.');
     if (dot > 0 && dot < summary.length - 1) {
-      summary = '${summary.substring(0, dot + 1)}';
+      summary = summary.substring(0, dot + 1);
     }
 
     return Container(
@@ -496,7 +496,7 @@ class ResultsPage extends StatelessWidget {
                   controller: scrollController,
                   padding: const EdgeInsets.all(AppSpacing.md),
                   itemCount: careers.length,
-                  separatorBuilder: (_, __) =>
+                  separatorBuilder: (_, _) =>
                       const SizedBox(height: AppSpacing.sm),
                   itemBuilder: (_, i) =>
                       _buildCareerListItem(context, careers[i]),
@@ -682,37 +682,42 @@ class ResultsPage extends StatelessWidget {
         s.contains('système') ||
         s.contains('data') ||
         s.contains('numérique') ||
-        s.contains('digital'))
+        s.contains('digital')) {
       return Icons.computer;
+    }
     if (s.contains('santé') ||
         s.contains('infirmi') ||
         s.contains('médecine') ||
         s.contains('biologie') ||
         s.contains('pharmacie') ||
-        s.contains('clinique'))
+        s.contains('clinique')) {
       return Icons.local_hospital;
+    }
     if (s.contains('enseigne') ||
         s.contains('éducation') ||
         s.contains('formation') ||
         s.contains('pédago') ||
-        s.contains('communautaire'))
+        s.contains('communautaire')) {
       return Icons.school;
+    }
     if (s.contains('finance') ||
         s.contains('banque') ||
         s.contains('comptabi') ||
         s.contains('audit') ||
         s.contains('statistiques') ||
         s.contains('actuariat') ||
-        s.contains('assurance'))
+        s.contains('assurance')) {
       return Icons.account_balance;
+    }
     if (s.contains('commerce') ||
         s.contains('entrepre') ||
         s.contains('marketing') ||
         s.contains('vente') ||
         s.contains('management') ||
         s.contains('secrétariat') ||
-        s.contains('logistique'))
+        s.contains('logistique')) {
       return Icons.store;
+    }
     if (s.contains('génie') ||
         s.contains('btp') ||
         s.contains('mécanique') ||
@@ -720,14 +725,16 @@ class ResultsPage extends StatelessWidget {
         s.contains('topographie') ||
         s.contains('maintenance') ||
         s.contains('physique') ||
-        s.contains('architecture'))
+        s.contains('architecture')) {
       return Icons.engineering;
+    }
     if (s.contains('agriculture') ||
         s.contains('agroalimentaire') ||
         s.contains('environnement') ||
         s.contains('vétérinaire') ||
-        s.contains('écologie'))
+        s.contains('écologie')) {
       return Icons.agriculture;
+    }
     if (s.contains('design') ||
         s.contains('graphique') ||
         s.contains('journalisme') ||
@@ -735,16 +742,18 @@ class ResultsPage extends StatelessWidget {
         s.contains('cinéma') ||
         s.contains('arts') ||
         s.contains('ux') ||
-        s.contains('créa'))
+        s.contains('créa')) {
       return Icons.palette;
+    }
     if (s.contains('droit') ||
         s.contains('administration') ||
         s.contains('juridique') ||
         s.contains('ressources humaines') ||
         s.contains('psychologie') ||
         s.contains('coaching') ||
-        s.contains('fiscalité'))
+        s.contains('fiscalité')) {
       return Icons.gavel;
+    }
     return Icons.work_outline;
   }
 }

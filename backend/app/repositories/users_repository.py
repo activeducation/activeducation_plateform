@@ -10,6 +10,8 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 from uuid import UUID
 
+from functools import lru_cache
+
 from app.db.supabase_client import get_admin_supabase_client, SupabaseClient
 from app.core.logging import get_logger
 from app.core.exceptions import (
@@ -178,10 +180,7 @@ class UsersRepository:
     # SEARCH
     # =========================================================================
 
-# Instance singleton
-users_repo = UsersRepository()
-
-
+@lru_cache(maxsize=1)
 def get_users_repository() -> UsersRepository:
-    """Retourne l'instance du repository utilisateurs."""
-    return users_repo
+    """Retourne l'instance (unique) du repository utilisateurs."""
+    return UsersRepository()

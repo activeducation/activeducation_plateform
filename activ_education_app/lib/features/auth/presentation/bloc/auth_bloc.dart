@@ -42,22 +42,32 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
 
-    final isAuthenticated = await _authRepository.isAuthenticated();
+    try {
+      // Timeout de 5s pour eviter le blocage sur web (flutter_secure_storage/IndexedDB)
+      final isAuthenticated = await _authRepository
+          .isAuthenticated()
+          .timeout(const Duration(seconds: 5), onTimeout: () => false);
 
-    if (isAuthenticated) {
-      final cachedUser = await _authRepository.getCachedUser();
-      if (cachedUser != null) {
-        emit(AuthAuthenticated(cachedUser));
-        return;
+      if (isAuthenticated) {
+        final cachedUser = await _authRepository
+            .getCachedUser()
+            .timeout(const Duration(seconds: 3), onTimeout: () => null);
+        if (cachedUser != null) {
+          emit(AuthAuthenticated(cachedUser));
+          return;
+        }
+
+        // Essayer de recuperer le profil
+        final result = await _getCurrentUserUseCase();
+        result.fold(
+          (failure) => emit(AuthUnauthenticated()),
+          (profile) => emit(AuthAuthenticated(profile)),
+        );
+      } else {
+        emit(AuthUnauthenticated());
       }
-
-      // Essayer de recuperer le profil
-      final result = await _getCurrentUserUseCase();
-      result.fold(
-        (failure) => emit(AuthUnauthenticated()),
-        (profile) => emit(AuthAuthenticated(profile)),
-      );
-    } else {
+    } catch (_) {
+      // En cas d'erreur inattendue, traiter comme non authentifie
       emit(AuthUnauthenticated());
     }
   }

@@ -148,6 +148,12 @@ class _Sidebar extends StatelessWidget {
                   path: '/tests',
                   currentPath: currentPath,
                 ),
+                _SidebarItem(
+                  icon: Icons.business_center_rounded,
+                  label: 'Opportunites',
+                  path: '/opportunities',
+                  currentPath: currentPath,
+                ),
                 const _SidebarSection(label: 'ENGAGEMENT'),
                 _SidebarItem(
                   icon: Icons.emoji_events_rounded,

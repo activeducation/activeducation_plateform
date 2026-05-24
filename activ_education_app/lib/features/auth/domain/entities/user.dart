@@ -9,6 +9,7 @@ class User extends Equatable {
   final String? displayName;
   final String? phoneNumber;
   final String? avatarUrl;
+  final String? role;
   final DateTime createdAt;
 
   const User({
@@ -19,6 +20,7 @@ class User extends Equatable {
     this.displayName,
     this.phoneNumber,
     this.avatarUrl,
+    this.role,
     required this.createdAt,
   });
 
@@ -65,6 +67,7 @@ class UserProfile extends User {
     super.displayName,
     super.phoneNumber,
     super.avatarUrl,
+    super.role,
     required super.createdAt,
     this.dateOfBirth,
     this.schoolName,

@@ -11,6 +11,8 @@ Gere les interactions avec Supabase pour:
 from datetime import datetime, timezone
 from typing import Any, Optional
 
+from functools import lru_cache
+
 from app.core.logging import get_logger
 from app.db.supabase_client import SupabaseClient, get_admin_supabase_client
 
@@ -390,9 +392,7 @@ class SchoolAdminRepository:
         return result.data[0] if result.data else None
 
 
-# Singleton
-school_admin_repository = SchoolAdminRepository(db=get_admin_supabase_client())
-
-
+@lru_cache(maxsize=1)
 def get_school_admin_repository() -> SchoolAdminRepository:
-    return school_admin_repository
+    """Retourne l'instance (unique) du repository school admin."""
+    return SchoolAdminRepository(db=get_admin_supabase_client())

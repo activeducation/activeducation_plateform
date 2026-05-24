@@ -795,6 +795,9 @@ class _RankingQuestionState extends State<_RankingQuestion> {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: _orderedOptions.length,
+          // onReorder deprecated en faveur de onReorderItem (auto-ajuste
+          // newIndex). Migration prévue dans PR refacto reorder UX.
+          // ignore: deprecated_member_use
           onReorder: _onReorder,
           proxyDecorator: (child, index, animation) {
             return AnimatedBuilder(

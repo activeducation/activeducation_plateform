@@ -12,7 +12,8 @@ filterwarnings = [
     "ignore::DeprecationWarning:supabase.*",
     "ignore::DeprecationWarning:slowapi.*",
     "ignore::pydantic.PydanticDeprecatedSince20",
-    "ignore::pydantic.PydanticDeprecatedSince212",
+    # PydanticDeprecatedSince212 retiré : n'existe que dans pydantic >= 2.12,
+    # mais le projet est pinned à 2.10.4 → AttributeError au démarrage pytest CI.
 ]
 
 [tool.coverage.run]
@@ -39,3 +40,12 @@ exclude_lines = [
 
 [tool.coverage.html]
 directory = "htmlcov"
+
+# =============================================================================
+# mypy — explicit_package_bases résout le conflit "Duplicate module 'admin'"
+# entre app/repositories/admin/ et app/api/v1/endpoints/admin/
+# =============================================================================
+[tool.mypy]
+explicit_package_bases = true
+namespace_packages = true
+ignore_missing_imports = true

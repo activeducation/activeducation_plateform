@@ -53,7 +53,7 @@ class SchoolsSection extends StatelessWidget {
               horizontal: AppSpacing.pagePaddingHorizontal,
             ),
             itemCount: schools.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
             itemBuilder: (context, index) =>
                 SchoolCard(school: schools[index], onTap: onViewAll),
           ),

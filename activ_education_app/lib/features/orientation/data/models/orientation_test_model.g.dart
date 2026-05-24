@@ -7,30 +7,30 @@ part of 'orientation_test_model.dart';
 // **************************************************************************
 
 OrientationTestModel _$OrientationTestModelFromJson(
-        Map<String, dynamic> json) =>
-    OrientationTestModel(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      description: json['description'] as String,
-      type: $enumDecode(_$TestTypeEnumMap, json['type']),
-      durationMinutes: (json['durationMinutes'] as num).toInt(),
-      questions: (json['questions'] as List<dynamic>)
-          .map((e) => QuestionModel.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      imageUrl: json['imageUrl'] as String?,
-    );
+  Map<String, dynamic> json,
+) => OrientationTestModel(
+  id: json['id'] as String,
+  name: json['name'] as String,
+  description: json['description'] as String,
+  type: $enumDecode(_$TestTypeEnumMap, json['type']),
+  durationMinutes: (json['durationMinutes'] as num).toInt(),
+  questions: (json['questions'] as List<dynamic>)
+      .map((e) => QuestionModel.fromJson(e as Map<String, dynamic>))
+      .toList(),
+  imageUrl: json['imageUrl'] as String?,
+);
 
 Map<String, dynamic> _$OrientationTestModelToJson(
-        OrientationTestModel instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'name': instance.name,
-      'description': instance.description,
-      'type': _$TestTypeEnumMap[instance.type]!,
-      'durationMinutes': instance.durationMinutes,
-      'imageUrl': instance.imageUrl,
-      'questions': instance.questions,
-    };
+  OrientationTestModel instance,
+) => <String, dynamic>{
+  'id': instance.id,
+  'name': instance.name,
+  'description': instance.description,
+  'type': _$TestTypeEnumMap[instance.type]!,
+  'durationMinutes': instance.durationMinutes,
+  'imageUrl': instance.imageUrl,
+  'questions': instance.questions,
+};
 
 const _$TestTypeEnumMap = {
   TestType.riasec: 'riasec',
@@ -79,12 +79,12 @@ const _$QuestionTypeEnumMap = {
 };
 
 OptionModel _$OptionModelFromJson(Map<String, dynamic> json) => OptionModel(
-      id: json['id'] as String,
-      text: json['text'] as String,
-      value: json['value'],
-      icon: json['icon'] as String?,
-      emoji: json['emoji'] as String?,
-    );
+  id: json['id'] as String,
+  text: json['text'] as String,
+  value: json['value'],
+  icon: json['icon'] as String?,
+  emoji: json['emoji'] as String?,
+);
 
 Map<String, dynamic> _$OptionModelToJson(OptionModel instance) =>
     <String, dynamic>{

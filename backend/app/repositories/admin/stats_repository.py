@@ -1,11 +1,11 @@
 """Repository pour les statistiques du dashboard admin."""
 
-from typing import Any
+from functools import lru_cache
+
 from app.db.supabase_client import get_admin_supabase_client, SupabaseClient
 from app.core.logging import get_logger
 from app.schemas.admin.dashboard import (
     DashboardStats,
-    WeeklyUsersPoint,
     TestsByType,
     RecentActivity,
 )
@@ -38,10 +38,7 @@ class StatsRepository:
             # Tests par type
             tests_by_type = []
             for t in ["riasec", "personality", "skills", "interests", "aptitude"]:
-                count_result = self._db.client.table("user_test_sessions").select(
-                    "id", count="exact"
-                ).eq("status", "completed").execute()
-                # Simplified - in production would join with orientation_tests
+                # Placeholder — voir bloc try ci-dessous pour le vrai comptage par type
                 tests_by_type.append(TestsByType(type=t, count=0))
 
             # Try to get actual test type counts
@@ -98,8 +95,7 @@ class StatsRepository:
             return DashboardStats()
 
 
-_stats_repo = StatsRepository()
-
-
+@lru_cache(maxsize=1)
 def get_stats_repository() -> StatsRepository:
-    return _stats_repo
+    """Retourne l'instance (unique) du repository stats."""
+    return StatsRepository()

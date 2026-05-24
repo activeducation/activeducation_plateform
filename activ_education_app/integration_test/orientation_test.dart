@@ -51,6 +51,7 @@ final _mockTests = [
   ),
 ];
 
+// ignore: unused_element — mock conservé pour scénarios de test futurs
 final _mockResult = TestResult(
   testId: 'test-1',
   scores: const {'R': 85, 'I': 72, 'A': 68, 'S': 45, 'E': 38, 'C': 30},

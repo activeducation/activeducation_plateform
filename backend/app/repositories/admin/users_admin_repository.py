@@ -1,7 +1,9 @@
 """Repository pour la gestion admin des utilisateurs."""
 
-from typing import Any, Optional
+from typing import Optional
 from uuid import UUID
+
+from functools import lru_cache
 
 from app.db.supabase_client import get_admin_supabase_client, SupabaseClient
 from app.core.logging import get_logger
@@ -147,8 +149,7 @@ class UsersAdminRepository:
         return {"success": True, "user_id": str(user_id), "is_active": is_active}
 
 
-_users_admin_repo = UsersAdminRepository()
-
-
+@lru_cache(maxsize=1)
 def get_users_admin_repository() -> UsersAdminRepository:
-    return _users_admin_repo
+    """Retourne l'instance (unique) du repository admin utilisateurs."""
+    return UsersAdminRepository()

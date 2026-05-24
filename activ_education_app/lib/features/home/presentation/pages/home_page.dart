@@ -15,6 +15,7 @@ import '../widgets/aida_card.dart';
 import '../widgets/tests_section.dart';
 import '../widgets/elearning_section.dart';
 import '../widgets/schools_section.dart';
+import '../widgets/opportunities_section.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -136,6 +137,14 @@ class _HomePageState extends State<HomePage> {
             child: Padding(
               padding: const EdgeInsets.only(top: 32),
               child: SchoolsSection(onViewAll: () => context.go('/schools')),
+            ),
+          ),
+
+          // ── Opportunities section ──
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 32),
+              child: const OpportunitiesSection(),
             ),
           ),
 

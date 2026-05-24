@@ -76,8 +76,6 @@ class _QuizWidgetState extends State<QuizWidget> {
   QuizQuestion get _currentQuestion => widget.questions[_currentIndex];
   bool get _isAnswered => _selectedAnswers.containsKey(_currentQuestion.id);
   bool get _isLast => _currentIndex == widget.questions.length - 1;
-  bool get _allAnswered =>
-      _selectedAnswers.length == widget.questions.length;
 
   void _selectOption(QuizOption option) {
     if (_selectedAnswers.containsKey(_currentQuestion.id)) return;

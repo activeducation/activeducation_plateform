@@ -19,7 +19,6 @@ class AuthInterceptor extends Interceptor {
 
   // Lock pour eviter les rafraichissements multiples
   bool _isRefreshing = false;
-  final List<ErrorInterceptorHandler> _pendingRequests = [];
 
   // Routes qui ne necessitent pas d'authentification
   static const List<String> _publicRoutes = [
