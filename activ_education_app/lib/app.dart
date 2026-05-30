@@ -16,15 +16,11 @@ class ActivEducationApp extends StatelessWidget {
       title: 'ActivEducation',
       debugShowCheckedModeBanner: false,
 
-      // Theme
       theme: AppTheme.lightTheme,
       themeMode: ThemeMode.light,
 
-      // Routing
       routerConfig: AppRouter.router,
 
-      // Providers must wrap the Navigator's child (not MaterialApp itself) so
-      // every route built by go_router can find AuthBloc via the inherited tree.
       builder: (context, child) {
         return MultiBlocProvider(
           providers: [
@@ -42,14 +38,13 @@ class ActivEducationApp extends StatelessWidget {
         );
       },
 
-      // Localisation
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: const [
-        Locale('fr', 'FR'), // Francais par defaut
+        Locale('fr', 'FR'),
         Locale('en', 'US'),
       ],
     );

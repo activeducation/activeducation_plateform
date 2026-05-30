@@ -2,7 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:injectable/injectable.dart';
 import '../../domain/entities/user_profile.dart';
-import '../../domain/usecases/get_user_profile.dart';
+import '../../domain/usecases/get_user_profile_usecase.dart';
 
 // Events
 abstract class ProfileEvent extends Equatable {

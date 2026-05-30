@@ -75,7 +75,8 @@ import '../../features/profile/data/repositories/profile_repository_impl.dart'
     as _i334;
 import '../../features/profile/domain/repositories/profile_repository.dart'
     as _i894;
-import '../../features/profile/domain/usecases/get_user_profile.dart' as _i12;
+import '../../features/profile/domain/usecases/get_user_profile_usecase.dart'
+    as _i146;
 import '../../features/profile/presentation/bloc/profile_bloc.dart' as _i469;
 import '../auth/auth_interceptor.dart' as _i53;
 import '../auth/token_storage.dart' as _i1002;
@@ -83,32 +84,28 @@ import 'register_module.dart' as _i291;
 
 extension GetItInjectableX on _i174.GetIt {
   // initializes the registration of main-scope dependencies inside of GetIt
-  _i174.GetIt init({
+  Future<_i174.GetIt> init({
     String? environment,
     _i526.EnvironmentFilter? environmentFilter,
-  }) {
+  }) async {
     final gh = _i526.GetItHelper(this, environment, environmentFilter);
     final registerModule = _$RegisterModule();
-    gh.lazySingletonAsync<_i460.SharedPreferences>(() => registerModule.prefs);
+    await gh.singletonAsync<_i460.SharedPreferences>(
+      () => registerModule.prefs,
+      preResolve: true,
+    );
+    gh.lazySingleton<_i558.FlutterSecureStorage>(
+      () => registerModule.secureStorage,
+    );
     gh.lazySingleton<_i894.ProfileRepository>(
       () => _i334.ProfileRepositoryImpl(),
-    );
-    gh.lazySingleton<_i788.GamificationRemoteDataSource>(
-      () => _i788.GamificationRemoteDataSource(
-        gh<_i361.Dio>(instanceName: 'apiClient'),
-      ),
     );
     gh.lazySingleton<_i361.Dio>(
       () => registerModule.refreshDio,
       instanceName: 'refreshClient',
     );
-    gh.lazySingleton<_i493.GamificationRepository>(
-      () => _i493.GamificationRepositoryImpl(
-        gh<_i788.GamificationRemoteDataSource>(),
-      ),
-    );
-    gh.lazySingleton<_i12.GetUserProfile>(
-      () => _i12.GetUserProfile(gh<_i894.ProfileRepository>()),
+    gh.lazySingleton<_i146.GetUserProfile>(
+      () => _i146.GetUserProfile(gh<_i894.ProfileRepository>()),
     );
     gh.lazySingleton<_i1002.TokenStorage>(
       () =>
@@ -132,6 +129,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i361.Dio>(instanceName: 'apiClient'),
       ),
     );
+    gh.factory<_i469.ProfileBloc>(
+      () => _i469.ProfileBloc(gh<_i146.GetUserProfile>()),
+    );
     gh.lazySingleton<_i101.PartnerRemoteDataSource>(
       () => _i101.PartnerRemoteDataSourceImpl(
         gh<_i361.Dio>(instanceName: 'apiClient'),
@@ -152,8 +152,15 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i361.Dio>(instanceName: 'apiClient'),
       ),
     );
-    gh.factory<_i469.ProfileBloc>(
-      () => _i469.ProfileBloc(gh<_i12.GetUserProfile>()),
+    gh.lazySingleton<_i788.GamificationRemoteDataSource>(
+      () => _i788.GamificationRemoteDataSource(
+        gh<_i361.Dio>(instanceName: 'apiClient'),
+      ),
+    );
+    gh.lazySingleton<_i493.GamificationRepository>(
+      () => _i493.GamificationRepositoryImpl(
+        gh<_i788.GamificationRemoteDataSource>(),
+      ),
     );
     gh.lazySingleton<_i322.OrientationRepository>(
       () => _i759.OrientationRepositoryImpl(
@@ -173,10 +180,10 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i1042.PartnerRepository>(
       () => _i57.PartnerRepositoryImpl(gh<_i101.PartnerRemoteDataSource>()),
     );
-    gh.lazySingletonAsync<_i787.AuthRepository>(
-      () async => _i153.AuthRepositoryImpl(
+    gh.lazySingleton<_i787.AuthRepository>(
+      () => _i153.AuthRepositoryImpl(
         gh<_i107.AuthRemoteDataSource>(),
-        await getAsync<_i460.SharedPreferences>(),
+        gh<_i460.SharedPreferences>(),
         gh<_i1002.TokenStorage>(),
       ),
     );
@@ -186,18 +193,17 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i393.SubmitTest>(),
       ),
     );
-    gh.factoryAsync<_i17.GetCurrentUserUseCase>(
-      () async =>
-          _i17.GetCurrentUserUseCase(await getAsync<_i787.AuthRepository>()),
+    gh.factory<_i17.GetCurrentUserUseCase>(
+      () => _i17.GetCurrentUserUseCase(gh<_i787.AuthRepository>()),
     );
-    gh.factoryAsync<_i188.LoginUseCase>(
-      () async => _i188.LoginUseCase(await getAsync<_i787.AuthRepository>()),
+    gh.factory<_i188.LoginUseCase>(
+      () => _i188.LoginUseCase(gh<_i787.AuthRepository>()),
     );
-    gh.factoryAsync<_i48.LogoutUseCase>(
-      () async => _i48.LogoutUseCase(await getAsync<_i787.AuthRepository>()),
+    gh.factory<_i48.LogoutUseCase>(
+      () => _i48.LogoutUseCase(gh<_i787.AuthRepository>()),
     );
-    gh.factoryAsync<_i941.RegisterUseCase>(
-      () async => _i941.RegisterUseCase(await getAsync<_i787.AuthRepository>()),
+    gh.factory<_i941.RegisterUseCase>(
+      () => _i941.RegisterUseCase(gh<_i787.AuthRepository>()),
     );
     gh.lazySingleton<_i355.CompleteLessonUsecase>(
       () => _i355.CompleteLessonUsecase(gh<_i62.ElearningRepository>()),
@@ -229,13 +235,13 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i355.CompleteLessonUsecase>(),
       ),
     );
-    gh.factoryAsync<_i797.AuthBloc>(
-      () async => _i797.AuthBloc(
-        await getAsync<_i188.LoginUseCase>(),
-        await getAsync<_i941.RegisterUseCase>(),
-        await getAsync<_i48.LogoutUseCase>(),
-        await getAsync<_i17.GetCurrentUserUseCase>(),
-        await getAsync<_i787.AuthRepository>(),
+    gh.factory<_i797.AuthBloc>(
+      () => _i797.AuthBloc(
+        gh<_i188.LoginUseCase>(),
+        gh<_i941.RegisterUseCase>(),
+        gh<_i48.LogoutUseCase>(),
+        gh<_i17.GetCurrentUserUseCase>(),
+        gh<_i787.AuthRepository>(),
       ),
     );
     gh.factory<_i12.PartnerBloc>(

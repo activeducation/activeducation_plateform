@@ -35,8 +35,12 @@ class TokenStorage {
 
   /// Initialise le stockage (doit etre appele au demarrage).
   Future<void> init() async {
-    _prefs ??= await SharedPreferences.getInstance();
-    await _migrateLegacyTokensIfNeeded();
+    try {
+      _prefs ??= await SharedPreferences.getInstance();
+      await _migrateLegacyTokensIfNeeded();
+    } catch (_) {
+      // Echec silencieux — l'app fonctionne sans stockage persistant
+    }
   }
 
   /// Verifie si le stockage est initialise.
@@ -130,9 +134,13 @@ class TokenStorage {
 
   /// Verifie si un utilisateur est authentifie.
   Future<bool> hasValidTokens() async {
-    final accessToken = await getAccessToken();
-    final refreshToken = await getRefreshToken();
-    return accessToken != null && refreshToken != null;
+    try {
+      final accessToken = await getAccessToken();
+      final refreshToken = await getRefreshToken();
+      return accessToken != null && refreshToken != null;
+    } catch (_) {
+      return false;
+    }
   }
 
   /// Sauvegarde le rôle de l'utilisateur.
