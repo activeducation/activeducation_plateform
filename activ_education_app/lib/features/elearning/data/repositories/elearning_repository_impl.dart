@@ -47,7 +47,10 @@ class ElearningRepositoryImpl implements ElearningRepository {
       final result = await _remoteDataSource.enrollCourse(id);
       return Right(result);
     } catch (e) {
-      return Left(Exception(e.toString()));
+      // Preserve le type original (ex: ElearningApiException avec statusCode)
+      // pour que le bloc puisse reagir specifiquement au 401 (auth requise).
+      // Wrapper dans un Exception generique perdrait le statusCode.
+      return Left(e is Exception ? e : Exception(e.toString()));
     }
   }
 

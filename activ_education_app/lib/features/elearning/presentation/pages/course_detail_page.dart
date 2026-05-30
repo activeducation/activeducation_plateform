@@ -27,15 +27,19 @@ class CourseDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => getIt<CourseBloc>()..add(LoadCourse(courseId)),
-      child: _CourseDetailView(initialCourse: initialCourse),
+      child: _CourseDetailView(
+        courseId: courseId,
+        initialCourse: initialCourse,
+      ),
     );
   }
 }
 
 class _CourseDetailView extends StatelessWidget {
+  final String courseId;
   final Course? initialCourse;
 
-  const _CourseDetailView({this.initialCourse});
+  const _CourseDetailView({required this.courseId, this.initialCourse});
 
   @override
   Widget build(BuildContext context) {
@@ -63,6 +67,26 @@ class _CourseDetailView extends StatelessWidget {
               ),
             );
           }
+          if (state is CourseAuthRequired) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text(
+                  'Connectez-vous pour vous inscrire à ce cours',
+                ),
+                backgroundColor: AppColors.primary,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                margin: const EdgeInsets.all(16),
+                action: SnackBarAction(
+                  label: 'Se connecter',
+                  textColor: Colors.white,
+                  onPressed: () => context.go('/login'),
+                ),
+              ),
+            );
+          }
           if (state is CourseError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -83,8 +107,10 @@ class _CourseDetailView extends StatelessWidget {
           if (state is CourseError && state is! CourseLoaded) {
             return _DetailError(
               message: state.message,
+              // Fix : on relance avec le VRAI courseId, pas le message d'erreur
+              // (l'ancien code passait state.message → /courses/{erreur} → 422).
               onRetry: () =>
-                  context.read<CourseBloc>().add(LoadCourse(state.message)),
+                  context.read<CourseBloc>().add(LoadCourse(courseId)),
               onBack: () => context.pop(),
             );
           }
@@ -98,6 +124,8 @@ class _CourseDetailView extends StatelessWidget {
             isEnrolling = true;
           }
           if (state is CourseEnrolled) course = state.course;
+          // Auth requise : on garde le detail affiche derriere le snackbar.
+          if (state is CourseAuthRequired) course = state.course;
 
           if (course == null) return const _DetailShimmer();
 

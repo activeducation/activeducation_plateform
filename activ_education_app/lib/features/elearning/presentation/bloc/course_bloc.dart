@@ -2,6 +2,8 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
+import '../../data/datasources/elearning_remote_datasource.dart'
+    show ElearningApiException;
 import '../../domain/entities/course.dart';
 import '../../domain/usecases/enroll_course_usecase.dart';
 import '../../domain/usecases/get_course_detail_usecase.dart';
@@ -82,6 +84,18 @@ class CourseError extends CourseState {
   List<Object?> get props => [message];
 }
 
+/// Emis quand une action requiert une authentification (ex: inscription a un
+/// cours avec une session expiree). Conserve le [course] pour que la page
+/// continue d'afficher le detail derriere l'invitation a se connecter.
+class CourseAuthRequired extends CourseState {
+  final CourseDetail course;
+
+  const CourseAuthRequired(this.course);
+
+  @override
+  List<Object?> get props => [course];
+}
+
 // ─── BLoC ─────────────────────────────────────────────────────────────────────
 
 @injectable
@@ -120,7 +134,15 @@ class CourseBloc extends Bloc<CourseEvent, CourseState> {
 
       final result = await _enrollCourseUsecase(event.id);
       result.fold(
-        (error) => emit(CourseError(error.toString())),
+        (error) {
+          // 401 = session expiree / pas connecte : on invite a se connecter
+          // plutot que d'afficher une erreur technique brute.
+          if (error is ElearningApiException && error.statusCode == 401) {
+            emit(CourseAuthRequired(currentState.course));
+          } else {
+            emit(CourseError(error.toString()));
+          }
+        },
         (_) async {
           // Reload course detail to get updated enrollment status
           final reloadResult = await _getCourseDetailUsecase(event.id);

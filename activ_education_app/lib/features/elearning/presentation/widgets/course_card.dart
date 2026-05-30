@@ -108,6 +108,7 @@ class _FullCourseCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(18),
         child: Container(
+          clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
             color: AppColors.card,
             borderRadius: BorderRadius.circular(18),
@@ -128,192 +129,251 @@ class _FullCourseCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Bold color header ──
-              Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Container(
-                    height: 84,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [color, color.withValues(alpha: 0.72)],
-                      ),
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(17),
-                      ),
-                    ),
-                    padding: const EdgeInsets.fromLTRB(13, 13, 13, 0),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 42,
-                          height: 42,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.22),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(
-                            iconForCategory(course.category),
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        ),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            diffLabel,
-                            style: const TextStyle(
-                              fontSize: 9.5,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                              letterSpacing: 0.2,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // XP gold badge at bottom-left of header
-                  Positioned(
-                    bottom: -10,
-                    left: 13,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.xpGold,
-                        borderRadius: BorderRadius.circular(7),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.xpGold.withValues(alpha: 0.55),
-                            blurRadius: 10,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Iconsax.medal_star5, size: 11, color: AppColors.darkBg),
-                          const SizedBox(width: 3),
-                          Text(
-                            '+${course.pointsReward} XP',
-                            style: const TextStyle(
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.darkBg,
-                              letterSpacing: 0,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              // ── Content ──
+              // ── Image de presentation (remplit l'espace dispo, plus de vide) ──
               Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(13, 18, 13, 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        course.title,
-                        style: AppTypography.titleSmall.copyWith(
-                          fontWeight: FontWeight.w700,
-                          height: 1.25,
-                          letterSpacing: -0.2,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Expanded(
-                        child: Text(
-                          course.description,
-                          style: AppTypography.bodySmall.copyWith(
-                            color: AppColors.textTertiary,
-                            height: 1.4,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    _CourseCover(course: course, color: color),
 
-                      if (hasProgress) ...[
-                        Row(
-                          children: [
-                            Expanded(
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(4),
-                                child: LinearProgressIndicator(
-                                  value: (course.progressPct! / 100).clamp(0.0, 1.0),
-                                  minHeight: 5,
-                                  backgroundColor: color.withValues(alpha: 0.12),
-                                  valueColor: AlwaysStoppedAnimation<Color>(color),
-                                ),
-                              ),
+                    // Badge difficulte (haut droite)
+                    Positioned(
+                      top: 11,
+                      right: 11,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.28),
+                          borderRadius: BorderRadius.circular(7),
+                        ),
+                        child: Text(
+                          diffLabel,
+                          style: const TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Badge XP (bas gauche)
+                    Positioned(
+                      bottom: 11,
+                      left: 11,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.xpGold,
+                          borderRadius: BorderRadius.circular(7),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.xpGold.withValues(alpha: 0.55),
+                              blurRadius: 10,
+                              offset: const Offset(0, 3),
                             ),
-                            const SizedBox(width: 7),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Iconsax.medal_star5,
+                                size: 11, color: AppColors.darkBg),
+                            const SizedBox(width: 3),
                             Text(
-                              '${course.progressPct}%',
-                              style: TextStyle(
+                              '+${course.pointsReward} XP',
+                              style: const TextStyle(
                                 fontSize: 10.5,
                                 fontWeight: FontWeight.w800,
-                                color: color,
+                                color: AppColors.darkBg,
                               ),
                             ),
                           ],
                         ),
-                      ] else ...[
-                        Row(
-                          children: [
-                            Icon(Iconsax.clock, size: 12, color: AppColors.textTertiary),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${course.durationMinutes} min',
-                              style: AppTypography.labelSmall.copyWith(
-                                color: AppColors.textSecondary,
-                                fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── Contenu compact (taille intrinseque, pas d'etirement) ──
+              Padding(
+                padding: const EdgeInsets.fromLTRB(13, 11, 13, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      course.title,
+                      style: AppTypography.titleSmall.copyWith(
+                        fontWeight: FontWeight.w700,
+                        height: 1.25,
+                        letterSpacing: -0.2,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      course.description,
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textTertiary,
+                        height: 1.4,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 10),
+                    if (hasProgress)
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: (course.progressPct! / 100)
+                                    .clamp(0.0, 1.0),
+                                minHeight: 5,
+                                backgroundColor: color.withValues(alpha: 0.12),
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(color),
                               ),
                             ),
-                            const Spacer(),
-                            Container(
-                              width: 7,
-                              height: 7,
-                              decoration: BoxDecoration(
-                                color: diffColor,
-                                shape: BoxShape.circle,
-                              ),
+                          ),
+                          const SizedBox(width: 7),
+                          Text(
+                            '${course.progressPct}%',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w800,
+                              color: color,
                             ),
-                            const SizedBox(width: 4),
-                            Text(
-                              diffLabel,
-                              style: TextStyle(
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w600,
-                                color: diffColor,
-                              ),
+                          ),
+                        ],
+                      )
+                    else
+                      Row(
+                        children: [
+                          Icon(Iconsax.clock,
+                              size: 12, color: AppColors.textTertiary),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${course.durationMinutes} min',
+                            style: AppTypography.labelSmall.copyWith(
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w500,
                             ),
-                          ],
-                        ),
-                      ],
-                    ],
-                  ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            width: 7,
+                            height: 7,
+                            decoration: BoxDecoration(
+                              color: diffColor,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            diffLabel,
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w600,
+                              color: diffColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
                 ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Couverture du cours : affiche [course.thumbnailUrl] si disponible, sinon un
+/// degrade colore par categorie avec une grande icone. Un voile sombre en bas
+/// garantit la lisibilite des badges (difficulte / XP).
+class _CourseCover extends StatelessWidget {
+  final Course course;
+  final Color color;
+
+  const _CourseCover({required this.course, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final hasThumb =
+        course.thumbnailUrl != null && course.thumbnailUrl!.trim().isNotEmpty;
+
+    final fallback = _GradientCover(color: color, course: course);
+
+    final Widget background = hasThumb
+        ? Image.network(
+            course.thumbnailUrl!.trim(),
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) => fallback,
+            loadingBuilder: (ctx, child, progress) =>
+                progress == null ? child : fallback,
+          )
+        : fallback;
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        background,
+        // Voile degrade en bas pour lisibilite des badges sur les images.
+        if (hasThumb)
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.transparent,
+                  Colors.black.withValues(alpha: 0.40),
+                ],
+                stops: const [0.55, 1.0],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Degrade colore + grande icone de categorie (placeholder quand pas d'image).
+class _GradientCover extends StatelessWidget {
+  final Color color;
+  final Course course;
+
+  const _GradientCover({required this.color, required this.course});
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [color, color.withValues(alpha: 0.68)],
+        ),
+      ),
+      child: Center(
+        child: Icon(
+          iconForCategory(course.category),
+          color: Colors.white.withValues(alpha: 0.92),
+          size: 56,
         ),
       ),
     );
