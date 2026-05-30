@@ -431,13 +431,13 @@ class _SchoolDetailPageState extends State<SchoolDetailPage>
                 ? CachedNetworkImage(
                     imageUrl: school.coverImageUrl!,
                     fit: BoxFit.cover,
-                    placeholder: (_, __) => Container(
+                    placeholder: (_, _) => Container(
                       color: AppColors.primary,
                       child: const Center(
                         child: CircularProgressIndicator(strokeWidth: 2),
                       ),
                     ),
-                    errorWidget: (_, __, ___) => Container(
+                    errorWidget: (_, _, _) => Container(
                       decoration: const BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
@@ -517,12 +517,12 @@ class _SchoolDetailPageState extends State<SchoolDetailPage>
                                   width: 70,
                                   height: 70,
                                   fit: BoxFit.cover,
-                                  placeholder: (_, __) => const Center(
+                                  placeholder: (_, _) => const Center(
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
                                     ),
                                   ),
-                                  errorWidget: (_, __, ___) => const Icon(
+                                  errorWidget: (_, _, _) => const Icon(
                                     Iconsax.building,
                                     color: AppColors.primary,
                                     size: 32,

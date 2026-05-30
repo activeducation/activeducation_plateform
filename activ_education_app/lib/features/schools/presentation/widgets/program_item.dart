@@ -17,36 +17,45 @@ class ProgramItem extends StatelessWidget {
         name.contains('dev') ||
         name.contains('cyber') ||
         name.contains('cloud') ||
-        name.contains('reseau'))
+        name.contains('reseau')) {
       return Iconsax.code;
-    if (name.contains('droit') || name.contains('juridique'))
+    }
+    if (name.contains('droit') || name.contains('juridique')) {
       return Iconsax.book;
-    if (name.contains('sante') || name.contains('medecine'))
+    }
+    if (name.contains('sante') || name.contains('medecine')) {
       return Iconsax.health;
+    }
     if (name.contains('genie civil') ||
         name.contains('btp') ||
         name.contains('electricite') ||
         name.contains('mecanique') ||
         name.contains('froid') ||
-        name.contains('maintenance'))
+        name.contains('maintenance')) {
       return Iconsax.cpu;
+    }
     if (name.contains('marketing') ||
         name.contains('commerce') ||
-        name.contains('communication'))
+        name.contains('communication')) {
       return Iconsax.chart;
+    }
     if (name.contains('finance') ||
         name.contains('comptabilite') ||
-        name.contains('banque'))
+        name.contains('banque')) {
       return Iconsax.money_2;
+    }
     if (name.contains('management') ||
         name.contains('gestion') ||
         name.contains('rh') ||
-        name.contains('logistique'))
+        name.contains('logistique')) {
       return Iconsax.briefcase;
-    if (name.contains('agro') || name.contains('environnement'))
+    }
+    if (name.contains('agro') || name.contains('environnement')) {
       return Iconsax.tree;
-    if (name.contains('lettres') || name.contains('economie'))
+    }
+    if (name.contains('lettres') || name.contains('economie')) {
       return Iconsax.document;
+    }
     return Iconsax.book_1;
   }
 

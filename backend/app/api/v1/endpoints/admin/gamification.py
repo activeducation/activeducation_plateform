@@ -1,9 +1,8 @@
 """Admin gamification management endpoints."""
 
 from uuid import UUID
-from typing import Optional
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, Request
 
 from app.core.logging import get_logger
 from app.core.security import get_current_admin
@@ -26,8 +25,9 @@ def _log_audit(admin, action, entity_type, entity_id, changes=None):
             "entity_id": str(entity_id) if entity_id else None,
             "changes": changes,
         })
-    except Exception as e:
-        logger.warning(f"Audit log failed: {e}")
+    except Exception:
+        logger.error("Audit log failed, blocking action", exc_info=True)
+        raise
 
 
 # =========================================================================

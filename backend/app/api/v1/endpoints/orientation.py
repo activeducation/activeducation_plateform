@@ -16,7 +16,7 @@ from fastapi import APIRouter, Depends, Query, Request
 
 from app.core.logging import get_logger
 from app.core.exceptions import TestNotFoundError, QueryError
-from app.core.security import get_current_user_id, get_current_user_id_optional
+from app.core.security import get_current_user_id_optional
 from app.schemas.orientation import (
     OrientationTest,
     OrientationTestSummary,
@@ -24,13 +24,6 @@ from app.schemas.orientation import (
     TestSubmission,
     Career,
     CareerSummary,
-    MobileOrientationTest,
-    MobileQuestion,
-    MobileOption,
-    MobileCareer,
-    MobileEducationPath,
-    MobileSalaryInfo,
-    MobileJobOutlook,
 )
 from app.services.orientation_engine import orientation_engine
 from app.services.career_matcher import career_matcher
@@ -247,7 +240,7 @@ async def submit_test(
                 result=result,
             )
             logger.info(
-                f"Test submitted successfully",
+                "Test submitted successfully",
                 extra={
                     "test_id": str(test_id),
                     "user_id": str(user_id),
@@ -258,7 +251,7 @@ async def submit_test(
             logger.warning(f"Could not save test results to DB: {e}")
     else:
         logger.info(
-            f"Test submitted anonymously (no auth)",
+            "Test submitted anonymously (no auth)",
             extra={"test_id": str(test_id), "dominant_traits": result.dominant_traits},
         )
 

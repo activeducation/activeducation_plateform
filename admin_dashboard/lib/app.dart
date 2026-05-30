@@ -10,14 +10,14 @@ class AdminApp extends StatefulWidget {
 }
 
 class _AdminAppState extends State<AdminApp> {
-  late final _router = createAdminRouter();
+  late final _adminRouter = createAdminRouter();
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'ActivEducation Admin',
       theme: AdminTheme.light,
-      routerConfig: _router,
+      routerConfig: _adminRouter,
       debugShowCheckedModeBanner: false,
     );
   }

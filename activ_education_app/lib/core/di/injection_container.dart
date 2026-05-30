@@ -11,10 +11,7 @@ final getIt = GetIt.instance;
   asExtension: true,
 )
 Future<void> configureDependencies() async {
-  // Initialiser les dependances injectables
   await getIt.init();
-
-  // Initialiser le TokenStorage
   final tokenStorage = getIt<TokenStorage>();
   await tokenStorage.init();
 }

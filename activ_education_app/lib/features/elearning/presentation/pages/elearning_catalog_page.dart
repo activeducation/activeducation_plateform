@@ -460,7 +460,7 @@ class _CatalogViewState extends State<_CatalogView> {
                         physics: const BouncingScrollPhysics(),
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         itemCount: state.myCourses.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 12),
+                        separatorBuilder: (_, _) => const SizedBox(width: 12),
                         itemBuilder: (context, index) {
                           final course = state.myCourses[index];
                           return CourseCard(
@@ -525,7 +525,7 @@ class _CatalogViewState extends State<_CatalogView> {
                         crossAxisCount: 2,
                         crossAxisSpacing: 12,
                         mainAxisSpacing: 14,
-                        childAspectRatio: 0.72,
+                        childAspectRatio: 0.82,
                       ),
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {
@@ -741,7 +741,7 @@ class _ShimmerLoading extends StatelessWidget {
                         crossAxisCount: 2,
                         crossAxisSpacing: 12,
                         mainAxisSpacing: 14,
-                        childAspectRatio: 0.72,
+                        childAspectRatio: 0.82,
                       ),
                       itemCount: 6,
                       itemBuilder: (context, index) => Container(

@@ -39,6 +39,9 @@ htmlcov/
 *.md
 docs/
 
+# Scripts
+scripts/
+
 # OS
 .DS_Store
 Thumbs.db

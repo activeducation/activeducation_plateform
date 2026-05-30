@@ -3,9 +3,8 @@
 import os
 import re
 import uuid
-from typing import Optional
 
-from fastapi import APIRouter, Depends, File, UploadFile, Form, HTTPException
+from fastapi import APIRouter, Depends, File, UploadFile, HTTPException
 from app.core.logging import get_logger
 from app.core.security import get_current_admin
 from app.core.exceptions import ValidationError
@@ -55,11 +54,11 @@ async def upload_image(
         raise ValidationError(f"Bucket invalide. Valides: {', '.join(VALID_BUCKETS)}")
 
     if file.content_type not in ALLOWED_TYPES:
-        raise ValidationError(f"Format invalide. Acceptes: jpg, png, webp")
+        raise ValidationError("Format invalide. Acceptes: jpg, png, webp")
 
     content = await file.read()
     if len(content) > MAX_FILE_SIZE:
-        raise ValidationError(f"Fichier trop volumineux. Max: 5MB")
+        raise ValidationError("Fichier trop volumineux. Max: 5MB")
 
     detected_type = _validate_magic_bytes(content)
     if detected_type not in ALLOWED_TYPES:
@@ -98,7 +97,7 @@ async def delete_image(
 ):
     """Supprime une image de Supabase Storage."""
     if bucket not in VALID_BUCKETS:
-        raise ValidationError(f"Bucket invalide")
+        raise ValidationError("Bucket invalide")
 
     safe_filename = os.path.basename(filename)
     if safe_filename != filename or "/" in filename or "\\" in filename:
@@ -128,5 +127,6 @@ def _log_audit(admin_id, action, entity_type, entity_id, changes):
             "entity_id": str(entity_id) if entity_id else None,
             "changes": changes,
         })
-    except Exception as e:
-        logger.warning(f"Audit log failed: {e}")
+    except Exception:
+        logger.error("Audit log failed, blocking action", exc_info=True)
+        raise

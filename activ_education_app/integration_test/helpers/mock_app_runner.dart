@@ -11,7 +11,6 @@ import 'package:mocktail/mocktail.dart';
 import 'package:activ_education_app/features/auth/domain/entities/user.dart';
 import 'package:activ_education_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:activ_education_app/features/auth/presentation/pages/login_page.dart';
-import 'package:activ_education_app/features/home/presentation/pages/home_page.dart';
 import 'package:activ_education_app/core/theme/theme.dart';
 
 // ============================================================================

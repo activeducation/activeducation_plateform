@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -10,8 +11,18 @@ import '../constants/api_endpoints.dart';
 @module
 abstract class RegisterModule {
   /// SharedPreferences pour le stockage local.
+  @singleton
   @preResolve
-  Future<SharedPreferences> get prefs => SharedPreferences.getInstance();
+  Future<SharedPreferences> get prefs async => SharedPreferences.getInstance();
+
+  /// FlutterSecureStorage pour les tokens.
+  @lazySingleton
+  FlutterSecureStorage get secureStorage => const FlutterSecureStorage(
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    iOptions: IOSOptions(
+      accessibility: KeychainAccessibility.first_unlock,
+    ),
+  );
 
   /// Client Dio pour les requetes de refresh (sans intercepteur auth).
   @Named('refreshClient')

@@ -18,6 +18,7 @@ class TokenStorage {
   static const String _refreshTokenKey = 'auth_refresh_token';
   static const String _tokenExpiryKey = 'auth_token_expiry';
   static const String _userIdKey = 'auth_user_id';
+  static const String _userRoleKey = 'auth_user_role';
 
   final FlutterSecureStorage _secure;
   SharedPreferences? _prefs;
@@ -34,8 +35,12 @@ class TokenStorage {
 
   /// Initialise le stockage (doit etre appele au demarrage).
   Future<void> init() async {
-    _prefs ??= await SharedPreferences.getInstance();
-    await _migrateLegacyTokensIfNeeded();
+    try {
+      _prefs ??= await SharedPreferences.getInstance();
+      await _migrateLegacyTokensIfNeeded();
+    } catch (_) {
+      // Echec silencieux — l'app fonctionne sans stockage persistant
+    }
   }
 
   /// Verifie si le stockage est initialise.
@@ -129,9 +134,25 @@ class TokenStorage {
 
   /// Verifie si un utilisateur est authentifie.
   Future<bool> hasValidTokens() async {
-    final accessToken = await getAccessToken();
-    final refreshToken = await getRefreshToken();
-    return accessToken != null && refreshToken != null;
+    try {
+      final accessToken = await getAccessToken();
+      final refreshToken = await getRefreshToken();
+      return accessToken != null && refreshToken != null;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Sauvegarde le rôle de l'utilisateur.
+  Future<void> saveUserRole(String role) async {
+    final prefs = await _ensureInitialized();
+    await prefs.setString(_userRoleKey, role);
+  }
+
+  /// Récupère le rôle de l'utilisateur.
+  Future<String?> getUserRole() async {
+    final prefs = await _ensureInitialized();
+    return prefs.getString(_userRoleKey);
   }
 
   /// Supprime tous les tokens (deconnexion).
@@ -143,6 +164,7 @@ class TokenStorage {
       _secure.delete(key: _refreshTokenKey),
       prefs.remove(_tokenExpiryKey),
       prefs.remove(_userIdKey),
+      prefs.remove(_userRoleKey),
     ]);
   }
 

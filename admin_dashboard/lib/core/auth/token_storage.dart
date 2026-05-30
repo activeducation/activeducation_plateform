@@ -20,6 +20,8 @@ class TokenStorage {
   static const _userEmailKey = 'admin_user_email';
   static const _userRoleKey = 'admin_user_role';
   static const _userNameKey = 'admin_user_name';
+  static const _schoolIdKey = 'school_id';
+  static const _schoolNameKey = 'school_name';
 
   final FlutterSecureStorage _secure;
   SharedPreferences? _prefs;
@@ -91,6 +93,15 @@ class TokenStorage {
   String? get userEmail => _prefs?.getString(_userEmailKey);
   String? get userRole => _prefs?.getString(_userRoleKey);
   String? get userName => _prefs?.getString(_userNameKey);
+  String? get schoolId => _prefs?.getString(_schoolIdKey);
+  String? get schoolName => _prefs?.getString(_schoolNameKey);
+
+  Future<void> saveSchool(Map<String, dynamic> school) async {
+    if (school['id'] != null) await _prefs?.setString(_schoolIdKey, school['id']);
+    if (school['name'] != null) await _prefs?.setString(_schoolNameKey, school['name']);
+  }
+
+  bool get isSchoolAdmin => userRole == 'school_admin' && schoolId != null;
 
   bool get isLoggedIn => accessToken != null && accessToken!.isNotEmpty;
   bool get isSuperAdmin => userRole == 'super_admin';
@@ -105,6 +116,17 @@ class TokenStorage {
       _prefs?.remove(_userEmailKey) ?? Future.value(true),
       _prefs?.remove(_userRoleKey) ?? Future.value(true),
       _prefs?.remove(_userNameKey) ?? Future.value(true),
+      _prefs?.remove(_schoolIdKey) ?? Future.value(true),
+      _prefs?.remove(_schoolNameKey) ?? Future.value(true),
     ]);
+  }
+
+  Future<void> saveUser(Map<String, dynamic> user) async {
+    await saveUserInfo(
+      userId: user['id'] ?? '',
+      email: user['email'] ?? '',
+      role: user['role'] ?? 'student',
+      name: user['display_name'] ?? user['first_name'] ?? user['email'] ?? '',
+    );
   }
 }

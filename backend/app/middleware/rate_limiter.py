@@ -3,7 +3,7 @@ Rate Limiting Middleware pour proteger l'API contre les abus.
 Utilise slowapi pour la gestion des limites de requetes.
 """
 
-from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from fastapi import Request
@@ -39,8 +39,8 @@ def _get_storage_uri() -> str:
     redis_url = getattr(settings, "REDIS_URL", None)
     if redis_url and settings.ENVIRONMENT != "development":
         uri = f"redis+sentinel://{redis_url}" if "sentinel" in redis_url else redis_url
-        logger.info("Rate limiter storage: Redis (%s)", redis_url)
-        return redis_url
+        logger.info("Rate limiter storage: Redis (%s)", uri)
+        return uri
     logger.info("Rate limiter storage: memory (dev mode)")
     return "memory://"
 

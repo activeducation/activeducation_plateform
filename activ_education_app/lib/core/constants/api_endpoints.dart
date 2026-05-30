@@ -85,6 +85,7 @@ class ApiEndpoints {
   static String requestMentor(String id) => '$mentors/$id/request';
   static const String mentorRelationships = '$apiV1/mentor-relationships';
   static String relationshipById(String id) => '$mentorRelationships/$id';
+  static const String mentorList = '$apiV1/mentors';
 
   // ============================================
   // MESSAGERIE
@@ -136,4 +137,19 @@ class ApiEndpoints {
   static const String leaderboard = '$gamification/leaderboard';
   static const String weeklyLeaderboard = '$gamification/leaderboard/weekly';
   static const String dailyStreak = '$gamification/streak';
+
+  // ============================================
+  // OPPORTUNITIES - Stages, jobs, bourses
+  // ============================================
+  static const String opportunities = '$apiV1/opportunities';
+  static String opportunityById(String id) => '$opportunities/$id';
+
+  // ============================================
+  // PARTNER (CDEJ, ONG) - Organizations & Beneficiaries
+  // ============================================
+  static const String partnerOrganizations = '$apiV1/partner/organizations';
+  static String partnerOrganizationById(String id) => '$partnerOrganizations/$id';
+  static String partnerOrganizationStats(String id) => '$partnerOrganizations/$id/stats';
+  static String partnerBeneficiaries(String orgId) => '$partnerOrganizations/$orgId/beneficiaries';
+  static String partnerBeneficiaryById(String id) => '$apiV1/partner/beneficiaries/$id';
 }

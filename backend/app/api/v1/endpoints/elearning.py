@@ -17,7 +17,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.core.cache import get_cache, TTL_LISTS
 from app.core.security import get_current_user_id, get_user_from_token
-from app.repositories.elearning_repository import elearning_repository
+from app.repositories.elearning_repository import get_elearning_repository
 from app.schemas.elearning import (
     CourseListItem,
     CourseDetail,
@@ -78,7 +78,7 @@ async def list_courses(
     if cached is not None:
         return [CourseListItem(**c) for c in cached]
 
-    courses = await elearning_repository.get_published_courses(user_id=user_id_str)
+    courses = await get_elearning_repository().get_published_courses(user_id=user_id_str)
     items = [CourseListItem(**c) for c in courses]
 
     cache.set(cache_key, [c.model_dump(mode="json") for c in items], ttl=TTL_LISTS)
@@ -106,7 +106,7 @@ async def get_course(
     if cached is not None:
         return CourseDetail(**cached)
 
-    course_data = await elearning_repository.get_course_detail(
+    course_data = await get_elearning_repository().get_course_detail(
         course_id=str(course_id), user_id=user_id_str
     )
     if course_data is None:
@@ -142,7 +142,7 @@ async def get_lesson(
 ) -> LessonDetail:
     user_id_str = str(user_id)
 
-    lesson_data = await elearning_repository.get_lesson_detail(
+    lesson_data = await get_elearning_repository().get_lesson_detail(
         lesson_id=str(lesson_id), user_id=user_id_str
     )
     if lesson_data is None:
@@ -155,7 +155,7 @@ async def get_lesson(
     if not lesson_data.get("is_free", False):
         # Recuperer le module pour obtenir le course_id
         try:
-            db = elearning_repository._db
+            db = get_elearning_repository()._db
             module_result = (
                 db.client.table("elearning_modules")
                 .select("course_id")
@@ -213,7 +213,7 @@ async def enroll_in_course(
     user_id: UUID = Depends(get_current_user_id),
 ) -> EnrollmentResponse:
     # Verifier que le cours existe et est publie
-    course_data = await elearning_repository.get_course_detail(
+    course_data = await get_elearning_repository().get_course_detail(
         course_id=str(course_id), user_id=None
     )
     if course_data is None or not course_data.get("is_published", False):
@@ -223,7 +223,7 @@ async def enroll_in_course(
         )
 
     try:
-        enrollment = await elearning_repository.enroll_user(
+        enrollment = await get_elearning_repository().enroll_user(
             user_id=str(user_id), course_id=str(course_id)
         )
     except ValueError as e:
@@ -269,7 +269,7 @@ async def get_my_courses(
     if cached is not None:
         return MyCoursesResponse(**cached)
 
-    enrollments = await elearning_repository.get_user_enrollments(user_id=str(user_id))
+    enrollments = await get_elearning_repository().get_user_enrollments(user_id=str(user_id))
 
     my_courses = []
     for enrollment in enrollments:
@@ -313,7 +313,7 @@ async def complete_lesson(
     user_id: UUID = Depends(get_current_user_id),
 ) -> CompleteLessonResponse:
     # Verifier que la lecon existe
-    lesson_data = await elearning_repository.get_lesson_detail(
+    lesson_data = await get_elearning_repository().get_lesson_detail(
         lesson_id=str(lesson_id), user_id=str(user_id)
     )
     if lesson_data is None:
@@ -322,7 +322,7 @@ async def complete_lesson(
             detail="Lecon introuvable.",
         )
 
-    result = await elearning_repository.mark_lesson_complete(
+    result = await get_elearning_repository().mark_lesson_complete(
         user_id=str(user_id),
         lesson_id=str(lesson_id),
         score=body.score,

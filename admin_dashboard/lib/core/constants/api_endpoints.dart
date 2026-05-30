@@ -9,6 +9,9 @@ class ApiEndpoints {
   // Admin Auth
   static const String adminLogin = '/admin/auth/login';
 
+  // School Admin Auth
+  static const String schoolAdminLogin = '/school/auth/login';
+
   // Dashboard
   static const String dashboardStats = '/admin/dashboard/stats';
 
@@ -70,6 +73,42 @@ class ApiEndpoints {
   static String adminAnnouncementById(String id) => '/admin/announcements/$id';
   static const String adminAuditLog = '/admin/audit-log';
 
+  // E-Learning
+  static const String adminElearningCourses = '/admin/elearning/courses';
+  static String adminElearningCourseById(String id) => '/admin/elearning/courses/$id';
+  static String adminElearningCoursePublish(String id) => '/admin/elearning/courses/$id/publish';
+  static String adminElearningCourseModules(String id) => '/admin/elearning/courses/$id/modules';
+  static const String adminElearningSchools = '/admin/elearning/schools';
+
+  // E-Learning Modules
+  static String adminElearningModule(String id) => '/admin/elearning/modules/$id';
+  static String adminElearningModuleLessons(String id) => '/admin/elearning/modules/$id/lessons';
+
+  // E-Learning Lessons
+  static String adminElearningLesson(String id) => '/admin/elearning/lessons/$id';
+
+  // Opportunities
+  static const String adminOpportunities = '/admin/opportunities';
+  static String adminOpportunityById(String id) => '/admin/opportunities/$id';
+  static String adminOpportunityPublish(String id) => '/admin/opportunities/$id/publish';
+  static String adminOpportunityFeatured(String id) => '/admin/opportunities/$id/featured';
+
   // Upload
   static String adminUpload(String bucket) => '/admin/upload/$bucket';
+
+  // School Admin (E-Learning)
+  static const String schoolCourses = '/school/courses';
+  static String schoolCourseById(String id) => '/school/courses/$id';
+  static String schoolCoursePublish(String id) => '/school/courses/$id/publish';
+  static String schoolCourseModules(String id) => '/school/courses/$id/modules';
+  static const String schoolProfile = '/school/profile';
+  static const String schoolDashboard = '/school/dashboard';
+
+  // School Admin Modules
+  static String schoolModule(String id) => '/school/modules/$id';
+  static String schoolModuleLessons(String id) => '/school/modules/$id/lessons';
+
+  // School Admin Lessons
+  static String schoolLesson(String id) => '/school/lessons/$id';
+  static String schoolLessonUploadVideo(String id) => '/school/lessons/$id/upload-video';
 }

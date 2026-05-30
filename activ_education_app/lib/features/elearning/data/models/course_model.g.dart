@@ -1,7 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-// ignore_for_file: type=lint
-
 part of 'course_model.dart';
 
 // **************************************************************************
@@ -9,17 +7,17 @@ part of 'course_model.dart';
 // **************************************************************************
 
 CourseModel _$CourseModelFromJson(Map<String, dynamic> json) => CourseModel(
-      id: json['id'] as String,
-      title: json['title'] as String,
-      description: json['description'] as String,
-      thumbnailUrl: json['thumbnail_url'] as String?,
-      category: json['category'] as String,
-      difficulty: $enumDecode(_$CourseDifficultyEnumMap, json['difficulty']),
-      durationMinutes: (json['duration_minutes'] as num).toInt(),
-      pointsReward: (json['points_reward'] as num).toInt(),
-      progressPct: (json['progress_pct'] as num?)?.toInt(),
-      isEnrolled: json['is_enrolled'] as bool? ?? false,
-    );
+  id: json['id'] as String,
+  title: json['title'] as String,
+  description: json['description'] as String? ?? '',
+  thumbnailUrl: json['thumbnail_url'] as String?,
+  category: json['category'] as String? ?? '',
+  difficulty: $enumDecode(_$CourseDifficultyEnumMap, json['difficulty']),
+  durationMinutes: (json['duration_minutes'] as num?)?.toInt() ?? 0,
+  pointsReward: (json['points_reward'] as num?)?.toInt() ?? 0,
+  progressPct: (json['progress_pct'] as num?)?.toInt(),
+  isEnrolled: json['is_enrolled'] as bool? ?? false,
+);
 
 Map<String, dynamic> _$CourseModelToJson(CourseModel instance) =>
     <String, dynamic>{
@@ -41,15 +39,39 @@ const _$CourseDifficultyEnumMap = {
   CourseDifficulty.avance: 'avance',
 };
 
+CourseModuleModel _$CourseModuleModelFromJson(Map<String, dynamic> json) =>
+    CourseModuleModel(
+      id: json['id'] as String,
+      courseId: json['course_id'] as String,
+      title: json['title'] as String,
+      description: json['description'] as String?,
+      displayOrder: (json['display_order'] as num?)?.toInt() ?? 0,
+      isLocked: json['is_locked'] as bool,
+      lessons: (json['lessons'] as List<dynamic>)
+          .map((e) => LessonSummaryModel.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+
+Map<String, dynamic> _$CourseModuleModelToJson(CourseModuleModel instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'course_id': instance.courseId,
+      'title': instance.title,
+      'description': instance.description,
+      'display_order': instance.displayOrder,
+      'is_locked': instance.isLocked,
+      'lessons': instance.lessons,
+    };
+
 LessonSummaryModel _$LessonSummaryModelFromJson(Map<String, dynamic> json) =>
     LessonSummaryModel(
       id: json['id'] as String,
       moduleId: json['module_id'] as String,
       title: json['title'] as String,
       lessonType: $enumDecode(_$LessonTypeEnumMap, json['lesson_type']),
-      durationMinutes: (json['duration_minutes'] as num).toInt(),
-      pointsReward: (json['points_reward'] as num).toInt(),
-      isFree: json['is_free'] as bool? ?? false,
+      durationMinutes: (json['duration_minutes'] as num?)?.toInt() ?? 0,
+      pointsReward: (json['points_reward'] as num?)?.toInt() ?? 0,
+      isFree: json['is_free'] as bool,
       status: $enumDecodeNullable(_$LessonStatusEnumMap, json['status']),
     );
 
@@ -79,30 +101,6 @@ const _$LessonStatusEnumMap = {
   LessonStatus.completed: 'completed',
 };
 
-CourseModuleModel _$CourseModuleModelFromJson(Map<String, dynamic> json) =>
-    CourseModuleModel(
-      id: json['id'] as String,
-      courseId: json['course_id'] as String,
-      title: json['title'] as String,
-      description: json['description'] as String?,
-      displayOrder: (json['display_order'] as num).toInt(),
-      isLocked: json['is_locked'] as bool? ?? false,
-      lessons: (json['lessons'] as List<dynamic>)
-          .map((e) => LessonSummaryModel.fromJson(e as Map<String, dynamic>))
-          .toList(),
-    );
-
-Map<String, dynamic> _$CourseModuleModelToJson(CourseModuleModel instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'course_id': instance.courseId,
-      'title': instance.title,
-      'description': instance.description,
-      'display_order': instance.displayOrder,
-      'is_locked': instance.isLocked,
-      'lessons': instance.lessons.map((e) => (e as LessonSummaryModel).toJson()).toList(),
-    };
-
 LessonContentModel _$LessonContentModelFromJson(Map<String, dynamic> json) =>
     LessonContentModel(
       lessonType: $enumDecode(_$LessonTypeEnumMap, json['lesson_type']),
@@ -121,13 +119,15 @@ LessonDetailModel _$LessonDetailModelFromJson(Map<String, dynamic> json) =>
       moduleId: json['module_id'] as String,
       title: json['title'] as String,
       lessonType: $enumDecode(_$LessonTypeEnumMap, json['lesson_type']),
-      durationMinutes: (json['duration_minutes'] as num).toInt(),
-      pointsReward: (json['points_reward'] as num).toInt(),
-      isFree: json['is_free'] as bool? ?? false,
+      durationMinutes: (json['duration_minutes'] as num?)?.toInt() ?? 0,
+      pointsReward: (json['points_reward'] as num?)?.toInt() ?? 0,
+      isFree: json['is_free'] as bool,
       status: $enumDecodeNullable(_$LessonStatusEnumMap, json['status']),
       content: json['content'] == null
           ? null
-          : LessonContentModel.fromJson(json['content'] as Map<String, dynamic>),
+          : LessonContentModel.fromJson(
+              json['content'] as Map<String, dynamic>,
+            ),
     );
 
 Map<String, dynamic> _$LessonDetailModelToJson(LessonDetailModel instance) =>
@@ -140,21 +140,19 @@ Map<String, dynamic> _$LessonDetailModelToJson(LessonDetailModel instance) =>
       'points_reward': instance.pointsReward,
       'is_free': instance.isFree,
       'status': _$LessonStatusEnumMap[instance.status],
-      'content': instance.content == null
-          ? null
-          : (instance.content! as LessonContentModel).toJson(),
+      'content': instance.content,
     };
 
 CourseDetailModel _$CourseDetailModelFromJson(Map<String, dynamic> json) =>
     CourseDetailModel(
       id: json['id'] as String,
       title: json['title'] as String,
-      description: json['description'] as String,
+      description: json['description'] as String? ?? '',
       thumbnailUrl: json['thumbnail_url'] as String?,
-      category: json['category'] as String,
+      category: json['category'] as String? ?? '',
       difficulty: $enumDecode(_$CourseDifficultyEnumMap, json['difficulty']),
-      durationMinutes: (json['duration_minutes'] as num).toInt(),
-      pointsReward: (json['points_reward'] as num).toInt(),
+      durationMinutes: (json['duration_minutes'] as num?)?.toInt() ?? 0,
+      pointsReward: (json['points_reward'] as num?)?.toInt() ?? 0,
       progressPct: (json['progress_pct'] as num?)?.toInt(),
       isEnrolled: json['is_enrolled'] as bool? ?? false,
       modules: (json['modules'] as List<dynamic>)
@@ -174,6 +172,5 @@ Map<String, dynamic> _$CourseDetailModelToJson(CourseDetailModel instance) =>
       'points_reward': instance.pointsReward,
       'progress_pct': instance.progressPct,
       'is_enrolled': instance.isEnrolled,
-      'modules': instance.modules.map((e) => (e as CourseModuleModel).toJson()).toList(),
+      'modules': instance.modules,
     };
-

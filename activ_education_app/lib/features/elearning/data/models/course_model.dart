@@ -3,17 +3,17 @@ import '../../domain/entities/course.dart';
 
 part 'course_model.g.dart';
 
-@JsonSerializable()
+@JsonSerializable(fieldRename: FieldRename.snake)
 class CourseModel extends Course {
   const CourseModel({
     required super.id,
     required super.title,
-    required super.description,
+    @JsonKey(defaultValue: '') required super.description,
     super.thumbnailUrl,
-    required super.category,
+    @JsonKey(defaultValue: '') required super.category,
     required super.difficulty,
-    required super.durationMinutes,
-    required super.pointsReward,
+    @JsonKey(defaultValue: 0) required super.durationMinutes,
+    @JsonKey(defaultValue: 0) required super.pointsReward,
     super.progressPct,
     super.isEnrolled,
   });
@@ -24,7 +24,7 @@ class CourseModel extends Course {
   Map<String, dynamic> toJson() => _$CourseModelToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(fieldRename: FieldRename.snake)
 class CourseModuleModel extends CourseModule {
   @override
   final List<LessonSummaryModel> lessons;
@@ -34,7 +34,7 @@ class CourseModuleModel extends CourseModule {
     required super.courseId,
     required super.title,
     super.description,
-    required super.displayOrder,
+    @JsonKey(defaultValue: 0) required super.displayOrder,
     required super.isLocked,
     required this.lessons,
   }) : super(lessons: lessons);
@@ -45,15 +45,15 @@ class CourseModuleModel extends CourseModule {
   Map<String, dynamic> toJson() => _$CourseModuleModelToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(fieldRename: FieldRename.snake)
 class LessonSummaryModel extends LessonSummary {
   const LessonSummaryModel({
     required super.id,
     required super.moduleId,
     required super.title,
     required super.lessonType,
-    required super.durationMinutes,
-    required super.pointsReward,
+    @JsonKey(defaultValue: 0) required super.durationMinutes,
+    @JsonKey(defaultValue: 0) required super.pointsReward,
     required super.isFree,
     super.status,
   });
@@ -64,7 +64,7 @@ class LessonSummaryModel extends LessonSummary {
   Map<String, dynamic> toJson() => _$LessonSummaryModelToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(fieldRename: FieldRename.snake)
 class LessonContentModel extends LessonContent {
   const LessonContentModel({
     required super.lessonType,
@@ -77,7 +77,7 @@ class LessonContentModel extends LessonContent {
   Map<String, dynamic> toJson() => _$LessonContentModelToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(fieldRename: FieldRename.snake)
 class LessonDetailModel extends LessonDetail {
   @override
   final LessonContentModel? content;
@@ -87,8 +87,8 @@ class LessonDetailModel extends LessonDetail {
     required super.moduleId,
     required super.title,
     required super.lessonType,
-    required super.durationMinutes,
-    required super.pointsReward,
+    @JsonKey(defaultValue: 0) required super.durationMinutes,
+    @JsonKey(defaultValue: 0) required super.pointsReward,
     required super.isFree,
     super.status,
     this.content,
@@ -100,7 +100,7 @@ class LessonDetailModel extends LessonDetail {
   Map<String, dynamic> toJson() => _$LessonDetailModelToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(fieldRename: FieldRename.snake)
 class CourseDetailModel extends CourseDetail {
   @override
   final List<CourseModuleModel> modules;
@@ -108,12 +108,12 @@ class CourseDetailModel extends CourseDetail {
   const CourseDetailModel({
     required super.id,
     required super.title,
-    required super.description,
+    @JsonKey(defaultValue: '') required super.description,
     super.thumbnailUrl,
-    required super.category,
+    @JsonKey(defaultValue: '') required super.category,
     required super.difficulty,
-    required super.durationMinutes,
-    required super.pointsReward,
+    @JsonKey(defaultValue: 0) required super.durationMinutes,
+    @JsonKey(defaultValue: 0) required super.pointsReward,
     super.progressPct,
     super.isEnrolled,
     required this.modules,

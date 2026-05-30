@@ -17,6 +17,8 @@ android {
 
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_17.toString()
+        // Force Kotlin language version to avoid compatibility issues with old plugins
+        languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.fromString("1.8"))
     }
 
     defaultConfig {

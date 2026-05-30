@@ -9,8 +9,6 @@ Gère :
 """
 
 import random
-from typing import Optional
-from uuid import UUID
 
 from app.core.logging import get_logger
 from app.schemas.orientation import CareerSummary, TestResult
