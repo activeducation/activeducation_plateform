@@ -31,24 +31,20 @@ def upgrade() -> None:
     op.execute("CREATE INDEX IF NOT EXISTS idx_user_profiles_created ON user_profiles(created_at DESC)")
     op.execute("CREATE INDEX IF NOT EXISTS idx_user_profiles_role ON user_profiles(role)")
 
-    # Elearning - enrollments and progress
+    # Elearning - enrollments and progress (tables creees en 005)
     op.execute("CREATE INDEX IF NOT EXISTS idx_elearning_enrollments_user_course ON elearning_enrollments(user_id, course_id)")
     op.execute("CREATE INDEX IF NOT EXISTS idx_elearning_enrollments_course ON elearning_enrollments(course_id)")
     op.execute("CREATE INDEX IF NOT EXISTS idx_elearning_progress_user ON elearning_user_progress(user_id)")
     op.execute("CREATE INDEX IF NOT EXISTS idx_elearning_progress_lesson ON elearning_user_progress(lesson_id)")
 
-    # Gamification - points queries
-    op.execute("CREATE INDEX IF NOT EXISTS idx_gamification_points_user ON gamification_points(user_id)")
-    op.execute("CREATE INDEX IF NOT EXISTS idx_gamification_points_type ON gamification_points(points_type)")
-    op.execute("CREATE INDEX IF NOT EXISTS idx_gamification_badges_user ON gamification_badges(user_id)")
-
-    # Mentor availability
-    op.execute("CREATE INDEX IF NOT EXISTS idx_mentor_availability_active ON mentor_availability(is_available)")
-    op.execute("CREATE INDEX IF NOT EXISTS idx_mentor_availability_time ON mentor_availability(available_from, available_to)")
-
-    # Opportunities
-    op.execute("CREATE INDEX IF NOT EXISTS idx_opportunities_status ON opportunities(status)")
-    op.execute("CREATE INDEX IF NOT EXISTS idx_opportunities_type ON opportunities(opportunity_type)")
+    # NOTE: les index gamification_points / gamification_badges ont ete RETIRES.
+    # Ces tables n'existent dans aucune migration (les vraies tables de
+    # gamification sont `challenges` et `user_challenges`, creees en 002).
+    #
+    # NOTE: les index mentor_availability et opportunities ont ete DEPLACES
+    # vers la migration 012, qui cree ces tables. Les creer ici provoquait un
+    # echec "relation does not exist" lors d'un `alembic upgrade head` from
+    # scratch (009 s'execute AVANT 012).
 
 
 def downgrade() -> None:
@@ -62,10 +58,4 @@ def downgrade() -> None:
     op.execute("DROP INDEX IF EXISTS idx_elearning_enrollments_course")
     op.execute("DROP INDEX IF EXISTS idx_elearning_progress_user")
     op.execute("DROP INDEX IF EXISTS idx_elearning_progress_lesson")
-    op.execute("DROP INDEX IF EXISTS idx_gamification_points_user")
-    op.execute("DROP INDEX IF EXISTS idx_gamification_points_type")
-    op.execute("DROP INDEX IF EXISTS idx_gamification_badges_user")
-    op.execute("DROP INDEX IF EXISTS idx_mentor_availability_active")
-    op.execute("DROP INDEX IF EXISTS idx_mentor_availability_time")
-    op.execute("DROP INDEX IF EXISTS idx_opportunities_status")
-    op.execute("DROP INDEX IF EXISTS idx_opportunities_type")
+    # gamification_* / mentor_availability / opportunities : voir note dans upgrade()

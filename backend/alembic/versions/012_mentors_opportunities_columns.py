@@ -81,6 +81,9 @@ def upgrade() -> None:
     """)
 
     op.execute("CREATE INDEX IF NOT EXISTS idx_mentor_availability_mentor ON mentor_availability(mentor_id);")
+    # Index deplaces depuis 009 (qui s'executait avant la creation de la table)
+    op.execute("CREATE INDEX IF NOT EXISTS idx_mentor_availability_active ON mentor_availability(is_available);")
+    op.execute("CREATE INDEX IF NOT EXISTS idx_mentor_availability_time ON mentor_availability(available_from, available_to);")
 
     # =========================================================================
     # 4. Table opportunities (si absente, avec currency XOF)
