@@ -31,6 +31,20 @@ class AuthInterceptor extends Interceptor {
     '/orientation/mobile/',
   ];
 
+  /// Routes a authentification OPTIONNELLE : le backend les sert avec ou sans
+  /// token (ex: get_optional_user_id). Si un token valide est present, on
+  /// l'attache pour enrichir la reponse (progress_pct, is_enrolled...). Mais si
+  /// le token est expire et que le refresh echoue, on procede SANS token au
+  /// lieu de bloquer la requete avec un 401 — sinon le catalogue public casse
+  /// des que la session expire.
+  static const List<String> _optionalAuthRoutes = [
+    '/elearning/courses',
+    '/elearning/lessons',
+    '/mentors',
+    '/opportunities',
+    '/schools',
+  ];
+
   AuthInterceptor(this._tokenStorage, @Named('refreshClient') this._refreshDio);
 
   @override
@@ -42,6 +56,8 @@ class AuthInterceptor extends Interceptor {
       return handler.next(options);
     }
 
+    final isOptionalAuth = _isOptionalAuthRoute(options.path);
+
     final isExpired = await _tokenStorage.isTokenExpired();
     if (isExpired) {
       if (kDebugMode) debugPrint('[AuthInterceptor] Token expired, proactively refreshing...');
@@ -49,6 +65,11 @@ class AuthInterceptor extends Interceptor {
       if (!refreshed) {
         if (kDebugMode) debugPrint('[AuthInterceptor] Proactive refresh failed — clearing tokens');
         await _tokenStorage.clearTokens();
+        // Route a auth optionnelle : on laisse passer SANS token plutot que de
+        // casser le contenu public (catalogue, mentors, opportunites, ecoles).
+        if (isOptionalAuth) {
+          return handler.next(options);
+        }
         return handler.reject(
           DioException(
             requestOptions: options,
@@ -98,6 +119,12 @@ class AuthInterceptor extends Interceptor {
   /// Verifie si la route est publique (pas d'auth requise).
   bool _isPublicRoute(String path) {
     return _publicRoutes.any((route) => path.contains(route));
+  }
+
+  /// Verifie si la route accepte une auth optionnelle (token attache si valide,
+  /// sinon requete envoyee sans token au lieu d'etre bloquee).
+  bool _isOptionalAuthRoute(String path) {
+    return _optionalAuthRoutes.any((route) => path.contains(route));
   }
 
   /// Gere le rafraichissement du token.
