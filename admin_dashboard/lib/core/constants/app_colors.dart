@@ -3,44 +3,51 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  // Primary palette – Bleu Royal ActivEducation (couleur logo exacte)
-  static const Color primary = Color(0xFF1060CF);
-  static const Color primaryLight = Color(0xFF4A8AE5);
-  static const Color primaryMid = Color(0xFF1752B8);
-  static const Color primaryDark = Color(0xFF0A45A0);
-  static const Color primarySurface = Color(0xFFE8F0FE);
+  // Primary palette – Bleu (#3133DD)
+  static const Color primary = Color(0xFF3133DD);
+  static const Color primaryLight = Color(0xFF6062E8);
+  static const Color primaryMid = Color(0xFF2322D3);
+  static const Color primaryDark = Color(0xFF0E00C8);
+  static const Color primarySurface = Color(0xFFE1E0FF);
 
-  // Secondary / accent – Or Ambré ActivEducation (couleur logo exacte)
-  static const Color secondary = Color(0xFFF2A423);
-  static const Color secondaryLight = Color(0xFFFFD166);
-  static const Color secondaryDark = Color(0xFFCC8800);
-  static const Color secondarySurface = Color(0xFFFFF5E0);
+  // Secondary / Accent – Orange Vif gamifié (#FAA100)
+  static const Color secondary = Color(0xFFFAA100);
+  static const Color secondaryLight = Color(0xFFFFB94D);
+  static const Color secondaryDark = Color(0xFFD48700);
+  static const Color secondarySurface = Color(0xFFFFF3E0);
+  static const Color accent = Color(0xFFFAA100);
+  static const Color accentLight = Color(0xFFFFB94D);
+  static const Color accentDark = Color(0xFFD48700);
+  static const Color accentSurface = Color(0xFFFFF3E0);
 
-  // Backgrounds – légèrement teintés bleu pour cohérence
-  static const Color background = Color(0xFFF5F7FC);
+  // Surfaces
   static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceVariant = Color(0xFFF0F4FA);
-  static const Color surfaceHover = Color(0xFFEBF0F8);
+  static const Color surfaceVariant = Color(0xFFF6F2FA);
+  static const Color surfaceHover = Color(0xFFF0ECF4);
+  static const Color background = Color(0xFFFBF8FF);
 
-  // Sidebar – Bleu ActivEducation profond (aligné landing page)
-  static const Color sidebarBg = Color(0xFF060E1E);
-  static const Color sidebarBgLight = Color(0xFF0B1C3C);
-  static const Color sidebarText = Color(0xFFE4EEF8);
-  static const Color sidebarTextMuted = Color(0xFF7AA0BC);
-  static const Color sidebarItemHover = Color(0xFF1060CF);
-  static const Color sidebarItemActive = Color(0xFFF2A423);
-  static const Color sidebarDivider = Color(0xFF1B2E52);
+  // Sidebar – Fond sombre profond
+  static const Color sidebarBg = Color(0xFF121217);
+  static const Color sidebarBgLight = Color(0xFF1E1E26);
+  static const Color sidebarText = Color(0xFFF3EFF7);
+  static const Color sidebarTextMuted = Color(0xFFC6C4D8);
+  static const Color sidebarItemHover = Color(0xFF3133DD);
+  static const Color sidebarItemActive = Color(0xFFFAA100);
+  static const Color sidebarDivider = Color(0xFF303035);
 
   // Text
-  static const Color textPrimary = Color(0xFF0F172A);
-  static const Color textSecondary = Color(0xFF64748B);
-  static const Color textMuted = Color(0xFF94A3B8);
+  static const Color textPrimary = Color(0xFF1B1B20);
+  static const Color textSecondary = Color(0xFF454556);
+  static const Color textTertiary = Color(0xFF767587);
+  static const Color textMuted = Color(0xFF767587);
   static const Color textOnPrimary = Colors.white;
 
   // Borders
-  static const Color border = Color(0xFFE2E8F0);
-  static const Color borderLight = Color(0xFFF1F5F9);
-  static const Color divider = Color(0xFFF1F5F9);
+  static const Color outline = Color(0xFF767587);
+  static const Color outlineVariant = Color(0xFFC6C4D8);
+  static const Color border = Color(0xFFE4E1E9);
+  static const Color borderLight = Color(0xFFF0ECF4);
+  static const Color divider = Color(0xFFE4E1E9);
 
   // Status
   static const Color success = Color(0xFF10B981);
@@ -53,6 +60,6 @@ class AppColors {
   static const Color infoSurface = Color(0xFFEFF6FF);
 
   // Shadows
-  static const Color cardShadow = Color(0x08000000);
+  static const Color cardShadow = Color(0x05000000);
   static const Color cardShadowHover = Color(0x12000000);
 }
