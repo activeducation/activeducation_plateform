@@ -1,20 +1,26 @@
 """
-Script pour creer le premier super_admin dans la base de donnees.
+Script LEGACY pour creer le premier super_admin (auth JWT maison).
+
+ATTENTION : ce script utilise l'ancienne auth (hash_password). Depuis la
+migration vers Supabase Auth natif, utilisez plutot scripts/create_super_admin.py.
 
 IMPORTANT: Avant de lancer ce script, executez la migration 003_admin_tables.sql
 dans le Supabase Dashboard > SQL Editor pour ajouter les colonnes role, is_active, etc.
 
 Usage:
     cd backend
-    python -m scripts.create_admin
+    ADMIN_PASSWORD='VotreMotDePasse!' python -m scripts.create_admin
+    # Sans ADMIN_PASSWORD : un mot de passe fort est genere et affiche.
 
-Credentials par defaut:
-    Email:    admin@activeducation.com
-    Password: Admin@2024!
+Credentials (configurables via variables d'environnement) :
+    ADMIN_EMAIL    (defaut: admin@activeducation.com)
+    ADMIN_PASSWORD (si absent : genere aleatoirement, affiche une fois)
 """
 
 import sys
 import os
+import secrets
+import string
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -22,10 +28,29 @@ from app.core.security import hash_password
 from app.db.supabase_client import get_supabase_client
 
 
-ADMIN_EMAIL = "admin@activeducation.com"
-ADMIN_PASSWORD = "Admin@2024!"
-ADMIN_FIRST_NAME = "Super"
-ADMIN_LAST_NAME = "Admin"
+def _generate_password(length: int = 16) -> str:
+    """Genere un mot de passe fort : maj + min + chiffre + symbole garantis."""
+    symbols = "!@#$%^&*-_"
+    alphabet = string.ascii_letters + string.digits + symbols
+    while True:
+        pwd = "".join(secrets.choice(alphabet) for _ in range(length))
+        if (
+            any(c.islower() for c in pwd)
+            and any(c.isupper() for c in pwd)
+            and any(c.isdigit() for c in pwd)
+            and any(c in symbols for c in pwd)
+        ):
+            return pwd
+
+
+# Aucun secret en dur : lus depuis l'environnement, mot de passe genere si absent.
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@activeducation.com")
+ADMIN_FIRST_NAME = os.environ.get("ADMIN_FIRST_NAME", "Super")
+ADMIN_LAST_NAME = os.environ.get("ADMIN_LAST_NAME", "Admin")
+
+_env_password = os.environ.get("ADMIN_PASSWORD")
+PASSWORD_WAS_GENERATED = _env_password is None
+ADMIN_PASSWORD = _env_password or _generate_password()
 
 
 def create_super_admin():

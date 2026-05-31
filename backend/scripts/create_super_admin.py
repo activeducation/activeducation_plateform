@@ -12,25 +12,55 @@ PREREQUIS:
 
 Usage:
     cd backend
+    # Avec un mot de passe choisi :
+    ADMIN_EMAIL=admin@activeducation.com ADMIN_PASSWORD='VotreMotDePasse!' \
+        python -m scripts.create_super_admin
+
+    # Ou sans ADMIN_PASSWORD : un mot de passe fort est genere et affiche.
     python -m scripts.create_super_admin
 
-Credentials:
-    Email:    admin@activeducation.com
-    Password: Admin@2024!
+Credentials (configurables via variables d'environnement) :
+    ADMIN_EMAIL      (defaut: admin@activeducation.com)
+    ADMIN_PASSWORD   (si absent : genere aleatoirement, affiche une fois)
+    ADMIN_FIRST_NAME (defaut: Super)
+    ADMIN_LAST_NAME  (defaut: Admin)
 """
 
 import sys
 import os
+import secrets
+import string
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.core.config import settings
 
-# ─── Credentials du super admin ───────────────────────────────────────────────
-ADMIN_EMAIL = "admin@activeducation.com"
-ADMIN_PASSWORD = "Admin@2024!"
-ADMIN_FIRST_NAME = "Super"
-ADMIN_LAST_NAME = "Admin"
+
+def _generate_password(length: int = 16) -> str:
+    """Genere un mot de passe fort : maj + min + chiffre + symbole garantis."""
+    symbols = "!@#$%^&*-_"
+    alphabet = string.ascii_letters + string.digits + symbols
+    while True:
+        pwd = "".join(secrets.choice(alphabet) for _ in range(length))
+        if (
+            any(c.islower() for c in pwd)
+            and any(c.isupper() for c in pwd)
+            and any(c.isdigit() for c in pwd)
+            and any(c in symbols for c in pwd)
+        ):
+            return pwd
+
+
+# ─── Credentials du super admin (lus depuis l'environnement) ──────────────────
+# Aucun secret en dur dans le code source. Le mot de passe vient de la variable
+# ADMIN_PASSWORD ; s'il est absent, on en genere un fort et on l'affiche une fois.
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@activeducation.com")
+ADMIN_FIRST_NAME = os.environ.get("ADMIN_FIRST_NAME", "Super")
+ADMIN_LAST_NAME = os.environ.get("ADMIN_LAST_NAME", "Admin")
+
+_env_password = os.environ.get("ADMIN_PASSWORD")
+PASSWORD_WAS_GENERATED = _env_password is None
+ADMIN_PASSWORD = _env_password or _generate_password()
 # ──────────────────────────────────────────────────────────────────────────────
 
 
@@ -144,6 +174,10 @@ def create_super_admin():
     print(f"  UUID     : {auth_user_id}")
     print(f"  Role     : super_admin")
     print("=" * 55)
+    if PASSWORD_WAS_GENERATED:
+        print("\n  /!\\  MOT DE PASSE GENERE ALEATOIREMENT — copiez-le MAINTENANT.")
+        print("       Il ne sera PAS reaffiche. Conservez-le dans un gestionnaire")
+        print("       de mots de passe.")
     print("\n  → Vous pouvez maintenant vous connecter sur le dashboard.\n")
 
 
