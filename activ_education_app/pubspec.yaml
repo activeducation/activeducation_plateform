@@ -57,39 +57,13 @@ dependencies:
   freezed_annotation: ^3.1.0
   json_annotation: ^4.10.0
 
-  # Icons
-  cupertino_icons: ^1.0.8
-  iconsax: ^0.0.8
-  flutter_localizations:
-    sdk: flutter
-  bloc: ^9.0.0
-  lottie: ^3.3.2
-  url_launcher: ^6.2.5
-
-  # Observability (activation conditionnelle via SENTRY_DSN)
-  sentry_flutter: ^8.12.0
-
-dev_dependencies:
-  flutter_test:
-    sdk: flutter
-  flutter_lints: ^6.0.0
-  
-  # Code Generation
-  build_runner: ^2.4.8
-  injectable_generator: ^2.12.0
-  freezed: ^3.2.5
-  json_serializable: ^6.8.0
-  
-  # Testing
-  mocktail: ^1.0.4
-  bloc_test: ^10.0.0
-  integration_test:
-    sdk: flutter
-
 flutter:
   uses-material-design: true
-
   assets:
     - assets/images/
-
-
+    - assets/.env
+    - lib/features/orientation/data/local/
+  fonts:
+    - family: Hanken Grotesque
+      fonts:
+        - asset: assets/fonts/HankenGrotesque.ttf

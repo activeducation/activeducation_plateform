@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_spacing.dart';
 
@@ -41,18 +40,18 @@ class AdminTheme {
 
     scaffoldBackgroundColor: AppColors.background,
     textTheme: TextTheme(
-      displayLarge: GoogleFonts.getFont('Hanken Grotesque', fontSize: 48, fontWeight: FontWeight.w800, letterSpacing: -0.02 * 48, height: 56 / 48, color: AppColors.textPrimary),
-      headlineLarge: GoogleFonts.getFont('Hanken Grotesque', fontSize: 32, fontWeight: FontWeight.w700, letterSpacing: -0.01 * 32, height: 40 / 32, color: AppColors.textPrimary),
-      headlineMedium: GoogleFonts.getFont('Hanken Grotesque', fontSize: 24, fontWeight: FontWeight.w600, height: 32 / 24, color: AppColors.textPrimary),
-      headlineSmall: GoogleFonts.getFont('Hanken Grotesque', fontSize: 20, fontWeight: FontWeight.w600, height: 28 / 20, color: AppColors.textPrimary),
-      titleLarge: GoogleFonts.getFont('Hanken Grotesque', fontSize: 20, fontWeight: FontWeight.w600, height: 28 / 20, color: AppColors.textPrimary),
-      titleMedium: GoogleFonts.getFont('Hanken Grotesque', fontSize: 16, fontWeight: FontWeight.w600, height: 24 / 16, color: AppColors.textPrimary),
-      bodyLarge: GoogleFonts.getFont('Hanken Grotesque', fontSize: 18, fontWeight: FontWeight.w400, height: 28 / 18, color: AppColors.textSecondary),
-      bodyMedium: GoogleFonts.getFont('Hanken Grotesque', fontSize: 16, fontWeight: FontWeight.w400, height: 24 / 16, color: AppColors.textSecondary),
-      bodySmall: GoogleFonts.getFont('Hanken Grotesque', fontSize: 14, fontWeight: FontWeight.w400, height: 20 / 14, color: AppColors.textTertiary),
-      labelLarge: GoogleFonts.getFont('Hanken Grotesque', fontSize: 16, fontWeight: FontWeight.w600, height: 24 / 16, color: AppColors.textPrimary),
-      labelMedium: GoogleFonts.getFont('Hanken Grotesque', fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 0.01 * 14, height: 20 / 14, color: AppColors.textSecondary),
-      labelSmall: GoogleFonts.getFont('Hanken Grotesque', fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 0.05 * 12, height: 16 / 12, color: AppColors.textTertiary),
+      displayLarge: TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 48, fontWeight: FontWeight.w800, letterSpacing: -0.02 * 48, height: 56 / 48, color: AppColors.textPrimary),
+      headlineLarge: TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 32, fontWeight: FontWeight.w700, letterSpacing: -0.01 * 32, height: 40 / 32, color: AppColors.textPrimary),
+      headlineMedium: TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 24, fontWeight: FontWeight.w600, height: 32 / 24, color: AppColors.textPrimary),
+      headlineSmall: TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 20, fontWeight: FontWeight.w600, height: 28 / 20, color: AppColors.textPrimary),
+      titleLarge: TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 20, fontWeight: FontWeight.w600, height: 28 / 20, color: AppColors.textPrimary),
+      titleMedium: TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 16, fontWeight: FontWeight.w600, height: 24 / 16, color: AppColors.textPrimary),
+      bodyLarge: TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 18, fontWeight: FontWeight.w400, height: 28 / 18, color: AppColors.textSecondary),
+      bodyMedium: TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 16, fontWeight: FontWeight.w400, height: 24 / 16, color: AppColors.textSecondary),
+      bodySmall: TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 14, fontWeight: FontWeight.w400, height: 20 / 14, color: AppColors.textTertiary),
+      labelLarge: TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 16, fontWeight: FontWeight.w600, height: 24 / 16, color: AppColors.textPrimary),
+      labelMedium: TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 0.01 * 14, height: 20 / 14, color: AppColors.textSecondary),
+      labelSmall: TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 0.05 * 12, height: 16 / 12, color: AppColors.textTertiary),
     ),
 
     appBarTheme: AppBarTheme(
@@ -60,7 +59,7 @@ class AdminTheme {
       foregroundColor: AppColors.textPrimary,
       elevation: 0,
       surfaceTintColor: Colors.transparent,
-      titleTextStyle: GoogleFonts.getFont('Hanken Grotesque', fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+      titleTextStyle: TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
     ),
 
     cardTheme: CardThemeData(
@@ -94,9 +93,9 @@ class AdminTheme {
         borderSide: const BorderSide(color: Color(0xFFBA1A1A)),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      hintStyle: GoogleFonts.getFont('Hanken Grotesque', fontSize: 14, color: AppColors.textMuted),
-      labelStyle: GoogleFonts.getFont('Hanken Grotesque', fontSize: 14, color: AppColors.textSecondary),
-      floatingLabelStyle: GoogleFonts.getFont('Hanken Grotesque', fontSize: 14, color: AppColors.primary),
+      hintStyle: TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 14, color: AppColors.textMuted),
+      labelStyle: TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 14, color: AppColors.textSecondary),
+      floatingLabelStyle: TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 14, color: AppColors.primary),
     ),
 
     elevatedButtonTheme: ElevatedButtonThemeData(
@@ -108,7 +107,7 @@ class AdminTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSpacing.borderRadius),
         ),
-        textStyle: GoogleFonts.getFont('Hanken Grotesque', fontSize: 14, fontWeight: FontWeight.w600),
+        textStyle: TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 14, fontWeight: FontWeight.w600),
       ),
     ),
 
@@ -126,20 +125,20 @@ class AdminTheme {
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
         foregroundColor: AppColors.primary,
-        textStyle: GoogleFonts.getFont('Hanken Grotesque', fontSize: 14, fontWeight: FontWeight.w500),
+        textStyle: TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 14, fontWeight: FontWeight.w500),
       ),
     ),
 
     dataTableTheme: DataTableThemeData(
-      headingTextStyle: GoogleFonts.getFont('Hanken Grotesque', fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary, letterSpacing: 0.3),
-      dataTextStyle: GoogleFonts.getFont('Hanken Grotesque', fontSize: 13, color: AppColors.textPrimary),
+      headingTextStyle: TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary, letterSpacing: 0.3),
+      dataTextStyle: TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 13, color: AppColors.textPrimary),
       decoration: const BoxDecoration(),
       headingRowColor: WidgetStateProperty.all(AppColors.surfaceVariant.withValues(alpha: 0.5)),
     ),
 
     chipTheme: ChipThemeData(
       backgroundColor: AppColors.surfaceVariant,
-      labelStyle: GoogleFonts.getFont('Hanken Grotesque', fontSize: 12, fontWeight: FontWeight.w500),
+      labelStyle: TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 12, fontWeight: FontWeight.w500),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppSpacing.borderRadius),
       ),
@@ -174,7 +173,7 @@ class AdminTheme {
         color: AppColors.sidebarBg,
         borderRadius: BorderRadius.circular(AppSpacing.borderRadiusSm),
       ),
-      textStyle: GoogleFonts.getFont('Hanken Grotesque', fontSize: 12, color: Colors.white),
+      textStyle: TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 12, color: Colors.white),
     ),
   );
 }
