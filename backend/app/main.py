@@ -9,9 +9,11 @@ Application FastAPI avec:
 
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Response, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from slowapi.errors import RateLimitExceeded
 
 from app.core.config import settings
@@ -247,6 +249,125 @@ async def app_exception_handler(request: Request, exc: AppException):
     response = JSONResponse(
         status_code=exc.status_code,
         content=response_content,
+    )
+    return _apply_cors_headers(request, response)
+
+
+# ─── Erreurs de validation (422) — messages lisibles ─────────────────────────
+
+# Libelles francais pour les champs courants (utilises dans les messages).
+_FIELD_LABELS = {
+    "email": "l'adresse email",
+    "password": "le mot de passe",
+    "current_password": "le mot de passe actuel",
+    "new_password": "le nouveau mot de passe",
+    "first_name": "le prénom",
+    "last_name": "le nom",
+    "phone_number": "le numéro de téléphone",
+    "title": "le titre",
+    "name": "le nom",
+    "description": "la description",
+    "role": "le rôle",
+    "rating": "la note",
+    "type": "le type",
+}
+
+
+def _friendly_field_error(err: dict) -> str:
+    """Transforme une erreur Pydantic en phrase francaise lisible."""
+    etype = str(err.get("type", ""))
+    loc = err.get("loc", [])
+    # Ignore le prefixe 'body'/'query'/'path' pour ne garder que le champ
+    field = str(loc[-1]) if loc else ""
+    label = _FIELD_LABELS.get(field, f"le champ « {field} »")
+    cap = label[0].upper() + label[1:] if label else "Ce champ"
+
+    if field == "email" or "email" in etype:
+        return "L'adresse email n'est pas valide (ex: nom@domaine.com)."
+    if etype in ("missing", "value_error.missing"):
+        return f"{cap} est requis."
+    if "too_short" in etype or "min_length" in etype or "string_too_short" in etype:
+        return f"{cap} est trop court."
+    if "too_long" in etype or "max_length" in etype or "string_too_long" in etype:
+        return f"{cap} est trop long."
+    if "int" in etype or "float" in etype or "number" in etype:
+        return f"{cap} doit être un nombre."
+    if "bool" in etype:
+        return f"{cap} doit être vrai ou faux."
+    # Repli : utilise le message Pydantic si rien ne matche
+    return f"{cap} est invalide."
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+):
+    """
+    Transforme les erreurs de validation Pydantic (422) en messages francais
+    lisibles, au lieu du tableau technique brut [{type, loc, msg}...].
+    """
+    correlation_id = getattr(request.state, "correlation_id", "unknown")
+    errors = exc.errors()
+
+    # Message principal = premiere erreur ; details par champ pour le frontend.
+    message = _friendly_field_error(errors[0]) if errors else "Données invalides."
+    fields = {}
+    for e in errors:
+        loc = e.get("loc", [])
+        field = str(loc[-1]) if loc else "champ"
+        fields[field] = _friendly_field_error(e)
+
+    logger.warning(
+        "Validation error",
+        extra={
+            "correlation_id": correlation_id,
+            "path": request.url.path,
+            "fields": list(fields.keys()),
+        },
+    )
+
+    response = JSONResponse(
+        status_code=422,
+        content={
+            "error": "validation_error",
+            "message": message,
+            "fields": fields,
+            "correlation_id": correlation_id,
+        },
+    )
+    return _apply_cors_headers(request, response)
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    """
+    Uniformise les HTTPException (404, 405, 403...) au format JSON propre
+    { error, message, correlation_id } au lieu de { detail: "Not Found" }.
+    """
+    correlation_id = getattr(request.state, "correlation_id", "unknown")
+
+    # Messages francais pour les statuts courants
+    default_messages = {
+        404: "Ressource introuvable.",
+        405: "Méthode non autorisée.",
+        403: "Accès refusé.",
+        401: "Authentification requise.",
+    }
+    detail = exc.detail
+    # Si detail est deja un message lisible, on le garde ; sinon message par defaut
+    message = (
+        detail
+        if isinstance(detail, str) and detail not in ("Not Found", "Method Not Allowed")
+        else default_messages.get(exc.status_code, "Une erreur est survenue.")
+    )
+
+    response = JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": "http_error",
+            "message": message,
+            "correlation_id": correlation_id,
+        },
     )
     return _apply_cors_headers(request, response)
 
