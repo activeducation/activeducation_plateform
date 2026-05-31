@@ -56,3 +56,10 @@ flutter:
 
   assets:
     - assets/images/
+    - .env
+    - .env.example
+
+  fonts:
+    - family: Hanken Grotesque
+      fonts:
+        - asset: assets/fonts/HankenGrotesque.ttf

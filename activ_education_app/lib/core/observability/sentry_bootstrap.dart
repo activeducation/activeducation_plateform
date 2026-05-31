@@ -38,10 +38,11 @@ Future<void> initSentryAndRun({
   );
 }
 
-/// Wrap l'app dans un SentryWidget si Sentry est actif.
-/// Sinon retourne le widget original (aucune surcharge).
+/// Retourne le widget app tel quel.
+///
+/// Note : dans sentry_flutter >= 9.x, l'ancien wrapper `SentryWidget` n'est
+/// plus exporte de la meme maniere. La capture d'erreurs reste assuree par
+/// `initSentryAndRun` (zone Sentry), donc ce wrapper devient un passthrough.
 Widget wrapWithSentryIfEnabled(Widget app) {
-  const dsn = String.fromEnvironment('SENTRY_DSN', defaultValue: '');
-  if (dsn.isEmpty) return app;
-  return SentryWidget(child: app);
+  return app;
 }

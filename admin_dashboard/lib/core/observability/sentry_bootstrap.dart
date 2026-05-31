@@ -36,8 +36,11 @@ Future<void> initSentryAndRun({
   );
 }
 
+/// Retourne le widget app tel quel (passthrough).
+///
+/// La capture d'erreurs reste assuree par `initSentryAndRun` (zone Sentry).
+/// On evite `SentryWidget` dont l'export differe entre versions de
+/// sentry_flutter (cassait la compilation web).
 Widget wrapWithSentryIfEnabled(Widget app) {
-  const dsn = String.fromEnvironment('SENTRY_DSN', defaultValue: '');
-  if (dsn.isEmpty) return app;
-  return SentryWidget(child: app);
+  return app;
 }
