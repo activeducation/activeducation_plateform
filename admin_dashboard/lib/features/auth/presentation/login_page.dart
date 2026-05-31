@@ -273,7 +273,7 @@ class _LoginPageState extends State<LoginPage> {
                         TextFormField(
                           controller: _emailController,
                           decoration: InputDecoration(
-                            hintText: 'admin@activeducation.com',
+                            hintText: 'votre@email.com',
                             prefixIcon: const Icon(
                               Icons.email_outlined,
                               size: 20,
