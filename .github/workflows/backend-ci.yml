@@ -156,9 +156,25 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Check no pending migrations
+      - name: Check migrations consistency
         if: env.DATABASE_URL != ''
-        run: alembic check
+        run: |
+          # Ce projet n'utilise pas l'ORM SQLAlchemy (target_metadata=None),
+          # donc `alembic check` (--autogenerate, qui exige un MetaData) ne
+          # peut pas fonctionner. On valide a la place ce qui compte vraiment :
+          # 1) une seule head (pas de migrations divergentes a merger),
+          # 2) que la chaine de migrations est lineaire et jouable.
+          set -e
+          HEADS=$(alembic heads | grep -c '(head)')
+          echo "Nombre de heads Alembic : $HEADS"
+          if [ "$HEADS" -ne 1 ]; then
+            echo "::error::Plusieurs heads Alembic detectees ($HEADS). Mergez les migrations divergentes."
+            alembic heads
+            exit 1
+          fi
+          # Valide que la chaine 'base -> head' est resolvable (ordre/down_revision corrects)
+          alembic history --verbose >/dev/null
+          echo "OK : une seule head, historique de migrations coherent."
 
   docker-build:
     name: Docker Build
