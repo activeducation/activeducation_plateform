@@ -232,7 +232,17 @@ async def submit_test(
     # Sauvegarder la session uniquement pour les utilisateurs connectes
     if user_id is not None:
         try:
-            already_completed = await repo.has_completed_test(user_id, test_id)
+            # Verifier l'idempotence du XP AVANT de creer la session (sinon la
+            # nouvelle session compte comme "deja complete"). Isole dans son
+            # propre try : un echec du check XP ne doit jamais empecher la
+            # sauvegarde du resultat du test.
+            already_completed = False
+            try:
+                already_completed = await repo.has_completed_test(user_id, test_id)
+            except Exception as check_error:
+                logger.warning(
+                    f"Could not check prior test completion for XP (user {user_id}): {check_error}"
+                )
 
             session = await repo.create_test_session(user_id, test_id)
 
@@ -244,7 +254,8 @@ async def submit_test(
                 result=result,
             )
 
-            # Attribuer le XP uniquement a la premiere completion
+            # Attribuer le XP uniquement a la premiere completion. Best-effort :
+            # l'attribution ne doit jamais casser la sauvegarde du test.
             if not already_completed:
                 try:
                     # Client service_role : la RPC award_xp est GRANT a
