@@ -4,7 +4,7 @@ Endpoints API pour la gamification utilisateur.
 
 from uuid import UUID
 import math
-from datetime import datetime, timezone
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, Request, Query
 
