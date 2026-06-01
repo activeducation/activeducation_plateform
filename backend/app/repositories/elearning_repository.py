@@ -16,6 +16,7 @@ from typing import Any, Optional
 from functools import lru_cache
 
 from app.core.logging import get_logger
+from app.core.gamification_cache import invalidate_gamification_profile, invalidate_leaderboard
 from app.db.supabase_client import SupabaseClient, get_admin_supabase_client
 
 logger = get_logger("repositories.elearning")
@@ -438,16 +439,18 @@ class ElearningRepository:
             if answers is not None:
                 progress_data["quiz_answers"] = answers
 
-            # Verifier si une entree existe deja
+            # Verifier si une entree existe deja (idempotence)
             existing_progress = (
                 self._db.client.table("elearning_user_progress")
-                .select("id, started_at")
+                .select("id, started_at, status")
                 .eq("user_id", user_id)
                 .eq("lesson_id", lesson_id)
                 .limit(1)
                 .execute()
             )
+            already_completed = False
             if existing_progress.data:
+                already_completed = existing_progress.data[0].get("status") == "completed"
                 # Mettre a jour l'entree existante
                 (
                     self._db.client.table("elearning_user_progress")
@@ -551,8 +554,8 @@ class ElearningRepository:
                     .execute()
                 )
 
-            # 6. Attribuer les points a l'utilisateur
-            if points_reward > 0:
+            # 6. Attribuer les points a l'utilisateur (idempotent : 1 seule fois)
+            if points_reward > 0 and not already_completed:
                 try:
                     existing_points = (
                         self._db.client.table("user_points")
@@ -582,6 +585,22 @@ class ElearningRepository:
                             })
                             .execute()
                         )
+
+                    # Attribuer le XP dans user_profiles.total_xp via RPC atomique
+                    try:
+                        self._db.client.rpc(
+                            "award_xp",
+                            {"p_user_id": user_id, "p_amount": points_reward},
+                        ).execute()
+                    except Exception as xp_error:
+                        logger.warning(
+                            f"Could not award XP to user {user_id}: {xp_error}"
+                        )
+
+                    # Invalider le cache gamification + leaderboard
+                    invalidate_gamification_profile(user_id)
+                    invalidate_leaderboard()
+
                 except Exception as points_error:
                     # L'attribution de points ne doit pas bloquer la completion
                     logger.warning(

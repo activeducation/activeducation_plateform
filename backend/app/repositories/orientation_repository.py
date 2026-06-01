@@ -190,6 +190,22 @@ class OrientationRepository:
     # SESSIONS DE TEST
     # =========================================================================
 
+    async def has_completed_test(self, user_id: UUID, test_id: UUID) -> bool:
+        """Verifie si l'utilisateur a deja complete ce test."""
+        try:
+            result = (
+                self._db.client.table("user_test_sessions")
+                .select("id", count="exact")
+                .eq("user_id", str(user_id))
+                .eq("test_id", str(test_id))
+                .eq("status", "completed")
+                .limit(1)
+                .execute()
+            )
+            return (result.count or 0) > 0
+        except Exception:
+            return False
+
     async def create_test_session(
         self,
         user_id: UUID,

@@ -8,6 +8,8 @@ import '../../domain/usecases/login_usecase.dart';
 import '../../domain/usecases/register_usecase.dart';
 import '../../domain/usecases/logout_usecase.dart';
 import '../../domain/usecases/get_current_user_usecase.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../../gamification/presentation/cubit/gamification_cubit.dart';
 
 part 'auth_event.dart';
 part 'auth_state.dart';
@@ -121,6 +123,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
 
     await _logoutUseCase();
+
+    // Reinitialiser la gamification pour qu'un prochain utilisateur ne voie
+    // pas le XP/streak de celui qui vient de se deconnecter (Cubit singleton).
+    if (getIt.isRegistered<GamificationCubit>()) {
+      getIt<GamificationCubit>().reset();
+    }
 
     emit(AuthUnauthenticated());
   }

@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/constants/constants.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../gamification/presentation/cubit/gamification_cubit.dart';
 import '../../../../shared/widgets/buttons/gradient_button.dart';
 import '../../domain/entities/course.dart';
 import '../bloc/lesson_bloc.dart';
@@ -183,7 +184,15 @@ class _LessonContentState extends State<_LessonContent> {
   Widget build(BuildContext context) {
     final isCompleted = widget.lesson.status == LessonStatus.completed;
 
-    return Scaffold(
+    return BlocListener<LessonBloc, LessonState>(
+      listener: (context, state) {
+        if (state is LessonCompleted) {
+          try {
+            getIt<GamificationCubit>().refresh();
+          } catch (_) {}
+        }
+      },
+      child: Scaffold(
       backgroundColor: AppColors.background,
       body: Column(
         children: [
@@ -208,6 +217,7 @@ class _LessonContentState extends State<_LessonContent> {
             ),
         ],
       ),
+    ),
     );
   }
 

@@ -186,12 +186,10 @@ class GamificationProfile {
 
   double get levelProgress {
     if (nextLevelXp <= 0) return 0;
-    final totalForLevel = nextLevelXp - xpToNextLevel;
-    if (totalForLevel <= 0) return 0;
-    final currentInLevel = stats.totalXp - totalForLevel;
-    final neededForLevel = nextLevelXp - totalForLevel;
-    if (neededForLevel <= 0) return 0;
-    return (currentInLevel / neededForLevel).clamp(0.0, 1.0);
+    final startOfLevel = (stats.currentLevel - 1) * stats.currentLevel ~/ 2 * 100;
+    final range = nextLevelXp - startOfLevel;
+    if (range <= 0) return 0;
+    return ((stats.totalXp - startOfLevel) / range).clamp(0.0, 1.0);
   }
 
   Map<String, dynamic> toJson() => {
