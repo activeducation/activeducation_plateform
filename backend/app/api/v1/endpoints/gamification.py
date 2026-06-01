@@ -4,7 +4,7 @@ Endpoints API pour la gamification utilisateur.
 
 from uuid import UUID
 import math
-from datetime import datetime, timezone
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, Request, Query
 
@@ -87,28 +87,21 @@ async def get_my_gamification(
     ]
     
     total_xp = user_profile.get("total_xp", 0) if user_profile else 0
-    
-    current_streak = 0
-    longest_streak = 0
-    
-    if user_profile:
-        last_login = user_profile.get("last_login_at")
-        if last_login:
-            if isinstance(last_login, str):
-                last_login = datetime.fromisoformat(last_login.replace("Z", "+00:00"))
-            
-            now = datetime.now(timezone.utc)
-            days_since = (now - last_login).days
-            
-            if days_since == 0:
-                current_streak = user_profile.get("current_streak", 1)
-            elif days_since == 1:
-                current_streak = user_profile.get("current_streak", 0)
-            
-            longest_streak = user_profile.get("longest_streak", 0)
+    current_streak = user_profile.get("current_streak", 0) if user_profile else 0
+    longest_streak = user_profile.get("longest_streak", 0) if user_profile else 0
     
     current_level, next_level_xp, xp_to_next = _calculate_level(total_xp)
     
+    leaderboard_rank = None
+    try:
+        rank_result = db.client.rpc(
+            "get_leaderboard_rank", {"p_user_id": user_id_str}
+        ).execute()
+        if rank_result.data:
+            leaderboard_rank = rank_result.data[0]["rank"]
+    except Exception:
+        pass
+
     stats = GamificationStats(
         total_xp=total_xp,
         current_level=current_level,
@@ -116,7 +109,7 @@ async def get_my_gamification(
         longest_streak=longest_streak,
         total_achievements=len(completed_achievements),
         completed_challenges=len(completed_challenges),
-        leaderboard_rank=None,
+        leaderboard_rank=leaderboard_rank,
     )
     
     achievement_models = [

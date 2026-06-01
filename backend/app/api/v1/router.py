@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from app.api.v1.endpoints import orientation, auth, schools, chat, elearning, gamification
-from app.api.v1.endpoints import mentors, opportunities
+from app.api.v1.endpoints import mentors, opportunities, announcements, settings
 from app.api.v1.endpoints.partner import organizations as partner_organizations
 from app.api.v1.endpoints.admin import (
     auth as admin_auth,
@@ -52,6 +52,12 @@ api_router.include_router(mentors.router, prefix="/mentors", tags=["mentors"])
 
 # Opportunities — stages, jobs, bourses
 api_router.include_router(opportunities.router, prefix="/opportunities", tags=["opportunities"])
+
+# Announcements — annonces actives (publiques)
+api_router.include_router(announcements.router, prefix="/announcements", tags=["announcements"])
+
+# Settings — parametres publics
+api_router.include_router(settings.router, prefix="/settings", tags=["settings"])
 
 # Partner (CDEJ, ONG) — organisations et beneficiaires
 api_router.include_router(partner_organizations.router, prefix="", tags=["partner"])

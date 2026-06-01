@@ -13,6 +13,7 @@ abstract class PartnerRepository {
     String? country,
   });
 
+  Future<Organization> getMyOrganization();
   Future<Organization> getOrganization(String orgId);
   Future<OrganizationWithStats> getOrganizationWithStats(String orgId);
   Future<List<Organization>> listOrganizations({

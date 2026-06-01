@@ -111,4 +111,7 @@ class ApiEndpoints {
   // School Admin Lessons
   static String schoolLesson(String id) => '/school/lessons/$id';
   static String schoolLessonUploadVideo(String id) => '/school/lessons/$id/upload-video';
+
+  // Partner
+  static String adminApproveOrg(String id) => '/admin/partner/organizations/$id/approve';
 }

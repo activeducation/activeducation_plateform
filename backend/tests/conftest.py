@@ -60,6 +60,13 @@ class FakeOrientationRepo:
         self.saved = True
         return {"id": str(uuid4())}
 
+    async def has_completed_test(self, user_id: UUID, test_id: UUID) -> bool:
+        # Aucune completion anterieure dans le fake : 1re soumission -> XP attribue.
+        return False
+
+    async def get_matching_school_programs(self, sectors, limit: int = 8):
+        return []
+
 
 @pytest.fixture
 def client():

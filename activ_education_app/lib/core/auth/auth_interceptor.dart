@@ -29,6 +29,8 @@ class AuthInterceptor extends Interceptor {
     '/auth/reset-password',
     '/health',
     '/orientation/mobile/',
+    '/announcements',
+    '/settings/public',
   ];
 
   /// Routes a authentification OPTIONNELLE : le backend les sert avec ou sans

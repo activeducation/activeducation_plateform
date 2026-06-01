@@ -17,6 +17,8 @@ from fastapi import APIRouter, Depends, Query, Request
 from app.core.logging import get_logger
 from app.core.exceptions import TestNotFoundError, QueryError
 from app.core.security import get_current_user_id_optional
+from app.core.gamification_cache import invalidate_gamification_profile, invalidate_leaderboard
+from app.db.supabase_client import get_admin_supabase_client
 from app.schemas.orientation import (
     OrientationTest,
     OrientationTestSummary,
@@ -230,6 +232,18 @@ async def submit_test(
     # Sauvegarder la session uniquement pour les utilisateurs connectes
     if user_id is not None:
         try:
+            # Verifier l'idempotence du XP AVANT de creer la session (sinon la
+            # nouvelle session compte comme "deja complete"). Isole dans son
+            # propre try : un echec du check XP ne doit jamais empecher la
+            # sauvegarde du resultat du test.
+            already_completed = False
+            try:
+                already_completed = await repo.has_completed_test(user_id, test_id)
+            except Exception as check_error:
+                logger.warning(
+                    f"Could not check prior test completion for XP (user {user_id}): {check_error}"
+                )
+
             session = await repo.create_test_session(user_id, test_id)
 
             await repo.complete_test_session(
@@ -239,6 +253,25 @@ async def submit_test(
                 responses=submission.responses,
                 result=result,
             )
+
+            # Attribuer le XP uniquement a la premiere completion. Best-effort :
+            # l'attribution ne doit jamais casser la sauvegarde du test.
+            if not already_completed:
+                try:
+                    # Client service_role : la RPC award_xp est GRANT a
+                    # service_role uniquement (le client Anon recevrait
+                    # "permission denied" et le XP ne serait jamais attribue).
+                    db = get_admin_supabase_client()
+                    db.client.rpc(
+                        "award_xp",
+                        {"p_user_id": str(user_id), "p_amount": 50},
+                    ).execute()
+                    invalidate_gamification_profile(str(user_id))
+                    invalidate_leaderboard()
+                    logger.info(f"Awarded 50 XP to user {user_id} for first test completion")
+                except Exception as xp_error:
+                    logger.warning(f"Could not award test XP to user {user_id}: {xp_error}")
+
             logger.info(
                 "Test submitted successfully",
                 extra={

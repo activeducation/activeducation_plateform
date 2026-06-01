@@ -142,14 +142,59 @@ class UsersRepository:
             raise QueryError(f"Erreur lors de la mise a jour du profil: {str(e)}")
 
     async def update_last_login(self, user_id: UUID) -> bool:
-        """Met a jour la date de derniere connexion."""
+        """Met a jour le streak et la date de derniere connexion."""
         try:
-            self._db.update(
-                table="user_profiles",
-                id_column="id",
-                id_value=str(user_id),
-                data={"last_login_at": datetime.now(timezone.utc).isoformat()},
-            )
+            now = datetime.now(timezone.utc)
+
+            profile = self._db.client.table("user_profiles").select(
+                "last_login_at, current_streak, longest_streak"
+            ).eq("id", str(user_id)).limit(1).execute()
+
+            current_streak = 0
+            longest_streak = 0
+
+            if profile.data:
+                p = profile.data[0]
+                last_login = p.get("last_login_at")
+                current_streak = p.get("current_streak", 0)
+                longest_streak = p.get("longest_streak", 0)
+
+                if last_login:
+                    if isinstance(last_login, str):
+                        last_login = datetime.fromisoformat(
+                            last_login.replace("Z", "+00:00")
+                        )
+                    days_since = (now.date() - last_login.date()).days
+
+                    if days_since == 0:
+                        pass
+                    elif days_since == 1:
+                        current_streak += 1
+                    else:
+                        current_streak = 1
+
+                    if current_streak > longest_streak:
+                        longest_streak = current_streak
+                else:
+                    current_streak = 1
+                    longest_streak = 1
+            else:
+                current_streak = 1
+                longest_streak = 1
+
+            self._db.client.table("user_profiles").update({
+                "last_login_at": now.isoformat(),
+                "current_streak": current_streak,
+                "longest_streak": longest_streak,
+            }).eq("id", str(user_id)).execute()
+
+            # Invalider le cache gamification
+            try:
+                from app.core.gamification_cache import invalidate_gamification_profile
+                invalidate_gamification_profile(str(user_id))
+            except Exception:
+                pass
+
             return True
         except Exception as e:
             logger.warning(f"Could not update last_login for user {user_id}: {e}")

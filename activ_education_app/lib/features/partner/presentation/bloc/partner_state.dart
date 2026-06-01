@@ -52,6 +52,15 @@ class PartnerDashboardLoaded extends PartnerState {
   }
 }
 
+class PartnerMyOrganizationLoaded extends PartnerState {
+  final Organization organization;
+
+  const PartnerMyOrganizationLoaded(this.organization);
+
+  @override
+  List<Object?> get props => [organization];
+}
+
 class PartnerOrganizationLoaded extends PartnerState {
   final Organization organization;
   final OrganizationWithStats? stats;

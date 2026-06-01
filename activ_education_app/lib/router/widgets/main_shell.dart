@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/auth/token_storage.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/di/injection_container.dart';
 
 /// Shell de navigation principal partagé par toutes les routes authentifiées.
 ///
@@ -22,19 +24,11 @@ class MainShellWrapper extends StatefulWidget {
 
 class _MainShellWrapperState extends State<MainShellWrapper> {
   int _currentIndex = 0;
-
-  final List<String> _routes = [
-    '/home',
-    '/orientation',
-    '/elearning',
-    '/mentors',
-    '/schools',
-    '/profile',
-  ];
+  late List<_NavItemData> _navItems;
 
   static const double _desktopBreakpoint = 768;
 
-  static const _navItems = [
+  static const _defaultNavItems = [
     _NavItemData(
       icon: Icons.home_outlined,
       activeIcon: Icons.home_rounded,
@@ -73,11 +67,34 @@ class _MainShellWrapperState extends State<MainShellWrapper> {
     ),
   ];
 
+  static const _partnerNavItem = _NavItemData(
+    icon: Icons.groups_outlined,
+    activeIcon: Icons.groups_rounded,
+    label: 'Partenaire',
+    route: '/partner/organization/create',
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    _navItems = List.from(_defaultNavItems);
+    _initNav();
+  }
+
+  Future<void> _initNav() async {
+    final tokenStorage = getIt<TokenStorage>();
+    final role = await tokenStorage.getUserRole();
+    final hasPartnerAccess = role != null && ['partner_admin', 'admin', 'super_admin'].contains(role);
+    if (hasPartnerAccess && mounted) {
+      setState(() => _navItems.insert(_navItems.length - 1, _partnerNavItem));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final String location = GoRouterState.of(context).uri.toString();
-    for (int i = 0; i < _routes.length; i++) {
-      if (location.startsWith(_routes[i])) {
+    for (int i = 0; i < _navItems.length; i++) {
+      if (location.startsWith(_navItems[i].route)) {
         _currentIndex = i;
         break;
       }
@@ -93,7 +110,10 @@ class _MainShellWrapperState extends State<MainShellWrapper> {
             _DarkSidebar(
               currentIndex: _currentIndex,
               navItems: _navItems,
-              onTap: (route) => context.go(route),
+              onTap: (index, route) {
+                setState(() => _currentIndex = index);
+                context.go(route);
+              },
               onAida: () => context.push('/chat'),
             ),
             Expanded(
@@ -116,7 +136,10 @@ class _MainShellWrapperState extends State<MainShellWrapper> {
       bottomNavigationBar: _BottomNav(
         currentIndex: _currentIndex,
         navItems: _navItems,
-        onTap: (route) => context.go(route),
+        onTap: (index, route) {
+          setState(() => _currentIndex = index);
+          context.go(route);
+        },
       ),
       floatingActionButton: _AidaFab(onTap: () => context.push('/chat')),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
@@ -129,7 +152,7 @@ class _MainShellWrapperState extends State<MainShellWrapper> {
 class _DarkSidebar extends StatelessWidget {
   final int currentIndex;
   final List<_NavItemData> navItems;
-  final void Function(String route) onTap;
+  final void Function(int index, String route) onTap;
   final VoidCallback onAida;
 
   const _DarkSidebar({
@@ -211,13 +234,13 @@ class _DarkSidebar extends StatelessWidget {
             const SizedBox(height: 8),
 
             // ── Nav items (sans Profil) ──
-            ...navItems.take(4).toList().asMap().entries.map((entry) {
+            ...navItems.take(navItems.length - 1).toList().asMap().entries.map((entry) {
               final i = entry.key;
               final item = entry.value;
               return _SidebarItem(
                 item: item,
                 isActive: currentIndex == i,
-                onTap: () => onTap(item.route),
+                onTap: () => onTap(i, item.route),
               );
             }),
 
@@ -241,9 +264,9 @@ class _DarkSidebar extends StatelessWidget {
 
             // ── Profil ──
             _SidebarItem(
-              item: navItems[5],
-              isActive: currentIndex == 5,
-              onTap: () => onTap(navItems[5].route),
+              item: navItems.last,
+              isActive: currentIndex == navItems.length - 1,
+              onTap: () => onTap(navItems.length - 1, navItems.last.route),
             ),
             const SizedBox(height: 16),
           ],
@@ -441,7 +464,7 @@ class _AidaSidebarButton extends StatelessWidget {
 class _BottomNav extends StatelessWidget {
   final int currentIndex;
   final List<_NavItemData> navItems;
-  final void Function(String route) onTap;
+  final void Function(int index, String route) onTap;
 
   const _BottomNav({
     required this.currentIndex,
@@ -476,7 +499,7 @@ class _BottomNav extends StatelessWidget {
               return _MobileNavItem(
                 item: item,
                 isActive: currentIndex == i,
-                onTap: () => onTap(item.route),
+                onTap: () => onTap(i, item.route),
               );
             }).toList(),
           ),

@@ -1,20 +1,25 @@
-/// Espacements et dimensions standardisés pour l'application
 class AppSpacing {
   AppSpacing._();
 
+  static const double unit = 4;
+
   // ============================================
-  // ESPACEMENTS DE BASE
+  // ESPACEMENTS DE BASE (4px baseline)
   // ============================================
   static const double none = 0;
   static const double xxxs = 2;
   static const double xxs = 4;
-  static const double xs = 8;
-  static const double sm = 12;
+  static const double xs = 4;
+  static const double sm = 8;
   static const double md = 16;
   static const double lg = 24;
-  static const double xl = 32;
-  static const double xxl = 48;
-  static const double xxxl = 64;
+  static const double xl = 40;
+  static const double xxl = 64;
+  static const double xxxl = 96;
+
+  static const double gutter = 24;
+  static const double marginMobile = 16;
+  static const double marginDesktop = 64;
 
   // ============================================
   // PADDING PAGE
@@ -32,7 +37,7 @@ class AppSpacing {
   static const double cardMargin = 12;
   static const double cardRadius = 16;
   static const double cardRadiusLarge = 24;
-  static const double cardRadiusSmall = 12;
+  static const double cardRadiusSmall = 8;
 
   // ============================================
   // BOUTONS
@@ -40,15 +45,16 @@ class AppSpacing {
   static const double buttonHeight = 56;
   static const double buttonHeightSmall = 44;
   static const double buttonHeightLarge = 64;
-  static const double buttonRadius = 16;
-  static const double buttonRadiusFull = 28;
+  static const double buttonRadius = 8;
+  static const double buttonRadiusFull = 9999;
   static const double buttonPaddingHorizontal = 24;
+  static const double buttonScalePress = 0.98;
 
   // ============================================
   // INPUTS
   // ============================================
   static const double inputHeight = 56;
-  static const double inputRadius = 16;
+  static const double inputRadius = 8;
   static const double inputPadding = 16;
 
   // ============================================
@@ -92,6 +98,17 @@ class AppSpacing {
   // ============================================
   static const double appBarHeight = 64;
   static const double appBarHeightLarge = 120;
+
+  // ============================================
+  // ROUNDED CORNERS
+  // ============================================
+  static const double roundedSm = 4;
+  static const double roundedDefault = 8;
+  static const double roundedMd = 12;
+  static const double roundedLg = 16;
+  static const double roundedXl = 24;
+  static const double roundedBadge = 24;
+  static const double roundedFull = 9999;
 
   // ============================================
   // ANIMATIONS

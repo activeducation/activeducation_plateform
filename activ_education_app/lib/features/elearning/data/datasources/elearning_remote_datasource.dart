@@ -168,7 +168,7 @@ class ElearningRemoteDataSourceImpl implements ElearningRemoteDataSource {
 
       final response = await _dio.post(
         '${ApiEndpoints.elearningLessons}/$id/complete',
-        data: body.isNotEmpty ? body : null,
+        data: body,
       );
       final data = response.data;
 

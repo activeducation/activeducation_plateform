@@ -33,6 +33,7 @@ class DashboardStats(BaseModel):
     total_tests_completed: int = 0
     total_schools: int = 0
     total_mentors: int = 0
+    total_announcements: int = 0
     new_users_weekly: list[WeeklyUsersPoint] = []
     tests_by_type: list[TestsByType] = []
     recent_activity: list[RecentActivity] = []

@@ -51,6 +51,8 @@ import '../../features/gamification/data/datasources/gamification_remote_datasou
     as _i788;
 import '../../features/gamification/data/repositories/gamification_repository.dart'
     as _i493;
+import '../../features/gamification/presentation/cubit/gamification_cubit.dart'
+    as _i208;
 import '../../features/orientation/data/datasources/careers_remote_data_source.dart'
     as _i832;
 import '../../features/orientation/data/datasources/orientation_remote_data_source.dart'
@@ -204,6 +206,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i941.RegisterUseCase>(
       () => _i941.RegisterUseCase(gh<_i787.AuthRepository>()),
+    );
+    gh.lazySingleton<_i208.GamificationCubit>(
+      () => _i208.GamificationCubit(gh<_i493.GamificationRepository>()),
     );
     gh.lazySingleton<_i355.CompleteLessonUsecase>(
       () => _i355.CompleteLessonUsecase(gh<_i62.ElearningRepository>()),

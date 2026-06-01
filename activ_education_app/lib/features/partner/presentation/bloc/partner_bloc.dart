@@ -13,6 +13,7 @@ class PartnerBloc extends Bloc<PartnerEvent, PartnerState> {
   final PartnerRepository _partnerRepository;
 
   PartnerBloc(this._partnerRepository) : super(PartnerInitial()) {
+    on<PartnerLoadMyOrganization>(_onLoadMyOrganization);
     on<PartnerLoadDashboard>(_onLoadDashboard);
     on<PartnerLoadOrganization>(_onLoadOrganization);
     on<PartnerLoadOrganizationStats>(_onLoadOrganizationStats);
@@ -26,6 +27,23 @@ class PartnerBloc extends Bloc<PartnerEvent, PartnerState> {
 
   String? _currentOrganizationId;
   String? _currentStatusFilter;
+
+  Future<void> _onLoadMyOrganization(
+    PartnerLoadMyOrganization event,
+    Emitter<PartnerState> emit,
+  ) async {
+    try {
+      final organization = await _partnerRepository.getMyOrganization();
+      emit(PartnerMyOrganizationLoaded(organization));
+    } catch (e) {
+      final msg = e.toString();
+      if (msg.contains('notFound') || msg.contains('Not Found') || msg.contains('404')) {
+        emit(PartnerInitial());
+      } else {
+        emit(PartnerError(msg));
+      }
+    }
+  }
 
   Future<void> _onLoadDashboard(
     PartnerLoadDashboard event,

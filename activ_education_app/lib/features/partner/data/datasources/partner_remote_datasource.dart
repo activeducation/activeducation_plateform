@@ -17,6 +17,7 @@ abstract class PartnerRemoteDataSource {
     String? country,
   });
 
+  Future<OrganizationModel> getMyOrganization();
   Future<OrganizationModel> getOrganization(String orgId);
   Future<OrganizationWithStatsModel> getOrganizationWithStats(String orgId);
   Future<List<OrganizationModel>> listOrganizations({
@@ -93,6 +94,16 @@ class PartnerRemoteDataSourceImpl implements PartnerRemoteDataSource {
           'country': ?country,
         },
       );
+      return OrganizationModel.fromJson(response.data);
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  @override
+  Future<OrganizationModel> getMyOrganization() async {
+    try {
+      final response = await _dio.get(ApiEndpoints.partnerMyOrganization);
       return OrganizationModel.fromJson(response.data);
     } on DioException catch (e) {
       throw _handleDioError(e);
