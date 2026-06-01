@@ -56,8 +56,6 @@ flutter:
 
   assets:
     - assets/images/
-    - .env
-    - .env.example
 
   fonts:
     - family: Hanken Grotesque
