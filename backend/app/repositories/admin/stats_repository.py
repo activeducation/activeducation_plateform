@@ -35,6 +35,11 @@ class StatsRepository:
             mentors = self._db.client.table("mentors").select("id", count="exact").execute()
             total_mentors = mentors.count or 0
 
+            announcements_count = self._db.client.table("announcements").select(
+                "id", count="exact"
+            ).eq("is_active", True).execute()
+            total_announcements = announcements_count.count or 0
+
             # Tests par type
             tests_by_type = []
             for t in ["riasec", "personality", "skills", "interests", "aptitude"]:
@@ -86,6 +91,7 @@ class StatsRepository:
                 total_tests_completed=total_tests,
                 total_schools=total_schools,
                 total_mentors=total_mentors,
+                total_announcements=total_announcements,
                 tests_by_type=tests_by_type,
                 recent_activity=recent,
             )

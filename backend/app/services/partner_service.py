@@ -100,6 +100,13 @@ class PartnerService:
 
         return self._to_organization_response(org)
 
+    async def get_my_organization(self, user_id: UUID) -> OrganizationResponse:
+        """Recupere l'organisation de l'utilisateur courant (celle qu'il a creee)."""
+        org = await self._partner_repo.get_organization_by_creator(user_id)
+        if not org:
+            raise NotFoundError("Organisation", "créée par l'utilisateur")
+        return self._to_organization_response(org)
+
     async def get_organization_by_code(
         self,
         code: str,

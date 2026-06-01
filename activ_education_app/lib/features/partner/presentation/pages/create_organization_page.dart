@@ -28,6 +28,15 @@ class _CreateOrganizationPageState extends State<CreateOrganizationPage> {
 
   String _selectedType = 'cdej';
   bool _isLoading = false;
+  bool _checkingOrg = true;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<PartnerBloc>().add(const PartnerLoadMyOrganization());
+    });
+  }
 
   @override
   void dispose() {
@@ -62,6 +71,16 @@ class _CreateOrganizationPageState extends State<CreateOrganizationPage> {
       ),
       body: BlocListener<PartnerBloc, PartnerState>(
         listener: (context, state) {
+          if (state is PartnerMyOrganizationLoaded) {
+            context.go('/partner/organization/${state.organization.id}');
+            return;
+          }
+          if (_checkingOrg) {
+            if (state is PartnerInitial || state is PartnerError) {
+              if (mounted) setState(() => _checkingOrg = false);
+            }
+            return;
+          }
           if (state is PartnerOrganizationCreated) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -80,7 +99,9 @@ class _CreateOrganizationPageState extends State<CreateOrganizationPage> {
             );
           }
         },
-        child: Form(
+        child: _checkingOrg
+            ? const Center(child: CircularProgressIndicator())
+            : Form(
           key: _formKey,
           child: ListView(
             padding: const EdgeInsets.all(AppSpacing.lg),

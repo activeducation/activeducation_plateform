@@ -150,6 +150,10 @@ class AppRouter {
             builder: (context, state) => const OpportunitiesListPage(),
           ),
           GoRoute(
+            path: '/partner',
+            redirect: (context, state) => '/partner/organization/create',
+          ),
+          GoRoute(
             path: '/partner/organization/create',
             builder: (context, state) => const CreateOrganizationPage(),
           ),

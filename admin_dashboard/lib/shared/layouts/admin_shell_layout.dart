@@ -154,6 +154,12 @@ class _Sidebar extends StatelessWidget {
                   path: '/opportunities',
                   currentPath: currentPath,
                 ),
+                _SidebarItem(
+                  icon: Icons.groups_rounded,
+                  label: 'Partenaires',
+                  path: '/partner/organizations',
+                  currentPath: currentPath,
+                ),
                 const _SidebarSection(label: 'ENGAGEMENT'),
                 _SidebarItem(
                   icon: Icons.emoji_events_rounded,
@@ -485,6 +491,7 @@ class _TopBar extends StatelessWidget {
     if (path.startsWith('/announcements')) return 'Annonces';
     if (path.startsWith('/settings')) return 'Parametres';
     if (path.startsWith('/audit-log')) return 'Journal d\'audit';
+    if (path.startsWith('/partner/organizations')) return 'Organisations partenaires';
     return 'Dashboard';
   }
 }

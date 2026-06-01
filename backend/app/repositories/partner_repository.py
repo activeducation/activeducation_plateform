@@ -72,6 +72,22 @@ class PartnerRepository:
             logger.error(f"Error fetching organization by code {code}: {e}", exc_info=True)
             raise QueryError(f"Erreur lors de la recuperation de l'organisation: {str(e)}")
 
+    async def get_organization_by_creator(self, created_by: UUID) -> Optional[dict[str, Any]]:
+        """Recupere la premiere organisation creee par un utilisateur."""
+        try:
+            result = (
+                self._db.client.table("partner_organizations")
+                .select("*")
+                .eq("created_by", str(created_by))
+                .order("created_at", desc=True)
+                .limit(1)
+                .execute()
+            )
+            return result.data[0] if result.data else None
+        except Exception as e:
+            logger.error(f"Error fetching organization by creator {created_by}: {e}", exc_info=True)
+            raise QueryError(f"Erreur lors de la recuperation de l'organisation: {str(e)}")
+
     async def create_organization(
         self,
         data: dict[str, Any],

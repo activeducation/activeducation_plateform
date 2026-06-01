@@ -145,9 +145,20 @@ class ApiEndpoints {
   static String opportunityById(String id) => '$opportunities/$id';
 
   // ============================================
+  // ANNOUNCEMENTS
+  // ============================================
+  static const String announcements = '$apiV1/announcements';
+
+  // ============================================
+  // SETTINGS
+  // ============================================
+  static const String publicSettings = '$apiV1/settings/public';
+
+  // ============================================
   // PARTNER (CDEJ, ONG) - Organizations & Beneficiaries
   // ============================================
   static const String partnerOrganizations = '$apiV1/partner/organizations';
+  static String get partnerMyOrganization => '$partnerOrganizations/my-organization';
   static String partnerOrganizationById(String id) => '$partnerOrganizations/$id';
   static String partnerOrganizationStats(String id) => '$partnerOrganizations/$id/stats';
   static String partnerBeneficiaries(String orgId) => '$partnerOrganizations/$orgId/beneficiaries';

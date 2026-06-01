@@ -87,6 +87,17 @@ async def list_organizations(
     )
 
 
+@router.get("/organizations/my-organization", response_model=OrganizationResponse)
+@standard_limit()
+async def get_my_organization(
+    request: Request,
+    user_id: UUID = Depends(get_current_user_id),
+    service: PartnerService = Depends(get_service),
+):
+    """Recupere l'organisation de l'utilisateur courant."""
+    return await service.get_my_organization(user_id)
+
+
 @router.get("/organizations/{org_id}", response_model=OrganizationResponse)
 @standard_limit()
 async def get_organization(

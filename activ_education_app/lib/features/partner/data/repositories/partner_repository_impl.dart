@@ -36,6 +36,12 @@ class PartnerRepositoryImpl implements PartnerRepository {
   }
 
   @override
+  Future<Organization> getMyOrganization() async {
+    final model = await _remoteDataSource.getMyOrganization();
+    return model.toEntity();
+  }
+
+  @override
   Future<Organization> getOrganization(String orgId) async {
     final model = await _remoteDataSource.getOrganization(orgId);
     return model.toEntity();

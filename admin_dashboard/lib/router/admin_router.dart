@@ -26,6 +26,7 @@ import '../features/elearning/presentation/courses_list_page.dart';
 import '../features/elearning/presentation/course_editor_page.dart';
 import '../features/opportunities/presentation/opportunities_list_page.dart';
 import '../features/opportunities/presentation/opportunity_editor_page.dart';
+import '../features/partner/presentation/organizations_list_page.dart';
 import '../features/school_portal/presentation/school_login_page.dart';
 import '../features/school_portal/presentation/school_shell_layout.dart';
 import '../features/school_portal/presentation/school_dashboard_page.dart';
@@ -174,6 +175,10 @@ GoRouter createAdminRouter() {
             path: '/opportunities/:id/edit',
             builder: (context, state) =>
                 OpportunityEditorPage(opportunityId: state.pathParameters['id']),
+          ),
+          GoRoute(
+            path: '/partner/organizations',
+            builder: (context, state) => const OrganizationsListPage(),
           ),
         ],
       ),
