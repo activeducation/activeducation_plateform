@@ -9,6 +9,7 @@ import '../features/onboarding/presentation/pages/onboarding_interests_page.dart
 import '../features/onboarding/presentation/pages/onboarding_goals_page.dart';
 import '../features/onboarding/presentation/pages/onboarding_complete_page.dart';
 import '../features/home/presentation/pages/home_page.dart';
+import '../features/mentors/presentation/become_mentor_page.dart';
 import '../features/schools/presentation/pages/school_directory_page.dart';
 import '../features/orientation/presentation/pages/test_selection_page.dart';
 import '../features/orientation/presentation/pages/test_execution_page.dart';
@@ -208,6 +209,11 @@ class AppRouter {
           final args = state.extra as ChatPageArgs? ?? const ChatPageArgs();
           return ChatPage(args: args);
         },
+      ),
+      GoRoute(
+        path: '/mentors/apply',
+        builder: (BuildContext context, GoRouterState state) =>
+            const BecomeMentorPage(),
       ),
     ],
   );
