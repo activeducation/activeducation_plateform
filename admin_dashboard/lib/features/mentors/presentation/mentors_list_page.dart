@@ -64,6 +64,73 @@ class _MentorsListPageState extends State<MentorsListPage> {
     }
   }
 
+  Future<void> _showCreateMentorDialog() async {
+    final fullName = TextEditingController();
+    final specialty = TextEditingController();
+    final email = TextEditingController();
+    final experience = TextEditingController();
+    final created = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Créer un mentor'),
+        content: SizedBox(
+          width: 380,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(controller: fullName, decoration: const InputDecoration(labelText: 'Nom complet *')),
+              const SizedBox(height: 10),
+              TextField(controller: specialty, decoration: const InputDecoration(labelText: 'Spécialité *')),
+              const SizedBox(height: 10),
+              TextField(controller: email, decoration: const InputDecoration(labelText: 'Email')),
+              const SizedBox(height: 10),
+              TextField(controller: experience, keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: "Années d'expérience")),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Créer'),
+          ),
+        ],
+      ),
+    );
+    if (created != true) return;
+    if (fullName.text.trim().isEmpty || specialty.text.trim().isEmpty) {
+      if (mounted) AdminSnackbar.error(context, 'Nom et spécialité requis');
+      return;
+    }
+    try {
+      final api = getIt<ApiClient>();
+      await api.post(ApiEndpoints.adminMentors, data: {
+        'full_name': fullName.text.trim(),
+        'specialty': specialty.text.trim(),
+        if (email.text.trim().isNotEmpty) 'email': email.text.trim(),
+        if (experience.text.trim().isNotEmpty)
+          'years_experience': int.tryParse(experience.text.trim()),
+      });
+      if (mounted) AdminSnackbar.success(context, 'Mentor créé');
+      _load();
+    } catch (e) {
+      if (mounted) AdminSnackbar.error(context, 'Création impossible');
+    }
+  }
+
+  Future<void> _showTasksSheet(String mentorId, String mentorName) async {
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => _MentorTasksSheet(mentorId: mentorId, mentorName: mentorName),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final totalPages = (_total / 20).ceil();
@@ -73,8 +140,28 @@ class _MentorsListPageState extends State<MentorsListPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Mentors', style: AppTypography.heading1),
-          Text('$_total mentors', style: AppTypography.subtitle),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Mentors', style: AppTypography.heading1),
+                    Text('$_total mentors', style: AppTypography.subtitle),
+                  ],
+                ),
+              ),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('Créer un mentor'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: _showCreateMentorDialog,
+              ),
+            ],
+          ),
           const SizedBox(height: 24),
           Expanded(
             child: Card(
@@ -121,6 +208,13 @@ class _MentorsListPageState extends State<MentorsListPage> {
                                 onPressed: () => _toggleActive(mentor['id']),
                                 tooltip: mentor['is_active'] == true ? 'Desactiver' : 'Activer',
                               ),
+                              IconButton(
+                                icon: const Icon(Icons.task_alt, size: 18, color: AppColors.secondary),
+                                onPressed: () => _showTasksSheet(
+                                    mentor['id'].toString(),
+                                    name.isEmpty ? (userInfo['email'] ?? 'Mentor') : name),
+                                tooltip: 'Tâches',
+                              ),
                             ])),
                           ]);
                         }).toList(),
@@ -139,6 +233,189 @@ class _MentorsListPageState extends State<MentorsListPage> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Bottom sheet de gestion des taches d'un mentor (liste + ajout + statut).
+class _MentorTasksSheet extends StatefulWidget {
+  final String mentorId;
+  final String mentorName;
+  const _MentorTasksSheet({required this.mentorId, required this.mentorName});
+
+  @override
+  State<_MentorTasksSheet> createState() => _MentorTasksSheetState();
+}
+
+class _MentorTasksSheetState extends State<_MentorTasksSheet> {
+  List<dynamic> _tasks = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() => _loading = true);
+    try {
+      final api = getIt<ApiClient>();
+      final res = await api.get(ApiEndpoints.adminMentorTasks(widget.mentorId));
+      setState(() {
+        _tasks = (res.data['items'] ?? []) as List;
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _addTask() async {
+    final title = TextEditingController();
+    final desc = TextEditingController();
+    String priority = 'normal';
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSt) => AlertDialog(
+          title: const Text('Nouvelle tâche'),
+          content: SizedBox(
+            width: 360,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(controller: title, decoration: const InputDecoration(labelText: 'Titre *')),
+                const SizedBox(height: 10),
+                TextField(controller: desc, maxLines: 3, decoration: const InputDecoration(labelText: 'Description')),
+                const SizedBox(height: 10),
+                DropdownButtonFormField<String>(
+                  initialValue: priority,
+                  decoration: const InputDecoration(labelText: 'Priorité'),
+                  items: const [
+                    DropdownMenuItem(value: 'low', child: Text('Basse')),
+                    DropdownMenuItem(value: 'normal', child: Text('Normale')),
+                    DropdownMenuItem(value: 'high', child: Text('Haute')),
+                  ],
+                  onChanged: (v) => setSt(() => priority = v ?? 'normal'),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+            ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Ajouter')),
+          ],
+        ),
+      ),
+    );
+    if (ok != true || title.text.trim().isEmpty) return;
+    try {
+      final api = getIt<ApiClient>();
+      await api.post(ApiEndpoints.adminMentorTasks(widget.mentorId), data: {
+        'title': title.text.trim(),
+        if (desc.text.trim().isNotEmpty) 'description': desc.text.trim(),
+        'priority': priority,
+      });
+      if (mounted) AdminSnackbar.success(context, 'Tâche ajoutée');
+      _load();
+    } catch (e) {
+      if (mounted) AdminSnackbar.error(context, 'Ajout impossible');
+    }
+  }
+
+  Future<void> _setStatus(String taskId, String status) async {
+    try {
+      final api = getIt<ApiClient>();
+      await api.patch(ApiEndpoints.adminMentorTaskById(taskId), data: {'status': status});
+      _load();
+    } catch (e) {
+      if (mounted) AdminSnackbar.error(context, 'Mise à jour impossible');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 20, right: 20, top: 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text('Tâches — ${widget.mentorName}',
+                    style: AppTypography.heading3),
+              ),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.add, size: 16),
+                label: const Text('Ajouter'),
+                onPressed: _addTask,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (_loading)
+            const Padding(padding: EdgeInsets.all(24), child: Center(child: CircularProgressIndicator()))
+          else if (_tasks.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Center(child: Text('Aucune tâche assignée', style: AppTypography.subtitle)),
+            )
+          else
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 360),
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: _tasks.length,
+                separatorBuilder: (_, _) => const Divider(height: 1),
+                itemBuilder: (_, i) {
+                  final t = _tasks[i] as Map<String, dynamic>;
+                  final done = t['status'] == 'done';
+                  return ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Checkbox(
+                      value: done,
+                      onChanged: (v) => _setStatus(
+                          t['id'].toString(), (v ?? false) ? 'done' : 'todo'),
+                    ),
+                    title: Text(
+                      t['title'] ?? '',
+                      style: AppTypography.body.copyWith(
+                        decoration: done ? TextDecoration.lineThrough : null,
+                        color: done ? AppColors.textMuted : AppColors.textPrimary,
+                      ),
+                    ),
+                    subtitle: (t['description'] ?? '').toString().isNotEmpty
+                        ? Text(t['description'], style: AppTypography.bodySmall)
+                        : null,
+                    trailing: _priorityBadge(t['priority'] ?? 'normal'),
+                  );
+                },
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _priorityBadge(String p) {
+    final (color, label) = switch (p) {
+      'high' => (AppColors.error, 'Haute'),
+      'low' => (AppColors.textMuted, 'Basse'),
+      _ => (AppColors.primary, 'Normale'),
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(label, style: AppTypography.label.copyWith(color: color)),
     );
   }
 }

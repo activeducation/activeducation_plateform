@@ -19,6 +19,7 @@ import '../features/orientation_tests/presentation/test_editor_page.dart';
 import '../features/gamification/presentation/achievements_page.dart';
 import '../features/gamification/presentation/challenges_page.dart';
 import '../features/mentors/presentation/mentors_list_page.dart';
+import '../features/mentors/presentation/mentor_applications_page.dart';
 import '../features/settings/presentation/settings_page.dart';
 import '../features/settings/presentation/announcements_page.dart';
 import '../features/settings/presentation/audit_log_page.dart';
@@ -137,6 +138,10 @@ GoRouter createAdminRouter() {
           GoRoute(
             path: '/mentors',
             builder: (context, state) => const MentorsListPage(),
+          ),
+          GoRoute(
+            path: '/mentors/applications',
+            builder: (context, state) => const MentorApplicationsPage(),
           ),
           GoRoute(
             path: '/settings',
