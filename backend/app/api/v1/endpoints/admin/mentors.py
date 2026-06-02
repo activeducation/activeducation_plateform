@@ -9,6 +9,13 @@ from app.core.logging import get_logger
 from app.core.security import get_current_admin
 from app.db.supabase_client import get_supabase_client
 from app.core.exceptions import NotFoundError
+from app.schemas.mentor import (
+    MentorCreate,
+    MentorTaskCreate,
+    MentorTaskUpdate,
+    MentorTaskResponse,
+)
+from app.repositories.mentor_repository import get_mentor_repository
 
 
 logger = get_logger("api.admin.mentors")
@@ -126,3 +133,82 @@ async def toggle_active_mentor(
     )
     _log_audit(admin, "toggle_active", "mentor", mentor_id, {"is_active": new_value})
     return result[0] if result else {"is_active": new_value}
+
+
+# ============================================================================
+# CREATION DIRECTE D'UN MENTOR
+# ============================================================================
+
+@router.post("", status_code=201)
+async def create_mentor(
+    body: MentorCreate,
+    admin: dict = Depends(get_current_admin),
+):
+    """Cree un mentor directement (sans candidature)."""
+    repo = get_mentor_repository()
+    data = body.model_dump(exclude_none=True)
+    data["source"] = "manual"
+    data.setdefault("is_active", True)
+    mentor = repo.create_mentor(data)
+    _log_audit(admin, "create", "mentor", mentor.get("id"), {"full_name": body.full_name})
+    return mentor
+
+
+# ============================================================================
+# TACHES ASSIGNEES AUX MENTORS
+# ============================================================================
+
+@router.get("/{mentor_id}/tasks")
+async def list_mentor_tasks(
+    mentor_id: UUID,
+    admin: dict = Depends(get_current_admin),
+):
+    """Liste les taches d'un mentor."""
+    return {"items": get_mentor_repository().list_tasks(mentor_id)}
+
+
+@router.post("/{mentor_id}/tasks", response_model=MentorTaskResponse, status_code=201)
+async def create_mentor_task(
+    mentor_id: UUID,
+    body: MentorTaskCreate,
+    admin: dict = Depends(get_current_admin),
+):
+    """Assigne une tache a un mentor."""
+    db = get_supabase_client()
+    mentor = db.fetch_one(table="mentors", id_column="id", id_value=str(mentor_id))
+    if not mentor:
+        raise NotFoundError("Mentor", str(mentor_id))
+
+    data = body.model_dump(exclude_none=True)
+    data["assigned_by"] = str(admin["user_id"])
+    task = get_mentor_repository().create_task(mentor_id, data)
+    _log_audit(admin, "create", "mentor_task", task.get("id"), {"title": body.title})
+    return task
+
+
+@router.patch("/tasks/{task_id}", response_model=MentorTaskResponse)
+async def update_mentor_task(
+    task_id: UUID,
+    body: MentorTaskUpdate,
+    admin: dict = Depends(get_current_admin),
+):
+    """Met a jour une tache mentor (statut, priorite...)."""
+    changes = body.model_dump(exclude_none=True)
+    if not changes:
+        raise NotFoundError("Tâche", str(task_id))
+    task = get_mentor_repository().update_task(task_id, changes)
+    if not task:
+        raise NotFoundError("Tâche", str(task_id))
+    _log_audit(admin, "update", "mentor_task", task_id, changes)
+    return task
+
+
+@router.delete("/tasks/{task_id}", status_code=204)
+async def delete_mentor_task(
+    task_id: UUID,
+    admin: dict = Depends(get_current_admin),
+):
+    """Supprime une tache mentor."""
+    get_mentor_repository().delete_task(task_id)
+    _log_audit(admin, "delete", "mentor_task", task_id, None)
+    return None
