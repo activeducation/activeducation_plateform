@@ -185,14 +185,14 @@ class _FullCourseCard extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             const Icon(Iconsax.medal_star5,
-                                size: 11, color: AppColors.darkBg),
+                                size: 11, color: AppColors.textOnAccent),
                             const SizedBox(width: 3),
                             Text(
                               '+${course.pointsReward} XP',
                               style: const TextStyle(
                                 fontSize: 10.5,
                                 fontWeight: FontWeight.w800,
-                                color: AppColors.darkBg,
+                                color: AppColors.textOnAccent,
                               ),
                             ),
                           ],

@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../core/constants/app_colors.dart';
 import '../features/auth/presentation/pages/splash_page.dart';
 import '../features/auth/presentation/pages/login_page.dart';
 import '../features/auth/presentation/pages/register_page.dart';
@@ -31,6 +32,21 @@ import '../features/partner/presentation/pages/beneficiary_form_page.dart';
 import '../features/opportunities/presentation/pages/opportunities_page.dart';
 import 'auth_guard.dart' show AuthGuard, RoleGuard;
 import 'widgets/main_shell.dart';
+
+/// Centre et limite la largeur d'une page plein écran (hors shell) sur grand
+/// écran / web, tout en laissant le plein écran sur mobile. Les marges latérales
+/// prennent la couleur de fond de l'app pour un rendu propre sur desktop.
+Widget _responsive(Widget page, {double maxWidth = 520}) {
+  return ColoredBox(
+    color: AppColors.background,
+    child: Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maxWidth),
+        child: page,
+      ),
+    ),
+  );
+}
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',
@@ -68,37 +84,37 @@ class AppRouter {
       GoRoute(
         path: '/register',
         builder: (BuildContext context, GoRouterState state) {
-          return const RegisterPage();
+          return _responsive(const RegisterPage(), maxWidth: 520);
         },
       ),
       GoRoute(
         path: '/onboarding',
         builder: (BuildContext context, GoRouterState state) {
-          return const OnboardingIntroPage();
+          return _responsive(const OnboardingIntroPage(), maxWidth: 480);
         },
       ),
       GoRoute(
         path: '/onboarding/profile',
         builder: (BuildContext context, GoRouterState state) {
-          return const OnboardingProfilePage();
+          return _responsive(const OnboardingProfilePage(), maxWidth: 480);
         },
       ),
       GoRoute(
         path: '/onboarding/interests',
         builder: (BuildContext context, GoRouterState state) {
-          return const OnboardingInterestsPage();
+          return _responsive(const OnboardingInterestsPage(), maxWidth: 480);
         },
       ),
       GoRoute(
         path: '/onboarding/goals',
         builder: (BuildContext context, GoRouterState state) {
-          return const OnboardingGoalsPage();
+          return _responsive(const OnboardingGoalsPage(), maxWidth: 480);
         },
       ),
       GoRoute(
         path: '/onboarding/complete',
         builder: (BuildContext context, GoRouterState state) {
-          return const OnboardingCompletePage();
+          return _responsive(const OnboardingCompletePage(), maxWidth: 480);
         },
       ),
       ShellRoute(
@@ -192,21 +208,21 @@ class AppRouter {
         path: '/orientation/test',
         builder: (BuildContext context, GoRouterState state) {
           final test = state.extra as OrientationTest;
-          return TestExecutionPage(test: test);
+          return _responsive(TestExecutionPage(test: test), maxWidth: 720);
         },
       ),
       GoRoute(
         path: '/orientation/results',
         builder: (BuildContext context, GoRouterState state) {
           final result = state.extra as TestResult;
-          return ResultsPage(result: result);
+          return _responsive(ResultsPage(result: result), maxWidth: 760);
         },
       ),
       GoRoute(
         path: '/orientation/career',
         builder: (BuildContext context, GoRouterState state) {
           final career = state.extra as Career;
-          return CareerDetailPage(career: career);
+          return _responsive(CareerDetailPage(career: career), maxWidth: 760);
         },
       ),
       GoRoute(
@@ -219,7 +235,7 @@ class AppRouter {
       GoRoute(
         path: '/mentors/apply',
         builder: (BuildContext context, GoRouterState state) =>
-            const BecomeMentorPage(),
+            _responsive(const BecomeMentorPage(), maxWidth: 560),
       ),
     ],
   );

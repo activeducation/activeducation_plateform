@@ -330,7 +330,7 @@ class _SidebarItemState extends State<_SidebarItem> {
                       padding: const EdgeInsets.all(7),
                       decoration: BoxDecoration(
                         color: widget.isActive
-                            ? AppColors.primary.withValues(alpha: 0.25)
+                            ? AppColors.secondary.withValues(alpha: 0.22)
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(9),
                       ),
@@ -339,7 +339,7 @@ class _SidebarItemState extends State<_SidebarItem> {
                             ? widget.item.activeIcon
                             : widget.item.icon,
                         color: widget.isActive
-                            ? AppColors.darkAccentBlue
+                            ? AppColors.secondary
                             : AppColors.darkTextSecondary,
                         size: 20,
                       ),
@@ -364,7 +364,7 @@ class _SidebarItemState extends State<_SidebarItem> {
                         width: 3,
                         height: 20,
                         decoration: BoxDecoration(
-                          color: AppColors.primary,
+                          color: AppColors.secondary,
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -397,13 +397,13 @@ class _AidaSidebarButton extends StatelessWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                AppColors.primary.withValues(alpha: 0.30),
-                AppColors.primaryIndigo.withValues(alpha: 0.20),
+                Colors.white.withValues(alpha: 0.16),
+                Colors.white.withValues(alpha: 0.06),
               ],
             ),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: AppColors.primary.withValues(alpha: 0.35),
+              color: Colors.white.withValues(alpha: 0.22),
             ),
           ),
           child: Row(
@@ -411,7 +411,7 @@ class _AidaSidebarButton extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.30),
+                  color: AppColors.secondary.withValues(alpha: 0.30),
                   borderRadius: BorderRadius.circular(9),
                 ),
                 child: const Icon(
