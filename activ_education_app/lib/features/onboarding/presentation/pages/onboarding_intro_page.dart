@@ -9,27 +9,21 @@ class OnboardingIntroPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: AppColors.heroGradient,
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 40),
-                _buildHeader(),
-                const SizedBox(height: 48),
-                _buildIllustration(),
-                const Spacer(),
-                _buildCTA(context),
-                const SizedBox(height: 32),
-              ],
-            ),
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 40),
+              _buildHeader(),
+              const SizedBox(height: 48),
+              _buildIllustration(),
+              const Spacer(),
+              _buildCTA(context),
+              const SizedBox(height: 32),
+            ],
           ),
         ),
       ),
@@ -43,7 +37,8 @@ class OnboardingIntroPage extends StatelessWidget {
         Text(
           'Bienvenue sur',
           style: AppTypography.heroSubtitle.copyWith(
-            color: AppColors.darkAccentAmber,
+            color: AppColors.secondaryDark,
+            fontWeight: FontWeight.w700,
             fontSize: 16,
           ),
         ),
@@ -51,15 +46,16 @@ class OnboardingIntroPage extends StatelessWidget {
         Text(
           'ActivEducation',
           style: AppTypography.heroDisplay.copyWith(
+            color: AppColors.textPrimary,
             fontSize: 36,
             letterSpacing: -1,
           ),
         ),
         const SizedBox(height: 16),
         Text(
-          'Ton assistant d''orientation personnalisé.\nDécouvre les métiers qui te ressemblent.',
+          'Ton assistant d\'orientation personnalisé.\nDécouvre les métiers qui te ressemblent.',
           style: AppTypography.bodyLarge.copyWith(
-            color: AppColors.darkTextSecondary,
+            color: AppColors.textSecondary,
             height: 1.5,
           ),
         ),
@@ -77,13 +73,13 @@ class OnboardingIntroPage extends StatelessWidget {
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.1),
+              color: AppColors.secondarySurface,
               borderRadius: BorderRadius.circular(32),
             ),
             child: const Icon(
               Icons.rocket_launch_rounded,
               size: 56,
-              color: AppColors.darkAccentAmber,
+              color: AppColors.secondary,
             ),
           ),
           const SizedBox(height: 24),
@@ -115,7 +111,7 @@ class OnboardingIntroPage extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.2),
+            color: AppColors.primarySurface,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(icon, color: AppColors.primary, size: 24),
@@ -128,14 +124,14 @@ class OnboardingIntroPage extends StatelessWidget {
               Text(
                 title,
                 style: AppTypography.titleSmall.copyWith(
-                  color: AppColors.darkTextPrimary,
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               Text(
                 subtitle,
                 style: AppTypography.labelSmall.copyWith(
-                  color: AppColors.darkTextMuted,
+                  color: AppColors.textTertiary,
                 ),
               ),
             ],
@@ -173,7 +169,7 @@ class OnboardingIntroPage extends StatelessWidget {
           child: Text(
             'J\'ai déjà un compte',
             style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.darkTextSecondary,
+              color: AppColors.textSecondary,
             ),
           ),
         ),

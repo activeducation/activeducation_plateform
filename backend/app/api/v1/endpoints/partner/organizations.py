@@ -55,7 +55,27 @@ async def create_organization(
 
     L'utilisateur courant devient l'administrateur de l'organisation.
     """
-    return await service.create_organization(body, user_id)
+    org = await service.create_organization(body, user_id)
+
+    # Notifie l'equipe (best-effort, ne bloque jamais la creation)
+    try:
+        from app.core import email as email_service
+        await email_service.notify_internal(
+            subject=f"Nouvelle organisation partenaire — {body.name}",
+            html_body=(
+                f"<h2>Nouvelle organisation partenaire</h2>"
+                f"<ul>"
+                f"<li><b>Nom</b> : {body.name}</li>"
+                f"<li><b>Type</b> : {getattr(body, 'organization_type', '—')}</li>"
+                f"<li><b>Email contact</b> : {getattr(body, 'contact_email', None) or '—'}</li>"
+                f"</ul>"
+                f"<p>À approuver dans le dashboard admin → Partenaires.</p>"
+            ),
+        )
+    except Exception:
+        pass
+
+    return org
 
 
 @router.get("/organizations", response_model=OrganizationListResponse)

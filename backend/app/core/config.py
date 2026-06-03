@@ -40,6 +40,18 @@ class Settings(BaseSettings):
     # LLM - AÏDA
     GROQ_API_KEY: Optional[str] = None
 
+    # Email (notifications candidatures mentor, etc.) — tout optionnel.
+    # Si SMTP n'est pas configure, l'envoi est ignore silencieusement (best-effort).
+    # L'adresse destinataire des notifications est aussi configurable a chaud via
+    # la cle app_settings 'notification_email' (prioritaire sur NOTIFICATION_EMAIL).
+    SMTP_HOST: Optional[str] = None
+    SMTP_PORT: int = 587
+    SMTP_USER: Optional[str] = None
+    SMTP_PASSWORD: Optional[str] = None
+    SMTP_FROM: Optional[str] = None
+    SMTP_USE_TLS: bool = True
+    NOTIFICATION_EMAIL: Optional[str] = None  # fallback si app_settings absent
+
     # CORS - Liste vide par defaut, doit etre configuree
     BACKEND_CORS_ORIGINS: list[str] = []
 

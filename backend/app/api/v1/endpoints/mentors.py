@@ -3,14 +3,19 @@ Endpoints API publics pour les mentors.
 """
 
 from uuid import UUID
+from typing import Optional
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Depends
 
 from functools import lru_cache
 
 from app.core.logging import get_logger
 from app.core.cache import get_cache, CacheClient, TTL_MENTORS
 from app.db.supabase_client import get_supabase_client
+from app.core.security import get_current_user_id_optional
+from app.core import email as email_service
+from app.schemas.mentor import MentorApplicationCreate, MentorApplicationResponse
+from app.repositories.mentor_repository import get_mentor_repository
 
 logger = get_logger("api.mentors")
 
@@ -21,6 +26,76 @@ router = APIRouter()
 def _cache() -> CacheClient:
     """Retourne l'instance (unique) du cache."""
     return get_cache()
+
+
+@router.post("/apply", response_model=MentorApplicationResponse, status_code=201)
+async def apply_as_mentor(
+    application: MentorApplicationCreate,
+    user_id: Optional[UUID] = Depends(get_current_user_id_optional),
+):
+    """Candidature pour devenir mentor (publique, depuis l'app).
+
+    - Enregistre la candidature (status=pending).
+    - Notifie l'equipe par email (best-effort, adresse configurable a chaud).
+    - Envoie un accuse de reception au candidat (best-effort).
+    """
+    repo = get_mentor_repository()
+    data = application.model_dump(exclude_none=True)
+    if user_id is not None:
+        data["user_id"] = str(user_id)
+
+    created = repo.create_application(data)
+
+    # Notification interne (best-effort, ne bloque jamais la candidature)
+    try:
+        await email_service.notify_internal(
+            subject=f"Nouvelle candidature mentor — {application.full_name}",
+            html_body=_internal_application_html(application),
+        )
+    except Exception as e:
+        logger.warning(f"Notification interne candidature mentor echouee: {e}")
+
+    # Accuse de reception au candidat (best-effort)
+    try:
+        await email_service.send_email_async(
+            to_email=str(application.email),
+            subject="Votre candidature mentor — ActivEducation",
+            html_body=_applicant_ack_html(application),
+        )
+    except Exception as e:
+        logger.warning(f"Accuse reception candidat echoue: {e}")
+
+    logger.info("Mentor application received: %s", application.email)
+    return created
+
+
+def _internal_application_html(a: MentorApplicationCreate) -> str:
+    areas = ", ".join(a.expertise_areas or []) or "—"
+    return f"""
+    <h2>Nouvelle candidature mentor</h2>
+    <ul>
+      <li><b>Nom</b> : {a.full_name}</li>
+      <li><b>Email</b> : {a.email}</li>
+      <li><b>Téléphone</b> : {a.phone or '—'}</li>
+      <li><b>Spécialité</b> : {a.specialty}</li>
+      <li><b>Expérience</b> : {a.years_experience if a.years_experience is not None else '—'} ans</li>
+      <li><b>Domaines</b> : {areas}</li>
+      <li><b>LinkedIn</b> : {a.linkedin_url or '—'}</li>
+    </ul>
+    <p><b>Bio</b><br>{a.bio or '—'}</p>
+    <p><b>Motivation</b><br>{a.motivation or '—'}</p>
+    <hr><p>Traitez cette candidature dans le dashboard admin → Mentors → Candidatures.</p>
+    """
+
+
+def _applicant_ack_html(a: MentorApplicationCreate) -> str:
+    return f"""
+    <h2>Merci pour votre candidature, {a.full_name} !</h2>
+    <p>Nous avons bien reçu votre candidature pour devenir mentor sur
+    <b>ActivEducation</b> (spécialité : {a.specialty}).</p>
+    <p>Notre équipe l'examinera et reviendra vers vous prochainement.</p>
+    <p>À bientôt,<br>L'équipe ActivEducation</p>
+    """
 
 
 @router.get("")

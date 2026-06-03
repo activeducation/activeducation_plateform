@@ -5,6 +5,7 @@ import '../../../core/constants/app_typography.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/di/injection_container.dart';
 import '../../../core/auth/token_storage.dart';
+import '../../../core/network/api_client.dart';
 import '../../../core/constants/api_endpoints.dart';
 
 class OrganizationModel {
@@ -88,7 +89,7 @@ class _OrganizationsListPageState extends State<OrganizationsListPage> {
       final token = getIt<TokenStorage>().accessToken;
       if (token == null) { setState(() { _loading = false; _error = 'Session expirée. Veuillez vous reconnecter.'; }); return; }
 
-      final response = await getIt<Dio>().get(
+      final response = await getIt<ApiClient>().dio.get(
         '${ApiEndpoints.baseUrl}/partner/organizations',
         options: Options(headers: {'Authorization': 'Bearer $token'}),
         queryParameters: {'page': 1, 'page_size': 100},
@@ -109,7 +110,7 @@ class _OrganizationsListPageState extends State<OrganizationsListPage> {
       final token = getIt<TokenStorage>().accessToken;
       if (token == null) return;
 
-      await getIt<Dio>().post(
+      await getIt<ApiClient>().dio.post(
         '${ApiEndpoints.baseUrl}/admin/partner/organizations/$orgId/approve',
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );

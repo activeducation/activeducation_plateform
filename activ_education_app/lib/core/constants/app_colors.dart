@@ -80,47 +80,55 @@ class AppColors {
   // ============================================
   static const Color outline = Color(0xFF767587);
   static const Color outlineVariant = Color(0xFFC6C4D8);
-  static const Color border = Color(0xFFC6C4D8);
-  static const Color borderLight = Color(0xFFE4E1E9);
+  static const Color border = Color(0xFFE4E1E9);
+  static const Color borderLight = Color(0xFFF0ECF4);
   static const Color divider = Color(0xFFE4E1E9);
   static const Color glassBorder = Color(0xFFC6C4D8);
 
   // ============================================
-  // DARK UI — Sidebar, headers hero, sections sombres
+  // "DARK" UI — Sidebar, headers hero, sections d'accent
+  // Recoloré en BLEU DE MARQUE (plus aucun noir/gris sombre) : ces surfaces
+  // restent foncées-sur-claires côté texte, mais en indigo/bleu du logo afin
+  // d'être cohérentes avec le bandeau hero de l'admin. Le nom des tokens est
+  // conservé pour ne pas casser les ~25 fichiers qui les référencent.
   // ============================================
-  static const Color darkBg = Color(0xFF121217);
-  static const Color darkBg2 = Color(0xFF1E1E26);
-  static const Color darkBg3 = Color(0xFF2A2A35);
-  static const Color darkSurface = Color(0xFF303035);
-  static const Color darkSurface2 = Color(0xFF3A3A45);
-  static const Color darkSurface3 = Color(0xFF454556);
-  static const Color darkBorder = Color(0xFF454556);
-  static const Color darkBorder2 = Color(0xFF555566);
-  static const Color darkDivider = Color(0xFF303035);
+  static const Color darkBg = Color(0xFF2A2BB5); // indigo profond (sidebar, hero solide, snackbar)
+  static const Color darkBg2 = Color(0xFF3133DD); // = primary
+  static const Color darkBg3 = Color(0xFF3E40E0);
+  static const Color darkSurface = Color(0xFF4446D6); // panneaux translucides sur hero
+  static const Color darkSurface2 = Color(0xFF4F51E0); // item actif (sidebar)
+  static const Color darkSurface3 = Color(0xFF6163E8);
+  static const Color darkBorder = Color(0xFF5759C8);
+  static const Color darkBorder2 = Color(0xFF6E70EC);
+  static const Color darkDivider = Color(0xFF4446D6);
 
-  static const Color darkTextPrimary = Color(0xFFF3EFF7);
-  static const Color darkTextSecondary = Color(0xFFC6C4D8);
-  static const Color darkTextMuted = Color(0xFF767587);
-  static const Color darkAccentBlue = Color(0xFF6062E8);
+  static const Color darkTextPrimary = Color(0xFFFFFFFF);
+  static const Color darkTextSecondary = Color(0xFFD6D7F7);
+  static const Color darkTextMuted = Color(0xFFADAEEE);
+  static const Color darkAccentBlue = Color(0xFFB9C6FF);
   static const Color darkAccentAmber = Color(0xFFFAA100);
 
   // ============================================
   // STATUTS
   // ============================================
-  static const Color success = Color(0xFF16A34A);
-  static const Color successLight = Color(0xFFDCFCE7);
+  static const Color success = Color(0xFF10B981);
+  static const Color successLight = Color(0xFFECFDF5);
+  static const Color successSurface = Color(0xFFECFDF5);
   static const Color successDark = Color(0xFF15803D);
 
-  static const Color warning = Color(0xFFEAB308);
-  static const Color warningLight = Color(0xFFFEF9C3);
+  static const Color warning = Color(0xFFF59E0B);
+  static const Color warningLight = Color(0xFFFFFBEB);
+  static const Color warningSurface = Color(0xFFFFFBEB);
   static const Color warningDark = Color(0xFFA16207);
 
-  static const Color error = Color(0xFFBA1A1A);
-  static const Color errorLight = Color(0xFFFFDAD6);
+  static const Color error = Color(0xFFEF4444);
+  static const Color errorLight = Color(0xFFFEF2F2);
+  static const Color errorSurface = Color(0xFFFEF2F2);
   static const Color errorDark = Color(0xFF93000A);
 
-  static const Color info = Color(0xFF2563EB);
-  static const Color infoLight = Color(0xFFDBEAFE);
+  static const Color info = Color(0xFF3B82F6);
+  static const Color infoLight = Color(0xFFEFF6FF);
+  static const Color infoSurface = Color(0xFFEFF6FF);
   static const Color infoDark = Color(0xFF1D4ED8);
 
   // ============================================
@@ -154,16 +162,18 @@ class AppColors {
     colors: [accent, accentDark],
   );
 
+  // Dégradé bleu de marque, identique au bandeau hero de l'admin dashboard
+  // (Bonjour, … !) : bleu profond → bleu → bleu clair.
   static const LinearGradient heroGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [darkBg, darkBg2],
+    colors: [primaryDark, primary, primaryLight],
   );
 
   static const LinearGradient heroGradientBlue = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF1E1E26), primary],
+    colors: [primaryDark, primary],
   );
 
   static const LinearGradient heroGradientAlt = LinearGradient(

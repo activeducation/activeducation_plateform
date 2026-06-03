@@ -65,6 +65,15 @@ class ApiEndpoints {
   static String adminMentorVerify(String id) => '/admin/mentors/$id/verify';
   static String adminMentorToggleActive(String id) =>
       '/admin/mentors/$id/toggle-active';
+  static String adminMentorTasks(String id) => '/admin/mentors/$id/tasks';
+  static String adminMentorTaskById(String id) => '/admin/mentors/tasks/$id';
+
+  // Candidatures mentor
+  static const String adminMentorApplications = '/admin/mentor-applications';
+  static String adminMentorAppApprove(String id) =>
+      '/admin/mentor-applications/$id/approve';
+  static String adminMentorAppReject(String id) =>
+      '/admin/mentor-applications/$id/reject';
 
   // Settings
   static const String adminSettings = '/admin/settings';
@@ -86,6 +95,7 @@ class ApiEndpoints {
 
   // E-Learning Lessons
   static String adminElearningLesson(String id) => '/admin/elearning/lessons/$id';
+  static String adminElearningCourseExam(String id) => '/admin/elearning/courses/$id/exam';
 
   // Opportunities
   static const String adminOpportunities = '/admin/opportunities';

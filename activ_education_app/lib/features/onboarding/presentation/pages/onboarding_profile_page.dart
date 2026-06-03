@@ -36,34 +36,28 @@ class _OnboardingProfilePageState extends State<OnboardingProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: AppColors.heroGradient,
-        ),
-        child: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 32),
-                      _buildLevelSelector(),
-                      const SizedBox(height: 32),
-                      _buildSchoolTypeSelector(),
-                    ],
-                  ),
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader(),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 32),
+                    _buildLevelSelector(),
+                    const SizedBox(height: 32),
+                    _buildSchoolTypeSelector(),
+                  ],
                 ),
               ),
-              _buildCTA(context),
-            ],
-          ),
+            ),
+            _buildCTA(context),
+          ],
         ),
       ),
     );
@@ -80,6 +74,7 @@ class _OnboardingProfilePageState extends State<OnboardingProfilePage> {
           Text(
             'Ton profil',
             style: AppTypography.heroDisplay.copyWith(
+              color: AppColors.textPrimary,
               fontSize: 28,
               letterSpacing: -0.5,
             ),
@@ -88,7 +83,7 @@ class _OnboardingProfilePageState extends State<OnboardingProfilePage> {
           Text(
             'Parle-nous de ton parcours scolaire',
             style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.darkTextSecondary,
+              color: AppColors.textSecondary,
             ),
           ),
         ],
@@ -112,7 +107,7 @@ class _OnboardingProfilePageState extends State<OnboardingProfilePage> {
         Text(
           'Étape 1 sur 4',
           style: AppTypography.labelSmall.copyWith(
-            color: AppColors.darkTextMuted,
+            color: AppColors.textTertiary,
           ),
         ),
       ],
@@ -125,7 +120,7 @@ class _OnboardingProfilePageState extends State<OnboardingProfilePage> {
       height: 4,
       margin: const EdgeInsets.only(right: 8),
       decoration: BoxDecoration(
-        color: active ? AppColors.primary : AppColors.darkBorder,
+        color: active ? AppColors.secondary : AppColors.outlineVariant,
         borderRadius: BorderRadius.circular(2),
       ),
     );
@@ -138,7 +133,7 @@ class _OnboardingProfilePageState extends State<OnboardingProfilePage> {
         Text(
           'Ton niveau',
           style: AppTypography.titleSmall.copyWith(
-            color: AppColors.darkTextPrimary,
+            color: AppColors.textPrimary,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -159,12 +154,12 @@ class _OnboardingProfilePageState extends State<OnboardingProfilePage> {
                 decoration: BoxDecoration(
                   color: isSelected
                       ? AppColors.primary
-                      : Colors.white.withValues(alpha: 0.1),
+                      : AppColors.surfaceLow,
                   borderRadius: BorderRadius.circular(100),
                   border: Border.all(
                     color: isSelected
                         ? AppColors.primary
-                        : AppColors.darkBorder,
+                        : AppColors.outlineVariant,
                   ),
                 ),
                 child: Text(
@@ -172,7 +167,7 @@ class _OnboardingProfilePageState extends State<OnboardingProfilePage> {
                   style: AppTypography.labelMedium.copyWith(
                     color: isSelected
                         ? Colors.white
-                        : AppColors.darkTextSecondary,
+                        : AppColors.textSecondary,
                     fontWeight:
                         isSelected ? FontWeight.w600 : FontWeight.w400,
                   ),
@@ -192,7 +187,7 @@ class _OnboardingProfilePageState extends State<OnboardingProfilePage> {
         Text(
           'Type d\'établissement',
           style: AppTypography.titleSmall.copyWith(
-            color: AppColors.darkTextPrimary,
+            color: AppColors.textPrimary,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -213,12 +208,12 @@ class _OnboardingProfilePageState extends State<OnboardingProfilePage> {
                 decoration: BoxDecoration(
                   color: isSelected
                       ? AppColors.primary
-                      : Colors.white.withValues(alpha: 0.1),
+                      : AppColors.surfaceLow,
                   borderRadius: BorderRadius.circular(100),
                   border: Border.all(
                     color: isSelected
                         ? AppColors.primary
-                        : AppColors.darkBorder,
+                        : AppColors.outlineVariant,
                   ),
                 ),
                 child: Text(
@@ -226,7 +221,7 @@ class _OnboardingProfilePageState extends State<OnboardingProfilePage> {
                   style: AppTypography.labelMedium.copyWith(
                     color: isSelected
                         ? Colors.white
-                        : AppColors.darkTextSecondary,
+                        : AppColors.textSecondary,
                     fontWeight:
                         isSelected ? FontWeight.w600 : FontWeight.w400,
                   ),
@@ -252,9 +247,10 @@ class _OnboardingProfilePageState extends State<OnboardingProfilePage> {
               ? () => context.push('/onboarding/interests')
               : null,
           style: ElevatedButton.styleFrom(
-            backgroundColor:
-                canContinue ? AppColors.primary : AppColors.darkBorder,
+            backgroundColor: AppColors.primary,
+            disabledBackgroundColor: AppColors.surfaceDim,
             foregroundColor: Colors.white,
+            disabledForegroundColor: AppColors.textTertiary,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(100),
             ),

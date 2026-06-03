@@ -9,26 +9,20 @@ class OnboardingCompletePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: AppColors.heroGradient,
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              children: [
-                const Spacer(),
-                _buildSuccessAnimation(),
-                const SizedBox(height: 40),
-                _buildSuccessContent(),
-                const Spacer(),
-                _buildCTA(context),
-                const SizedBox(height: 32),
-              ],
-            ),
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            children: [
+              const Spacer(),
+              _buildSuccessAnimation(),
+              const SizedBox(height: 40),
+              _buildSuccessContent(),
+              const Spacer(),
+              _buildCTA(context),
+              const SizedBox(height: 32),
+            ],
           ),
         ),
       ),
@@ -82,6 +76,7 @@ class OnboardingCompletePage extends StatelessWidget {
         Text(
           'Tout est prêt !',
           style: AppTypography.heroDisplay.copyWith(
+            color: AppColors.textPrimary,
             fontSize: 32,
             letterSpacing: -0.5,
           ),
@@ -92,7 +87,7 @@ class OnboardingCompletePage extends StatelessWidget {
           child: Text(
             'Ton profil est configuré. Tu peux maintenant créer ton compte et commencer ton parcours d\'orientation.',
             style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.darkTextSecondary,
+              color: AppColors.textSecondary,
               height: 1.5,
             ),
             textAlign: TextAlign.center,
@@ -121,14 +116,14 @@ class OnboardingCompletePage extends StatelessWidget {
             children: [
               Icon(
                 feature['icon'] as IconData,
-                color: AppColors.darkAccentAmber,
+                color: AppColors.secondary,
                 size: 20,
               ),
               const SizedBox(width: 12),
               Text(
                 feature['text'] as String,
                 style: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.darkTextPrimary,
+                  color: AppColors.textPrimary,
                 ),
               ),
             ],
@@ -166,7 +161,7 @@ class OnboardingCompletePage extends StatelessWidget {
           child: Text(
             'J\'ai déjà un compte',
             style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.darkTextSecondary,
+              color: AppColors.textSecondary,
             ),
           ),
         ),
