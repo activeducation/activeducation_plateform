@@ -15,6 +15,9 @@ from app.schemas.admin.elearning import (
     LessonCreate,
     LessonUpdate,
 )
+from app.schemas.exam import ExamUpsert, ExamResponse
+from app.repositories.exam_repository import get_exam_repository
+from uuid import UUID
 
 logger = get_logger("api.admin.elearning")
 
@@ -371,3 +374,42 @@ async def list_schools_with_courses(
         }
         for s in (sch_res.data or [])
     ]
+
+
+# ============================================================================
+# EXAMENS DE COURS (QCM + badge)
+# ============================================================================
+
+@router.get("/courses/{course_id}/exam")
+async def get_course_exam(
+    course_id: UUID,
+    admin: dict = Depends(get_current_admin),
+):
+    """Recupere l'examen d'un cours (avec questions + bonnes reponses)."""
+    exam = get_exam_repository().get_exam_by_course(course_id)
+    return exam or {}
+
+
+@router.put("/courses/{course_id}/exam", response_model=ExamResponse)
+async def upsert_course_exam(
+    course_id: UUID,
+    body: ExamUpsert,
+    admin: dict = Depends(get_current_admin),
+):
+    """Cree ou met a jour l'examen d'un cours (+ ses questions QCM)."""
+    questions = [q.model_dump() for q in body.questions]
+    data = body.model_dump(exclude={"questions"})
+    exam = get_exam_repository().upsert_exam(course_id, data, questions)
+    _log_audit(admin, "upsert", "course_exam", course_id, {"questions": len(questions)})
+    return exam
+
+
+@router.delete("/courses/{course_id}/exam", status_code=204)
+async def delete_course_exam(
+    course_id: UUID,
+    admin: dict = Depends(get_current_admin),
+):
+    """Supprime l'examen d'un cours."""
+    get_exam_repository().delete_exam(course_id)
+    _log_audit(admin, "delete", "course_exam", course_id, None)
+    return None
