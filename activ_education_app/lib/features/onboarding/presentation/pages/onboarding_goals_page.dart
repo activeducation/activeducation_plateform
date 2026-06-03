@@ -55,39 +55,33 @@ class _OnboardingGoalsPageState extends State<OnboardingGoalsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: AppColors.heroGradient,
-        ),
-        child: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 16),
-                      Text(
-                        'Qu\'est-ce qui t\'intéresse le plus ?',
-                        style: AppTypography.bodyMedium.copyWith(
-                          color: AppColors.darkTextSecondary,
-                        ),
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader(),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 16),
+                    Text(
+                      'Qu\'est-ce qui t\'intéresse le plus ?',
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: AppColors.textSecondary,
                       ),
-                      const SizedBox(height: 24),
-                      _buildGoalList(),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 24),
+                    _buildGoalList(),
+                  ],
                 ),
               ),
-              _buildCTA(context),
-            ],
-          ),
+            ),
+            _buildCTA(context),
+          ],
         ),
       ),
     );
@@ -104,6 +98,7 @@ class _OnboardingGoalsPageState extends State<OnboardingGoalsPage> {
           Text(
             'Tes objectifs',
             style: AppTypography.heroDisplay.copyWith(
+              color: AppColors.textPrimary,
               fontSize: 28,
               letterSpacing: -0.5,
             ),
@@ -129,7 +124,7 @@ class _OnboardingGoalsPageState extends State<OnboardingGoalsPage> {
         Text(
           'Étape 3 sur 4',
           style: AppTypography.labelSmall.copyWith(
-            color: AppColors.darkTextMuted,
+            color: AppColors.textTertiary,
           ),
         ),
       ],
@@ -142,7 +137,7 @@ class _OnboardingGoalsPageState extends State<OnboardingGoalsPage> {
       height: 4,
       margin: const EdgeInsets.only(right: 8),
       decoration: BoxDecoration(
-        color: active ? AppColors.primary : AppColors.darkBorder,
+        color: active ? AppColors.secondary : AppColors.outlineVariant,
         borderRadius: BorderRadius.circular(2),
       ),
     );
@@ -160,13 +155,13 @@ class _OnboardingGoalsPageState extends State<OnboardingGoalsPage> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: isSelected
-                  ? AppColors.primary.withValues(alpha: 0.15)
-                  : Colors.white.withValues(alpha: 0.05),
+                  ? AppColors.primarySurface
+                  : AppColors.card,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: isSelected
                     ? AppColors.primary
-                    : AppColors.darkBorder.withValues(alpha: 0.5),
+                    : AppColors.outlineVariant,
                 width: isSelected ? 2 : 1,
               ),
             ),
@@ -177,14 +172,14 @@ class _OnboardingGoalsPageState extends State<OnboardingGoalsPage> {
                   decoration: BoxDecoration(
                     color: isSelected
                         ? AppColors.primary
-                        : AppColors.darkSurface,
+                        : AppColors.surfaceLow,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     goal['icon'] as IconData,
                     color: isSelected
                         ? Colors.white
-                        : AppColors.darkTextSecondary,
+                        : AppColors.textSecondary,
                     size: 24,
                   ),
                 ),
@@ -196,7 +191,7 @@ class _OnboardingGoalsPageState extends State<OnboardingGoalsPage> {
                       Text(
                         goal['title'] as String,
                         style: AppTypography.titleSmall.copyWith(
-                          color: AppColors.darkTextPrimary,
+                          color: AppColors.textPrimary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -204,7 +199,7 @@ class _OnboardingGoalsPageState extends State<OnboardingGoalsPage> {
                       Text(
                         goal['subtitle'] as String,
                         style: AppTypography.labelSmall.copyWith(
-                          color: AppColors.darkTextMuted,
+                          color: AppColors.textTertiary,
                         ),
                       ),
                     ],
@@ -242,10 +237,10 @@ class _OnboardingGoalsPageState extends State<OnboardingGoalsPage> {
               ? () => context.push('/onboarding/complete')
               : null,
           style: ElevatedButton.styleFrom(
-            backgroundColor: _selectedGoal != null
-                ? AppColors.primary
-                : AppColors.darkBorder,
+            backgroundColor: AppColors.primary,
+            disabledBackgroundColor: AppColors.surfaceDim,
             foregroundColor: Colors.white,
+            disabledForegroundColor: AppColors.textTertiary,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(100),
             ),

@@ -179,6 +179,12 @@ class _Sidebar extends StatelessWidget {
                   path: '/mentors',
                   currentPath: currentPath,
                 ),
+                _SidebarItem(
+                  icon: Icons.how_to_reg_rounded,
+                  label: 'Candidatures',
+                  path: '/mentors/applications',
+                  currentPath: currentPath,
+                ),
                 const _SidebarSection(label: 'SYSTEME'),
                 _SidebarItem(
                   icon: Icons.campaign_rounded,

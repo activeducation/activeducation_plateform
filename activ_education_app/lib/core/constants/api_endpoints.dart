@@ -83,6 +83,7 @@ class ApiEndpoints {
   static String mentorById(String id) => '$mentors/$id';
   static String mentorReviews(String id) => '$mentors/$id/reviews';
   static String requestMentor(String id) => '$mentors/$id/request';
+  static const String mentorApply = '$mentors/apply';
   static const String mentorRelationships = '$apiV1/mentor-relationships';
   static String relationshipById(String id) => '$mentorRelationships/$id';
   static const String mentorList = '$apiV1/mentors';
@@ -123,6 +124,8 @@ class ApiEndpoints {
   static const String elearningLessons = '$elearning/lessons';
   static String elearningLessonById(String id) => '$elearningLessons/$id';
   static String elearningLessonComplete(String id) => '$elearningLessons/$id/complete';
+  static String elearningCourseExam(String id) => '$elearningCourses/$id/exam';
+  static String elearningCourseExamSubmit(String id) => '$elearningCourses/$id/exam/submit';
   static const String elearningMyCourses = '$elearning/my-courses';
 
   // ============================================

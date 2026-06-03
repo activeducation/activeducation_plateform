@@ -16,6 +16,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.core.cache import get_cache, TTL_LISTS
+from app.core.logging import get_logger
 from app.core.security import get_current_user_id, get_user_from_token
 from app.repositories.elearning_repository import get_elearning_repository
 from app.schemas.elearning import (
@@ -28,6 +29,10 @@ from app.schemas.elearning import (
     MyCoursesResponse,
     MyCourse,
 )
+from app.schemas.exam import ExamPublic, ExamSubmission, ExamResult
+from app.repositories.exam_repository import get_exam_repository
+
+logger = get_logger("api.elearning")
 
 router = APIRouter()
 
@@ -339,4 +344,119 @@ async def complete_lesson(
         status=result["status"],
         points_earned=result["points_earned"],
         course_progress_pct=result.get("course_progress_pct"),
+    )
+
+
+# ============================================================================
+# EXAMEN DU COURS (QCM + badge a la reussite)
+# ============================================================================
+
+@router.get("/courses/{course_id}/exam", response_model=ExamPublic)
+async def get_course_exam_public(course_id: UUID):
+    """Examen d'un cours pour l'etudiant (sans les bonnes reponses)."""
+    exam = get_exam_repository().get_exam_by_course(course_id)
+    if not exam or not exam.get("is_active", True):
+        raise HTTPException(status_code=404, detail="Aucun examen pour ce cours.")
+
+    questions = []
+    for q in exam.get("questions", []):
+        opts = q.get("options") or []
+        questions.append({
+            "id": q["id"],
+            "question": q["question"],
+            "options": [{"text": o.get("text", "")} for o in opts],
+        })
+
+    return ExamPublic(
+        id=exam["id"],
+        course_id=exam["course_id"],
+        title=exam.get("title", "Examen final"),
+        description=exam.get("description"),
+        passing_score=exam.get("passing_score", 80),
+        badge_title=exam.get("badge_title"),
+        badge_icon=exam.get("badge_icon"),
+        questions=questions,
+    )
+
+
+@router.post("/courses/{course_id}/exam/submit", response_model=ExamResult)
+async def submit_course_exam(
+    course_id: UUID,
+    submission: ExamSubmission,
+    user_id: UUID = Depends(get_current_user_id),
+):
+    """Soumet les reponses : calcule le score, attribue badge + XP si reussi."""
+    repo = get_exam_repository()
+    exam = repo.get_exam_by_course(course_id)
+    if not exam or not exam.get("is_active", True):
+        raise HTTPException(status_code=404, detail="Aucun examen pour ce cours.")
+
+    questions = exam.get("questions", [])
+    if not questions:
+        raise HTTPException(status_code=400, detail="Cet examen n'a pas de questions.")
+
+    # Scoring : pour chaque question, l'index choisi doit pointer une option correcte.
+    total_points = 0
+    earned_points = 0
+    correct_count = 0
+    for q in questions:
+        pts = q.get("points", 1)
+        total_points += pts
+        opts = q.get("options") or []
+        chosen = submission.answers.get(str(q["id"]))
+        if chosen is not None and 0 <= chosen < len(opts) and opts[chosen].get("is_correct"):
+            earned_points += pts
+            correct_count += 1
+
+    score = round((earned_points / total_points) * 100) if total_points else 0
+    passing = exam.get("passing_score", 80)
+    passed = score >= passing
+
+    # Premiere reussite ? (pour ne crediter le badge/XP qu'une fois)
+    already_passed = repo.has_passed_before(user_id, exam["id"])
+
+    repo.record_attempt(
+        user_id=user_id, exam_id=exam["id"], course_id=str(course_id),
+        score=score, passed=passed, answers=submission.answers,
+    )
+
+    xp_awarded = 0
+    badge_earned = False
+    if passed and not already_passed:
+        # Badge (achievement)
+        badge_earned = True
+        try:
+            repo.grant_badge(
+                user_id, str(course_id),
+                exam.get("badge_title") or exam.get("title", "Cours réussi"),
+                exam.get("badge_icon"),
+            )
+        except Exception as e:
+            logger.warning(f"grant_badge error: {e}")
+        # XP bonus (best-effort, RPC atomique)
+        xp = exam.get("xp_reward", 0) or 0
+        if xp > 0:
+            try:
+                from app.db.supabase_client import get_admin_supabase_client
+                from app.core.gamification_cache import (
+                    invalidate_gamification_profile, invalidate_leaderboard,
+                )
+                db = get_admin_supabase_client()
+                db.client.rpc("award_xp", {"p_user_id": str(user_id), "p_amount": xp}).execute()
+                xp_awarded = xp
+                invalidate_gamification_profile(str(user_id))
+                invalidate_leaderboard()
+            except Exception as e:
+                logger.warning(f"award_xp (exam) error: {e}")
+
+    return ExamResult(
+        score=score,
+        passed=passed,
+        passing_score=passing,
+        correct_count=correct_count,
+        total_questions=len(questions),
+        xp_awarded=xp_awarded,
+        badge_earned=badge_earned,
+        badge_title=exam.get("badge_title"),
+        badge_icon=exam.get("badge_icon"),
     )

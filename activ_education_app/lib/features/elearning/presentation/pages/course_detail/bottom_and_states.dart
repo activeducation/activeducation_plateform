@@ -107,12 +107,12 @@ class _BottomAction extends StatelessWidget {
           ],
           Expanded(
             child: GradientButton(
-              text: nextLessonId != null ? 'Continuer' : 'Cours terminé ✓',
-              icon: nextLessonId != null ? Iconsax.play : Iconsax.tick_circle,
+              text: nextLessonId != null ? 'Continuer' : 'Passer l\'examen',
+              icon: nextLessonId != null ? Iconsax.play : Iconsax.medal_star,
               showArrow: nextLessonId != null,
               onPressed: nextLessonId != null
                   ? () => context.push('/elearning/lesson/$nextLessonId')
-                  : null,
+                  : () => context.push('/elearning/course/${course.id}/exam'),
             ),
           ),
         ],

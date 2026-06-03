@@ -79,39 +79,33 @@ class _OnboardingInterestsPageState extends State<OnboardingInterestsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: AppColors.heroGradient,
-        ),
-        child: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 16),
-                      Text(
-                        'Choisis ce qui t\'intéresse\n(plusieurs choix possibles)',
-                        style: AppTypography.bodyMedium.copyWith(
-                          color: AppColors.darkTextSecondary,
-                        ),
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader(),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 16),
+                    Text(
+                      'Choisis ce qui t\'intéresse\n(plusieurs choix possibles)',
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: AppColors.textSecondary,
                       ),
-                      const SizedBox(height: 24),
-                      _buildInterestGrid(),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 24),
+                    _buildInterestGrid(),
+                  ],
                 ),
               ),
-              _buildCTA(context),
-            ],
-          ),
+            ),
+            _buildCTA(context),
+          ],
         ),
       ),
     );
@@ -128,6 +122,7 @@ class _OnboardingInterestsPageState extends State<OnboardingInterestsPage> {
           Text(
             'Tes intérêts',
             style: AppTypography.heroDisplay.copyWith(
+              color: AppColors.textPrimary,
               fontSize: 28,
               letterSpacing: -0.5,
             ),
@@ -153,7 +148,7 @@ class _OnboardingInterestsPageState extends State<OnboardingInterestsPage> {
         Text(
           'Étape 2 sur 4',
           style: AppTypography.labelSmall.copyWith(
-            color: AppColors.darkTextMuted,
+            color: AppColors.textTertiary,
           ),
         ),
       ],
@@ -166,17 +161,20 @@ class _OnboardingInterestsPageState extends State<OnboardingInterestsPage> {
       height: 4,
       margin: const EdgeInsets.only(right: 8),
       decoration: BoxDecoration(
-        color: active ? AppColors.primary : AppColors.darkBorder,
+        color: active ? AppColors.secondary : AppColors.outlineVariant,
         borderRadius: BorderRadius.circular(2),
       ),
     );
   }
 
   Widget _buildInterestGrid() {
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      children: _interests.map((interest) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double cardWidth = (constraints.maxWidth - 12) / 2;
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: _interests.map((interest) {
         final isSelected = _selectedInterests.contains(interest['id']);
         return GestureDetector(
           onTap: () {
@@ -190,17 +188,17 @@ class _OnboardingInterestsPageState extends State<OnboardingInterestsPage> {
           },
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            width: (MediaQuery.of(context).size.width - 60) / 2,
+            width: cardWidth,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: isSelected
-                  ? AppColors.primary.withValues(alpha: 0.15)
-                  : Colors.white.withValues(alpha: 0.05),
+                  ? AppColors.primarySurface
+                  : AppColors.card,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: isSelected
                     ? AppColors.primary
-                    : AppColors.darkBorder.withValues(alpha: 0.5),
+                    : AppColors.outlineVariant,
                 width: isSelected ? 2 : 1,
               ),
             ),
@@ -212,14 +210,14 @@ class _OnboardingInterestsPageState extends State<OnboardingInterestsPage> {
                   decoration: BoxDecoration(
                     color: isSelected
                         ? AppColors.primary
-                        : AppColors.darkSurface,
+                        : AppColors.surfaceLow,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     interest['icon'] as IconData,
                     color: isSelected
                         ? Colors.white
-                        : AppColors.darkTextSecondary,
+                        : AppColors.textSecondary,
                     size: 24,
                   ),
                 ),
@@ -227,7 +225,7 @@ class _OnboardingInterestsPageState extends State<OnboardingInterestsPage> {
                 Text(
                   interest['title'] as String,
                   style: AppTypography.titleSmall.copyWith(
-                    color: AppColors.darkTextPrimary,
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -235,7 +233,7 @@ class _OnboardingInterestsPageState extends State<OnboardingInterestsPage> {
                 Text(
                   interest['subtitle'] as String,
                   style: AppTypography.labelSmall.copyWith(
-                    color: AppColors.darkTextMuted,
+                    color: AppColors.textTertiary,
                   ),
                   maxLines: 2,
                 ),
@@ -243,7 +241,9 @@ class _OnboardingInterestsPageState extends State<OnboardingInterestsPage> {
             ),
           ),
         );
-      }).toList(),
+          }).toList(),
+        );
+      },
     );
   }
 
@@ -260,7 +260,7 @@ class _OnboardingInterestsPageState extends State<OnboardingInterestsPage> {
               child: Text(
                 '${_selectedInterests.length} intérêt${_selectedInterests.length > 1 ? 's' : ''} sélectionné${_selectedInterests.length > 1 ? 's' : ''}',
                 style: AppTypography.labelSmall.copyWith(
-                  color: AppColors.darkAccentAmber,
+                  color: AppColors.secondaryDark,
                 ),
               ),
             ),
@@ -272,9 +272,10 @@ class _OnboardingInterestsPageState extends State<OnboardingInterestsPage> {
                   ? () => context.push('/onboarding/goals')
                   : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    canContinue ? AppColors.primary : AppColors.darkBorder,
+                backgroundColor: AppColors.primary,
+                disabledBackgroundColor: AppColors.surfaceDim,
                 foregroundColor: Colors.white,
+                disabledForegroundColor: AppColors.textTertiary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(100),
                 ),

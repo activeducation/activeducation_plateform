@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:go_router/go_router.dart';
+import 'package:iconsax/iconsax.dart';
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_typography.dart';
@@ -81,6 +83,15 @@ class _MentorsPageState extends State<MentorsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => context.push('/mentors/apply'),
+        backgroundColor: AppColors.primary,
+        icon: const Icon(Iconsax.teacher, color: Colors.white, size: 20),
+        label: Text(
+          'Devenir mentor',
+          style: AppTypography.labelLarge.copyWith(color: Colors.white),
+        ),
+      ),
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,

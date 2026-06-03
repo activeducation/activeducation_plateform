@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
@@ -7,6 +9,7 @@ import '../../../core/constants/api_endpoints.dart';
 import '../../../core/di/injection_container.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/widgets/feedback/admin_snackbar.dart';
+import 'exam_editor_dialog.dart';
 
 class CourseEditorPage extends StatefulWidget {
   final String? courseId;
@@ -111,6 +114,45 @@ class _CourseEditorPageState extends State<CourseEditorPage> {
     } catch (e) {
       if (mounted) AdminSnackbar.error(context, 'Erreur');
     }
+  }
+
+  bool _uploadingImage = false;
+
+  Future<void> _uploadImage() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      withData: true,
+    );
+    if (result == null || result.files.isEmpty) return;
+    final file = result.files.first;
+    if (file.bytes == null) {
+      if (mounted) AdminSnackbar.error(context, 'Fichier illisible');
+      return;
+    }
+    setState(() => _uploadingImage = true);
+    try {
+      final api = getIt<ApiClient>();
+      final form = FormData.fromMap({
+        'file': MultipartFile.fromBytes(file.bytes!, filename: file.name),
+      });
+      final res = await api.post(ApiEndpoints.adminUpload('elearning'), data: form);
+      final url = res.data['url'] as String?;
+      if (url != null) {
+        setState(() => _thumbnailCtrl.text = url);
+        if (mounted) AdminSnackbar.success(context, 'Image téléversée');
+      }
+    } catch (e) {
+      if (mounted) AdminSnackbar.error(context, "Échec de l'upload");
+    } finally {
+      if (mounted) setState(() => _uploadingImage = false);
+    }
+  }
+
+  Future<void> _openExamEditor() async {
+    await showDialog(
+      context: context,
+      builder: (_) => ExamEditorDialog(courseId: widget.courseId!),
+    );
   }
 
   Future<void> _addModule() async {
@@ -290,10 +332,64 @@ class _CourseEditorPageState extends State<CourseEditorPage> {
             const SizedBox(height: 16),
             TextField(controller: _descCtrl, decoration: const InputDecoration(labelText: 'Description *'), maxLines: 4),
             const SizedBox(height: 16),
-            TextField(controller: _thumbnailCtrl, decoration: const InputDecoration(labelText: 'URL miniature', prefixIcon: Icon(Icons.image))),
+            // Image du cours (catalogue) : upload + apercu
+            Text('Image du cours (catalogue)', style: AppTypography.label),
+            const SizedBox(height: 8),
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Container(
+                width: 120, height: 80,
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceVariant,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.border),
+                  image: _thumbnailCtrl.text.isNotEmpty
+                      ? DecorationImage(image: NetworkImage(_thumbnailCtrl.text), fit: BoxFit.cover)
+                      : null,
+                ),
+                child: _thumbnailCtrl.text.isEmpty
+                    ? const Icon(Icons.image_outlined, color: AppColors.textMuted)
+                    : null,
+              ),
+              const SizedBox(width: 16),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                OutlinedButton.icon(
+                  icon: _uploadingImage
+                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Icon(Icons.upload, size: 18),
+                  label: Text(_uploadingImage ? 'Téléversement...' : 'Téléverser une image'),
+                  onPressed: _uploadingImage ? null : _uploadImage,
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _thumbnailCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'ou coller une URL',
+                    isDense: true,
+                    prefixIcon: Icon(Icons.link, size: 18),
+                  ),
+                  onChanged: (_) => setState(() {}),
+                ),
+              ])),
+            ]),
           ]))),
           const SizedBox(height: 24),
           if (_isEditing) ...[
+            // Examen du cours
+            Card(child: Padding(padding: const EdgeInsets.all(16), child: Row(children: [
+              const Icon(Icons.quiz_outlined, color: AppColors.primary),
+              const SizedBox(width: 12),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('Examen final (QCM)', style: AppTypography.heading3),
+                Text('Définissez les questions, le score de passage et le badge',
+                    style: AppTypography.subtitle),
+              ])),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.edit, size: 18),
+                label: const Text('Gérer l\'examen'),
+                onPressed: _openExamEditor,
+              ),
+            ]))),
+            const SizedBox(height: 24),
             Row(children: [
               Text('Modules et Leçons', style: AppTypography.heading3),
               const Spacer(),
