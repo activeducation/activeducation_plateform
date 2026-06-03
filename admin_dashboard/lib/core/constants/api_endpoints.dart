@@ -95,6 +95,7 @@ class ApiEndpoints {
 
   // E-Learning Lessons
   static String adminElearningLesson(String id) => '/admin/elearning/lessons/$id';
+  static String adminElearningCourseExam(String id) => '/admin/elearning/courses/$id/exam';
 
   // Opportunities
   static const String adminOpportunities = '/admin/opportunities';
