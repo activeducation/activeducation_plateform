@@ -7,6 +7,7 @@ import 'package:iconsax/iconsax.dart';
 import '../../../core/constants/constants.dart';
 import '../../../core/di/injection_container.dart';
 import '../../../shared/widgets/buttons/gradient_button.dart';
+import '../../../shared/widgets/feedback/app_snackbar.dart';
 import '../../auth/presentation/bloc/auth_bloc.dart';
 
 /// Formulaire de candidature pour devenir mentor.
@@ -80,14 +81,9 @@ class _BecomeMentorPageState extends State<BecomeMentorPage> {
       if (mounted) setState(() => _success = true);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text(
-              "Impossible d'envoyer votre candidature. Réessayez plus tard.",
-            ),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-          ),
+        AppSnackbar.error(
+          context,
+          "Impossible d'envoyer votre candidature. Réessayez plus tard.",
         );
       }
     } finally {

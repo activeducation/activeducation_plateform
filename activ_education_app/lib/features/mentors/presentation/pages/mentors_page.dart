@@ -6,6 +6,7 @@ import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_typography.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../../shared/widgets/feedback/app_snackbar.dart';
 import '../../data/models/mentor_model.dart';
 
 final _getIt = getIt;
@@ -477,12 +478,8 @@ class _MentorDetailSheet extends StatelessWidget {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Demande de mentorat envoyée!'),
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
+                          AppSnackbar.success(
+                              context, 'Demande de mentorat envoyée !');
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
