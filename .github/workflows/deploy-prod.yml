@@ -80,7 +80,10 @@ jobs:
         working-directory: admin_dashboard
         run: |
           flutter pub get
-          flutter build web --release --dart-define=API_BASE_URL=https://api.activeducationhub.com
+          # ⚠ L'admin attend le suffixe /api/v1 dans baseUrl (endpoints sans préfixe,
+          # ex: /admin/auth/login). L'app étudiant, elle, ajoute /api/v1 côté endpoints
+          # donc n'en a pas besoin. Ne pas retirer /api/v1 ici sous peine de 404 partout.
+          flutter build web --release --dart-define=API_BASE_URL=https://api.activeducationhub.com/api/v1
 
       - name: Deploy to production server
         uses: appleboy/ssh-action@v1
