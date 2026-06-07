@@ -49,7 +49,9 @@ jobs:
         working-directory: activ_education_app
         run: |
           flutter pub get
-          flutter build web --release --dart-define=API_BASE_URL=https://staging-api.activeducationhub.com/api/v1
+          # ⚠ L'app étudiant ajoute /api/v1 côté endpoints ($apiV1/...), donc baseUrl
+          # NE doit PAS contenir /api/v1 (sinon double préfixe /api/v1/api/v1 → 404).
+          flutter build web --release --dart-define=API_BASE_URL=https://staging-api.activeducationhub.com
 
       - name: Build admin frontend
         working-directory: admin_dashboard
