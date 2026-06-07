@@ -345,6 +345,23 @@ class OrientationRepository:
             logger.error(f"Error fetching careers: {e}", exc_info=True)
             raise QueryError(f"Erreur lors de la recuperation des carrieres: {str(e)}")
 
+    async def search_careers(self, query: str, limit: int = 10) -> list[dict[str, Any]]:
+        """Recherche de carrieres/metiers par nom ou secteur (texte libre)."""
+        try:
+            res = (
+                self._db.client.table("careers")
+                .select("*")
+                .eq("is_active", True)
+                .or_(f"name.ilike.%{query}%,sector_name.ilike.%{query}%")
+                .order("name.asc")
+                .limit(limit)
+                .execute()
+            )
+            return res.data or []
+        except Exception as e:
+            logger.warning(f"search_careers error: {e}")
+            return []
+
     async def get_career_by_id(self, career_id: UUID) -> dict[str, Any]:
         """
         Recupere une carriere par son ID.

@@ -8,6 +8,7 @@ import '../../../../core/constants/constants.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../gamification/presentation/cubit/gamification_cubit.dart';
 import '../../../../shared/widgets/buttons/gradient_button.dart';
+import '../../../../shared/widgets/feedback/app_snackbar.dart';
 import '../../domain/entities/course.dart';
 import '../bloc/lesson_bloc.dart';
 import '../widgets/lesson_type_badge.dart';
@@ -41,17 +42,7 @@ class _LessonView extends StatelessWidget {
     return BlocConsumer<LessonBloc, LessonState>(
       listener: (context, state) {
         if (state is LessonError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: AppColors.error,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              margin: const EdgeInsets.all(16),
-            ),
-          );
+          AppSnackbar.error(context, state.message);
         }
       },
       builder: (context, state) {

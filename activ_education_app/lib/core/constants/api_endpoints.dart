@@ -158,6 +158,11 @@ class ApiEndpoints {
   static const String publicSettings = '$apiV1/settings/public';
 
   // ============================================
+  // RECHERCHE UNIFIEE
+  // ============================================
+  static const String search = '$apiV1/search';
+
+  // ============================================
   // PARTNER (CDEJ, ONG) - Organizations & Beneficiaries
   // ============================================
   static const String partnerOrganizations = '$apiV1/partner/organizations';

@@ -6,6 +6,7 @@ import 'package:iconsax/iconsax.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../shared/widgets/buttons/gradient_button.dart';
+import '../../../../shared/widgets/feedback/app_snackbar.dart';
 
 /// Ecran d'examen QCM d'un cours. Charge l'examen, recueille les reponses,
 /// soumet et affiche le resultat (badge si >= score de passage).
@@ -52,9 +53,7 @@ class _CourseExamPageState extends State<CourseExamPage> {
   Future<void> _submit() async {
     final questions = (_exam?['questions'] as List?) ?? [];
     if (_answers.length < questions.length) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Répondez à toutes les questions.')),
-      );
+      AppSnackbar.info(context, 'Répondez à toutes les questions.');
       return;
     }
     setState(() => _submitting = true);
@@ -67,9 +66,7 @@ class _CourseExamPageState extends State<CourseExamPage> {
       setState(() => _result = Map<String, dynamic>.from(res.data));
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Échec de la soumission. Réessayez.')),
-        );
+        AppSnackbar.error(context, 'Échec de la soumission. Réessayez.');
       }
     } finally {
       if (mounted) setState(() => _submitting = false);

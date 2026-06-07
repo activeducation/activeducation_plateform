@@ -73,9 +73,7 @@ class _TestExecutionView extends StatelessWidget {
                 if (state is TestCompleted) {
                   context.pushReplacement('/orientation/results', extra: state.result);
                 } else if (state is OrientationError) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Erreur: ${state.message}')),
-                  );
+                  AppSnackbar.error(context, state.message);
                 }
               },
               child: _buildBody(context, state),
