@@ -8,6 +8,7 @@ import 'package:shimmer/shimmer.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../shared/widgets/buttons/gradient_button.dart';
+import '../../../../shared/widgets/feedback/app_snackbar.dart';
 import '../../domain/entities/course.dart';
 import '../bloc/course_bloc.dart';
 import '../widgets/course_card.dart' show colorForCategory, iconForCategory;
@@ -54,57 +55,18 @@ class _CourseDetailView extends StatelessWidget {
       body: BlocConsumer<CourseBloc, CourseState>(
         listener: (context, state) {
           if (state is CourseEnrolled) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Row(
-                  children: [
-                    const Icon(Icons.check_circle_rounded,
-                        color: Colors.white, size: 18),
-                    const SizedBox(width: 8),
-                    const Text('Inscription réussie !'),
-                  ],
-                ),
-                backgroundColor: AppColors.success,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                margin: const EdgeInsets.all(16),
-              ),
-            );
+            AppSnackbar.success(context, 'Inscription réussie !');
           }
           if (state is CourseAuthRequired) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text(
-                  'Connectez-vous pour vous inscrire à ce cours',
-                ),
-                backgroundColor: AppColors.primary,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                margin: const EdgeInsets.all(16),
-                action: SnackBarAction(
-                  label: 'Se connecter',
-                  textColor: Colors.white,
-                  onPressed: () => context.go('/login'),
-                ),
-              ),
+            AppSnackbar.info(
+              context,
+              'Connectez-vous pour vous inscrire à ce cours',
+              actionLabel: 'Se connecter',
+              onAction: () => context.go('/login'),
             );
           }
           if (state is CourseError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: AppColors.error,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                margin: const EdgeInsets.all(16),
-              ),
-            );
+            AppSnackbar.error(context, state.message);
           }
         },
         builder: (context, state) {

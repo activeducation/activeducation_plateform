@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_typography.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../../shared/widgets/feedback/state_views.dart';
 
 final _getIt = getIt;
 const int _pageSize = 20;
@@ -132,24 +133,15 @@ class _OpportunitiesListPageState extends State<OpportunitiesListPage> {
 
   Widget _buildBody() {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator());
+      return const LoadingView();
     }
 
     if (_error != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('Erreur: $_error'),
-            const SizedBox(height: 16),
-            ElevatedButton(onPressed: () => _loadPage(1), child: const Text('Réessayer')),
-          ],
-        ),
-      );
+      return ErrorView(message: _error!, onRetry: () => _loadPage(1));
     }
 
     if (_opportunities.isEmpty) {
-      return const Center(child: Text('Aucune opportunité disponible'));
+      return const EmptyView(message: 'Aucune opportunité disponible');
     }
 
     return ListView.builder(

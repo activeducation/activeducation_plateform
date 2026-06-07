@@ -68,13 +68,7 @@ class _ChatViewState extends State<_ChatView> {
               listener: (context, state) {
                 if (state is ChatReady) {
                   if (state.error != null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(state.error!),
-                        backgroundColor: AppColors.error,
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
+                    AppSnackbar.error(context, state.error!);
                   }
                   _scrollToBottom();
                 }

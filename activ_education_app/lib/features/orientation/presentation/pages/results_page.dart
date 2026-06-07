@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../features/ai_chat/presentation/pages/chat_page.dart';
 import '../../../../shared/widgets/buttons/gradient_button.dart';
-import '../../data/datasources/careers_database.dart';
 import '../../domain/entities/career.dart';
 import '../../domain/entities/test_result.dart';
 
@@ -55,8 +54,20 @@ class ResultsPage extends StatelessWidget {
   };
 
   List<Career> _getCareersForSector(String sectorName) {
+    // Les metiers viennent desormais du backend (result.recommendations,
+    // alimente par career_matcher cote API). On filtre par secteur, avec un
+    // repli souple via le mapping de noms de secteurs.
     final localSector = _sectorMapping[sectorName] ?? sectorName;
-    return CareersDatabase.getCareersBySector(localSector).take(5).toList();
+    final matches = result.recommendations.where((c) {
+      final cs = c.sector;
+      return cs == sectorName ||
+          cs == localSector ||
+          (_sectorMapping[cs] ?? cs) == localSector;
+    }).toList();
+    if (matches.isNotEmpty) return matches.take(5).toList();
+    // Repli ultime : si rien ne matche le secteur, montrer les meilleures
+    // recommandations globales (evite une carte vide).
+    return result.recommendations.take(5).toList();
   }
 
   @override

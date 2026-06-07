@@ -26,6 +26,7 @@ import '../features/elearning/presentation/pages/course_detail_page.dart';
 import '../features/elearning/presentation/pages/lesson_page.dart';
 import '../features/elearning/presentation/pages/course_exam_page.dart';
 import '../features/mentors/presentation/pages/mentors_page.dart';
+import '../features/search/presentation/search_page.dart';
 import '../features/partner/presentation/pages/create_organization_page.dart';
 import '../features/partner/presentation/pages/organization_dashboard_page.dart';
 import '../features/partner/presentation/pages/beneficiary_form_page.dart';
@@ -167,6 +168,11 @@ class AppRouter {
             path: '/elearning/course/:id/exam',
             builder: (context, state) =>
                 CourseExamPage(courseId: state.pathParameters['id']!),
+          ),
+          GoRoute(
+            path: '/search',
+            builder: (context, state) =>
+                SearchPage(initialQuery: state.uri.queryParameters['q']),
           ),
           GoRoute(
             path: '/opportunities',

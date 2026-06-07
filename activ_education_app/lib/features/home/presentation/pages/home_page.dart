@@ -88,8 +88,10 @@ class _HomePageState extends State<HomePage> {
                 AppSpacing.pagePaddingHorizontal,
                 0,
               ),
-              child: const CustomSearchBar(
+              child: CustomSearchBar(
                 hintText: 'Chercher une école, un métier...',
+                readOnly: true,
+                onTap: () => context.push('/search'),
               ),
             ),
           ),
