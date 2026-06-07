@@ -7,6 +7,7 @@ import 'package:iconsax/iconsax.dart';
 
 import '../../../core/constants/constants.dart';
 import '../../../core/di/injection_container.dart';
+import '../../../shared/widgets/feedback/state_views.dart';
 
 /// Page de recherche unifiée : écoles, métiers et cours.
 /// Recherche en direct (debounce) via GET /search?q=.
@@ -112,7 +113,7 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   Widget _buildBody() {
-    if (_loading) return const Center(child: CircularProgressIndicator());
+    if (_loading) return const LoadingView();
 
     if (_results == null) {
       return _buildHint();
@@ -124,16 +125,9 @@ class _SearchPageState extends State<SearchPage> {
     final total = schools.length + careers.length + courses.length;
 
     if (total == 0) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Iconsax.search_normal, size: 44, color: AppColors.textTertiary),
-            const SizedBox(height: 14),
-            Text('Aucun résultat pour « $_lastQuery »',
-                style: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary)),
-          ],
-        ),
+      return EmptyView(
+        message: 'Aucun résultat pour « $_lastQuery »',
+        icon: Iconsax.search_normal,
       );
     }
 
