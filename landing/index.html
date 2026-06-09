@@ -2,1199 +2,925 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ActivEducation — Découvrez votre voie, jouez votre avenir</title>
-  <meta name="description" content="La première plateforme d'orientation scolaire et professionnelle gamifiée. Tests d'orientation, mentors, gamification et bien plus. Bientôt disponible." />
-  <meta property="og:title" content="ActivEducation — Bientôt en ligne" />
-  <meta property="og:description" content="La première plateforme d'orientation scolaire et professionnelle gamifiée." />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#3133DD" />
+
+  <title>ActivEducation — Découvre ta voie, joue ton avenir</title>
+  <meta name="description" content="La plateforme d'orientation scolaire et professionnelle gamifiée du Togo. Teste-toi, explore plus de 40 métiers, trouve ton école, échange avec des mentors et progresse comme dans un jeu. 100% gratuit pour les élèves." />
+  <link rel="canonical" href="https://activeducationhub.com/" />
+
+  <!-- Open Graph -->
   <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="ActivEducation" />
+  <meta property="og:title" content="ActivEducation — Découvre ta voie, joue ton avenir" />
+  <meta property="og:description" content="L'orientation scolaire et professionnelle gamifiée. Tests, métiers, écoles, mentors et gamification. 100% gratuit pour les élèves." />
+  <meta property="og:url" content="https://activeducationhub.com/" />
+  <meta property="og:image" content="https://activeducationhub.com/logo.jpeg" />
+  <meta property="og:locale" content="fr_FR" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="ActivEducation — Découvre ta voie, joue ton avenir" />
+  <meta name="twitter:description" content="L'orientation scolaire et professionnelle gamifiée du Togo. 100% gratuit pour les élèves." />
+  <meta name="twitter:image" content="https://activeducationhub.com/logo.jpeg" />
+
   <link rel="icon" type="image/jpeg" href="logo.jpeg" />
+  <link rel="apple-touch-icon" href="logo.jpeg" />
+
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesque:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <!-- Structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "EducationalOrganization",
+    "name": "ActivEducation",
+    "url": "https://activeducationhub.com/",
+    "logo": "https://activeducationhub.com/logo.jpeg",
+    "description": "Plateforme d'orientation scolaire et professionnelle gamifiée pour les élèves du Togo et d'Afrique de l'Ouest.",
+    "areaServed": "TG",
+    "sameAs": []
+  }
+  </script>
 
   <style>
-    /* ─── VARIABLES ─────────────────────────────────────────────────────── */
     :root {
-      --blue:          #1060CF;
-      --blue-dark:     #0A45A0;
-      --blue-mid:      #1752B8;
-      --blue-light:    #4A8AE5;
-      --blue-pale:     rgba(16, 96, 207, 0.12);
-      --gold:          #F2A423;
-      --gold-dark:     #CC8800;
-      --gold-light:    #FFD166;
-      --gold-pale:     rgba(242, 164, 35, 0.12);
-      --navy:          #060E1E;
-      --navy-mid:      #0B1C3C;
-      --navy-card:     #0F2550;
-      --navy-surface:  rgba(255,255,255,0.035);
-      --white:         #FFFFFF;
-      --off-white:     #F6F9FF;
-      --text-main:     #E4EEF8;
-      --text-muted:    rgba(228, 238, 248, 0.55);
-      --text-dim:      rgba(228, 238, 248, 0.30);
-      --border:        rgba(255,255,255,0.07);
-      --border-hover:  rgba(16,96,207,0.40);
-      --radius-sm:     8px;
-      --radius-md:     16px;
-      --radius-lg:     24px;
-      --radius-xl:     40px;
-      --shadow-blue:   0 8px 32px rgba(10, 69, 160, 0.30);
-      --shadow-gold:   0 8px 32px rgba(204, 136, 0, 0.28);
-      --shadow-card:   0 4px 32px rgba(10, 69, 160, 0.18);
-      --transition:    0.28s cubic-bezier(0.4, 0, 0.2, 1);
-      --font-body:     'Outfit', system-ui, sans-serif;
-      --font-display:  'Sora', system-ui, sans-serif;
+      /* Brand */
+      --blue: #3133DD;
+      --blue-dark: #0E00C8;
+      --blue-mid: #2322D3;
+      --blue-light: #6062E8;
+      --indigo-deep: #2A2BB5;
+      --blue-surface: #E1E0FF;
+
+      --amber: #FAA100;
+      --amber-light: #FFB94D;
+      --amber-dark: #D48700;
+      --amber-surface: #FFF3E0;
+
+      --streak: #FF6B35;
+      --level: #8B5CF6;
+      --xp: #34D399;
+
+      /* Surfaces — light only */
+      --bg: #FBF8FF;
+      --bg-alt: #F6F2FA;
+      --surface: #FFFFFF;
+      --surface-variant: #F0ECF4;
+
+      /* Text */
+      --text: #1B1B20;
+      --text-2: #454556;
+      --text-3: #767587;
+      --on-blue: #FFFFFF;
+      --on-blue-2: #D6D7F7;
+      --on-blue-3: #ADAEEE;
+
+      /* Borders */
+      --border: #E4E1E9;
+      --border-2: #C6C4D8;
+      --on-blue-border: rgba(255,255,255,.16);
+
+      /* Type */
+      --font: 'Hanken Grotesque', system-ui, -apple-system, sans-serif;
+
+      /* Radius */
+      --r-sm: 10px;
+      --r: 16px;
+      --r-lg: 24px;
+      --r-pill: 999px;
+
+      /* Motion */
+      --spring: cubic-bezier(0.22, 1, 0.36, 1);
+      --out: cubic-bezier(0, 0, 0.2, 1);
+
+      /* Shadows — blue-tinted */
+      --sh-sm: 0 2px 8px rgba(49,51,221,.06);
+      --sh: 0 12px 32px rgba(49,51,221,.10);
+      --sh-lg: 0 28px 60px rgba(49,51,221,.16);
+      --sh-amber: 0 16px 40px rgba(250,161,0,.28);
+      --sh-blue: 0 20px 48px rgba(14,0,200,.35);
     }
 
-    /* ─── RESET ─────────────────────────────────────────────────────────── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; font-size: 16px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      * { animation: none !important; transition: none !important; }
+    }
+
     body {
-      font-family: var(--font-body);
-      background: var(--navy);
-      color: var(--text-main);
-      overflow-x: hidden;
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
       line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      overflow-x: hidden;
     }
+
+    a { color: inherit; text-decoration: none; }
     img { max-width: 100%; display: block; }
-    a { text-decoration: none; color: inherit; }
-    button { cursor: pointer; border: none; font-family: inherit; }
+    ::selection { background: var(--amber); color: var(--text); }
 
-    /* ─── GRAIN OVERLAY ─────────────────────────────────────────────────── */
-    body::before {
-      content: '';
-      position: fixed; inset: 0; z-index: 999;
-      pointer-events: none;
-      opacity: 0.028;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-      background-size: 180px 180px;
-    }
+    .wrap { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 24px; }
 
-    /* ─── SCROLLBAR ─────────────────────────────────────────────────────── */
-    ::-webkit-scrollbar { width: 5px; }
-    ::-webkit-scrollbar-track { background: var(--navy); }
-    ::-webkit-scrollbar-thumb { background: var(--blue-mid); border-radius: 3px; }
+    h1, h2, h3 { text-wrap: balance; line-height: 1.08; letter-spacing: -0.03em; }
+    p { text-wrap: pretty; }
 
-    /* ─── UTILITIES ─────────────────────────────────────────────────────── */
-    .container { max-width: 1200px; margin: 0 auto; padding: 0 28px; }
-
-    .gradient-text {
-      background: linear-gradient(125deg, var(--blue-light) 20%, var(--gold) 90%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .badge-pill {
+    .eyebrow {
       display: inline-flex; align-items: center; gap: 8px;
-      padding: 6px 16px; border-radius: 100px;
-      font-size: 12px; font-weight: 600; letter-spacing: 0.5px;
-      border: 1px solid rgba(242,164,35,0.25);
-      background: rgba(242,164,35,0.07);
-      color: var(--gold-light);
+      font-size: .75rem; font-weight: 700; letter-spacing: .14em;
+      text-transform: uppercase; color: var(--blue);
     }
-    .badge-pill .dot {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: var(--gold);
-      animation: pulse 2.4s infinite;
-    }
+    .eyebrow::before { content: ""; width: 18px; height: 2px; border-radius: 2px; background: var(--amber); }
+    .eyebrow.on-blue { color: var(--amber-light); }
+    .eyebrow.on-blue::before { background: var(--amber); }
 
-    /* ─── ANIMATIONS ────────────────────────────────────────────────────── */
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50%       { opacity: 0.45; transform: scale(0.75); }
+    /* ============ BUTTONS ============ */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+      font-family: var(--font); font-weight: 700; font-size: .95rem;
+      padding: 13px 24px; border-radius: var(--r-pill); border: 1.5px solid transparent;
+      cursor: pointer; white-space: nowrap;
+      transition: transform .18s var(--spring), background .18s var(--out), box-shadow .25s var(--out), color .18s;
     }
-    @keyframes float {
-      0%, 100% { transform: translateY(0px); }
-      50%       { transform: translateY(-16px); }
-    }
-    @keyframes floatReverse {
-      0%, 100% { transform: translateY(0px); }
-      50%       { transform: translateY(16px); }
-    }
-    @keyframes orb {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      25%       { transform: translate(50px, -40px) scale(1.06); }
-      50%       { transform: translate(-25px, 60px) scale(0.94); }
-      75%       { transform: translate(-50px, -25px) scale(1.03); }
-    }
-    @keyframes countUp {
-      from { opacity: 0; transform: translateY(24px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(36px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
+    .btn svg { width: 18px; height: 18px; }
+    .btn-amber { background: var(--amber); color: var(--text); box-shadow: var(--sh-amber); }
+    .btn-amber:hover { transform: translateY(-2px); background: var(--amber-light); }
+    .btn-amber:active { transform: translateY(0) scale(.98); }
+    .btn-blue { background: var(--blue); color: #fff; box-shadow: var(--sh); }
+    .btn-blue:hover { transform: translateY(-2px); background: var(--blue-dark); }
+    .btn-blue:active { transform: translateY(0) scale(.98); }
+    .btn-ghost { background: var(--surface); color: var(--text); border-color: var(--border); }
+    .btn-ghost:hover { transform: translateY(-2px); border-color: var(--blue); color: var(--blue); box-shadow: var(--sh-sm); }
+    .btn-outline-blue { background: transparent; color: #fff; border-color: var(--on-blue-border); }
+    .btn-outline-blue:hover { transform: translateY(-2px); background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.5); }
+    .btn-lg { padding: 16px 30px; font-size: 1rem; }
+    .btn:focus-visible { outline: none; box-shadow: 0 0 0 4px rgba(49,51,221,.30); }
 
-    .fade-in-up { opacity: 0; animation: fadeInUp 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
-    .fade-in-up.delay-1 { animation-delay: 0.14s; }
-    .fade-in-up.delay-2 { animation-delay: 0.28s; }
-    .fade-in-up.delay-3 { animation-delay: 0.42s; }
-    .fade-in-up.delay-4 { animation-delay: 0.56s; }
-
-    /* ─── NAVBAR ────────────────────────────────────────────────────────── */
-    nav {
+    /* ============ HEADER ============ */
+    header {
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      padding: 18px 0;
-      transition: var(--transition);
+      transition: background .3s var(--out), box-shadow .3s var(--out), border-color .3s;
+      border-bottom: 1px solid transparent;
     }
-    nav.scrolled {
-      background: rgba(6, 14, 30, 0.88);
-      backdrop-filter: blur(24px) saturate(160%);
-      -webkit-backdrop-filter: blur(24px) saturate(160%);
-      border-bottom: 1px solid var(--border);
-      padding: 13px 0;
+    header.scrolled {
+      background: rgba(251,248,255,.82);
+      backdrop-filter: saturate(180%) blur(16px);
+      -webkit-backdrop-filter: saturate(180%) blur(16px);
+      border-bottom-color: var(--border);
+      box-shadow: var(--sh-sm);
     }
-    .nav-inner {
-      display: flex; align-items: center; justify-content: space-between;
+    .nav { display: flex; align-items: center; justify-content: space-between; height: 72px; }
+    .brand { display: flex; align-items: center; gap: 11px; font-weight: 800; font-size: 1.18rem; letter-spacing: -0.02em; }
+    .brand img { width: 38px; height: 38px; border-radius: 10px; object-fit: cover; box-shadow: var(--sh-sm); }
+    .brand b { color: var(--blue); }
+    .nav-links { display: flex; align-items: center; gap: 4px; }
+    .nav-links a {
+      font-size: .92rem; font-weight: 600; color: var(--text-2);
+      padding: 9px 14px; border-radius: var(--r-pill); transition: background .18s, color .18s;
     }
-    .nav-logo {
-      display: flex; align-items: center; gap: 10px;
-    }
-    .nav-logo img {
-      width: 36px; height: 36px;
-      border-radius: 9px;
-      object-fit: contain;
-      background: white;
-      padding: 3px;
-    }
-    .nav-logo-text {
-      font-family: var(--font-display);
-      font-weight: 700; font-size: 18px; letter-spacing: -0.3px;
-      color: var(--white);
-    }
-    .nav-logo-text .accent { color: var(--gold); }
-    .nav-cta { display: flex; align-items: center; gap: 10px; }
+    .nav-links a:hover { background: var(--surface-variant); color: var(--text); }
+    .nav-actions { display: flex; align-items: center; gap: 10px; }
+    .nav-toggle { display: none; background: none; border: none; cursor: pointer; padding: 8px; }
+    .nav-toggle span { display: block; width: 22px; height: 2px; background: #fff; border-radius: 2px; transition: transform .3s var(--spring), opacity .2s, background .3s; }
+    .nav-toggle span + span { margin-top: 5px; }
 
-    .btn-ghost {
-      padding: 9px 20px; border-radius: 100px;
-      border: 1.5px solid rgba(255,255,255,0.14);
-      font-size: 13.5px; font-weight: 600; color: var(--text-main);
-      transition: var(--transition); background: transparent;
-    }
-    .btn-ghost:hover { border-color: rgba(74,138,229,0.5); background: rgba(16,96,207,0.08); }
-    .btn-ghost:active { transform: scale(0.97); }
+    /* Header par defaut = transparent AU-DESSUS du hero bleu => contenu clair */
+    .brand { color: #fff; }
+    .brand b { color: var(--amber-light); }
+    .nav-links a { color: rgba(255,255,255,.82); }
+    .nav-links a:hover { background: rgba(255,255,255,.14); color: #fff; }
+    .nav-actions .desk.btn-ghost { background: transparent; color: #fff; border-color: rgba(255,255,255,.4); box-shadow: none; }
+    .nav-actions .desk.btn-ghost:hover { background: rgba(255,255,255,.14); color: #fff; border-color: #fff; }
 
-    .btn-primary {
-      padding: 9px 22px; border-radius: 100px;
-      background: linear-gradient(135deg, var(--blue-dark), var(--blue));
-      font-size: 13.5px; font-weight: 700; color: var(--white);
-      transition: var(--transition);
-      box-shadow: 0 3px 14px rgba(16,96,207,0.38);
-    }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: var(--shadow-blue); }
-    .btn-primary:active { transform: scale(0.97) translateY(0); }
+    /* Header scrolle = fond clair => contenu sombre */
+    header.scrolled .brand { color: var(--text); }
+    header.scrolled .brand b { color: var(--blue); }
+    header.scrolled .nav-links a { color: var(--text-2); }
+    header.scrolled .nav-links a:hover { background: var(--surface-variant); color: var(--text); }
+    header.scrolled .nav-toggle span { background: var(--text); }
+    header.scrolled .nav-actions .desk.btn-ghost { background: var(--surface); color: var(--text); border-color: var(--border); }
+    header.scrolled .nav-actions .desk.btn-ghost:hover { border-color: var(--blue); color: var(--blue); }
 
-    /* ─── HERO ──────────────────────────────────────────────────────────── */
-    #hero {
-      position: relative;
-      min-height: 100dvh;
-      display: flex; align-items: center;
-      overflow: hidden; padding: 120px 0 96px;
+    /* ============ HERO ============ */
+    .hero {
+      position: relative; overflow: hidden;
+      background: linear-gradient(145deg, var(--blue-dark) 0%, var(--blue) 52%, var(--blue-light) 100%);
+      color: var(--on-blue);
+      padding: 150px 0 110px;
+      border-radius: 0 0 40px 40px;
     }
-    .hero-bg {
-      position: absolute; inset: 0; z-index: 0;
-      background:
-        radial-gradient(ellipse 70% 60% at 18% 52%, rgba(16,96,207,0.22) 0%, transparent 100%),
-        radial-gradient(ellipse 55% 50% at 85% 18%, rgba(242,164,35,0.09) 0%, transparent 100%),
-        radial-gradient(ellipse 60% 55% at 58% 82%, rgba(74,138,229,0.15) 0%, transparent 100%),
-        var(--navy);
+    .hero::before, .hero::after { content: ""; position: absolute; border-radius: 50%; filter: blur(8px); pointer-events: none; }
+    .hero::before {
+      width: 520px; height: 520px; top: -180px; right: -120px;
+      background: radial-gradient(circle at 30% 30%, rgba(250,161,0,.55), rgba(250,161,0,0) 65%);
+      animation: float1 14s ease-in-out infinite;
     }
-    /* Grid dot pattern */
+    .hero::after {
+      width: 460px; height: 460px; bottom: -200px; left: -140px;
+      background: radial-gradient(circle at 50% 50%, rgba(96,98,232,.55), rgba(96,98,232,0) 70%);
+      animation: float2 18s ease-in-out infinite;
+    }
+    @keyframes float1 { 0%,100%{ transform: translate(0,0) } 50%{ transform: translate(-30px,40px) } }
+    @keyframes float2 { 0%,100%{ transform: translate(0,0) } 50%{ transform: translate(40px,-30px) } }
+
     .hero-grid {
-      position: absolute; inset: 0; z-index: 0;
-      background-image:
-        radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px);
-      background-size: 44px 44px;
-      mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
+      position: relative; z-index: 2;
+      display: grid; grid-template-columns: 1.08fr .92fr; gap: 56px; align-items: center;
     }
-    .orb {
-      position: absolute; border-radius: 50%;
-      filter: blur(90px); pointer-events: none;
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 9px;
+      background: rgba(255,255,255,.12); border: 1px solid var(--on-blue-border);
+      padding: 7px 14px 7px 8px; border-radius: var(--r-pill);
+      font-size: .82rem; font-weight: 600; color: var(--on-blue-2); margin-bottom: 26px;
     }
-    .orb-1 {
-      width: 640px; height: 640px; top: -240px; left: -180px;
-      background: rgba(16,96,207,0.18);
-      animation: orb 18s ease-in-out infinite;
+    .hero-badge .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--xp); box-shadow: 0 0 0 4px rgba(52,211,153,.25); }
+    .flag { font-size: 1rem; }
+    .hero h1 { font-size: clamp(2.6rem, 5.2vw, 4.6rem); font-weight: 800; margin-bottom: 22px; }
+    .hero h1 .accent { color: var(--amber-light); position: relative; white-space: nowrap; }
+    .hero h1 .accent::after {
+      content: ""; position: absolute; left: 0; right: 0; bottom: .06em; height: .14em;
+      background: var(--amber); border-radius: 4px; opacity: .85;
     }
-    .orb-2 {
-      width: 520px; height: 520px; top: 80px; right: -120px;
-      background: rgba(242,164,35,0.08);
-      animation: orb 24s ease-in-out infinite reverse;
-    }
-    .orb-3 {
-      width: 400px; height: 400px; bottom: -80px; left: 28%;
-      background: rgba(74,138,229,0.12);
-      animation: orb 20s ease-in-out infinite 4s;
-    }
+    .hero-sub { font-size: clamp(1.02rem, 1.5vw, 1.22rem); color: var(--on-blue-2); max-width: 540px; font-weight: 400; margin-bottom: 34px; }
+    .hero-cta { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 30px; }
+    .hero-trust { display: flex; flex-wrap: wrap; gap: 10px 22px; font-size: .88rem; color: var(--on-blue-3); font-weight: 500; }
+    .hero-trust span { display: inline-flex; align-items: center; gap: 7px; }
+    .hero-trust svg { width: 16px; height: 16px; color: var(--amber-light); }
 
-    .hero-content { position: relative; z-index: 1; text-align: center; }
-    .hero-badge { margin-bottom: 32px; }
-    .hero-title {
-      font-family: var(--font-display);
-      font-size: clamp(44px, 7.5vw, 82px);
-      font-weight: 800;
-      line-height: 1.06;
-      letter-spacing: -2.5px;
-      margin-bottom: 24px;
+    /* Hero visual — gamified profile mock */
+    .mock { position: relative; perspective: 1400px; }
+    .mock-card {
+      background: var(--surface); color: var(--text); border-radius: var(--r-lg);
+      padding: 24px; box-shadow: var(--sh-blue);
+      transform: rotateY(-9deg) rotateX(4deg); transform-style: preserve-3d;
+      animation: cardIn 1s var(--spring) both .2s;
     }
-    .hero-title .line2 { display: block; }
-    .hero-subtitle {
-      font-family: var(--font-body);
-      font-size: clamp(16px, 2.2vw, 19px);
-      color: var(--text-muted);
-      max-width: 540px; margin: 0 auto 52px;
-      font-weight: 400; line-height: 1.75;
-      text-wrap: pretty;
+    @keyframes cardIn { from { opacity: 0; transform: rotateY(-9deg) rotateX(4deg) translateY(30px); } to { opacity: 1; transform: rotateY(-9deg) rotateX(4deg) translateY(0); } }
+    .mock-top { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+    .mock-avatar {
+      width: 56px; height: 56px; border-radius: 16px; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--blue-light), var(--blue));
+      display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 1.3rem;
+      position: relative;
     }
+    .mock-lvl {
+      position: absolute; bottom: -6px; right: -6px;
+      background: var(--amber); color: var(--text); font-size: .66rem; font-weight: 800;
+      padding: 2px 7px; border-radius: var(--r-pill); border: 2px solid var(--surface); white-space: nowrap;
+    }
+    .mock-name { font-weight: 800; font-size: 1.08rem; }
+    .mock-role { font-size: .82rem; color: var(--text-3); font-weight: 500; }
+    .mock-xp-label { display: flex; justify-content: space-between; font-size: .76rem; font-weight: 700; color: var(--text-2); margin-bottom: 7px; }
+    .mock-xp-label .g { color: var(--amber-dark); }
+    .mock-bar { height: 10px; border-radius: var(--r-pill); background: var(--surface-variant); overflow: hidden; }
+    .mock-bar i { display: block; height: 100%; width: 72%; border-radius: var(--r-pill); background: linear-gradient(90deg, var(--xp), #10B981); animation: fill 1.4s var(--spring) both .6s; }
+    @keyframes fill { from { width: 0; } }
+    .mock-badges { display: flex; gap: 10px; margin-top: 22px; }
+    .mock-badge {
+      flex: 1; background: var(--bg-alt); border: 1px solid var(--border); border-radius: var(--r-sm);
+      padding: 12px 8px; text-align: center;
+    }
+    .mock-badge .ic { width: 34px; height: 34px; border-radius: 10px; margin: 0 auto 7px; display: grid; place-items: center; }
+    .mock-badge span { font-size: .68rem; font-weight: 700; color: var(--text-2); display: block; }
+    .ic-gold { background: var(--amber-surface); } .ic-gold svg { color: var(--amber-dark); }
+    .ic-fire { background: #FFF0EA; } .ic-fire svg { color: var(--streak); }
+    .ic-lvl { background: #F3EBFF; } .ic-lvl svg { color: var(--level); }
+    .mock-badge svg { width: 18px; height: 18px; }
 
-    /* Floating ambient cards */
-    .floating-cards { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
-    .f-card {
-      position: absolute;
-      background: rgba(255,255,255,0.035);
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: var(--radius-md);
-      backdrop-filter: blur(12px);
-      display: flex; align-items: center; gap: 10px;
-      padding: 11px 16px; font-size: 13px; font-weight: 600;
-      white-space: nowrap;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.20);
+    .float-chip {
+      position: absolute; background: var(--surface); border-radius: var(--r); box-shadow: var(--sh-lg);
+      padding: 12px 16px; display: flex; align-items: center; gap: 11px; font-weight: 700; font-size: .86rem;
+      z-index: 3;
     }
-    .f-card .icon { font-size: 18px; }
-    .f-card-1 { top: 22%; left: 4%; animation: float 7s ease-in-out infinite; }
-    .f-card-2 { top: 36%; right: 3%; animation: floatReverse 8s ease-in-out infinite; }
-    .f-card-3 { bottom: 26%; left: 5%; animation: float 9s ease-in-out infinite 1s; }
-    .f-card-4 { bottom: 30%; right: 4%; animation: floatReverse 7.5s ease-in-out infinite 0.5s; }
-    @media (max-width: 1024px) { .floating-cards { display: none; } }
+    .float-chip small { display: block; font-size: .7rem; font-weight: 600; color: var(--text-3); }
+    .float-chip .em { width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; flex-shrink: 0; }
+    .chip-a { top: 8px; left: -34px; animation: bob 5s ease-in-out infinite; }
+    .chip-b { bottom: 24px; right: -28px; animation: bob 6s ease-in-out infinite .5s; }
+    @keyframes bob { 0%,100%{ transform: translateY(0) } 50%{ transform: translateY(-10px) } }
 
-    /* Countdown */
-    .countdown-wrapper { margin-bottom: 52px; }
-    .countdown-label {
-      font-size: 11px; font-weight: 700; letter-spacing: 2.5px;
-      text-transform: uppercase; color: var(--text-dim);
-      margin-bottom: 18px;
-    }
-    .countdown {
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-      flex-wrap: wrap;
-    }
-    .countdown-item {
-      display: flex; flex-direction: column; align-items: center;
-      min-width: 80px;
-      background: var(--navy-surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      padding: 16px 8px 14px;
-      backdrop-filter: blur(12px);
-      animation: countUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
-    }
-    .countdown-item:nth-child(1) { animation-delay: 0.08s; }
-    .countdown-item:nth-child(3) { animation-delay: 0.16s; }
-    .countdown-item:nth-child(5) { animation-delay: 0.24s; }
-    .countdown-item:nth-child(7) { animation-delay: 0.32s; }
-    .countdown-sep {
-      font-size: 28px; font-weight: 300;
-      color: var(--text-dim);
-      padding-bottom: 18px; line-height: 1;
-    }
-    .countdown-num {
-      font-family: var(--font-display);
-      font-size: clamp(32px, 4.5vw, 48px);
-      font-weight: 800; line-height: 1;
-      background: linear-gradient(135deg, var(--white), rgba(255,255,255,0.7));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      font-variant-numeric: tabular-nums;
-    }
-    .countdown-unit {
-      font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
-      text-transform: uppercase; color: var(--text-dim);
-      margin-top: 6px;
-    }
+    /* ============ SECTIONS ============ */
+    section { position: relative; }
+    .section-pad { padding: 96px 0; }
+    .section-head { max-width: 680px; margin-bottom: 56px; }
+    .section-head.center { margin-left: auto; margin-right: auto; text-align: center; }
+    .section-head h2 { font-size: clamp(2rem, 3.6vw, 3rem); font-weight: 800; margin: 16px 0 14px; }
+    .section-head p { font-size: 1.08rem; color: var(--text-2); }
 
-    /* Hero Email Form */
-    .hero-form {
-      display: flex; max-width: 480px; margin: 0 auto;
-      background: rgba(255,255,255,0.055);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 100px; padding: 5px;
-      backdrop-filter: blur(16px);
-      transition: var(--transition);
+    /* Stats band */
+    .stats {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;
+      margin-top: -60px; position: relative; z-index: 5;
     }
-    .hero-form:focus-within {
-      border-color: rgba(16,96,207,0.55);
-      box-shadow: 0 0 0 4px rgba(16,96,207,0.10), var(--shadow-card);
+    .stat {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
+      padding: 26px 24px; box-shadow: var(--sh);
     }
-    .hero-form input {
-      flex: 1; background: transparent; border: none; outline: none;
-      padding: 10px 20px; color: var(--white);
-      font-family: var(--font-body); font-size: 14.5px;
-    }
-    .hero-form input::placeholder { color: var(--text-dim); }
-    .hero-form .btn-submit {
-      padding: 11px 26px; border-radius: 100px;
-      background: linear-gradient(135deg, var(--blue-dark), var(--blue));
-      color: var(--white);
-      font-family: var(--font-body); font-size: 13.5px; font-weight: 700;
-      white-space: nowrap; transition: var(--transition);
-      box-shadow: 0 3px 14px rgba(16,96,207,0.45);
-    }
-    .hero-form .btn-submit:hover { transform: scale(1.03); box-shadow: var(--shadow-blue); }
-    .hero-form .btn-submit:active { transform: scale(0.98); }
+    .stat .num { font-size: 2.5rem; font-weight: 800; letter-spacing: -0.04em; color: var(--blue); font-variant-numeric: tabular-nums; line-height: 1; }
+    .stat .num .u { color: var(--amber); }
+    .stat .lbl { font-size: .9rem; font-weight: 600; color: var(--text-2); margin-top: 8px; }
 
-    .form-success {
-      display: none; align-items: center; justify-content: center; gap: 10px;
-      padding: 14px 28px; border-radius: 100px;
-      background: rgba(16,163,74,0.10);
-      border: 1px solid rgba(16,163,74,0.25);
-      color: #4ade80;
-      font-family: var(--font-body); font-weight: 600; font-size: 14.5px;
-      max-width: 480px; margin: 0 auto;
+    /* Steps */
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .step {
+      position: relative; background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r-lg); padding: 32px 28px 30px; overflow: hidden;
     }
-    .hero-note {
-      margin-top: 14px; font-size: 12.5px;
-      color: var(--text-dim);
-    }
+    .step::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, var(--blue), var(--blue-light)); transform: scaleX(0); transform-origin: left; transition: transform .4s var(--spring); }
+    .step:hover::before { transform: scaleX(1); }
+    .step:nth-child(2)::before { background: linear-gradient(90deg, var(--amber), var(--amber-light)); }
+    .step-n { font-size: .8rem; font-weight: 800; letter-spacing: .1em; color: var(--text-3); font-variant-numeric: tabular-nums; }
+    .step-ic { width: 56px; height: 56px; border-radius: var(--r); display: grid; place-items: center; margin: 16px 0 18px; background: var(--blue-surface); }
+    .step:nth-child(2) .step-ic { background: var(--amber-surface); }
+    .step-ic svg { width: 26px; height: 26px; color: var(--blue); }
+    .step:nth-child(2) .step-ic svg { color: var(--amber-dark); }
+    .step h3 { font-size: 1.3rem; font-weight: 700; margin-bottom: 10px; }
+    .step p { color: var(--text-2); font-size: .98rem; }
 
-    /* ─── STATS ─────────────────────────────────────────────────────────── */
-    #stats {
-      padding: 56px 0;
-      background: rgba(255,255,255,0.018);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
+    /* Features bento */
+    .bento { display: grid; grid-template-columns: repeat(6, 1fr); gap: 20px; }
+    .feature {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg);
+      padding: 30px; transition: transform .3s var(--spring), box-shadow .3s var(--out), border-color .3s;
     }
-    .stats-grid {
-      display: grid; grid-template-columns: repeat(4, 1fr);
-    }
-    .stat-item {
-      text-align: center; padding: 24px 16px;
-      border-right: 1px solid var(--border);
-    }
-    .stat-item:last-child { border-right: none; }
-    .stat-num {
-      font-family: var(--font-display);
-      font-size: clamp(36px, 4vw, 44px);
-      font-weight: 800; line-height: 1;
-      background: linear-gradient(135deg, var(--blue-light), var(--gold));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      font-variant-numeric: tabular-nums;
-    }
-    .stat-label {
-      font-size: 13.5px; color: var(--text-muted);
-      margin-top: 8px; font-weight: 500;
-    }
-    @media (max-width: 640px) {
-      .stats-grid { grid-template-columns: repeat(2, 1fr); }
-      .stat-item:nth-child(2) { border-right: none; }
-      .stat-item:nth-child(3) { border-right: 1px solid var(--border); border-top: 1px solid var(--border); }
-      .stat-item:nth-child(4) { border-top: 1px solid var(--border); }
-    }
+    .feature:hover { transform: translateY(-4px); box-shadow: var(--sh); border-color: var(--border-2); }
+    .feature.span3 { grid-column: span 3; }
+    .feature.span2 { grid-column: span 2; }
+    .feature.wide { grid-column: span 6; display: grid; grid-template-columns: 1.2fr 1fr; gap: 32px; align-items: center; }
+    .feature .fic { width: 50px; height: 50px; border-radius: 14px; display: grid; place-items: center; margin-bottom: 18px; background: var(--blue-surface); }
+    .feature .fic svg { width: 24px; height: 24px; color: var(--blue); }
+    .feature.amber .fic { background: var(--amber-surface); } .feature.amber .fic svg { color: var(--amber-dark); }
+    .feature h3 { font-size: 1.22rem; font-weight: 700; margin-bottom: 9px; }
+    .feature p { color: var(--text-2); font-size: .95rem; }
+    .feature .tag { display: inline-block; margin-top: 14px; font-size: .76rem; font-weight: 700; color: var(--blue); background: var(--blue-surface); padding: 5px 11px; border-radius: var(--r-pill); }
+    .feature.amber .tag { color: var(--amber-dark); background: var(--amber-surface); }
 
-    /* ─── SECTION HEADERS ───────────────────────────────────────────────── */
-    .section-header { text-align: center; margin-bottom: 64px; }
-    .section-tag {
-      display: inline-block; padding: 5px 14px; border-radius: 100px;
-      background: rgba(16,96,207,0.10); border: 1px solid rgba(16,96,207,0.22);
-      font-size: 11px; font-weight: 700; letter-spacing: 2px;
-      text-transform: uppercase; color: var(--blue-light); margin-bottom: 18px;
-    }
-    .section-title {
-      font-family: var(--font-display);
-      font-size: clamp(28px, 4vw, 46px);
-      font-weight: 800; line-height: 1.15; letter-spacing: -1.2px;
-      text-wrap: balance;
-    }
-    .section-sub {
-      margin-top: 16px;
-      font-size: 16.5px; color: var(--text-muted);
-      max-width: 540px; margin-left: auto; margin-right: auto;
-      line-height: 1.7; text-wrap: pretty;
-    }
+    /* mini badge grid inside wide feature */
+    .mini-badges { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .mini { background: var(--bg-alt); border: 1px solid var(--border); border-radius: var(--r); padding: 16px 12px; text-align: center; }
+    .mini .mic { width: 40px; height: 40px; border-radius: 12px; margin: 0 auto 9px; display: grid; place-items: center; }
+    .mini b { display: block; font-size: 1.3rem; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; }
+    .mini span { font-size: .74rem; font-weight: 600; color: var(--text-3); }
+    .mini svg { width: 20px; height: 20px; }
 
-    /* ─── FEATURES ──────────────────────────────────────────────────────── */
-    #features { padding: 120px 0; }
+    /* Gamification band */
+    .gband { background: linear-gradient(135deg, var(--indigo-deep), var(--blue) 70%); color: var(--on-blue); border-radius: var(--r-lg); overflow: hidden; position: relative; }
+    .gband::after { content: ""; position: absolute; width: 360px; height: 360px; right: -100px; top: -100px; border-radius: 50%; background: radial-gradient(circle, rgba(250,161,0,.4), transparent 70%); }
+    .gband-inner { position: relative; z-index: 2; display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; padding: 56px; }
+    .gband h2 { font-size: clamp(1.8rem, 3vw, 2.6rem); font-weight: 800; margin: 14px 0 16px; }
+    .gband p { color: var(--on-blue-2); font-size: 1.05rem; margin-bottom: 26px; }
+    .gband-stats { display: flex; gap: 30px; }
+    .gs .n { font-size: 2rem; font-weight: 800; color: var(--amber-light); font-variant-numeric: tabular-nums; }
+    .gs .l { font-size: .82rem; color: var(--on-blue-3); font-weight: 500; }
+    .gvis { display: grid; gap: 14px; }
+    .grow { background: rgba(255,255,255,.10); border: 1px solid var(--on-blue-border); border-radius: var(--r); padding: 16px 18px; display: flex; align-items: center; gap: 14px; backdrop-filter: blur(6px); }
+    .grow .gic { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; flex-shrink: 0; }
+    .grow b { font-size: .98rem; font-weight: 700; display: block; }
+    .grow small { font-size: .8rem; color: var(--on-blue-3); }
+    .grow svg { width: 22px; height: 22px; }
 
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
-    }
+    /* Audiences */
+    .aud { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+    .acard { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 32px 28px; transition: transform .3s var(--spring), box-shadow .3s; }
+    .acard:hover { transform: translateY(-4px); box-shadow: var(--sh); }
+    .acard .ah { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .acard .aem { width: 46px; height: 46px; border-radius: 13px; display: grid; place-items: center; background: var(--blue-surface); font-size: 1.4rem; }
+    .acard h3 { font-size: 1.25rem; font-weight: 700; }
+    .acard ul { list-style: none; display: grid; gap: 11px; }
+    .acard li { display: flex; gap: 11px; font-size: .95rem; color: var(--text-2); align-items: flex-start; }
+    .acard li svg { width: 19px; height: 19px; color: var(--xp); flex-shrink: 0; margin-top: 2px; }
 
-    /* Hero feature: first card spans 2 columns */
-    .feature-card:first-child {
-      grid-column: span 2;
-    }
-    /* Last card also spans 2 columns for zig-zag balance */
-    .feature-card:nth-child(5) {
-      grid-column: span 2;
-    }
+    /* Testimonials */
+    .quotes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+    .quote { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 28px; display: flex; flex-direction: column; }
+    .quote .stars { color: var(--amber); font-size: .9rem; letter-spacing: 2px; margin-bottom: 14px; }
+    .quote p { font-size: 1rem; color: var(--text); font-weight: 500; flex: 1; }
+    .quote .who { display: flex; align-items: center; gap: 12px; margin-top: 20px; }
+    .quote .av { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; font-weight: 800; color: #fff; background: linear-gradient(135deg, var(--blue-light), var(--blue)); }
+    .quote .who b { font-size: .92rem; font-weight: 700; display: block; }
+    .quote .who span { font-size: .8rem; color: var(--text-3); }
 
-    .feature-card {
-      position: relative; padding: 30px 28px;
-      background: var(--navy-surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      transition: transform var(--transition), border-color var(--transition), box-shadow var(--transition);
-      overflow: hidden;
+    /* FAQ */
+    .faq { max-width: 800px; margin: 0 auto; display: grid; gap: 12px; }
+    .qa { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+    .qa summary {
+      list-style: none; cursor: pointer;
+      font-size: 1.04rem; font-weight: 700; color: var(--text);
+      padding: 22px 24px; display: flex; justify-content: space-between; align-items: center; gap: 16px;
     }
-    .feature-card::after {
-      content: '';
-      position: absolute; inset: 0;
-      background: radial-gradient(ellipse 60% 50% at 10% 0%, rgba(16,96,207,0.06) 0%, transparent 80%);
-      opacity: 0; transition: opacity var(--transition);
-      border-radius: inherit;
-      pointer-events: none;
-    }
-    .feature-card:hover {
-      transform: translateY(-5px);
-      border-color: rgba(16,96,207,0.32);
-      box-shadow: 0 12px 40px rgba(10,69,160,0.22), 0 2px 8px rgba(10,69,160,0.10);
-    }
-    .feature-card:hover::after { opacity: 1; }
+    .qa summary::-webkit-details-marker { display: none; }
+    .qa summary:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--blue); border-radius: var(--r); }
+    .qa .ico { flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; background: var(--blue-surface); display: grid; place-items: center; transition: transform .3s var(--spring), background .3s; }
+    .qa .ico svg { width: 14px; height: 14px; color: var(--blue); }
+    .qa[open] .ico { transform: rotate(45deg); background: var(--amber); }
+    .qa[open] .ico svg { color: var(--text); }
+    .qa .ans { padding: 0 24px; max-height: 0; overflow: hidden; transition: max-height .35s var(--out), padding .35s var(--out); }
+    .qa[open] .ans { padding: 0 24px 24px; max-height: 320px; }
+    .qa .ans p { color: var(--text-2); font-size: .98rem; }
 
-    /* Gold accent for even cards */
-    .feature-card:nth-child(even):hover {
-      border-color: rgba(242,164,35,0.30);
-      box-shadow: 0 12px 40px rgba(204,136,0,0.18), 0 2px 8px rgba(204,136,0,0.08);
+    /* Final CTA */
+    .cta-band {
+      background: linear-gradient(120deg, var(--blue-light) 0%, var(--blue) 45%, var(--amber) 130%);
+      border-radius: var(--r-lg); padding: 64px 48px; text-align: center; color: #fff; position: relative; overflow: hidden;
     }
-    .feature-card:nth-child(even)::after {
-      background: radial-gradient(ellipse 60% 50% at 10% 0%, rgba(242,164,35,0.06) 0%, transparent 80%);
-    }
+    .cta-band::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 80% 120%, rgba(255,255,255,.22), transparent 50%); }
+    .cta-band > * { position: relative; z-index: 2; }
+    .cta-band h2 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; margin-bottom: 14px; }
+    .cta-band p { font-size: 1.12rem; color: rgba(255,255,255,.9); max-width: 560px; margin: 0 auto 30px; }
+    .cta-band .hero-cta { justify-content: center; }
 
-    .feature-icon {
-      width: 52px; height: 52px; border-radius: 14px; margin-bottom: 22px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 24px;
-    }
-    /* Odd cards: blue icon */
-    .feature-card:nth-child(odd) .feature-icon {
-      background: linear-gradient(135deg, var(--blue-dark), var(--blue));
-      box-shadow: 0 6px 20px rgba(16,96,207,0.32);
-    }
-    /* Even cards: gold icon */
-    .feature-card:nth-child(even) .feature-icon {
-      background: linear-gradient(135deg, var(--gold-dark), var(--gold));
-      box-shadow: 0 6px 20px rgba(204,136,0,0.30);
-    }
+    /* Footer */
+    footer { background: var(--bg-alt); border-top: 1px solid var(--border); padding: 64px 0 32px; margin-top: 96px; }
+    .foot-grid { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; gap: 40px; margin-bottom: 48px; }
+    .foot-brand .brand { margin-bottom: 16px; }
+    .foot-brand p { color: var(--text-2); font-size: .95rem; max-width: 320px; }
+    .foot-col h4 { font-size: .78rem; text-transform: uppercase; letter-spacing: .12em; color: var(--text-3); font-weight: 700; margin-bottom: 16px; }
+    .foot-col a { display: block; color: var(--text-2); font-size: .94rem; font-weight: 500; padding: 6px 0; transition: color .18s; }
+    .foot-col a:hover { color: var(--blue); }
+    .foot-bottom { border-top: 1px solid var(--border); padding-top: 24px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .foot-bottom p { font-size: .88rem; color: var(--text-3); }
+    .made { display: inline-flex; align-items: center; gap: 7px; font-size: .88rem; color: var(--text-2); font-weight: 600; }
 
-    .feature-title {
-      font-family: var(--font-display);
-      font-size: 17px; font-weight: 700; margin-bottom: 10px;
-      letter-spacing: -0.2px;
-    }
-    .feature-desc {
-      font-size: 14.5px; color: var(--text-muted); line-height: 1.72;
-    }
-    .feature-tag {
-      display: inline-block; margin-top: 18px; padding: 4px 12px;
-      border-radius: 100px; font-size: 11px; font-weight: 700; letter-spacing: 1px;
-      text-transform: uppercase;
-    }
-    .feature-card:nth-child(odd) .feature-tag {
-      background: rgba(16,96,207,0.10); color: var(--blue-light);
-    }
-    .feature-card:nth-child(even) .feature-tag {
-      background: rgba(242,164,35,0.10); color: var(--gold-light);
-    }
+    /* Reveal */
+    .reveal { opacity: 0; transform: translateY(24px); transition: opacity .6s var(--out), transform .6s var(--spring); }
+    .reveal.visible { opacity: 1; transform: none; }
 
-    /* Hero card inner layout — horizontal when wide */
-    .feature-card:first-child .feature-inner {
-      display: flex; align-items: flex-start; gap: 28px;
+    /* ============ RESPONSIVE ============ */
+    @media (max-width: 940px) {
+      .hero-grid { grid-template-columns: 1fr; gap: 48px; }
+      .mock { max-width: 420px; margin: 0 auto; }
+      .gband-inner { grid-template-columns: 1fr; gap: 32px; padding: 40px 32px; }
+      .feature.wide { grid-template-columns: 1fr; }
+      .foot-grid { grid-template-columns: 1fr 1fr; gap: 32px; }
     }
-    .feature-card:first-child .feature-icon { flex-shrink: 0; }
-    .feature-card:first-child .feature-content { flex: 1; }
-    .feature-card:first-child .feature-desc { font-size: 15px; }
-    .feature-highlights {
-      display: flex; gap: 24px; margin-top: 22px; flex-wrap: wrap;
-    }
-    .feature-hl {
-      display: flex; align-items: center; gap: 8px;
-      font-size: 13px; font-weight: 600; color: var(--blue-light);
-    }
-    .feature-hl::before { content: '✦'; font-size: 10px; opacity: 0.7; }
-
     @media (max-width: 860px) {
-      .features-grid { grid-template-columns: 1fr 1fr; }
-      .feature-card:first-child,
-      .feature-card:nth-child(5) { grid-column: span 2; }
-      .feature-card:first-child .feature-inner { flex-direction: column; gap: 0; }
+      .nav-links, .nav-actions .desk { display: none; }
+      .nav-toggle { display: block; }
+      .mobile-menu {
+        position: fixed; inset: 72px 0 auto 0; background: var(--surface);
+        border-bottom: 1px solid var(--border); box-shadow: var(--sh);
+        padding: 18px 24px 26px; display: none; flex-direction: column; gap: 6px; z-index: 99;
+      }
+      .mobile-menu.open { display: flex; }
+      .mobile-menu a { padding: 12px 14px; border-radius: var(--r-sm); font-weight: 600; color: var(--text-2); }
+      .mobile-menu a:hover { background: var(--surface-variant); }
+      .mobile-menu .btn { margin-top: 8px; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .steps { grid-template-columns: 1fr; }
+      .bento { grid-template-columns: 1fr; }
+      .feature.span3, .feature.span2 { grid-column: span 1; }
+      .aud, .quotes { grid-template-columns: 1fr; }
+      .gband-stats { gap: 22px; }
     }
-    @media (max-width: 560px) {
-      .features-grid { grid-template-columns: 1fr; }
-      .feature-card:first-child,
-      .feature-card:nth-child(5) { grid-column: span 1; }
+    @media (max-width: 480px) {
+      .wrap { padding: 0 18px; }
+      .hero { padding: 130px 0 80px; }
+      .section-pad { padding: 70px 0; }
+      .stats { grid-template-columns: 1fr 1fr; gap: 12px; }
+      .stat { padding: 20px 18px; }
+      .hero-cta .btn { flex: 1; }
+      .cta-band { padding: 48px 24px; }
     }
-
-    /* ─── HOW IT WORKS ──────────────────────────────────────────────────── */
-    #how {
-      padding: 120px 0;
-      background: rgba(255,255,255,0.018);
-      border-top: 1px solid var(--border);
-    }
-    .steps {
-      display: grid; grid-template-columns: repeat(3, 1fr);
-      gap: 0; position: relative;
-    }
-    .steps::before {
-      content: '';
-      position: absolute; top: 44px; left: 18%; right: 18%;
-      height: 1px;
-      background: linear-gradient(90deg, var(--blue), var(--gold));
-      opacity: 0.22;
-    }
-    .step-item { text-align: center; padding: 0 28px; }
-    .step-num {
-      width: 88px; height: 88px; border-radius: 50%; margin: 0 auto 28px;
-      display: flex; align-items: center; justify-content: center;
-      font-family: var(--font-display);
-      font-size: 28px; font-weight: 800; position: relative;
-      background: linear-gradient(145deg, var(--navy-card), var(--navy-mid));
-      border: 1.5px solid rgba(16,96,207,0.25);
-      box-shadow: 0 0 0 10px rgba(16,96,207,0.04), 0 8px 28px rgba(0,0,0,0.30);
-    }
-    .step-num .num-inner {
-      background: linear-gradient(135deg, var(--blue-light), var(--gold));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .step-title {
-      font-family: var(--font-display);
-      font-size: 18.5px; font-weight: 700; margin-bottom: 12px;
-      letter-spacing: -0.2px;
-    }
-    .step-desc { font-size: 14.5px; color: var(--text-muted); line-height: 1.72; }
-    @media (max-width: 768px) {
-      .steps { grid-template-columns: 1fr; gap: 52px; }
-      .steps::before { display: none; }
-    }
-
-    /* ─── GAMIFICATION SPOTLIGHT ────────────────────────────────────────── */
-    #gamification { padding: 120px 0; }
-    .gami-inner {
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 88px; align-items: center;
-    }
-    .gami-text .section-header { text-align: left; margin-bottom: 32px; }
-    .gami-list { display: flex; flex-direction: column; gap: 14px; }
-    .gami-item {
-      display: flex; align-items: flex-start; gap: 14px; padding: 16px 18px;
-      background: var(--navy-surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md); transition: var(--transition);
-    }
-    .gami-item:hover {
-      border-color: rgba(16,96,207,0.25);
-      background: rgba(16,96,207,0.045);
-      transform: translateX(4px);
-    }
-    .gami-item-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
-    .gami-item-title {
-      font-family: var(--font-display);
-      font-size: 14.5px; font-weight: 700; margin-bottom: 3px;
-    }
-    .gami-item-desc { font-size: 13.5px; color: var(--text-muted); }
-
-    .gami-visual {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
-    }
-    .gami-card {
-      padding: 22px 18px; border-radius: var(--radius-md);
-      background: var(--navy-surface);
-      border: 1px solid var(--border);
-      text-align: center; transition: var(--transition);
-    }
-    .gami-card:hover {
-      transform: translateY(-4px);
-      border-color: rgba(16,96,207,0.28);
-      box-shadow: 0 8px 28px rgba(10,69,160,0.18);
-    }
-    .gami-card:first-child { grid-column: span 2; }
-    .gami-card .icon { font-size: 28px; margin-bottom: 10px; }
-    .gami-card .value {
-      font-family: var(--font-display);
-      font-size: 26px; font-weight: 800;
-      background: linear-gradient(135deg, var(--blue-light), var(--gold));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text;
-      font-variant-numeric: tabular-nums;
-    }
-    .gami-card .label { font-size: 12.5px; color: var(--text-muted); margin-top: 5px; }
-    @media (max-width: 900px) {
-      .gami-inner { grid-template-columns: 1fr; gap: 52px; }
-      .gami-text .section-header { text-align: center; }
-    }
-
-    /* ─── WAITLIST CTA ──────────────────────────────────────────────────── */
-    #waitlist {
-      padding: 120px 0; position: relative; overflow: hidden;
-      border-top: 1px solid var(--border);
-    }
-    .waitlist-bg {
-      position: absolute; inset: 0; z-index: 0;
-      background:
-        radial-gradient(ellipse 70% 80% at 50% 50%, rgba(16,96,207,0.12) 0%, transparent 70%);
-    }
-    .waitlist-inner { position: relative; z-index: 1; text-align: center; }
-    .waitlist-inner .section-title {
-      font-size: clamp(30px, 5vw, 54px);
-      margin-bottom: 18px;
-    }
-    .waitlist-inner .section-sub { margin-bottom: 48px; }
-
-    .waitlist-form-big {
-      display: flex; max-width: 560px; margin: 0 auto 16px;
-      background: rgba(255,255,255,0.045);
-      border: 1px solid rgba(255,255,255,0.10);
-      border-radius: var(--radius-xl); padding: 7px;
-      backdrop-filter: blur(16px);
-      transition: var(--transition);
-    }
-    .waitlist-form-big:focus-within {
-      border-color: rgba(16,96,207,0.45);
-      box-shadow: 0 0 0 4px rgba(16,96,207,0.10);
-    }
-    .waitlist-form-big input {
-      flex: 1; background: transparent; border: none; outline: none;
-      padding: 12px 24px; color: var(--white);
-      font-family: var(--font-body); font-size: 15px;
-    }
-    .waitlist-form-big input::placeholder { color: var(--text-dim); }
-
-    .btn-gold {
-      padding: 13px 30px; border-radius: var(--radius-xl);
-      background: linear-gradient(135deg, var(--gold-dark), var(--gold));
-      color: var(--navy); font-family: var(--font-body);
-      font-size: 14.5px; font-weight: 800;
-      white-space: nowrap; transition: var(--transition);
-      box-shadow: 0 4px 20px rgba(204,136,0,0.36);
-    }
-    .btn-gold:hover { transform: scale(1.03); box-shadow: var(--shadow-gold); }
-    .btn-gold:active { transform: scale(0.98); }
-
-    .waitlist-note {
-      font-size: 12.5px; color: var(--text-dim); margin-bottom: 48px;
-    }
-
-    .social-proof {
-      display: flex; align-items: center; justify-content: center;
-      gap: 12px; flex-wrap: wrap;
-    }
-    .avatars { display: flex; }
-    .avatar {
-      width: 34px; height: 34px; border-radius: 50%;
-      border: 2px solid var(--navy); margin-left: -9px; font-size: 17px;
-      display: flex; align-items: center; justify-content: center;
-      background: linear-gradient(135deg, var(--blue-dark), var(--blue));
-    }
-    .avatars .avatar:first-child { margin-left: 0; }
-    .social-text { font-size: 13.5px; color: var(--text-muted); }
-    .social-text strong { color: var(--white); }
-
-    .waitlist-success {
-      display: none; flex-direction: column; align-items: center; gap: 14px;
-      max-width: 480px; margin: 0 auto;
-    }
-    .waitlist-success .success-icon { font-size: 44px; }
-    .waitlist-success .success-title {
-      font-family: var(--font-display);
-      font-size: 22px; font-weight: 700;
-    }
-    .waitlist-success .success-sub { font-size: 15.5px; color: var(--text-muted); }
-
-    /* ─── FOOTER ────────────────────────────────────────────────────────── */
-    footer {
-      padding: 44px 0 32px;
-      border-top: 1px solid var(--border);
-    }
-    .footer-inner {
-      display: flex; align-items: center; justify-content: space-between;
-      flex-wrap: wrap; gap: 20px;
-    }
-    .footer-logo {
-      display: flex; align-items: center; gap: 10px;
-    }
-    .footer-logo img {
-      width: 30px; height: 30px; border-radius: 7px;
-      object-fit: contain; background: white; padding: 2px;
-    }
-    .footer-logo-text {
-      font-family: var(--font-display);
-      font-weight: 700; font-size: 16px; color: var(--white);
-    }
-    .footer-logo-text .accent { color: var(--gold); }
-    .footer-links { display: flex; gap: 28px; flex-wrap: wrap; }
-    .footer-links a {
-      font-size: 13.5px; color: var(--text-dim);
-      transition: color var(--transition);
-    }
-    .footer-links a:hover { color: var(--white); }
-    .footer-copy {
-      font-size: 12.5px; color: var(--text-dim);
-    }
-    @media (max-width: 640px) {
-      .footer-inner { flex-direction: column; text-align: center; }
-      .footer-links { justify-content: center; }
-      .footer-logo { justify-content: center; }
-    }
-
-    /* ─── SCROLL REVEAL ─────────────────────────────────────────────────── */
-    .reveal {
-      opacity: 0;
-      transform: translateY(28px);
-      transition: opacity 0.72s cubic-bezier(0.22, 1, 0.36, 1), transform 0.72s cubic-bezier(0.22, 1, 0.36, 1);
-    }
-    .reveal.visible { opacity: 1; transform: translateY(0); }
-    .reveal.delay-1 { transition-delay: 0.08s; }
-    .reveal.delay-2 { transition-delay: 0.16s; }
-    .reveal.delay-3 { transition-delay: 0.24s; }
-    .reveal.delay-4 { transition-delay: 0.32s; }
-    .reveal.delay-5 { transition-delay: 0.40s; }
-    .reveal.delay-6 { transition-delay: 0.48s; }
   </style>
 </head>
-
 <body>
 
-  <!-- ─── NAVBAR ──────────────────────────────────────────────────────────── -->
-  <nav id="navbar">
-    <div class="container">
-      <div class="nav-inner">
-        <a href="#" class="nav-logo">
-          <img src="logo.jpeg" alt="ActivEducation logo" />
-          <span class="nav-logo-text">Activ<span class="accent">Educ</span></span>
-        </a>
-        <div class="nav-cta">
-          <a href="#waitlist" class="btn-ghost">Se connecter</a>
-          <a href="#waitlist" class="btn-primary">Accès anticipé</a>
-        </div>
+  <!-- ============ HEADER ============ -->
+  <header id="header">
+    <div class="wrap nav">
+      <a href="#" class="brand" aria-label="ActivEducation accueil">
+        <img src="logo.jpeg" alt="ActivEducation" />
+        <span>Activ<b>Education</b></span>
+      </a>
+      <nav class="nav-links" aria-label="Navigation principale">
+        <a href="#parcours">Le parcours</a>
+        <a href="#fonctionnalites">Fonctionnalités</a>
+        <a href="#mentors">Mentors</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+      <div class="nav-actions">
+        <a href="/app/#/login" class="btn btn-ghost desk">Se connecter</a>
+        <a href="/app/#/register" class="btn btn-amber desk">Créer un compte</a>
+        <button class="nav-toggle" id="navToggle" aria-label="Ouvrir le menu" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
       </div>
     </div>
-  </nav>
-
-  <!-- ─── HERO ────────────────────────────────────────────────────────────── -->
-  <section id="hero">
-    <div class="hero-bg"></div>
-    <div class="hero-grid"></div>
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="orb orb-3"></div>
-
-    <!-- Floating ambient cards -->
-    <div class="floating-cards">
-      <div class="f-card f-card-1">
-        <span class="icon">🏆</span> <span>+150 XP gagnés</span>
-      </div>
-      <div class="f-card f-card-2">
-        <span class="icon">🎯</span> <span>Test d'orientation complété</span>
-      </div>
-      <div class="f-card f-card-3">
-        <span class="icon">👨‍🏫</span> <span>Mentor trouvé — Dr. Kofi Asante</span>
-      </div>
-      <div class="f-card f-card-4">
-        <span class="icon">🔥</span> <span>7 jours de streak</span>
-      </div>
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="#parcours">Le parcours</a>
+      <a href="#fonctionnalites">Fonctionnalités</a>
+      <a href="#mentors">Mentors</a>
+      <a href="#faq">FAQ</a>
+      <a href="/app/#/login" class="btn btn-ghost">Se connecter</a>
+      <a href="/app/#/register" class="btn btn-amber">Créer un compte</a>
     </div>
+  </header>
 
-    <div class="container">
-      <div class="hero-content">
-
-        <div class="hero-badge fade-in-up">
-          <span class="badge-pill"><span class="dot"></span>Lancement imminent</span>
+  <!-- ============ HERO ============ -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div class="hero-text">
+        <div class="hero-badge">
+          <span class="dot"></span>
+          <span>Plateforme live</span>
+          <span class="flag">🇹🇬</span>
+          <span>Pensée pour le Togo</span>
         </div>
-
-        <h1 class="hero-title fade-in-up delay-1">
-          Découvrez votre voie.
-          <span class="line2 gradient-text">Jouez votre avenir.</span>
-        </h1>
-
-        <p class="hero-subtitle fade-in-up delay-2">
-          La première plateforme d'orientation scolaire et professionnelle gamifiée.
-          Tests personnalisés, mentors, classements — tout pour trouver votre chemin avec plaisir.
+        <h1>Découvre ta voie,<br><span class="accent">joue</span> ton avenir.</h1>
+        <p class="hero-sub">
+          ActivEducation transforme l'orientation scolaire en une aventure.
+          Teste-toi, explore les métiers, trouve ton école et progresse — XP,
+          badges et mentors à la clé.
         </p>
-
-        <!-- Countdown -->
-        <div class="countdown-wrapper fade-in-up delay-3">
-          <div class="countdown-label">Lancement dans</div>
-          <div class="countdown">
-            <div class="countdown-item">
-              <div class="countdown-num" id="cd-days">00</div>
-              <div class="countdown-unit">Jours</div>
-            </div>
-            <div class="countdown-sep">:</div>
-            <div class="countdown-item">
-              <div class="countdown-num" id="cd-hours">00</div>
-              <div class="countdown-unit">Heures</div>
-            </div>
-            <div class="countdown-sep">:</div>
-            <div class="countdown-item">
-              <div class="countdown-num" id="cd-mins">00</div>
-              <div class="countdown-unit">Minutes</div>
-            </div>
-            <div class="countdown-sep">:</div>
-            <div class="countdown-item">
-              <div class="countdown-num" id="cd-secs">00</div>
-              <div class="countdown-unit">Secondes</div>
-            </div>
-          </div>
+        <div class="hero-cta">
+          <a href="/app/#/register" class="btn btn-amber btn-lg">
+            Créer mon compte gratuit
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+          <a href="/app/#/login" class="btn btn-outline-blue btn-lg">J'ai déjà un compte</a>
         </div>
-
-        <!-- Email form -->
-        <div id="hero-form-wrapper" class="fade-in-up delay-4">
-          <form class="hero-form" id="heroForm" onsubmit="handleHeroSubmit(event)">
-            <input type="email" id="heroEmail" placeholder="Votre adresse e-mail" required />
-            <button type="submit" class="btn-submit">Accès anticipé →</button>
-          </form>
-          <div class="form-success" id="heroSuccess">
-            ✓ Vous serez parmi les premiers informés au lancement.
-          </div>
-          <p class="hero-note">Gratuit · Sans engagement · Notification à l'ouverture</p>
+        <div class="hero-trust">
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> 100% gratuit pour les élèves</span>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Tests d'orientation guidés</span>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Mentors & écoles vérifiés</span>
         </div>
-
       </div>
-    </div>
-  </section>
 
-  <!-- ─── STATS ────────────────────────────────────────────────────────────── -->
-  <section id="stats">
-    <div class="container">
-      <div class="stats-grid">
-        <div class="stat-item reveal">
-          <div class="stat-num">483+</div>
-          <div class="stat-label">Métiers répertoriés</div>
+      <div class="mock">
+        <div class="float-chip chip-a">
+          <span class="em" style="background:var(--amber-surface)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--amber-dark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg></span>
+          <div>Badge débloqué<small>Test terminé 🎉</small></div>
         </div>
-        <div class="stat-item reveal delay-1">
-          <div class="stat-num">47</div>
-          <div class="stat-label">Mentors professionnels</div>
+        <div class="float-chip chip-b">
+          <span class="em" style="background:#FFF0EA"><svg viewBox="0 0 24 24" fill="none" stroke="var(--streak)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></span>
+          <div>7 jours<small>Série en cours 🔥</small></div>
         </div>
-        <div class="stat-item reveal delay-2">
-          <div class="stat-num">23</div>
-          <div class="stat-label">Tests d'orientation</div>
-        </div>
-        <div class="stat-item reveal delay-3">
-          <div class="stat-num">100%</div>
-          <div class="stat-label">Gratuit pour débuter</div>
+
+        <div class="mock-card">
+          <div class="mock-top">
+            <div class="mock-avatar">A<span class="mock-lvl">Niv. 8</span></div>
+            <div>
+              <div class="mock-name">Ama K.</div>
+              <div class="mock-role">Profil : Sciences & Tech</div>
+            </div>
+          </div>
+          <div class="mock-xp-label"><span>Progression</span><span class="g">1 240 / 1 720 XP</span></div>
+          <div class="mock-bar"><i></i></div>
+          <div class="mock-badges">
+            <div class="mock-badge">
+              <div class="ic ic-gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg></div>
+              <span>12 badges</span>
+            </div>
+            <div class="mock-badge">
+              <div class="ic ic-fire"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div>
+              <span>Série 7j</span>
+            </div>
+            <div class="mock-badge">
+              <div class="ic ic-lvl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 8.5 22 9.3 17 14 18.2 21 12 17.5 5.8 21 7 14 2 9.3 9 8.5"/></svg></div>
+              <span>Niveau 8</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ─── FEATURES ─────────────────────────────────────────────────────────── -->
-  <section id="features">
-    <div class="container">
-      <div class="section-header reveal">
-        <span class="section-tag">Fonctionnalités</span>
-        <h2 class="section-title">Tout ce dont vous avez besoin<br><span class="gradient-text">pour choisir votre avenir</span></h2>
-        <p class="section-sub">Une plateforme complète qui combine orientation professionnelle et mécanique de jeu pour vous garder motivé.</p>
+  <!-- ============ STATS ============ -->
+  <section class="wrap">
+    <div class="stats">
+      <div class="stat reveal"><div class="num" data-count="42" data-suffix="+">0</div><div class="lbl">Métiers détaillés à explorer</div></div>
+      <div class="stat reveal"><div class="num" data-count="9">0</div><div class="lbl">Secteurs d'avenir cartographiés</div></div>
+      <div class="stat reveal"><div class="num" data-count="100" data-suffix="%">0</div><div class="lbl">Gratuit pour les élèves</div></div>
+      <div class="stat reveal"><div class="num">24<span class="u">/</span>7</div><div class="lbl">Cours & mentors accessibles</div></div>
+    </div>
+  </section>
+
+  <!-- ============ PARCOURS / STEPS ============ -->
+  <section class="section-pad wrap" id="parcours">
+    <div class="section-head">
+      <span class="eyebrow">Le parcours</span>
+      <h2>Trois étapes pour passer du doute à la décision.</h2>
+      <p>Un chemin clair, conçu pour les lycéens et étudiants qui ne savent pas encore où aller — et pour ceux qui veulent confirmer leur choix.</p>
+    </div>
+    <div class="steps">
+      <div class="step reveal">
+        <div class="step-n">ÉTAPE 01</div>
+        <div class="step-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+        <h3>Crée ton profil</h3>
+        <p>Quelques minutes pour parler de toi : tes matières, tes envies, tes points forts. Ton espace personnel commence à vivre.</p>
       </div>
-
-      <div class="features-grid">
-
-        <!-- Hero feature card (spans 2 cols) -->
-        <div class="feature-card reveal">
-          <div class="feature-inner">
-            <div class="feature-icon">🎯</div>
-            <div class="feature-content">
-              <div class="feature-title">Tests d'orientation personnalisés</div>
-              <div class="feature-desc">Des évaluations scientifiques et ludiques pour identifier vos aptitudes, vos intérêts et vous orienter vers les carrières qui vous correspondent vraiment. Chaque test s'adapte à votre profil en temps réel.</div>
-              <div class="feature-highlights">
-                <span class="feature-hl">Adaptatif</span>
-                <span class="feature-hl">Résultats instantanés</span>
-                <span class="feature-hl">Recommandations personnalisées</span>
-              </div>
-              <span class="feature-tag">Personnalisé</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Card 2 -->
-        <div class="feature-card reveal delay-1">
-          <div class="feature-icon">🏆</div>
-          <div class="feature-title">Gamification complète</div>
-          <div class="feature-desc">Gagnez des XP, débloquez des badges, montez dans le classement et relevez des défis quotidiens. L'orientation devient un jeu passionnant.</div>
-          <span class="feature-tag">Motivant</span>
-        </div>
-
-        <!-- Card 3 -->
-        <div class="feature-card reveal delay-2">
-          <div class="feature-icon">👨‍🏫</div>
-          <div class="feature-title">Réseau de mentors</div>
-          <div class="feature-desc">Accédez à des professionnels expérimentés dans votre domaine. Demandez des conseils, bénéficiez d'un accompagnement réel.</div>
-          <span class="feature-tag">Humain</span>
-        </div>
-
-        <!-- Card 4 -->
-        <div class="feature-card reveal delay-3">
-          <div class="feature-icon">💼</div>
-          <div class="feature-title">Explorer les carrières</div>
-          <div class="feature-desc">Parcourez plus de 483 métiers avec leurs perspectives d'emploi, salaires moyens, formations requises et témoignages de professionnels.</div>
-          <span class="feature-tag">Complet</span>
-        </div>
-
-        <!-- Card 5: spans 2 cols -->
-        <div class="feature-card reveal delay-4">
-          <div class="feature-inner">
-            <div class="feature-icon">🏫</div>
-            <div class="feature-content">
-              <div class="feature-title">Annuaire des établissements</div>
-              <div class="feature-desc">Trouvez les meilleures écoles, universités et centres de formation correspondant à votre profil. Filtrez par domaine, localisation et taux d'insertion professionnelle.</div>
-              <div class="feature-highlights">
-                <span class="feature-hl">Géolocalisé</span>
-                <span class="feature-hl">Taux d'insertion</span>
-                <span class="feature-hl">Avis étudiants</span>
-              </div>
-              <span class="feature-tag">Géolocalisé</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Card 6 -->
-        <div class="feature-card reveal delay-5">
-          <div class="feature-icon">💬</div>
-          <div class="feature-title">Messagerie intégrée</div>
-          <div class="feature-desc">Communiquez directement avec vos mentors et conseillers. Suivez vos conversations et votre progression en temps réel.</div>
-          <span class="feature-tag">Temps réel</span>
-        </div>
-
+      <div class="step reveal">
+        <div class="step-n">ÉTAPE 02</div>
+        <div class="step-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg></div>
+        <h3>Passe les tests</h3>
+        <p>Des tests d'orientation guidés qui révèlent les secteurs et métiers faits pour toi. Chaque réponse te rapproche de ta voie.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-n">ÉTAPE 03</div>
+        <div class="step-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg></div>
+        <h3>Trace ta voie</h3>
+        <p>Métiers recommandés, écoles qui forment pour, mentors qui te guident. Tu repars avec un plan, pas juste une idée.</p>
       </div>
     </div>
   </section>
 
-  <!-- ─── HOW IT WORKS ─────────────────────────────────────────────────────── -->
-  <section id="how">
-    <div class="container">
-      <div class="section-header reveal">
-        <span class="section-tag">Comment ça marche</span>
-        <h2 class="section-title">Trois étapes vers<br><span class="gradient-text">votre carrière idéale</span></h2>
+  <!-- ============ FEATURES BENTO ============ -->
+  <section class="section-pad wrap" id="fonctionnalites">
+    <div class="section-head center">
+      <span class="eyebrow">Tout au même endroit</span>
+      <h2>Une boîte à outils complète pour ton orientation.</h2>
+      <p>Plus besoin de chercher partout. ActivEducation réunit l'essentiel : tests, métiers, écoles, mentors et apprentissage.</p>
+    </div>
+    <div class="bento">
+      <div class="feature span3 reveal">
+        <div class="fic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg></div>
+        <h3>Annuaire des écoles</h3>
+        <p>Explore les établissements du Togo : filières proposées, frais, conditions d'admission et contacts. Compare et trouve celle qui te correspond.</p>
+        <span class="tag">Écoles vérifiées</span>
+      </div>
+      <div class="feature span3 amber reveal">
+        <div class="fic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div>
+        <h3>Métiers & filières détaillés</h3>
+        <p>Plus de 40 métiers décrits sans langue de bois : missions, compétences, salaires, débouchés et formations pour y arriver, au plus près du contexte local.</p>
+        <span class="tag">42 métiers · 9 secteurs</span>
       </div>
 
-      <div class="steps">
-        <div class="step-item reveal">
-          <div class="step-num"><span class="num-inner">01</span></div>
-          <h3 class="step-title">Crée ton profil</h3>
-          <p class="step-desc">Inscris-toi gratuitement en quelques minutes. Remplis ton profil avec ton niveau d'études, tes centres d'intérêt et tes ambitions.</p>
+      <div class="feature wide reveal" id="mentors">
+        <div>
+          <div class="fic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+          <h3>Des mentors qui ont fait le chemin</h3>
+          <p>Échange avec des professionnels et des aînés de ton secteur. Pose tes vraies questions, reçois des conseils concrets, et deviens mentor à ton tour quand tu seras prêt.</p>
+          <span class="tag">Mentorat encadré</span>
         </div>
+        <div class="mini-badges">
+          <div class="mini"><div class="mic" style="background:var(--blue-surface)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><b>1:1</b><span>Échanges directs</span></div>
+          <div class="mini"><div class="mic" style="background:var(--amber-surface)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--amber-dark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></div><b>Pros</b><span>Du terrain</span></div>
+          <div class="mini"><div class="mic" style="background:#F3EBFF"><svg viewBox="0 0 24 24" fill="none" stroke="var(--level)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="4"/></svg></div><b>Tâches</b><span>Objectifs guidés</span></div>
+        </div>
+      </div>
 
-        <div class="step-item reveal delay-2">
-          <div class="step-num"><span class="num-inner">02</span></div>
-          <h3 class="step-title">Passe tes tests</h3>
-          <p class="step-desc">Évalue tes aptitudes et découvre tes talents cachés. Gagne des points à chaque étape complétée et monte dans le classement.</p>
-        </div>
-
-        <div class="step-item reveal delay-4">
-          <div class="step-num"><span class="num-inner">03</span></div>
-          <h3 class="step-title">Trace ta voie</h3>
-          <p class="step-desc">Reçois des recommandations personnalisées, connecte-toi avec un mentor et accède aux meilleures formations pour te lancer.</p>
-        </div>
+      <div class="feature span2 reveal">
+        <div class="fic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>
+        <h3>Cours e-learning</h3>
+        <p>Apprends à ton rythme avec des cours structurés et des leçons courtes.</p>
+        <span class="tag">À ton rythme</span>
+      </div>
+      <div class="feature span2 amber reveal">
+        <div class="fic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg></div>
+        <h3>Examens & badges</h3>
+        <p>Valide tes cours avec un examen. Au-delà de 80%, débloque ton badge.</p>
+        <span class="tag">Badge dès 80%</span>
+      </div>
+      <div class="feature span2 reveal">
+        <div class="fic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></div>
+        <h3>Recherche unifiée</h3>
+        <p>Une seule barre pour trouver écoles, métiers et cours en un instant.</p>
+        <span class="tag">Tout, en un mot-clé</span>
       </div>
     </div>
   </section>
 
-  <!-- ─── GAMIFICATION SPOTLIGHT ───────────────────────────────────────────── -->
-  <section id="gamification">
-    <div class="container">
-      <div class="gami-inner">
-
-        <div class="gami-text">
-          <div class="section-header">
-            <span class="section-tag">Gamification</span>
-            <h2 class="section-title">L'orientation<br><span class="gradient-text">comme un jeu vidéo</span></h2>
-          </div>
-          <div class="gami-list">
-            <div class="gami-item reveal">
-              <div class="gami-item-icon">⚡</div>
-              <div>
-                <div class="gami-item-title">Streaks quotidiens</div>
-                <div class="gami-item-desc">Connectez-vous chaque jour pour maintenir votre streak et débloquer des bonus exclusifs.</div>
-              </div>
-            </div>
-            <div class="gami-item reveal delay-1">
-              <div class="gami-item-icon">🎖️</div>
-              <div>
-                <div class="gami-item-title">Badges et achievements</div>
-                <div class="gami-item-desc">Plus de 50 badges à débloquer : explorateur, persévérant, mentor, champion du classement.</div>
-              </div>
-            </div>
-            <div class="gami-item reveal delay-2">
-              <div class="gami-item-icon">📊</div>
-              <div>
-                <div class="gami-item-title">Classements hebdomadaires</div>
-                <div class="gami-item-desc">Comparez-vous avec d'autres élèves et grimpez dans le top du leaderboard régional.</div>
-              </div>
-            </div>
-            <div class="gami-item reveal delay-3">
-              <div class="gami-item-icon">⚔️</div>
-              <div>
-                <div class="gami-item-title">Défis et challenges</div>
-                <div class="gami-item-desc">Relevez des challenges thématiques pour gagner des XP bonus et des récompenses spéciales.</div>
-              </div>
-            </div>
+  <!-- ============ GAMIFICATION BAND ============ -->
+  <section class="section-pad wrap">
+    <div class="gband reveal">
+      <div class="gband-inner">
+        <div>
+          <span class="eyebrow on-blue">Apprendre = jouer</span>
+          <h2>L'orientation, version jeu.</h2>
+          <p>Chaque test passé, chaque cours validé, chaque jour de connexion te fait gagner des points et monter de niveau. La motivation ne te quitte plus.</p>
+          <div class="gband-stats">
+            <div class="gs"><div class="n">XP</div><div class="l">à chaque action</div></div>
+            <div class="gs"><div class="n">Badges</div><div class="l">à collectionner</div></div>
+            <div class="gs"><div class="n">Séries</div><div class="l">jour après jour</div></div>
           </div>
         </div>
-
-        <div class="gami-visual reveal delay-2">
-          <div class="gami-card">
-            <div class="icon">🔥</div>
-            <div class="value">12 jours</div>
-            <div class="label">Streak actuel · Record : 42 jours</div>
+        <div class="gvis">
+          <div class="grow">
+            <span class="gic" style="background:var(--amber-surface)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--amber-dark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
+            <div><b>+150 XP gagnés</b><small>Test d'orientation terminé</small></div>
           </div>
-          <div class="gami-card">
-            <div class="icon">⭐</div>
-            <div class="value">2 437 XP</div>
-            <div class="label">Points accumulés</div>
+          <div class="grow">
+            <span class="gic" style="background:#FFF0EA"><svg viewBox="0 0 24 24" fill="none" stroke="var(--streak)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></span>
+            <div><b>Série de 7 jours 🔥</b><small>Reviens demain pour la garder</small></div>
           </div>
-          <div class="gami-card">
-            <div class="icon">🥇</div>
-            <div class="value">#3</div>
-            <div class="label">Classement cette semaine</div>
+          <div class="grow">
+            <span class="gic" style="background:#F3EBFF"><svg viewBox="0 0 24 24" fill="none" stroke="var(--level)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg></span>
+            <div><b>Badge « Explorateur » débloqué</b><small>5 métiers consultés</small></div>
           </div>
-          <div class="gami-card">
-            <div class="icon">🏅</div>
-            <div class="value">18 / 50</div>
-            <div class="label">Badges débloqués</div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </section>
-
-  <!-- ─── WAITLIST ─────────────────────────────────────────────────────────── -->
-  <section id="waitlist">
-    <div class="waitlist-bg"></div>
-    <div class="container">
-      <div class="waitlist-inner">
-        <div class="section-header reveal">
-          <span class="section-tag">Accès anticipé</span>
-          <h2 class="section-title">Soyez parmi les premiers<br><span class="gradient-text">à découvrir la plateforme</span></h2>
-          <p class="section-sub">Inscrivez-vous dès maintenant pour être notifié au lancement et bénéficier d'un accès prioritaire gratuit.</p>
-        </div>
-
-        <div id="waitlist-form-section" class="reveal delay-1">
-          <form class="waitlist-form-big" id="waitlistForm" onsubmit="handleWaitlistSubmit(event)">
-            <input type="email" id="waitlistEmail" placeholder="votre@email.com" required />
-            <button type="submit" class="btn-gold">Je veux accès →</button>
-          </form>
-          <p class="waitlist-note">Vos données sont en sécurité. Aucun spam.</p>
-        </div>
-
-        <div class="waitlist-success" id="waitlistSuccess">
-          <div class="success-icon">🎓</div>
-          <div class="success-title">Vous êtes sur la liste.</div>
-          <div class="success-sub">On vous contacte dès l'ouverture. Partagez autour de vous.</div>
-        </div>
-
-        <div class="social-proof reveal delay-2">
-          <div class="avatars">
-            <div class="avatar">👩🏾</div>
-            <div class="avatar">👨🏿</div>
-            <div class="avatar">👩🏽</div>
-            <div class="avatar">👨🏾</div>
-            <div class="avatar">👩🏻</div>
-          </div>
-          <div class="social-text"><strong>+320 personnes</strong> déjà sur la liste d'attente</div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ─── FOOTER ───────────────────────────────────────────────────────────── -->
+  <!-- ============ AUDIENCES ============ -->
+  <section class="section-pad wrap">
+    <div class="section-head center">
+      <span class="eyebrow">Pour qui ?</span>
+      <h2>Une réponse pour chacun.</h2>
+    </div>
+    <div class="aud">
+      <div class="acard reveal">
+        <div class="ah"><span class="aem">🎓</span><h3>Élèves & étudiants</h3></div>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Découvre les métiers qui te ressemblent</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Choisis ton école en connaissance de cause</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Apprends en t'amusant, gratuitement</li>
+        </ul>
+      </div>
+      <div class="acard reveal">
+        <div class="ah"><span class="aem" style="background:var(--amber-surface)">👪</span><h3>Parents</h3></div>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Accompagne le choix de ton enfant sereinement</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Des informations fiables sur les filières</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Un avenir construit, pas subi</li>
+        </ul>
+      </div>
+      <div class="acard reveal">
+        <div class="ah"><span class="aem" style="background:#F3EBFF">🏫</span><h3>Écoles & mentors</h3></div>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Gagne en visibilité auprès des bons profils</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Partage ton expérience avec la nouvelle génération</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Contribue à une orientation de qualité</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TESTIMONIALS ============ -->
+  <section class="section-pad wrap">
+    <div class="section-head center">
+      <span class="eyebrow">Ils avancent avec nous</span>
+      <h2>Ce que ça change, concrètement.</h2>
+    </div>
+    <div class="quotes">
+      <div class="quote reveal">
+        <div class="stars">★★★★★</div>
+        <p>« Je voulais juste “faire médecine” sans savoir pourquoi. Les tests m'ont montré que j'aimais surtout l'analyse — j'ai trouvé une filière qui me correspond vraiment. »</p>
+        <div class="who"><span class="av">K</span><div><b>Koffi A.</b><span>Élève en Terminale, Lomé</span></div></div>
+      </div>
+      <div class="quote reveal">
+        <div class="stars">★★★★★</div>
+        <p>« En tant que parent, j'avais peur de mal conseiller ma fille. La fiche métier et l'école recommandée nous ont donné une vraie base pour décider ensemble. »</p>
+        <div class="who"><span class="av" style="background:linear-gradient(135deg,var(--amber-light),var(--amber-dark))">M</span><div><b>Mawussi D.</b><span>Parent d'élève</span></div></div>
+      </div>
+      <div class="quote reveal">
+        <div class="stars">★★★★★</div>
+        <p>« Les badges et la série de connexion, ça paraît bête, mais ça m'a fait revenir chaque jour. J'ai fini par explorer des métiers auxquels je n'aurais jamais pensé. »</p>
+        <div class="who"><span class="av" style="background:linear-gradient(135deg,var(--level),var(--blue))">A</span><div><b>Aïcha B.</b><span>Étudiante en L1</span></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FAQ ============ -->
+  <section class="section-pad wrap" id="faq">
+    <div class="section-head center">
+      <span class="eyebrow">On répond</span>
+      <h2>Les questions que tu te poses.</h2>
+    </div>
+    <div class="faq">
+      <details class="qa" open>
+        <summary>Est-ce que c'est vraiment gratuit ?<span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        </summary>
+        <div class="ans"><p>Oui. La création de compte, les tests d'orientation, l'exploration des métiers et des écoles sont gratuits pour les élèves et étudiants.</p></div>
+      </details>
+      <details class="qa">
+        <summary>Je ne sais pas du tout quoi faire. C'est pour moi ?<span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        </summary>
+        <div class="ans"><p>Exactement pour toi. ActivEducation est conçu pour partir de zéro : les tests t'aident à découvrir des pistes que tu n'avais même pas envisagées, puis à les confirmer.</p></div>
+      </details>
+      <details class="qa">
+        <summary>Les informations sur les écoles et métiers sont-elles fiables ?<span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        </summary>
+        <div class="ans"><p>Les contenus sont gérés et mis à jour par l'équipe ActivEducation, avec un focus sur le contexte du Togo et de l'Afrique de l'Ouest : filières, débouchés et formations réellement accessibles.</p></div>
+      </details>
+      <details class="qa">
+        <summary>Comment fonctionne le mentorat ?<span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        </summary>
+        <div class="ans"><p>Tu peux échanger avec des mentors — professionnels et aînés de ton domaine — directement depuis l'application. Plus tard, tu peux toi aussi candidater pour devenir mentor.</p></div>
+      </details>
+      <details class="qa">
+        <summary>Sur quels appareils puis-je l'utiliser ?<span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        </summary>
+        <div class="ans"><p>ActivEducation s'utilise directement depuis ton navigateur, sur téléphone comme sur ordinateur. Crée ton compte et accède à tout, partout.</p></div>
+      </details>
+    </div>
+  </section>
+
+  <!-- ============ FINAL CTA ============ -->
+  <section class="section-pad wrap">
+    <div class="cta-band reveal">
+      <h2>Ton avenir n'attend pas. Joue-le.</h2>
+      <p>Crée ton compte gratuit et fais ton premier test d'orientation aujourd'hui. Quelques minutes pour y voir enfin clair.</p>
+      <div class="hero-cta">
+        <a href="/app/#/register" class="btn btn-amber btn-lg">
+          Créer mon compte gratuit
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+        <a href="/app/#/login" class="btn btn-outline-blue btn-lg">Se connecter</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
   <footer>
-    <div class="container">
-      <div class="footer-inner">
-        <div class="footer-logo">
-          <img src="logo.jpeg" alt="ActivEducation" />
-          <span class="footer-logo-text">Activ<span class="accent">Education</span></span>
+    <div class="wrap">
+      <div class="foot-grid">
+        <div class="foot-brand">
+          <a href="#" class="brand"><img src="logo.jpeg" alt="ActivEducation" /><span>Activ<b>Education</b></span></a>
+          <p>La plateforme d'orientation scolaire et professionnelle gamifiée du Togo. Découvre ta voie, joue ton avenir.</p>
         </div>
-        <div class="footer-links">
+        <div class="foot-col">
+          <h4>Produit</h4>
+          <a href="#parcours">Le parcours</a>
+          <a href="#fonctionnalites">Fonctionnalités</a>
+          <a href="#mentors">Mentors</a>
+          <a href="/app/#/register">Créer un compte</a>
+        </div>
+        <div class="foot-col">
+          <h4>Ressources</h4>
+          <a href="#faq">FAQ</a>
+          <a href="/app/#/login">Se connecter</a>
+          <a href="#fonctionnalites">Métiers & écoles</a>
+        </div>
+        <div class="foot-col">
+          <h4>ActivEducation</h4>
           <a href="#">À propos</a>
-          <a href="#">Contact</a>
+          <a href="mailto:contact@activeducationhub.com">Nous contacter</a>
           <a href="#">Confidentialité</a>
-          <a href="#">CGU</a>
         </div>
-        <div class="footer-copy">© 2026 ActivEducation. Tous droits réservés.</div>
+      </div>
+      <div class="foot-bottom">
+        <p>© <span id="year">2026</span> ActivEducation. Tous droits réservés.</p>
+        <span class="made">Conçu avec ❤️ au Togo 🇹🇬</span>
       </div>
     </div>
   </footer>
 
-  <!-- ─── JAVASCRIPT ───────────────────────────────────────────────────────── -->
   <script>
-    // ── Countdown Timer
-    const LAUNCH_DATE = new Date('2026-05-01T00:00:00').getTime();
+    // Header scroll state
+    const header = document.getElementById('header');
+    const onScroll = () => header.classList.toggle('scrolled', window.scrollY > 12);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
 
-    function updateCountdown() {
-      const diff = LAUNCH_DATE - Date.now();
-      if (diff <= 0) {
-        document.querySelector('.countdown-wrapper').innerHTML =
-          '<div class="countdown-label" style="font-size:18px;color:var(--gold);letter-spacing:0">La plateforme est en ligne.</div>';
-        return;
-      }
-      const d = Math.floor(diff / 86400000);
-      const h = Math.floor((diff % 86400000) / 3600000);
-      const m = Math.floor((diff % 3600000) / 60000);
-      const s = Math.floor((diff % 60000) / 1000);
-      const pad = n => String(n).padStart(2, '0');
-      document.getElementById('cd-days').textContent  = pad(d);
-      document.getElementById('cd-hours').textContent = pad(h);
-      document.getElementById('cd-mins').textContent  = pad(m);
-      document.getElementById('cd-secs').textContent  = pad(s);
-    }
-    updateCountdown();
-    setInterval(updateCountdown, 1000);
+    // Mobile menu
+    const toggle = document.getElementById('navToggle');
+    const menu = document.getElementById('mobileMenu');
+    toggle.addEventListener('click', () => {
+      const open = menu.classList.toggle('open');
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    menu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+      menu.classList.remove('open');
+      toggle.setAttribute('aria-expanded', 'false');
+    }));
 
-    // ── Navbar scroll effect
-    const navbar = document.getElementById('navbar');
-    window.addEventListener('scroll', () => {
-      navbar.classList.toggle('scrolled', window.scrollY > 40);
-    }, { passive: true });
+    // FAQ: single-open accordion
+    const items = document.querySelectorAll('.qa');
+    items.forEach(d => d.addEventListener('toggle', () => {
+      if (d.open) items.forEach(o => { if (o !== d) o.open = false; });
+    }));
 
-    // ── Scroll reveal
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-          observer.unobserve(entry.target);
+    // Reveal on scroll (staggered)
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach((e, i) => {
+        if (e.isIntersecting) {
+          setTimeout(() => e.target.classList.add('visible'), (i % 6) * 70);
+          obs.unobserve(e.target);
         }
       });
-    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
-    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    }, { threshold: 0.10 });
+    document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
 
-    // ── Hero form submit
-    function handleHeroSubmit(e) {
-      e.preventDefault();
-      const email = document.getElementById('heroEmail').value.trim();
-      if (!email) return;
-      document.getElementById('heroForm').style.display = 'none';
-      document.getElementById('heroSuccess').style.display = 'flex';
-      const emails = JSON.parse(localStorage.getItem('ae_waitlist') || '[]');
-      if (!emails.includes(email)) { emails.push(email); localStorage.setItem('ae_waitlist', JSON.stringify(emails)); }
-    }
-
-    // ── Waitlist form submit
-    function handleWaitlistSubmit(e) {
-      e.preventDefault();
-      const email = document.getElementById('waitlistEmail').value.trim();
-      if (!email) return;
-      document.getElementById('waitlist-form-section').style.display = 'none';
-      document.getElementById('waitlistSuccess').style.display = 'flex';
-      const emails = JSON.parse(localStorage.getItem('ae_waitlist') || '[]');
-      if (!emails.includes(email)) { emails.push(email); localStorage.setItem('ae_waitlist', JSON.stringify(emails)); }
-    }
-
-    // ── Smooth anchor scroll
-    document.querySelectorAll('a[href^="#"]').forEach(a => {
-      a.addEventListener('click', e => {
-        const target = document.querySelector(a.getAttribute('href'));
-        if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    // Count-up for stats
+    const fmt = (n) => n.toLocaleString('fr-FR');
+    const counters = document.querySelectorAll('[data-count]');
+    const cObs = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (!e.isIntersecting) return;
+        const el = e.target;
+        const target = +el.dataset.count;
+        const suffix = el.dataset.suffix || '';
+        const dur = 1100; const t0 = performance.now();
+        const tick = (t) => {
+          const p = Math.min((t - t0) / dur, 1);
+          const eased = 1 - Math.pow(1 - p, 3);
+          el.textContent = fmt(Math.round(target * eased)) + suffix;
+          if (p < 1) requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+        cObs.unobserve(el);
       });
-    });
+    }, { threshold: 0.5 });
+    counters.forEach(c => cObs.observe(c));
+
+    // Year
+    document.getElementById('year').textContent = new Date().getFullYear();
   </script>
 </body>
 </html>
