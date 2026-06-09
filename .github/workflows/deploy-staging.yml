@@ -51,7 +51,8 @@ jobs:
           flutter pub get
           # ⚠ L'app étudiant ajoute /api/v1 côté endpoints ($apiV1/...), donc baseUrl
           # NE doit PAS contenir /api/v1 (sinon double préfixe /api/v1/api/v1 → 404).
-          flutter build web --release --dart-define=API_BASE_URL=https://staging-api.activeducationhub.com
+          # base-href=/app/ : l'app vit sous /app/ (la racine sert la landing).
+          flutter build web --release --base-href=/app/ --dart-define=API_BASE_URL=https://staging-api.activeducationhub.com
 
       - name: Build admin frontend
         working-directory: admin_dashboard
