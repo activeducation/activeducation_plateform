@@ -166,7 +166,10 @@ services:
     restart: unless-stopped
     volumes:
       - ./nginx/app.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./activ_education_app/build/web:/var/www/html:ro
+      # Landing statique a la racine du domaine
+      - ./landing:/var/www/html:ro
+      # App Flutter sous /app/ (build avec --base-href=/app/)
+      - ./activ_education_app/build/web:/var/www/html/app:ro
     networks:
       - app-network
     security_opt:
