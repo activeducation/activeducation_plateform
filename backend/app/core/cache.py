@@ -13,8 +13,8 @@ TTLs par defaut:
 
 import json
 import time
-from typing import Any, Callable, Optional
 from functools import wraps
+from typing import Any, Callable, Optional
 
 from app.core.logging import get_logger
 
@@ -27,14 +27,14 @@ logger = get_logger("core.cache")
 # TTL CONSTANTS (secondes)
 # =============================================================================
 
-TTL_LISTS = 600          # 10 min - listes ecoles/carrieres
-TTL_DETAIL = 300         # 5 min - detail ecole/carriere
-TTL_TESTS = 1800         # 30 min - tests d'orientation (tres statiques)
-TTL_USER_PROFILE = 120   # 2 min - profils utilisateurs
-TTL_MENTORS = 300        # 5 min - liste mentors (semi-statique)
+TTL_LISTS = 600  # 10 min - listes ecoles/carrieres
+TTL_DETAIL = 300  # 5 min - detail ecole/carriere
+TTL_TESTS = 1800  # 30 min - tests d'orientation (tres statiques)
+TTL_USER_PROFILE = 120  # 2 min - profils utilisateurs
+TTL_MENTORS = 300  # 5 min - liste mentors (semi-statique)
 TTL_OPPORTUNITIES = 300  # 5 min - liste opportunités (semi-statique)
-TTL_LEADERBOARD = 120    # 2 min - leaderboard (change fréquemment)
-TTL_GAMIFICATION = 60    # 1 min - profil gamification utilisateur
+TTL_LEADERBOARD = 120  # 2 min - leaderboard (change fréquemment)
+TTL_GAMIFICATION = 60  # 1 min - profil gamification utilisateur
 
 
 # =============================================================================
@@ -69,6 +69,7 @@ class CacheClient:
 
         try:
             import redis
+
             from app.core.config import settings
 
             redis_url = getattr(settings, "REDIS_URL", None)
@@ -237,6 +238,7 @@ def cached(key_prefix: str, ttl: int = TTL_LISTS, key_builder: Optional[Callable
         ttl: Duree de vie en secondes
         key_builder: Fonction optionnelle pour construire la cle depuis les args
     """
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -247,7 +249,7 @@ def cached(key_prefix: str, ttl: int = TTL_LISTS, key_builder: Optional[Callable
                 cache_key = key_builder(*args, **kwargs)
             else:
                 # Cle basee sur les arguments
-                args_str = "_".join(str(a) for a in args[1:] if not hasattr(a, '__dict__'))
+                args_str = "_".join(str(a) for a in args[1:] if not hasattr(a, "__dict__"))
                 kwargs_str = "_".join(f"{k}={v}" for k, v in sorted(kwargs.items()))
                 suffix = f"{args_str}_{kwargs_str}".strip("_") or "all"
                 cache_key = f"{key_prefix}:{suffix}"
@@ -272,6 +274,7 @@ def cached(key_prefix: str, ttl: int = TTL_LISTS, key_builder: Optional[Callable
             return result
 
         return wrapper
+
     return decorator
 
 

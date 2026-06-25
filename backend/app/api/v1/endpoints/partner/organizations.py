@@ -9,23 +9,23 @@ Gere:
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Request, Query
+from fastapi import APIRouter, Depends, Query, Request
 
 from app.core.logging import get_logger
 from app.core.security import get_current_user_id, get_current_user_role
+from app.middleware.rate_limiter import standard_limit
 from app.schemas.partner import (
-    OrganizationCreate,
-    OrganizationUpdate,
-    OrganizationResponse,
-    OrganizationListResponse,
     BeneficiaryCreate,
-    BeneficiaryUpdate,
-    BeneficiaryResponse,
     BeneficiaryListResponse,
+    BeneficiaryResponse,
+    BeneficiaryUpdate,
+    OrganizationCreate,
+    OrganizationListResponse,
+    OrganizationResponse,
+    OrganizationUpdate,
     OrganizationWithStats,
 )
-from app.services.partner_service import get_partner_service, PartnerService
-from app.middleware.rate_limiter import standard_limit
+from app.services.partner_service import PartnerService, get_partner_service
 
 logger = get_logger("api.partner")
 
@@ -60,6 +60,7 @@ async def create_organization(
     # Notifie l'equipe (best-effort, ne bloque jamais la creation)
     try:
         from app.core import email as email_service
+
         await email_service.notify_internal(
             subject=f"Nouvelle organisation partenaire — {body.name}",
             html_body=(

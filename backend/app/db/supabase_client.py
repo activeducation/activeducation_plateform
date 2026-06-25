@@ -8,23 +8,23 @@ Caracteristiques:
 - Gestion des erreurs avec exceptions typees
 """
 
-import time
 import asyncio
 import concurrent.futures
+import time
 from functools import wraps
 from threading import Lock
 from typing import Any, Callable, Optional, TypeVar
 
-from supabase import create_client, Client
 from postgrest.exceptions import APIError
+from supabase import Client, create_client
 
 from app.core.config import settings
-from app.core.logging import get_logger
+from app.core.exceptions import ConnectionError as DBConnectionError
 from app.core.exceptions import (
-    SupabaseError,
-    ConnectionError as DBConnectionError,
     QueryError,
+    SupabaseError,
 )
+from app.core.logging import get_logger
 
 logger = get_logger("db.supabase")
 
@@ -132,9 +132,7 @@ class SupabaseClient:
 
         except Exception as e:
             logger.error(f"Failed to initialize Supabase client: {e}", exc_info=True)
-            raise DBConnectionError(
-                f"Impossible d'initialiser le client Supabase: {str(e)}"
-            )
+            raise DBConnectionError(f"Impossible d'initialiser le client Supabase: {str(e)}")
 
     @property
     def client(self) -> Client:
@@ -232,11 +230,7 @@ class SupabaseClient:
         """Recupere un seul enregistrement par ID."""
         try:
             result = (
-                self.client.table(table)
-                .select(columns)
-                .eq(id_column, id_value)
-                .limit(1)
-                .execute()
+                self.client.table(table).select(columns).eq(id_column, id_value).limit(1).execute()
             )
             return result.data[0] if result.data else None
 
@@ -269,12 +263,7 @@ class SupabaseClient:
     ) -> list[dict[str, Any]]:
         """Met a jour un enregistrement."""
         try:
-            result = (
-                self.client.table(table)
-                .update(data)
-                .eq(id_column, id_value)
-                .execute()
-            )
+            result = self.client.table(table).update(data).eq(id_column, id_value).execute()
             return result.data
 
         except APIError as e:
@@ -290,12 +279,7 @@ class SupabaseClient:
     ) -> list[dict[str, Any]]:
         """Supprime un enregistrement."""
         try:
-            result = (
-                self.client.table(table)
-                .delete()
-                .eq(id_column, id_value)
-                .execute()
-            )
+            result = self.client.table(table).delete().eq(id_column, id_value).execute()
             return result.data
 
         except APIError as e:
@@ -319,9 +303,11 @@ supabase_client = SupabaseClient()
 # Instance singleton Admin (Service Role) - Lazy loading prefere mais ici simple
 admin_supabase_client: Optional[SupabaseClient] = None
 
+
 def get_supabase_client() -> SupabaseClient:
     """Retourne l'instance SupabaseClient standard (Anon)."""
     return supabase_client
+
 
 def get_admin_supabase_client() -> SupabaseClient:
     """
@@ -342,6 +328,7 @@ def get_admin_supabase_client() -> SupabaseClient:
         logger.info("Admin Supabase client initialized with service role key")
 
     return admin_supabase_client
+
 
 def get_supabase() -> Client:
     """Retourne le client brut standard."""

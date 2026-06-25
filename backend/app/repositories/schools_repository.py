@@ -1,19 +1,18 @@
 """Repository public pour les ecoles."""
 
+from functools import lru_cache
 from typing import Optional
 from uuid import UUID
 
-from functools import lru_cache
-
-from app.db.supabase_client import get_supabase_client, SupabaseClient
-from app.core.logging import get_logger
 from app.core.exceptions import NotFoundError
+from app.core.logging import get_logger
+from app.db.supabase_client import SupabaseClient, get_supabase_client
 from app.schemas.schools import (
-    SchoolListPublicResponse,
-    SchoolPublicSummary,
-    SchoolPublicDetail,
-    SchoolProgramPublic,
     SchoolImagePublic,
+    SchoolListPublicResponse,
+    SchoolProgramPublic,
+    SchoolPublicDetail,
+    SchoolPublicSummary,
 )
 
 logger = get_logger("repositories.schools")
@@ -43,7 +42,9 @@ class SchoolsPublicRepository:
         if school_type:
             query = query.eq("type", school_type)
         if search:
-            query = query.or_(f"name.ilike.%{search}%,city.ilike.%{search}%,description.ilike.%{search}%")
+            query = query.or_(
+                f"name.ilike.%{search}%,city.ilike.%{search}%,description.ilike.%{search}%"
+            )
 
         result = query.order("name").range(offset, offset + per_page - 1).execute()
         schools_data = result.data or []
@@ -61,7 +62,7 @@ class SchoolsPublicRepository:
                     .execute()
                 )
                 # Compter par school_id
-                for p in (programs_result.data or []):
+                for p in programs_result.data or []:
                     sid = p["school_id"]
                     programs_count_by_school[sid] = programs_count_by_school.get(sid, 0) + 1
             except Exception:
@@ -71,21 +72,23 @@ class SchoolsPublicRepository:
         for s in schools_data:
             programs_count = programs_count_by_school.get(s["id"], 0)
 
-            items.append(SchoolPublicSummary(
-                id=s["id"],
-                name=s["name"],
-                type=s["type"],
-                city=s["city"],
-                is_public=s.get("is_public", True),
-                logo_url=s.get("logo_url"),
-                description=s.get("description"),
-                programs_offered=s.get("programs_offered", []),
-                accreditations=s.get("accreditations", []),
-                tuition_range=s.get("tuition_range"),
-                student_count=s.get("student_count"),
-                founding_year=s.get("founding_year"),
-                programs_count=programs_count,
-            ))
+            items.append(
+                SchoolPublicSummary(
+                    id=s["id"],
+                    name=s["name"],
+                    type=s["type"],
+                    city=s["city"],
+                    is_public=s.get("is_public", True),
+                    logo_url=s.get("logo_url"),
+                    description=s.get("description"),
+                    programs_offered=s.get("programs_offered", []),
+                    accreditations=s.get("accreditations", []),
+                    tuition_range=s.get("tuition_range"),
+                    student_count=s.get("student_count"),
+                    founding_year=s.get("founding_year"),
+                    programs_count=programs_count,
+                )
+            )
 
         return SchoolListPublicResponse(
             items=items,
@@ -95,9 +98,7 @@ class SchoolsPublicRepository:
         )
 
     async def get_school_detail(self, school_id: UUID) -> SchoolPublicDetail:
-        school = self._db.fetch_one(
-            table="schools", id_column="id", id_value=str(school_id)
-        )
+        school = self._db.fetch_one(table="schools", id_column="id", id_value=str(school_id))
         if not school or not school.get("is_active", True):
             raise NotFoundError("Ecole", str(school_id))
 
@@ -107,11 +108,7 @@ class SchoolsPublicRepository:
             filters={"school_id": str(school_id)},
             order_by="display_order.asc",
         )
-        programs = [
-            SchoolProgramPublic(**p)
-            for p in programs_data
-            if p.get("is_active", True)
-        ]
+        programs = [SchoolProgramPublic(**p) for p in programs_data if p.get("is_active", True)]
 
         # Images
         images_data = self._db.fetch_all(

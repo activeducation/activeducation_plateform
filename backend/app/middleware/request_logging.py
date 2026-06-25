@@ -5,10 +5,11 @@ Log toutes les requetes avec correlation IDs pour le tracing.
 
 import time
 import uuid
+from typing import Callable
+
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
-from typing import Callable
 
 from app.core.config import settings
 from app.core.logging import get_logger

@@ -11,12 +11,11 @@ Gere les interactions avec Supabase pour:
 """
 
 from datetime import datetime, timezone
+from functools import lru_cache
 from typing import Any, Optional
 
-from functools import lru_cache
-
-from app.core.logging import get_logger
 from app.core.gamification_cache import invalidate_gamification_profile, invalidate_leaderboard
+from app.core.logging import get_logger
 from app.db.supabase_client import SupabaseClient, get_admin_supabase_client
 
 logger = get_logger("repositories.elearning")
@@ -288,9 +287,7 @@ class ElearningRepository:
                 "progress_pct": 0,
             }
             result = (
-                self._db.client.table("elearning_enrollments")
-                .insert(enrollment_data)
-                .execute()
+                self._db.client.table("elearning_enrollments").insert(enrollment_data).execute()
             )
             logger.info(f"User {user_id} enrolled in course {course_id}")
             return result.data[0] if result.data else enrollment_data
@@ -298,7 +295,9 @@ class ElearningRepository:
         except ValueError:
             raise
         except Exception as e:
-            logger.error(f"Error enrolling user {user_id} in course {course_id}: {e}", exc_info=True)
+            logger.error(
+                f"Error enrolling user {user_id} in course {course_id}: {e}", exc_info=True
+            )
             raise
 
     async def get_user_enrollments(self, user_id: str) -> list[dict[str, Any]]:
@@ -329,9 +328,7 @@ class ElearningRepository:
                 .in_("id", course_ids)
                 .execute()
             )
-            course_map: dict[str, dict] = {
-                c["id"]: c for c in (courses_result.data or [])
-            }
+            course_map: dict[str, dict] = {c["id"]: c for c in (courses_result.data or [])}
 
             # 3. Determiner la derniere lecon consultee pour chaque cours
             # (la lecon la plus recente avec statut in_progress ou completed)
@@ -387,12 +384,14 @@ class ElearningRepository:
                     "is_enrolled": True,
                 }
 
-                result.append({
-                    "course": course_with_enrollment,
-                    "progress_pct": enrollment["progress_pct"],
-                    "last_lesson_id": last_lesson_by_course.get(cid),
-                    "enrolled_at": enrollment["enrolled_at"],
-                })
+                result.append(
+                    {
+                        "course": course_with_enrollment,
+                        "progress_pct": enrollment["progress_pct"],
+                        "last_lesson_id": last_lesson_by_course.get(cid),
+                        "enrolled_at": enrollment["enrolled_at"],
+                    }
+                )
 
             return result
 
@@ -462,11 +461,7 @@ class ElearningRepository:
             else:
                 # Inserer une nouvelle entree
                 progress_data["started_at"] = now
-                (
-                    self._db.client.table("elearning_user_progress")
-                    .insert(progress_data)
-                    .execute()
-                )
+                (self._db.client.table("elearning_user_progress").insert(progress_data).execute())
 
             # 2. Recuperer les details de la lecon
             lesson_result = (
@@ -568,21 +563,25 @@ class ElearningRepository:
                         current = existing_points.data[0]
                         (
                             self._db.client.table("user_points")
-                            .update({
-                                "points_balance": current["points_balance"] + points_reward,
-                                "total_earned": current["total_earned"] + points_reward,
-                            })
+                            .update(
+                                {
+                                    "points_balance": current["points_balance"] + points_reward,
+                                    "total_earned": current["total_earned"] + points_reward,
+                                }
+                            )
                             .eq("user_id", user_id)
                             .execute()
                         )
                     else:
                         (
                             self._db.client.table("user_points")
-                            .insert({
-                                "user_id": user_id,
-                                "points_balance": points_reward,
-                                "total_earned": points_reward,
-                            })
+                            .insert(
+                                {
+                                    "user_id": user_id,
+                                    "points_balance": points_reward,
+                                    "total_earned": points_reward,
+                                }
+                            )
                             .execute()
                         )
 
@@ -593,9 +592,7 @@ class ElearningRepository:
                             {"p_user_id": user_id, "p_amount": points_reward},
                         ).execute()
                     except Exception as xp_error:
-                        logger.warning(
-                            f"Could not award XP to user {user_id}: {xp_error}"
-                        )
+                        logger.warning(f"Could not award XP to user {user_id}: {xp_error}")
 
                     # Invalider le cache gamification + leaderboard
                     invalidate_gamification_profile(user_id)
@@ -603,9 +600,7 @@ class ElearningRepository:
 
                 except Exception as points_error:
                     # L'attribution de points ne doit pas bloquer la completion
-                    logger.warning(
-                        f"Could not award points to user {user_id}: {points_error}"
-                    )
+                    logger.warning(f"Could not award points to user {user_id}: {points_error}")
 
             logger.info(
                 f"User {user_id} completed lesson {lesson_id} "

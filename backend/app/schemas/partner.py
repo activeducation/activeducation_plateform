@@ -7,11 +7,11 @@ Définit les structures de données pour:
 """
 
 import re
-from datetime import datetime, date
+from datetime import date, datetime
+from enum import Enum
 from typing import Optional
 from uuid import UUID
 
-from enum import Enum
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 

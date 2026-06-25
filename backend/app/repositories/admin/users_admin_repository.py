@@ -1,17 +1,16 @@
 """Repository pour la gestion admin des utilisateurs."""
 
+from functools import lru_cache
 from typing import Optional
 from uuid import UUID
 
-from functools import lru_cache
-
-from app.db.supabase_client import get_admin_supabase_client, SupabaseClient
-from app.core.logging import get_logger
 from app.core.exceptions import NotFoundError
+from app.core.logging import get_logger
+from app.db.supabase_client import SupabaseClient, get_admin_supabase_client
 from app.schemas.admin.users import (
+    AdminUserDetail,
     AdminUserListResponse,
     AdminUserSummary,
-    AdminUserDetail,
     AdminUserUpdate,
     UserActivitySummary,
 )
@@ -62,9 +61,7 @@ class UsersAdminRepository:
 
     async def get_user_detail(self, user_id: UUID) -> AdminUserDetail:
         """Detail d'un utilisateur avec resume d'activite."""
-        user = self._db.fetch_one(
-            table="user_profiles", id_column="id", id_value=str(user_id)
-        )
+        user = self._db.fetch_one(table="user_profiles", id_column="id", id_value=str(user_id))
         if not user:
             raise NotFoundError("Utilisateur", str(user_id))
 
@@ -81,21 +78,35 @@ class UsersAdminRepository:
         try:
             uid = str(user_id)
 
-            tests_completed = self._db.client.table("user_test_sessions").select(
-                "id", count="exact"
-            ).eq("user_id", uid).eq("status", "completed").execute()
+            tests_completed = (
+                self._db.client.table("user_test_sessions")
+                .select("id", count="exact")
+                .eq("user_id", uid)
+                .eq("status", "completed")
+                .execute()
+            )
 
-            tests_in_progress = self._db.client.table("user_test_sessions").select(
-                "id", count="exact"
-            ).eq("user_id", uid).eq("status", "in_progress").execute()
+            tests_in_progress = (
+                self._db.client.table("user_test_sessions")
+                .select("id", count="exact")
+                .eq("user_id", uid)
+                .eq("status", "in_progress")
+                .execute()
+            )
 
-            favorites = self._db.client.table("user_favorite_careers").select(
-                "id", count="exact"
-            ).eq("user_id", uid).execute()
+            favorites = (
+                self._db.client.table("user_favorite_careers")
+                .select("id", count="exact")
+                .eq("user_id", uid)
+                .execute()
+            )
 
-            achievements = self._db.client.table("user_achievements").select(
-                "id", count="exact"
-            ).eq("user_id", uid).execute()
+            achievements = (
+                self._db.client.table("user_achievements")
+                .select("id", count="exact")
+                .eq("user_id", uid)
+                .execute()
+            )
 
             gamification = self._db.fetch_one(
                 table="user_gamification", id_column="user_id", id_value=uid
@@ -120,8 +131,10 @@ class UsersAdminRepository:
             return await self.get_user_detail(user_id)
 
         result = self._db.update(
-            table="user_profiles", id_column="id",
-            id_value=str(user_id), data=update_data,
+            table="user_profiles",
+            id_column="id",
+            id_value=str(user_id),
+            data=update_data,
         )
         if not result:
             raise NotFoundError("Utilisateur", str(user_id))
@@ -131,8 +144,10 @@ class UsersAdminRepository:
     async def update_role(self, user_id: UUID, role: str) -> dict:
         """Change le role d'un utilisateur."""
         result = self._db.update(
-            table="user_profiles", id_column="id",
-            id_value=str(user_id), data={"role": role},
+            table="user_profiles",
+            id_column="id",
+            id_value=str(user_id),
+            data={"role": role},
         )
         if not result:
             raise NotFoundError("Utilisateur", str(user_id))
@@ -141,8 +156,10 @@ class UsersAdminRepository:
     async def toggle_active(self, user_id: UUID, is_active: bool) -> dict:
         """Active/desactive un utilisateur."""
         result = self._db.update(
-            table="user_profiles", id_column="id",
-            id_value=str(user_id), data={"is_active": is_active},
+            table="user_profiles",
+            id_column="id",
+            id_value=str(user_id),
+            data={"is_active": is_active},
         )
         if not result:
             raise NotFoundError("Utilisateur", str(user_id))

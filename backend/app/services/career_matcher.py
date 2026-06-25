@@ -11,9 +11,9 @@ Gère :
 import random
 
 from app.core.logging import get_logger
-from app.schemas.orientation import CareerSummary, TestResult
-from app.services.orientation_engine import orientation_engine, EN_TO_FR, CODE_TO_FR
 from app.repositories.orientation_repository import OrientationRepository
+from app.schemas.orientation import CareerSummary, TestResult
+from app.services.orientation_engine import CODE_TO_FR, EN_TO_FR, orientation_engine
 
 logger = get_logger("services.career_matcher")
 
@@ -34,6 +34,7 @@ def _normalize_career_trait(trait: str) -> str:
 def _extract_education_level(career_data: dict) -> str:
     """Extrait le niveau d'éducation minimum d'une carrière."""
     import json as _json
+
     edu = career_data.get("education_path")
     if isinstance(edu, str):
         try:

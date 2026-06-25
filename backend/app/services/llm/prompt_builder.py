@@ -104,11 +104,7 @@ class PromptBuilder:
             strengths = ", ".join(context["strengths"][:4])
             lines.append(f"- Points forts : {strengths}")
         if context.get("recommendations"):
-            careers = [
-                c.get("name", "")
-                for c in context["recommendations"][:5]
-                if c.get("name")
-            ]
+            careers = [c.get("name", "") for c in context["recommendations"][:5] if c.get("name")]
             if careers:
                 lines.append(f"- Carrières recommandées : {', '.join(careers)}")
         if context.get("recommended_sectors"):

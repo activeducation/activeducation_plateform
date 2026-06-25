@@ -15,8 +15,8 @@ Conception :
 from __future__ import annotations
 
 import asyncio
-import smtplib
 import json
+import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import Optional
@@ -41,10 +41,9 @@ def get_notification_email() -> Optional[str]:
     # 1. app_settings (configurable a chaud depuis le back-office)
     try:
         from app.db.supabase_client import get_supabase_client
+
         db = get_supabase_client()
-        row = db.fetch_one(
-            table="app_settings", id_column="key", id_value="notification_email"
-        )
+        row = db.fetch_one(table="app_settings", id_column="key", id_value="notification_email")
         if row and row.get("value"):
             raw = row["value"]
             # Les valeurs app_settings sont stockees en JSON ("\"x@y.com\"").
@@ -89,7 +88,8 @@ def send_email(
     if not is_email_configured():
         logger.info(
             "Email non envoye (SMTP non configure) — to=%s subject=%s",
-            to_email, subject,
+            to_email,
+            subject,
         )
         return False
     if not to_email:
@@ -126,5 +126,6 @@ async def notify_internal(subject: str, html_body: str, text_body: Optional[str]
 def _strip_html(html: str) -> str:
     """Fallback texte tres simple a partir du HTML."""
     import re
+
     text = re.sub(r"<[^>]+>", "", html)
     return re.sub(r"\n{3,}", "\n\n", text).strip()

@@ -9,19 +9,18 @@ Gere les interactions avec Supabase pour:
 import secrets
 import string
 from datetime import datetime, timezone
+from functools import lru_cache
 from typing import Any, Optional
 from uuid import UUID
-
-from app.db.supabase_client import get_admin_supabase_client, SupabaseClient
-from app.core.logging import get_logger
-from app.schemas.partner import OrganizationType
-from functools import lru_cache
 
 from app.core.exceptions import (
     NotFoundError,
     QueryError,
     ValidationError,
 )
+from app.core.logging import get_logger
+from app.db.supabase_client import SupabaseClient, get_admin_supabase_client
+from app.schemas.partner import OrganizationType
 
 logger = get_logger("repositories.partner")
 
@@ -161,9 +160,7 @@ class PartnerRepository:
         try:
             offset = (page - 1) * page_size
 
-            query = self._db.client.table("partner_organizations").select(
-                "*", count="exact"
-            )
+            query = self._db.client.table("partner_organizations").select("*", count="exact")
 
             if is_active is not None:
                 query = query.eq("is_active", is_active)
@@ -172,14 +169,12 @@ class PartnerRepository:
             if org_type is not None:
                 valid_values = [t.value for t in OrganizationType]
                 if org_type not in valid_values:
-                    raise ValidationError(
-                        f"org_type invalide. Valeurs: {', '.join(valid_values)}"
-                    )
+                    raise ValidationError(f"org_type invalide. Valeurs: {', '.join(valid_values)}")
                 query = query.eq("type", org_type)
 
-            response = query.order("created_at", desc=True).range(
-                offset, offset + page_size - 1
-            ).execute()
+            response = (
+                query.order("created_at", desc=True).range(offset, offset + page_size - 1).execute()
+            )
 
             total = response.count or 0
 
@@ -230,7 +225,9 @@ class PartnerRepository:
                 id_value=dossier_number,
             )
         except Exception as e:
-            logger.error(f"Error fetching beneficiary by number {dossier_number}: {e}", exc_info=True)
+            logger.error(
+                f"Error fetching beneficiary by number {dossier_number}: {e}", exc_info=True
+            )
             raise QueryError(f"Erreur lors de la recuperation du beneficiaire: {str(e)}")
 
     async def create_beneficiary(
@@ -293,16 +290,18 @@ class PartnerRepository:
         try:
             offset = (page - 1) * page_size
 
-            query = self._db.client.table("beneficiary_dossiers").select(
-                "*", count="exact"
-            ).eq("organization_id", str(organization_id))
+            query = (
+                self._db.client.table("beneficiary_dossiers")
+                .select("*", count="exact")
+                .eq("organization_id", str(organization_id))
+            )
 
             if status:
                 query = query.eq("status", status)
 
-            response = query.order("created_at", desc=True).range(
-                offset, offset + page_size - 1
-            ).execute()
+            response = (
+                query.order("created_at", desc=True).range(offset, offset + page_size - 1).execute()
+            )
 
             total = response.count or 0
 
@@ -319,9 +318,11 @@ class PartnerRepository:
     ) -> int:
         """Compte les beneficiaires d'une organisation."""
         try:
-            query = self._db.client.table("beneficiary_dossiers").select(
-                "*", count="exact"
-            ).eq("organization_id", str(organization_id))
+            query = (
+                self._db.client.table("beneficiary_dossiers")
+                .select("*", count="exact")
+                .eq("organization_id", str(organization_id))
+            )
 
             if status:
                 query = query.eq("status", status)

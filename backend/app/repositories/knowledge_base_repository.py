@@ -34,7 +34,9 @@ class KnowledgeBaseRepository:
 
         try:
             import redis as redis_lib
+
             from app.core.config import settings
+
             self._redis = redis_lib.from_url(settings.REDIS_URL, decode_responses=True)
             self._redis.ping()
         except Exception as exc:
@@ -43,6 +45,7 @@ class KnowledgeBaseRepository:
 
         try:
             from app.db.supabase_client import get_supabase_client
+
             self._supabase = get_supabase_client()
         except Exception as exc:
             logger.warning("Supabase indisponible pour la KB: %s", exc)

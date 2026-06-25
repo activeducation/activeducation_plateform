@@ -1,7 +1,7 @@
 """Admin orientation tests management endpoints."""
 
-from uuid import UUID
 from typing import Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request
 
@@ -9,16 +9,15 @@ from app.core.logging import get_logger
 from app.core.security import get_current_admin, get_current_super_admin
 from app.repositories.admin.tests_repository import get_tests_admin_repository
 from app.schemas.admin.orientation import (
-    TestListResponse,
-    TestDetail,
-    TestCreate,
-    TestUpdate,
-    QuestionCreate,
-    QuestionUpdate,
     OptionCreate,
     OptionUpdate,
+    QuestionCreate,
+    QuestionUpdate,
+    TestCreate,
+    TestDetail,
+    TestListResponse,
+    TestUpdate,
 )
-
 
 logger = get_logger("api.admin.orientation")
 
@@ -28,14 +27,18 @@ router = APIRouter()
 def _log_audit(admin, action, entity_type, entity_id, changes=None):
     try:
         from app.db.supabase_client import get_supabase_client
+
         db = get_supabase_client()
-        db.insert(table="admin_audit_log", data={
-            "admin_id": str(admin["user_id"]),
-            "action": action,
-            "entity_type": entity_type,
-            "entity_id": str(entity_id) if entity_id else None,
-            "changes": changes,
-        })
+        db.insert(
+            table="admin_audit_log",
+            data={
+                "admin_id": str(admin["user_id"]),
+                "action": action,
+                "entity_type": entity_type,
+                "entity_id": str(entity_id) if entity_id else None,
+                "changes": changes,
+            },
+        )
     except Exception:
         logger.error("Audit log failed, blocking action", exc_info=True)
         raise
@@ -45,8 +48,8 @@ def _log_audit(admin, action, entity_type, entity_id, changes=None):
 # TESTS CRUD
 # =========================================================================
 
-@router.get("", response_model=TestListResponse)
 
+@router.get("", response_model=TestListResponse)
 async def list_tests(
     request: Request,
     page: int = Query(1, ge=1),
@@ -59,13 +62,15 @@ async def list_tests(
     """Liste paginee des tests."""
     repo = get_tests_admin_repository()
     return await repo.list_tests(
-        page=page, per_page=per_page, search=search,
-        test_type=test_type, is_active=is_active,
+        page=page,
+        per_page=per_page,
+        search=search,
+        test_type=test_type,
+        is_active=is_active,
     )
 
 
 @router.get("/{test_id}", response_model=TestDetail)
-
 async def get_test(
     request: Request,
     test_id: UUID,
@@ -77,7 +82,6 @@ async def get_test(
 
 
 @router.post("", response_model=TestDetail)
-
 async def create_test(
     request: Request,
     body: TestCreate,
@@ -96,7 +100,6 @@ async def create_test(
 
 
 @router.put("/{test_id}", response_model=TestDetail)
-
 async def update_test(
     request: Request,
     test_id: UUID,
@@ -111,7 +114,6 @@ async def update_test(
 
 
 @router.delete("/{test_id}")
-
 async def delete_test(
     request: Request,
     test_id: UUID,
@@ -125,7 +127,6 @@ async def delete_test(
 
 
 @router.post("/{test_id}/duplicate", response_model=TestDetail)
-
 async def duplicate_test(
     request: Request,
     test_id: UUID,
@@ -142,8 +143,8 @@ async def duplicate_test(
 # QUESTIONS
 # =========================================================================
 
-@router.post("/{test_id}/questions")
 
+@router.post("/{test_id}/questions")
 async def add_question(
     request: Request,
     test_id: UUID,
@@ -158,7 +159,6 @@ async def add_question(
 
 
 @router.put("/{test_id}/questions/{question_id}")
-
 async def update_question(
     request: Request,
     test_id: UUID,
@@ -174,7 +174,6 @@ async def update_question(
 
 
 @router.delete("/{test_id}/questions/{question_id}")
-
 async def delete_question(
     request: Request,
     test_id: UUID,
@@ -189,7 +188,6 @@ async def delete_question(
 
 
 @router.patch("/{test_id}/questions/reorder")
-
 async def reorder_questions(
     request: Request,
     test_id: UUID,
@@ -206,8 +204,8 @@ async def reorder_questions(
 # OPTIONS
 # =========================================================================
 
-@router.post("/{test_id}/questions/{question_id}/options")
 
+@router.post("/{test_id}/questions/{question_id}/options")
 async def add_option(
     request: Request,
     test_id: UUID,
@@ -222,7 +220,6 @@ async def add_option(
 
 
 @router.put("/{test_id}/questions/{question_id}/options/{option_id}")
-
 async def update_option(
     request: Request,
     test_id: UUID,
@@ -238,7 +235,6 @@ async def update_option(
 
 
 @router.delete("/{test_id}/questions/{question_id}/options/{option_id}")
-
 async def delete_option(
     request: Request,
     test_id: UUID,

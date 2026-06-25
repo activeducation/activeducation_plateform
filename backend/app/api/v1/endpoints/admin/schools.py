@@ -1,7 +1,7 @@
 """Admin schools management endpoints."""
 
-from uuid import UUID
 from typing import Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request
 
@@ -9,15 +9,14 @@ from app.core.logging import get_logger
 from app.core.security import get_current_admin, get_current_super_admin
 from app.repositories.admin.schools_repository import get_schools_admin_repository
 from app.schemas.admin.schools import (
-    SchoolListResponse,
-    SchoolDetail,
-    SchoolCreate,
-    SchoolUpdate,
+    ImageCreate,
     ProgramCreate,
     ProgramUpdate,
-    ImageCreate,
+    SchoolCreate,
+    SchoolDetail,
+    SchoolListResponse,
+    SchoolUpdate,
 )
-
 
 logger = get_logger("api.admin.schools")
 
@@ -27,14 +26,18 @@ router = APIRouter()
 def _log_audit(admin, action, entity_type, entity_id, changes=None):
     try:
         from app.db.supabase_client import get_supabase_client
+
         db = get_supabase_client()
-        db.insert(table="admin_audit_log", data={
-            "admin_id": str(admin["user_id"]),
-            "action": action,
-            "entity_type": entity_type,
-            "entity_id": str(entity_id) if entity_id else None,
-            "changes": changes,
-        })
+        db.insert(
+            table="admin_audit_log",
+            data={
+                "admin_id": str(admin["user_id"]),
+                "action": action,
+                "entity_type": entity_type,
+                "entity_id": str(entity_id) if entity_id else None,
+                "changes": changes,
+            },
+        )
     except Exception:
         logger.error("Audit log failed, blocking action", exc_info=True)
         raise
@@ -44,8 +47,8 @@ def _log_audit(admin, action, entity_type, entity_id, changes=None):
 # SCHOOLS CRUD
 # =========================================================================
 
-@router.get("", response_model=SchoolListResponse)
 
+@router.get("", response_model=SchoolListResponse)
 async def list_schools(
     request: Request,
     page: int = Query(1, ge=1),
@@ -59,13 +62,16 @@ async def list_schools(
     """Liste paginee des ecoles."""
     repo = get_schools_admin_repository()
     return await repo.list_schools(
-        page=page, per_page=per_page, search=search,
-        city=city, school_type=type, is_verified=is_verified,
+        page=page,
+        per_page=per_page,
+        search=search,
+        city=city,
+        school_type=type,
+        is_verified=is_verified,
     )
 
 
 @router.get("/{school_id}", response_model=SchoolDetail)
-
 async def get_school(
     request: Request,
     school_id: UUID,
@@ -77,7 +83,6 @@ async def get_school(
 
 
 @router.post("", response_model=SchoolDetail)
-
 async def create_school(
     request: Request,
     body: SchoolCreate,
@@ -91,7 +96,6 @@ async def create_school(
 
 
 @router.put("/{school_id}", response_model=SchoolDetail)
-
 async def update_school(
     request: Request,
     school_id: UUID,
@@ -106,7 +110,6 @@ async def update_school(
 
 
 @router.delete("/{school_id}")
-
 async def delete_school(
     request: Request,
     school_id: UUID,
@@ -120,7 +123,6 @@ async def delete_school(
 
 
 @router.patch("/{school_id}/verify")
-
 async def toggle_verify(
     request: Request,
     school_id: UUID,
@@ -134,7 +136,6 @@ async def toggle_verify(
 
 
 @router.patch("/{school_id}/toggle-active")
-
 async def toggle_active(
     request: Request,
     school_id: UUID,
@@ -151,8 +152,8 @@ async def toggle_active(
 # PROGRAMS
 # =========================================================================
 
-@router.post("/{school_id}/programs")
 
+@router.post("/{school_id}/programs")
 async def add_program(
     request: Request,
     school_id: UUID,
@@ -167,7 +168,6 @@ async def add_program(
 
 
 @router.put("/{school_id}/programs/{program_id}")
-
 async def update_program(
     request: Request,
     school_id: UUID,
@@ -183,7 +183,6 @@ async def update_program(
 
 
 @router.delete("/{school_id}/programs/{program_id}")
-
 async def delete_program(
     request: Request,
     school_id: UUID,
@@ -201,8 +200,8 @@ async def delete_program(
 # IMAGES
 # =========================================================================
 
-@router.post("/{school_id}/images")
 
+@router.post("/{school_id}/images")
 async def add_image(
     request: Request,
     school_id: UUID,
@@ -217,7 +216,6 @@ async def add_image(
 
 
 @router.delete("/{school_id}/images/{image_id}")
-
 async def delete_image(
     request: Request,
     school_id: UUID,

@@ -6,8 +6,8 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 from uuid import UUID
 
-from app.db.supabase_client import get_admin_supabase_client, SupabaseClient
 from app.core.logging import get_logger
+from app.db.supabase_client import SupabaseClient, get_admin_supabase_client
 
 logger = get_logger("repositories.exam")
 
@@ -48,7 +48,9 @@ class ExamRepository:
 
     # ── Upsert (admin) ────────────────────────────────────────────────────────
 
-    def upsert_exam(self, course_id: UUID, data: dict[str, Any], questions: list[dict]) -> dict[str, Any]:
+    def upsert_exam(
+        self, course_id: UUID, data: dict[str, Any], questions: list[dict]
+    ) -> dict[str, Any]:
         """Cree ou met a jour l'examen d'un cours + remplace ses questions."""
         existing = self.get_exam_by_course(course_id)
         exam_fields = {
@@ -77,13 +79,15 @@ class ExamRepository:
         if questions:
             rows = []
             for i, q in enumerate(questions):
-                rows.append({
-                    "exam_id": exam_id,
-                    "question": q["question"],
-                    "options": q["options"],   # liste de {text, is_correct}
-                    "points": q.get("points", 1),
-                    "display_order": i,
-                })
+                rows.append(
+                    {
+                        "exam_id": exam_id,
+                        "question": q["question"],
+                        "options": q["options"],  # liste de {text, is_correct}
+                        "points": q.get("points", 1),
+                        "display_order": i,
+                    }
+                )
             self._db.client.table("exam_questions").insert(rows).execute()
 
         return self.get_exam_by_course(course_id)
@@ -95,8 +99,13 @@ class ExamRepository:
     # ── Tentatives ────────────────────────────────────────────────────────────
 
     def record_attempt(
-        self, user_id: UUID, exam_id: str, course_id: Optional[str],
-        score: int, passed: bool, answers: dict,
+        self,
+        user_id: UUID,
+        exam_id: str,
+        course_id: Optional[str],
+        score: int,
+        passed: bool,
+        answers: dict,
     ) -> dict[str, Any]:
         row = {
             "user_id": str(user_id),
@@ -122,7 +131,9 @@ class ExamRepository:
         )
         return (res.count or 0) > 0
 
-    def grant_badge(self, user_id: UUID, course_id: str, badge_title: str, badge_icon: Optional[str]) -> None:
+    def grant_badge(
+        self, user_id: UUID, course_id: str, badge_title: str, badge_icon: Optional[str]
+    ) -> None:
         """Insere un user_achievement de type course_badge (idempotent best-effort)."""
         achievement_type = f"course_badge:{course_id}"
         try:
@@ -137,15 +148,17 @@ class ExamRepository:
             )
             if existing.data:
                 return
-            self._db.client.table("user_achievements").insert({
-                "user_id": str(user_id),
-                "achievement_type": achievement_type,
-                "achievement_data": {
-                    "title": badge_title,
-                    "icon": badge_icon,
-                    "course_id": course_id,
-                },
-            }).execute()
+            self._db.client.table("user_achievements").insert(
+                {
+                    "user_id": str(user_id),
+                    "achievement_type": achievement_type,
+                    "achievement_data": {
+                        "title": badge_title,
+                        "icon": badge_icon,
+                        "course_id": course_id,
+                    },
+                }
+            ).execute()
         except Exception as e:
             logger.warning(f"grant_badge failed for user {user_id}: {e}")
 

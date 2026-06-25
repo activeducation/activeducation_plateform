@@ -4,7 +4,6 @@ SessionManager — Gestion de l'historique des conversations AÏDA.
 Stocke les sessions en mémoire avec éviction LRU quand la limite est atteinte.
 """
 
-
 from app.core.logging import get_logger
 
 logger = get_logger("services.llm.session")
@@ -44,7 +43,8 @@ class SessionManager:
         if history:
             logger.info(
                 "Session %s restaurée depuis l'historique client (%d messages)",
-                session_id, len(history),
+                session_id,
+                len(history),
             )
 
         return history

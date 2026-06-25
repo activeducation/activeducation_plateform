@@ -10,8 +10,8 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 from uuid import UUID
 
-from app.db.supabase_client import get_admin_supabase_client, SupabaseClient
 from app.core.logging import get_logger
+from app.db.supabase_client import SupabaseClient, get_admin_supabase_client
 
 logger = get_logger("repositories.mentor")
 
@@ -38,11 +38,7 @@ class MentorRepository:
         query = self._db.client.table("mentor_applications").select("*", count="exact")
         if status:
             query = query.eq("status", status)
-        res = (
-            query.order("created_at", desc=True)
-            .range(offset, offset + per_page - 1)
-            .execute()
-        )
+        res = query.order("created_at", desc=True).range(offset, offset + per_page - 1).execute()
         return {
             "items": res.data or [],
             "total": res.count or len(res.data or []),
@@ -104,12 +100,7 @@ class MentorRepository:
         changes = {**changes, "updated_at": _now()}
         if changes.get("status") == "done" and "completed_at" not in changes:
             changes["completed_at"] = _now()
-        res = (
-            self._db.client.table("mentor_tasks")
-            .update(changes)
-            .eq("id", str(task_id))
-            .execute()
-        )
+        res = self._db.client.table("mentor_tasks").update(changes).eq("id", str(task_id)).execute()
         return res.data[0] if res.data else None
 
     def delete_task(self, task_id: UUID) -> bool:

@@ -1,7 +1,7 @@
 """Admin careers management endpoints."""
 
-from uuid import UUID
 from typing import Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request
 
@@ -9,15 +9,14 @@ from app.core.logging import get_logger
 from app.core.security import get_current_admin, get_current_super_admin
 from app.repositories.admin.careers_repository import get_careers_admin_repository
 from app.schemas.admin.careers import (
-    CareerListResponse,
-    CareerDetail,
     CareerCreate,
+    CareerDetail,
+    CareerListResponse,
     CareerUpdate,
     SectorCreate,
-    SectorUpdate,
     SectorResponse,
+    SectorUpdate,
 )
-
 
 logger = get_logger("api.admin.careers")
 
@@ -27,14 +26,18 @@ router = APIRouter()
 def _log_audit(admin, action, entity_type, entity_id, changes=None):
     try:
         from app.db.supabase_client import get_supabase_client
+
         db = get_supabase_client()
-        db.insert(table="admin_audit_log", data={
-            "admin_id": str(admin["user_id"]),
-            "action": action,
-            "entity_type": entity_type,
-            "entity_id": str(entity_id) if entity_id else None,
-            "changes": changes,
-        })
+        db.insert(
+            table="admin_audit_log",
+            data={
+                "admin_id": str(admin["user_id"]),
+                "action": action,
+                "entity_type": entity_type,
+                "entity_id": str(entity_id) if entity_id else None,
+                "changes": changes,
+            },
+        )
     except Exception:
         logger.error("Audit log failed, blocking action", exc_info=True)
         raise
@@ -44,8 +47,8 @@ def _log_audit(admin, action, entity_type, entity_id, changes=None):
 # SECTORS
 # =========================================================================
 
-@router.get("/sectors", response_model=list[SectorResponse])
 
+@router.get("/sectors", response_model=list[SectorResponse])
 async def list_sectors(
     request: Request,
     admin: dict = Depends(get_current_admin),
@@ -56,7 +59,6 @@ async def list_sectors(
 
 
 @router.post("/sectors", response_model=SectorResponse)
-
 async def create_sector(
     request: Request,
     body: SectorCreate,
@@ -70,7 +72,6 @@ async def create_sector(
 
 
 @router.put("/sectors/{sector_id}", response_model=SectorResponse)
-
 async def update_sector(
     request: Request,
     sector_id: UUID,
@@ -85,7 +86,6 @@ async def update_sector(
 
 
 @router.delete("/sectors/{sector_id}")
-
 async def delete_sector(
     request: Request,
     sector_id: UUID,
@@ -102,8 +102,8 @@ async def delete_sector(
 # CAREERS
 # =========================================================================
 
-@router.get("", response_model=CareerListResponse)
 
+@router.get("", response_model=CareerListResponse)
 async def list_careers(
     request: Request,
     page: int = Query(1, ge=1),
@@ -117,13 +117,16 @@ async def list_careers(
     """Liste paginee des carrieres."""
     repo = get_careers_admin_repository()
     return await repo.list_careers(
-        page=page, per_page=per_page, search=search,
-        sector=sector, demand=demand, trend=trend,
+        page=page,
+        per_page=per_page,
+        search=search,
+        sector=sector,
+        demand=demand,
+        trend=trend,
     )
 
 
 @router.get("/{career_id}", response_model=CareerDetail)
-
 async def get_career(
     request: Request,
     career_id: UUID,
@@ -135,7 +138,6 @@ async def get_career(
 
 
 @router.post("", response_model=CareerDetail)
-
 async def create_career(
     request: Request,
     body: CareerCreate,
@@ -149,7 +151,6 @@ async def create_career(
 
 
 @router.put("/{career_id}", response_model=CareerDetail)
-
 async def update_career(
     request: Request,
     career_id: UUID,
@@ -164,7 +165,6 @@ async def update_career(
 
 
 @router.delete("/{career_id}")
-
 async def delete_career(
     request: Request,
     career_id: UUID,

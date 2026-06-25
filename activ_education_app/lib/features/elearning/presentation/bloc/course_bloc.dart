@@ -129,29 +129,26 @@ class CourseBloc extends Bloc<CourseEvent, CourseState> {
     Emitter<CourseState> emit,
   ) async {
     final currentState = state;
-    if (currentState is CourseLoaded) {
-      emit(CourseEnrolling(currentState.course));
+    if (currentState is! CourseLoaded) return;
 
-      final result = await _enrollCourseUsecase(event.id);
-      result.fold(
-        (error) {
-          // 401 = session expiree / pas connecte : on invite a se connecter
-          // plutot que d'afficher une erreur technique brute.
-          if (error is ElearningApiException && error.statusCode == 401) {
-            emit(CourseAuthRequired(currentState.course));
-          } else {
-            emit(CourseError(error.toString()));
-          }
-        },
-        (_) async {
-          // Reload course detail to get updated enrollment status
-          final reloadResult = await _getCourseDetailUsecase(event.id);
-          reloadResult.fold(
-            (error) => emit(CourseEnrolled(currentState.course)),
-            (course) => emit(CourseEnrolled(course)),
-          );
-        },
-      );
-    }
+    emit(CourseEnrolling(currentState.course));
+
+    final result = await _enrollCourseUsecase(event.id);
+    await result.fold(
+      (error) async {
+        if (error is ElearningApiException && error.statusCode == 401) {
+          emit(CourseAuthRequired(currentState.course));
+        } else {
+          emit(CourseError(error.toString()));
+        }
+      },
+      (_) async {
+        final reloadResult = await _getCourseDetailUsecase(event.id);
+        reloadResult.fold(
+          (error) => emit(CourseEnrolled(currentState.course)),
+          (course) => emit(CourseEnrolled(course)),
+        );
+      },
+    );
   }
 }

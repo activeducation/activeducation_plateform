@@ -39,6 +39,7 @@ class GroqProvider:
 
     def __init__(self) -> None:
         from app.core.config import settings
+
         self._groq_api_key = (settings.GROQ_API_KEY or "").strip()
         self._groq_enabled = bool(self._groq_api_key)
         self._ollama_available: Optional[bool] = None
@@ -154,6 +155,7 @@ class GroqProvider:
                             return
                         try:
                             import json
+
                             data = json.loads(data_str)
                             delta = data["choices"][0].get("delta", {})
                             content = delta.get("content")

@@ -8,10 +8,11 @@ Gere:
 - Calcul du score de correspondance carrieres
 """
 
-from app.schemas.orientation import TestResult, TestType
-from app.core.logging import get_logger
 from collections import defaultdict
 from uuid import UUID
+
+from app.core.logging import get_logger
+from app.schemas.orientation import TestResult, TestType
 
 logger = get_logger("services.orientation_engine")
 DEFAULT_TEST_ID = UUID("00000000-0000-0000-0000-000000000000")
@@ -137,19 +138,36 @@ CODE_TO_FR = {v["code"]: k for k, v in RIASEC_FR.items()}
 
 # MBTI descriptions en francais
 MBTI_FR = {
-    "Extraversion": {"fr": "Extraversion", "desc": "Vous puisez votre énergie dans les interactions sociales."},
-    "Introversion": {"fr": "Introversion", "desc": "Vous puisez votre énergie dans la réflexion intérieure."},
+    "Extraversion": {
+        "fr": "Extraversion",
+        "desc": "Vous puisez votre énergie dans les interactions sociales.",
+    },
+    "Introversion": {
+        "fr": "Introversion",
+        "desc": "Vous puisez votre énergie dans la réflexion intérieure.",
+    },
     "Sensing": {"fr": "Sensation", "desc": "Vous vous fiez aux faits concrets et à l'expérience."},
-    "Intuition": {"fr": "Intuition", "desc": "Vous vous fiez aux possibilités et aux idées abstraites."},
-    "Thinking": {"fr": "Pensée", "desc": "Vous prenez vos décisions de manière logique et objective."},
-    "Feeling": {"fr": "Sentiment", "desc": "Vous prenez vos décisions en tenant compte des valeurs et des personnes."},
+    "Intuition": {
+        "fr": "Intuition",
+        "desc": "Vous vous fiez aux possibilités et aux idées abstraites.",
+    },
+    "Thinking": {
+        "fr": "Pensée",
+        "desc": "Vous prenez vos décisions de manière logique et objective.",
+    },
+    "Feeling": {
+        "fr": "Sentiment",
+        "desc": "Vous prenez vos décisions en tenant compte des valeurs et des personnes.",
+    },
     "Judging": {"fr": "Jugement", "desc": "Vous préférez la planification et l'organisation."},
     "Perceiving": {"fr": "Perception", "desc": "Vous préférez la flexibilité et la spontanéité."},
 }
 
 
 class OrientationEngine:
-    async def calculate_result(self, test_type: TestType, responses: dict, test_data: dict = None) -> TestResult:
+    async def calculate_result(
+        self, test_type: TestType, responses: dict, test_data: dict = None
+    ) -> TestResult:
         """
         Calcule les resultats et genere une interpretation structuree.
         """
@@ -187,8 +205,12 @@ class OrientationEngine:
         counts = defaultdict(int)
 
         map_codes = {
-            'R': 'Réaliste', 'I': 'Investigateur', 'A': 'Artistique',
-            'S': 'Social', 'E': 'Entrepreneur', 'C': 'Conventionnel',
+            "R": "Réaliste",
+            "I": "Investigateur",
+            "A": "Artistique",
+            "S": "Social",
+            "E": "Entrepreneur",
+            "C": "Conventionnel",
         }
         # Also handle full English names
         en_map = {v["en"]: k for k, v in RIASEC_FR.items()}
@@ -196,8 +218,8 @@ class OrientationEngine:
         for q_id, value in responses.items():
             category = question_categories.get(str(q_id))
 
-            if not category and '_' in str(q_id):
-                category = str(q_id).split('_')[0]
+            if not category and "_" in str(q_id):
+                category = str(q_id).split("_")[0]
 
             score_val = self._parse_score(value)
 
@@ -327,17 +349,17 @@ class OrientationEngine:
         # Conseils specifiques par profil dominant
         specific_advice = {
             "Réaliste": "Privilégiez les formations pratiques (BTS, DUT, alternance). "
-                       "Les filières Génie Civil, Mécanique et Agroalimentaire recrutent bien au Togo.",
+            "Les filières Génie Civil, Mécanique et Agroalimentaire recrutent bien au Togo.",
             "Investigateur": "Visez les études longues (Licence, Master, Doctorat). "
-                            "L'Informatique, la Data Science et les Sciences biologiques sont en forte croissance en Afrique de l'Ouest.",
+            "L'Informatique, la Data Science et les Sciences biologiques sont en forte croissance en Afrique de l'Ouest.",
             "Artistique": "Construisez un portfolio solide dès maintenant. "
-                         "Le Design, le Marketing digital et l'UX ouvrent de nouvelles carrières au Togo et en Afrique.",
+            "Le Design, le Marketing digital et l'UX ouvrent de nouvelles carrières au Togo et en Afrique.",
             "Social": "Recherchez des stages en milieu hospitalier, éducatif ou associatif pour confirmer votre vocation. "
-                     "Les filières Santé Communautaire et Sciences de l'Éducation offrent de nombreux débouchés.",
+            "Les filières Santé Communautaire et Sciences de l'Éducation offrent de nombreux débouchés.",
             "Entrepreneur": "Rejoignez des programmes d'incubation (Woelab, CUBE) et formez-vous en gestion. "
-                           "Le Droit des Affaires et le Management sont des atouts pour créer ou diriger une entreprise.",
+            "Le Droit des Affaires et le Management sont des atouts pour créer ou diriger une entreprise.",
             "Conventionnel": "Visez les certifications reconnues (comptabilité SYSCOHADA, fiscalité). "
-                            "La Comptabilité, l'Audit et l'Administration Publique offrent une forte employabilité au Togo.",
+            "La Comptabilité, l'Audit et l'Administration Publique offrent une forte employabilité au Togo.",
         }
         if primary in specific_advice:
             advice_parts.append(specific_advice[primary])
@@ -382,9 +404,7 @@ class OrientationEngine:
 
                 scores[left_fr] = left_score
                 scores[right_fr] = right_score
-                dominant_traits.append(
-                    left_fr if left_score >= right_score else right_fr
-                )
+                dominant_traits.append(left_fr if left_score >= right_score else right_fr)
 
             # Generate MBTI interpretation
             interpretation = self._generate_personality_interpretation(scores, dominant_traits)
@@ -399,7 +419,9 @@ class OrientationEngine:
 
         return self._calculate_generic(responses, question_categories)
 
-    def _generate_personality_interpretation(self, scores: dict, dominant_traits: list[str]) -> dict:
+    def _generate_personality_interpretation(
+        self, scores: dict, dominant_traits: list[str]
+    ) -> dict:
         """Genere une interpretation pour le test de personnalite."""
         descriptions = []
         for trait in dominant_traits:
@@ -457,7 +479,9 @@ class OrientationEngine:
             return 1
 
     @staticmethod
-    def calculate_match_score(career_traits: list[str], user_dominant_traits: list[str], user_scores: dict) -> float:
+    def calculate_match_score(
+        career_traits: list[str], user_dominant_traits: list[str], user_scores: dict
+    ) -> float:
         """
         Calcule un score de correspondance (0-100) entre un profil utilisateur et une carriere.
 

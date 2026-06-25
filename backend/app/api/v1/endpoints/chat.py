@@ -50,8 +50,7 @@ class HistoryMessage(BaseModel):
 class ChatRequest(BaseModel):
     """Corps d'une requête de chat."""
 
-    message: str = Field(..., min_length=1, max_length=2000,
-                         description="Message de l'utilisateur")
+    message: str = Field(..., min_length=1, max_length=2000, description="Message de l'utilisateur")
     session_id: Optional[str] = Field(
         default=None,
         description="ID de session (créé automatiquement si absent)",
@@ -134,8 +133,8 @@ async def send_message(
     description=(
         "Envoie un message à AÏDA et reçoit la réponse en streaming Server-Sent Events. "
         "Le premier token apparaît en < 500ms. "
-        "Format de chaque événement : 'data: {\"chunk\": \"...\"}\\n\\n'. "
-        "Événement de fin : 'data: {\"done\": true, \"session_id\": \"...\"}\\n\\n'."
+        'Format de chaque événement : \'data: {"chunk": "..."}\\n\\n\'. '
+        'Événement de fin : \'data: {"done": true, "session_id": "..."}\\n\\n\'.'
     ),
     response_class=StreamingResponse,
     responses={

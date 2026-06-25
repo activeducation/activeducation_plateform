@@ -1,12 +1,12 @@
 """School admin profile endpoints."""
 
-from fastapi import APIRouter, Depends, UploadFile, File
+from fastapi import APIRouter, Depends, File, UploadFile
 
+from app.core.exceptions import NotFoundError
 from app.core.logging import get_logger
 from app.core.security import get_current_school_admin
-from app.core.exceptions import NotFoundError
-from app.schemas.school_admin import SchoolProfileUpdate
 from app.repositories.school_admin_repository import get_school_admin_repository
+from app.schemas.school_admin import SchoolProfileUpdate
 
 logger = get_logger("api.school.profile")
 

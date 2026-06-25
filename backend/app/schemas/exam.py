@@ -8,8 +8,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
 
-
 # ── Options & questions ──────────────────────────────────────────────────────
+
 
 class ExamOption(BaseModel):
     text: str = Field(..., min_length=1, max_length=500)
@@ -39,6 +39,7 @@ class ExamQuestionResponse(BaseModel):
 
 # ── Examen (admin) ───────────────────────────────────────────────────────────
 
+
 class ExamUpsert(BaseModel):
     """Cree/met a jour l'examen d'un cours (avec ses questions)."""
 
@@ -67,6 +68,7 @@ class ExamResponse(BaseModel):
 
 # ── Examen cote etudiant (sans les bonnes reponses) ──────────────────────────
 
+
 class ExamPublicOption(BaseModel):
     text: str
 
@@ -92,13 +94,14 @@ class ExamPublic(BaseModel):
 
 # ── Soumission ───────────────────────────────────────────────────────────────
 
+
 class ExamSubmission(BaseModel):
     # {question_id (str): index de l'option choisie (int)}
     answers: dict[str, int]
 
 
 class ExamResult(BaseModel):
-    score: int               # pourcentage 0..100
+    score: int  # pourcentage 0..100
     passed: bool
     passing_score: int
     correct_count: int

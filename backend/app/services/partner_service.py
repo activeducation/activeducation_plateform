@@ -6,40 +6,38 @@ Gere la logique metier pour:
 - Creation et gestion des dossiers beneficiaires
 """
 
+import asyncio
 from datetime import datetime
+from functools import lru_cache
 from typing import Optional
 from uuid import UUID
 
-from functools import lru_cache
-
-from app.core.logging import get_logger
 from app.core.cache import get_cache
 from app.core.exceptions import (
-    NotFoundError,
     AuthorizationError,
+    NotFoundError,
+)
+from app.core.logging import get_logger
+from app.db.supabase_client import get_supabase_client
+from app.repositories.partner_repository import (
+    PartnerRepository,
+    get_partner_repository,
+)
+from app.repositories.users_repository import (
+    UsersRepository,
+    get_users_repository,
 )
 from app.schemas.partner import (
-    OrganizationCreate,
-    OrganizationUpdate,
-    OrganizationResponse,
-    OrganizationListResponse,
     BeneficiaryCreate,
-    BeneficiaryUpdate,
-    BeneficiaryResponse,
     BeneficiaryListResponse,
+    BeneficiaryResponse,
     BeneficiarySummary,
+    BeneficiaryUpdate,
+    OrganizationCreate,
+    OrganizationListResponse,
+    OrganizationResponse,
+    OrganizationUpdate,
     OrganizationWithStats,
-)
-from app.repositories.partner_repository import (
-    get_partner_repository,
-    PartnerRepository,
-)
-import asyncio
-
-from app.db.supabase_client import get_supabase_client
-from app.repositories.users_repository import (
-    get_users_repository,
-    UsersRepository,
 )
 
 logger = get_logger("services.partner")
@@ -330,7 +328,10 @@ class PartnerService:
         user = await self._users_repo.get_by_id(user_id)
         if not user:
             self._report_security_event(
-                "rbac_user_not_found", user_id=user_id, org_id=org_id, role=None,
+                "rbac_user_not_found",
+                user_id=user_id,
+                org_id=org_id,
+                role=None,
             )
             raise AuthorizationError("Utilisateur introuvable")
 
@@ -347,12 +348,13 @@ class PartnerService:
 
         # Refus : trace pour monitoring sécurité
         self._report_security_event(
-            "idor_attempt", user_id=user_id, org_id=org_id, role=role,
+            "idor_attempt",
+            user_id=user_id,
+            org_id=org_id,
+            role=role,
             user_org_id=user_org_id,
         )
-        raise AuthorizationError(
-            "Vous n'avez pas accès à cette organisation"
-        )
+        raise AuthorizationError("Vous n'avez pas accès à cette organisation")
 
     @staticmethod
     def _report_security_event(event_type: str, **context) -> None:
@@ -366,6 +368,7 @@ class PartnerService:
         )
         try:
             import sentry_sdk
+
             sentry_sdk.set_tag("security_event", event_type)
             sentry_sdk.set_context("security", {k: str(v) for k, v in context.items()})
             sentry_sdk.capture_message(

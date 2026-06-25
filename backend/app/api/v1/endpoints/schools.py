@@ -5,9 +5,9 @@ from uuid import UUID
 
 from fastapi import APIRouter, Query
 
+from app.core.cache import TTL_DETAIL, TTL_LISTS, get_cache
 from app.repositories.schools_repository import get_schools_public_repository
 from app.schemas.schools import SchoolListPublicResponse, SchoolPublicDetail
-from app.core.cache import get_cache, TTL_LISTS, TTL_DETAIL
 
 router = APIRouter()
 

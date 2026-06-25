@@ -5,13 +5,13 @@ un `type`, un titre, un sous-titre, une image et une `route` (chemin de la
 page de detail cote app). Lecture publique, cache court.
 """
 
+from functools import lru_cache
 from typing import Any
 
 from fastapi import APIRouter, Query
-from functools import lru_cache
 
+from app.core.cache import CacheClient, get_cache
 from app.core.logging import get_logger
-from app.core.cache import get_cache, CacheClient
 from app.db.supabase_client import get_supabase_client
 
 logger = get_logger("api.search")
@@ -62,14 +62,16 @@ async def unified_search(
             .execute()
         )
         for s in res.data or []:
-            schools.append({
-                "type": "school",
-                "id": s["id"],
-                "title": s.get("name", ""),
-                "subtitle": s.get("city") or s.get("type") or "École",
-                "image": s.get("logo_url") or s.get("cover_image_url"),
-                "route": "/schools",  # l'annuaire (detail ecole = sheet interne)
-            })
+            schools.append(
+                {
+                    "type": "school",
+                    "id": s["id"],
+                    "title": s.get("name", ""),
+                    "subtitle": s.get("city") or s.get("type") or "École",
+                    "image": s.get("logo_url") or s.get("cover_image_url"),
+                    "route": "/schools",  # l'annuaire (detail ecole = sheet interne)
+                }
+            )
     except Exception as e:
         logger.warning(f"search schools error: {e}")
 
@@ -85,14 +87,16 @@ async def unified_search(
             .execute()
         )
         for c in res.data or []:
-            careers.append({
-                "type": "career",
-                "id": c["id"],
-                "title": c.get("name", ""),
-                "subtitle": c.get("sector_name") or "Métier",
-                "image": c.get("image_url"),
-                "route": f"/orientation/career?id={c['id']}",
-            })
+            careers.append(
+                {
+                    "type": "career",
+                    "id": c["id"],
+                    "title": c.get("name", ""),
+                    "subtitle": c.get("sector_name") or "Métier",
+                    "image": c.get("image_url"),
+                    "route": f"/orientation/career?id={c['id']}",
+                }
+            )
     except Exception as e:
         logger.warning(f"search careers error: {e}")
 
@@ -108,14 +112,16 @@ async def unified_search(
             .execute()
         )
         for c in res.data or []:
-            courses.append({
-                "type": "course",
-                "id": c["id"],
-                "title": c.get("title", ""),
-                "subtitle": c.get("category") or "Cours",
-                "image": c.get("thumbnail_url"),
-                "route": f"/elearning/course/{c['id']}",
-            })
+            courses.append(
+                {
+                    "type": "course",
+                    "id": c["id"],
+                    "title": c.get("title", ""),
+                    "subtitle": c.get("category") or "Cours",
+                    "image": c.get("thumbnail_url"),
+                    "route": f"/elearning/course/{c['id']}",
+                }
+            )
     except Exception as e:
         logger.warning(f"search courses error: {e}")
 

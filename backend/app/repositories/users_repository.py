@@ -7,18 +7,17 @@ Gere les interactions avec Supabase pour:
 """
 
 from datetime import datetime, timezone
+from functools import lru_cache
 from typing import Any, Optional
 from uuid import UUID
 
-from functools import lru_cache
-
-from app.db.supabase_client import get_admin_supabase_client, SupabaseClient
-from app.core.logging import get_logger
 from app.core.exceptions import (
+    AlreadyExistsError,
     NotFoundError,
     QueryError,
-    AlreadyExistsError,
 )
+from app.core.logging import get_logger
+from app.db.supabase_client import SupabaseClient, get_admin_supabase_client
 
 logger = get_logger("repositories.users")
 
@@ -146,9 +145,13 @@ class UsersRepository:
         try:
             now = datetime.now(timezone.utc)
 
-            profile = self._db.client.table("user_profiles").select(
-                "last_login_at, current_streak, longest_streak"
-            ).eq("id", str(user_id)).limit(1).execute()
+            profile = (
+                self._db.client.table("user_profiles")
+                .select("last_login_at, current_streak, longest_streak")
+                .eq("id", str(user_id))
+                .limit(1)
+                .execute()
+            )
 
             current_streak = 0
             longest_streak = 0
@@ -161,9 +164,7 @@ class UsersRepository:
 
                 if last_login:
                     if isinstance(last_login, str):
-                        last_login = datetime.fromisoformat(
-                            last_login.replace("Z", "+00:00")
-                        )
+                        last_login = datetime.fromisoformat(last_login.replace("Z", "+00:00"))
                     days_since = (now.date() - last_login.date()).days
 
                     if days_since == 0:
@@ -182,15 +183,18 @@ class UsersRepository:
                 current_streak = 1
                 longest_streak = 1
 
-            self._db.client.table("user_profiles").update({
-                "last_login_at": now.isoformat(),
-                "current_streak": current_streak,
-                "longest_streak": longest_streak,
-            }).eq("id", str(user_id)).execute()
+            self._db.client.table("user_profiles").update(
+                {
+                    "last_login_at": now.isoformat(),
+                    "current_streak": current_streak,
+                    "longest_streak": longest_streak,
+                }
+            ).eq("id", str(user_id)).execute()
 
             # Invalider le cache gamification
             try:
                 from app.core.gamification_cache import invalidate_gamification_profile
+
                 invalidate_gamification_profile(str(user_id))
             except Exception:
                 pass
@@ -224,6 +228,7 @@ class UsersRepository:
     # =========================================================================
     # SEARCH
     # =========================================================================
+
 
 @lru_cache(maxsize=1)
 def get_users_repository() -> UsersRepository:

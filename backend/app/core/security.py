@@ -14,14 +14,14 @@ from uuid import UUID
 from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from app.core.config import settings
-from app.core.logging import get_logger
 from app.core.cache import get_cache
+from app.core.config import settings
 from app.core.exceptions import (
     AuthenticationError,
-    TokenExpiredError,
     InvalidTokenError,
+    TokenExpiredError,
 )
+from app.core.logging import get_logger
 
 logger = get_logger("core.security")
 
@@ -133,7 +133,9 @@ async def get_current_user_role(
         return role
 
     import asyncio
+
     from app.db.supabase_client import get_supabase_client
+
     db = get_supabase_client()
     user = await asyncio.to_thread(
         db.fetch_one,
@@ -173,7 +175,8 @@ def _validate_token_via_supabase(token: str) -> dict[str, Any]:
     # Tentative de validation locale (performante, 0 reseau)
     if settings.SUPABASE_JWT_SECRET:
         try:
-            from jose import JWTError, jwt as jose_jwt
+            from jose import JWTError
+            from jose import jwt as jose_jwt
             from jose.exceptions import ExpiredSignatureError
 
             payload = jose_jwt.decode(
@@ -196,6 +199,7 @@ def _validate_token_via_supabase(token: str) -> dict[str, Any]:
     # Validation via API Supabase (si pas de JWT secret local)
     try:
         from app.db.supabase_client import get_supabase_client
+
         db = get_supabase_client()
         response = db.client.auth.get_user(token)
 
@@ -243,6 +247,7 @@ def get_user_from_token(token: str) -> dict[str, Any]:
 # =============================================================================
 # FASTAPI DEPENDENCIES
 # =============================================================================
+
 
 async def get_current_user_id(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
@@ -328,6 +333,7 @@ async def get_current_admin(
     user = _get_cached_admin_profile(user_id)
     if user is None:
         from app.db.supabase_client import get_supabase_client
+
         db = get_supabase_client()
         user = await asyncio.to_thread(
             db.fetch_one,
@@ -344,6 +350,7 @@ async def get_current_admin(
     role = user.get("role", "student")
     if role not in ("admin", "super_admin"):
         from app.core.exceptions import AuthorizationError
+
         raise AuthorizationError("Acces reserve aux administrateurs")
 
     if not user.get("is_active", True):
@@ -365,6 +372,7 @@ async def get_current_super_admin(
 
     if admin["role"] != "super_admin":
         from app.core.exceptions import AuthorizationError
+
         raise AuthorizationError("Acces reserve aux super administrateurs")
 
     return admin
@@ -401,6 +409,7 @@ async def get_current_school_admin(
         raise AuthenticationError("Token invalide")
 
     from app.db.supabase_client import get_supabase_client
+
     db = get_supabase_client()
 
     user, admin_profile = await asyncio.gather(
@@ -424,6 +433,7 @@ async def get_current_school_admin(
     role = user.get("role", "student")
     if role != "school_admin":
         from app.core.exceptions import AuthorizationError
+
         raise AuthorizationError("Acces reserve aux administrateurs d'ecole")
 
     if not user.get("is_active", True):
@@ -431,6 +441,7 @@ async def get_current_school_admin(
 
     if not admin_profile or not admin_profile.get("is_active", False):
         from app.core.exceptions import AuthorizationError
+
         raise AuthorizationError("Profil school admin inactif ou inexistant")
 
     return {

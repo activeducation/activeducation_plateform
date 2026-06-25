@@ -1,17 +1,17 @@
 """Admin : gestion des candidatures mentor (list / approve / reject)."""
 
-from uuid import UUID
 from typing import Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
 
+from app.core import email as email_service
+from app.core.exceptions import NotFoundError
 from app.core.logging import get_logger
 from app.core.security import get_current_admin
-from app.core.exceptions import NotFoundError
-from app.core import email as email_service
 from app.db.supabase_client import get_supabase_client
-from app.schemas.mentor import MentorApplicationReview
 from app.repositories.mentor_repository import get_mentor_repository
+from app.schemas.mentor import MentorApplicationReview
 
 logger = get_logger("api.admin.mentor_applications")
 
@@ -21,13 +21,16 @@ router = APIRouter()
 def _log_audit(admin, action, entity_id, changes=None):
     try:
         db = get_supabase_client()
-        db.insert(table="admin_audit_log", data={
-            "admin_id": str(admin["user_id"]),
-            "action": action,
-            "entity_type": "mentor_application",
-            "entity_id": str(entity_id) if entity_id else None,
-            "changes": changes,
-        })
+        db.insert(
+            table="admin_audit_log",
+            data={
+                "admin_id": str(admin["user_id"]),
+                "action": action,
+                "entity_type": "mentor_application",
+                "entity_id": str(entity_id) if entity_id else None,
+                "changes": changes,
+            },
+        )
     except Exception:
         logger.warning("Audit log (mentor_application) failed", exc_info=True)
 
@@ -78,13 +81,16 @@ async def approve_application(
 
     mentor = repo.create_mentor(mentor_data)
 
-    updated = repo.update_application(app_id, {
-        "status": "approved",
-        "review_note": (body.note if body else None),
-        "reviewed_by": str(admin["user_id"]),
-        "reviewed_at": _now_iso(),
-        "created_mentor_id": mentor.get("id"),
-    })
+    updated = repo.update_application(
+        app_id,
+        {
+            "status": "approved",
+            "review_note": (body.note if body else None),
+            "reviewed_by": str(admin["user_id"]),
+            "reviewed_at": _now_iso(),
+            "created_mentor_id": mentor.get("id"),
+        },
+    )
     _log_audit(admin, "approve", app_id, {"mentor_id": mentor.get("id")})
 
     # Email de bienvenue (best-effort)
@@ -118,12 +124,15 @@ async def reject_application(
     if not app:
         raise NotFoundError("Candidature", str(app_id))
 
-    updated = repo.update_application(app_id, {
-        "status": "rejected",
-        "review_note": (body.note if body else None),
-        "reviewed_by": str(admin["user_id"]),
-        "reviewed_at": _now_iso(),
-    })
+    updated = repo.update_application(
+        app_id,
+        {
+            "status": "rejected",
+            "review_note": (body.note if body else None),
+            "reviewed_by": str(admin["user_id"]),
+            "reviewed_at": _now_iso(),
+        },
+    )
     _log_audit(admin, "reject", app_id, {"note": (body.note if body else None)})
 
     # Email de refus courtois (best-effort)
@@ -147,4 +156,5 @@ async def reject_application(
 
 def _now_iso() -> str:
     from datetime import datetime, timezone
+
     return datetime.now(timezone.utc).isoformat()

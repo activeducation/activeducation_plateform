@@ -1,21 +1,20 @@
 """Repository for admin opportunities management."""
 
+from datetime import datetime
+from functools import lru_cache
 from typing import Optional
 from uuid import UUID
-from datetime import datetime
 
-from functools import lru_cache
-
-from app.db.supabase_client import get_admin_supabase_client, SupabaseClient
-from app.core.logging import get_logger
 from app.core.exceptions import NotFoundError
+from app.core.logging import get_logger
+from app.db.supabase_client import SupabaseClient, get_admin_supabase_client
 from app.schemas.admin.opportunities import (
+    OpportunityCreate,
+    OpportunityDetail,
     OpportunityListResponse,
     OpportunitySummary,
-    OpportunityDetail,
-    OpportunityCreate,
-    OpportunityUpdate,
     OpportunityType,
+    OpportunityUpdate,
 )
 
 logger = get_logger("repositories.admin.opportunities")
@@ -62,7 +61,12 @@ class OpportunitiesAdminRepository:
         )
 
     def get_opportunity(self, opportunity_id: UUID) -> OpportunityDetail:
-        result = self._db.client.table("opportunities").select("*").eq("id", str(opportunity_id)).execute()
+        result = (
+            self._db.client.table("opportunities")
+            .select("*")
+            .eq("id", str(opportunity_id))
+            .execute()
+        )
 
         if not result.data:
             raise NotFoundError("Opportunité", str(opportunity_id))
@@ -119,7 +123,12 @@ class OpportunitiesAdminRepository:
 
         payload["updated_at"] = datetime.utcnow().isoformat()
 
-        result = self._db.client.table("opportunities").update(payload).eq("id", str(opportunity_id)).execute()
+        result = (
+            self._db.client.table("opportunities")
+            .update(payload)
+            .eq("id", str(opportunity_id))
+            .execute()
+        )
 
         if not result.data:
             raise NotFoundError("Opportunité", str(opportunity_id))
@@ -128,7 +137,9 @@ class OpportunitiesAdminRepository:
         return OpportunityDetail(**self._flatten_opportunity(result.data[0]))
 
     def delete_opportunity(self, opportunity_id: UUID) -> None:
-        result = self._db.client.table("opportunities").delete().eq("id", str(opportunity_id)).execute()
+        result = (
+            self._db.client.table("opportunities").delete().eq("id", str(opportunity_id)).execute()
+        )
 
         if not result.data:
             raise NotFoundError("Opportunité", str(opportunity_id))
@@ -140,7 +151,12 @@ class OpportunitiesAdminRepository:
             "is_published": is_published,
             "updated_at": datetime.utcnow().isoformat(),
         }
-        result = self._db.client.table("opportunities").update(payload).eq("id", str(opportunity_id)).execute()
+        result = (
+            self._db.client.table("opportunities")
+            .update(payload)
+            .eq("id", str(opportunity_id))
+            .execute()
+        )
 
         if not result.data:
             raise NotFoundError("Opportunité", str(opportunity_id))
@@ -152,7 +168,12 @@ class OpportunitiesAdminRepository:
             "is_featured": is_featured,
             "updated_at": datetime.utcnow().isoformat(),
         }
-        result = self._db.client.table("opportunities").update(payload).eq("id", str(opportunity_id)).execute()
+        result = (
+            self._db.client.table("opportunities")
+            .update(payload)
+            .eq("id", str(opportunity_id))
+            .execute()
+        )
 
         if not result.data:
             raise NotFoundError("Opportunité", str(opportunity_id))

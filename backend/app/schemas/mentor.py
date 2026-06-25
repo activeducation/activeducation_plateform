@@ -8,10 +8,10 @@ from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
-
 # ============================================================================
 # CANDIDATURES MENTOR
 # ============================================================================
+
 
 class MentorApplicationCreate(BaseModel):
     """Candidature envoyee depuis l'app etudiant."""
@@ -65,6 +65,7 @@ class MentorApplicationReview(BaseModel):
 # ============================================================================
 # CREATION DIRECTE D'UN MENTOR (admin)
 # ============================================================================
+
 
 class MentorCreate(BaseModel):
     full_name: str = Field(..., min_length=2, max_length=120)

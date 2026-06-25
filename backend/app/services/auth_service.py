@@ -7,33 +7,32 @@ Le backend se charge uniquement de la logique metier supplementaire
 """
 
 from datetime import datetime
+from functools import lru_cache
 from typing import Optional
 from uuid import UUID
 
-from functools import lru_cache
-
-from app.core.logging import get_logger
 from app.core.exceptions import (
-    AuthenticationError,
     AlreadyExistsError,
+    AuthenticationError,
+    InvalidTokenError,
     NotFoundError,
     ValidationError,
-    InvalidTokenError,
+)
+from app.core.logging import get_logger
+from app.db.supabase_client import get_supabase_client
+from app.repositories.users_repository import (
+    UsersRepository,
+    get_users_repository,
 )
 from app.schemas.auth import (
+    AuthResponse,
     LoginRequest,
     RegisterRequest,
-    UserResponse,
-    UserProfile,
-    AuthResponse,
     TokenResponse,
     UpdateProfileRequest,
+    UserProfile,
+    UserResponse,
 )
-from app.repositories.users_repository import (
-    get_users_repository,
-    UsersRepository,
-)
-from app.db.supabase_client import get_supabase_client
 
 logger = get_logger("services.auth")
 
@@ -60,10 +59,12 @@ class AuthService:
             AuthenticationError: Si credentials invalides
         """
         try:
-            response = self._db.client.auth.sign_in_with_password({
-                "email": request.email.lower(),
-                "password": request.password,
-            })
+            response = self._db.client.auth.sign_in_with_password(
+                {
+                    "email": request.email.lower(),
+                    "password": request.password,
+                }
+            )
 
             if not response.user or not response.session:
                 raise AuthenticationError("Email ou mot de passe incorrect")
@@ -110,16 +111,18 @@ class AuthService:
             AlreadyExistsError: Si l'email existe deja
         """
         try:
-            response = self._db.client.auth.sign_up({
-                "email": request.email.lower(),
-                "password": request.password,
-                "options": {
-                    "data": {
-                        "first_name": request.first_name,
-                        "last_name": request.last_name,
-                    }
+            response = self._db.client.auth.sign_up(
+                {
+                    "email": request.email.lower(),
+                    "password": request.password,
+                    "options": {
+                        "data": {
+                            "first_name": request.first_name,
+                            "last_name": request.last_name,
+                        }
+                    },
                 }
-            })
+            )
 
             if not response.user:
                 raise AuthenticationError("Erreur lors de l'inscription")
@@ -284,10 +287,12 @@ class AuthService:
 
         # Verifier l'ancien mot de passe via re-authentification Supabase
         try:
-            self._db.client.auth.sign_in_with_password({
-                "email": user["email"],
-                "password": current_password,
-            })
+            self._db.client.auth.sign_in_with_password(
+                {
+                    "email": user["email"],
+                    "password": current_password,
+                }
+            )
         except Exception:
             raise AuthenticationError("Mot de passe actuel incorrect")
 

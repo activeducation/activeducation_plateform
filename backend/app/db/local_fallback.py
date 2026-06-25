@@ -2,6 +2,7 @@
 Données de tests d'orientation locales (fallback quand Supabase est indisponible).
 Contient les données de seed des fichiers database/schema.sql et database/seed_tests.sql.
 """
+
 import uuid as _uuid
 
 
@@ -33,16 +34,18 @@ def _build_test(
     questions = []
     for idx, (text, category) in enumerate(questions_data, 1):
         qid = _qid(test_id, idx)
-        questions.append({
-            "id": qid,
-            "test_id": test_id,
-            "question_text": text,
-            "question_type": "likert",
-            "category": category,
-            "display_order": idx,
-            "is_required": True,
-            "options": _likert_options(qid, opt_labels),
-        })
+        questions.append(
+            {
+                "id": qid,
+                "test_id": test_id,
+                "question_text": text,
+                "question_type": "likert",
+                "category": category,
+                "display_order": idx,
+                "is_required": True,
+                "options": _likert_options(qid, opt_labels),
+            }
+        )
     return {
         "id": test_id,
         "name": name,
@@ -167,7 +170,10 @@ _ENTREPRENEUR_QUESTIONS = [
     ("Je prefere creer mon propre chemin plutot que suivre celui des autres.", "Initiative"),
     ("L'echec ne me decourage pas, il me motive a essayer autrement.", "Resilience"),
     ("Je vois des opportunites business la ou les autres voient des problemes.", "Vision"),
-    ("Je suis pret a prendre des risques calcules pour atteindre mes objectifs.", "Prise de risque"),
+    (
+        "Je suis pret a prendre des risques calcules pour atteindre mes objectifs.",
+        "Prise de risque",
+    ),
     ("J'ai deja vendu quelque chose ou eu une petite activite generant des revenus.", "Experience"),
     ("Je suis capable de motiver et entrainer les autres dans mes projets.", "Leadership"),
     ("Je gere bien mon argent et je comprends les bases de la finance.", "Finance"),
@@ -258,60 +264,100 @@ FALLBACK_TESTS: list[dict] = [
         "123e4567-e89b-12d3-a456-426614174000",
         "Test d'Interets Professionnels (RIASEC)",
         "Decouvrez les metiers qui correspondent le mieux a vos centres d'interet selon la theorie de Holland.",
-        "riasec", 15, 1, _RIASEC_QUESTIONS, _RIASEC_OPTS,
+        "riasec",
+        15,
+        1,
+        _RIASEC_QUESTIONS,
+        _RIASEC_OPTS,
     ),
     _build_test(
         "223e4567-e89b-12d3-a456-426614174001",
         "Test des Intelligences Multiples",
         "Identifie tes formes d'intelligence dominantes selon la theorie de Howard Gardner.",
-        "personality", 12, 2, _INTELLIGENCES_QUESTIONS, _AGREE_OPTS,
+        "personality",
+        12,
+        2,
+        _INTELLIGENCES_QUESTIONS,
+        _AGREE_OPTS,
     ),
     _build_test(
         "323e4567-e89b-12d3-a456-426614174002",
         "Test des Valeurs Professionnelles",
         "Decouvre ce qui te motive vraiment dans le travail.",
-        "interests", 8, 3, _VALEURS_QUESTIONS, _AGREE_OPTS,
+        "interests",
+        8,
+        3,
+        _VALEURS_QUESTIONS,
+        _AGREE_OPTS,
     ),
     _build_test(
         "423e4567-e89b-12d3-a456-426614174003",
         "Test de Personnalite (MBTI Simplifie)",
         "Decouvre ton type de personnalite parmi 16 profils possibles.",
-        "personality", 10, 4, _MBTI_QUESTIONS, _AGREE_OPTS,
+        "personality",
+        10,
+        4,
+        _MBTI_QUESTIONS,
+        _AGREE_OPTS,
     ),
     _build_test(
         "523e4567-e89b-12d3-a456-426614174004",
         "Test d'Aptitudes Naturelles",
         "Identifie tes talents naturels et tes forces.",
-        "aptitude", 10, 5, _APTITUDES_QUESTIONS, _AGREE_OPTS,
+        "aptitude",
+        10,
+        5,
+        _APTITUDES_QUESTIONS,
+        _AGREE_OPTS,
     ),
     _build_test(
         "623e4567-e89b-12d3-a456-426614174005",
         "Test de Potentiel Entrepreneurial",
         "Es-tu fait pour entreprendre ? Ce test evalue tes competences et ta mentalite entrepreneuriales.",
-        "skills", 8, 6, _ENTREPRENEUR_QUESTIONS, _AGREE_OPTS,
+        "skills",
+        8,
+        6,
+        _ENTREPRENEUR_QUESTIONS,
+        _AGREE_OPTS,
     ),
     _build_test(
         "723e4567-e89b-12d3-a456-426614174006",
         "Test des Ancres de Carriere",
         "Identifie les motivations profondes qui orientent tes choix professionnels.",
-        "interests", 12, 7, _ANCRES_QUESTIONS, _AGREE_OPTS,
+        "interests",
+        12,
+        7,
+        _ANCRES_QUESTIONS,
+        _AGREE_OPTS,
     ),
     _build_test(
         "823e4567-e89b-12d3-a456-426614174007",
         "Test des Styles d'Apprentissage (VARK)",
         "Decouvre comment tu apprends le plus efficacement.",
-        "aptitude", 8, 8, _VARK_QUESTIONS, _AGREE_OPTS,
+        "aptitude",
+        8,
+        8,
+        _VARK_QUESTIONS,
+        _AGREE_OPTS,
     ),
     _build_test(
         "923e4567-e89b-12d3-a456-426614174008",
         "Test d'Environnement de Travail Ideal",
         "Determine les conditions de travail dans lesquelles tu performes le mieux.",
-        "skills", 9, 9, _ENVIRONNEMENT_QUESTIONS, _AGREE_OPTS,
+        "skills",
+        9,
+        9,
+        _ENVIRONNEMENT_QUESTIONS,
+        _AGREE_OPTS,
     ),
     _build_test(
         "a23e4567-e89b-12d3-a456-426614174009",
         "Test de Maturite du Projet Professionnel",
         "Mesure ton niveau de clarte sur ton avenir.",
-        "interests", 10, 10, _MATURITE_QUESTIONS, _AGREE_OPTS,
+        "interests",
+        10,
+        10,
+        _MATURITE_QUESTIONS,
+        _AGREE_OPTS,
     ),
 ]

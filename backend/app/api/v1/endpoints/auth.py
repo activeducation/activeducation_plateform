@@ -14,22 +14,22 @@ from fastapi import APIRouter, Depends, Request
 
 from app.core.logging import get_logger
 from app.core.security import get_current_user_id
+from app.middleware.rate_limiter import standard_limit, strict_limit
 from app.schemas.auth import (
-    LoginRequest,
-    RegisterRequest,
-    TokenResponse,
-    RefreshTokenRequest,
-    ForgotPasswordRequest,
-    ResetPasswordRequest,
-    ChangePasswordRequest,
     AuthResponse,
-    UserProfile,
-    UpdateProfileRequest,
-    MessageResponse,
+    ChangePasswordRequest,
+    ForgotPasswordRequest,
+    LoginRequest,
     LogoutResponse,
+    MessageResponse,
+    RefreshTokenRequest,
+    RegisterRequest,
+    ResetPasswordRequest,
+    TokenResponse,
+    UpdateProfileRequest,
+    UserProfile,
 )
-from app.services.auth_service import get_auth_service, AuthService
-from app.middleware.rate_limiter import strict_limit, standard_limit
+from app.services.auth_service import AuthService, get_auth_service
 
 logger = get_logger("api.auth")
 

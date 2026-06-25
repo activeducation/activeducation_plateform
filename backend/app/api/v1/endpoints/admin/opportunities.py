@@ -1,18 +1,18 @@
 """Admin opportunities management endpoints."""
 
-from uuid import UUID
 from typing import Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
 
 from app.core.logging import get_logger
 from app.core.security import get_current_admin
 from app.schemas.admin.opportunities import (
-    OpportunityListResponse,
-    OpportunityDetail,
     OpportunityCreate,
-    OpportunityUpdate,
+    OpportunityDetail,
+    OpportunityListResponse,
     OpportunityType,
+    OpportunityUpdate,
 )
 
 logger = get_logger("api.admin.opportunities")
@@ -22,20 +22,24 @@ router = APIRouter()
 
 def _get_repo():
     from app.repositories.admin.opportunities_repository import get_opportunities_admin_repository
+
     return get_opportunities_admin_repository()
 
 
 def _log_audit(admin, action, entity_type, entity_id, changes=None):
     try:
         from app.db.supabase_client import get_admin_supabase_client
+
         db = get_admin_supabase_client()
-        db.client.table("admin_audit_log").insert({
-            "admin_id": str(admin["user_id"]),
-            "action": action,
-            "entity_type": entity_type,
-            "entity_id": str(entity_id) if entity_id else None,
-            "changes": changes,
-        }).execute()
+        db.client.table("admin_audit_log").insert(
+            {
+                "admin_id": str(admin["user_id"]),
+                "action": action,
+                "entity_type": entity_type,
+                "entity_id": str(entity_id) if entity_id else None,
+                "changes": changes,
+            }
+        ).execute()
     except Exception:
         logger.error("Audit log failed, blocking action", exc_info=True)
         raise

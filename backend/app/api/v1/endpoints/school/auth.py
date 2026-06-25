@@ -2,12 +2,12 @@
 
 from fastapi import APIRouter, Request
 
-from app.core.logging import get_logger
 from app.core.exceptions import AuthenticationError, AuthorizationError
+from app.core.logging import get_logger
+from app.repositories.school_admin_repository import get_school_admin_repository
+from app.repositories.users_repository import get_users_repository
 from app.schemas.auth import LoginRequest
 from app.services.auth_service import get_auth_service
-from app.repositories.users_repository import get_users_repository
-from app.repositories.school_admin_repository import get_school_admin_repository
 
 logger = get_logger("api.school.auth")
 

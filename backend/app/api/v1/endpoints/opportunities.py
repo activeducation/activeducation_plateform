@@ -2,15 +2,14 @@
 Endpoints API publics pour les opportunités (stages, jobs, bourses).
 """
 
-from uuid import UUID
+from functools import lru_cache
 from typing import Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Query
 
-from functools import lru_cache
-
+from app.core.cache import TTL_OPPORTUNITIES, CacheClient, get_cache
 from app.core.logging import get_logger
-from app.core.cache import get_cache, CacheClient, TTL_OPPORTUNITIES
 from app.db.supabase_client import get_supabase_client
 
 logger = get_logger("api.opportunities")
@@ -26,7 +25,9 @@ def _cache() -> CacheClient:
 
 @router.get("")
 async def list_opportunities(
-    opportunity_type: Optional[str] = Query(None, description="Type: internship, job, volunteer, scholarship"),
+    opportunity_type: Optional[str] = Query(
+        None, description="Type: internship, job, volunteer, scholarship"
+    ),
     location: Optional[str] = Query(None, description="Filtrer par localisation"),
     remote: Optional[str] = Query(None, description="Filtrer par type: onsite, remote, hybrid"),
     limit: int = Query(20, ge=1, le=100),
@@ -45,9 +46,15 @@ async def list_opportunities(
 
     db = get_supabase_client()
 
-    query = db.client.table("opportunities").select(
-        "id,title,opportunity_type,organization_name,organization_logo,location,remote_type,application_deadline,is_published,is_featured,created_at"
-    ).eq("is_published", True).order("is_featured.desc").range(offset, offset + limit - 1)
+    query = (
+        db.client.table("opportunities")
+        .select(
+            "id,title,opportunity_type,organization_name,organization_logo,location,remote_type,application_deadline,is_published,is_featured,created_at"
+        )
+        .eq("is_published", True)
+        .order("is_featured.desc")
+        .range(offset, offset + limit - 1)
+    )
 
     if opportunity_type:
         query = query.eq("opportunity_type", opportunity_type)
@@ -94,12 +101,20 @@ async def get_opportunity(opportunity_id: UUID):
 
     db = get_supabase_client()
 
-    result = db.client.table("opportunities").select(
-        "id,title,opportunity_type,organization_name,organization_logo,location,remote_type,description,duration,requirements,benefits,salary_min,salary_max,salary_currency,application_url,application_deadline,is_published,is_featured,created_at,updated_at"
-    ).eq("id", str(opportunity_id)).eq("is_published", True).limit(1).execute()
+    result = (
+        db.client.table("opportunities")
+        .select(
+            "id,title,opportunity_type,organization_name,organization_logo,location,remote_type,description,duration,requirements,benefits,salary_min,salary_max,salary_currency,application_url,application_deadline,is_published,is_featured,created_at,updated_at"
+        )
+        .eq("id", str(opportunity_id))
+        .eq("is_published", True)
+        .limit(1)
+        .execute()
+    )
 
     if not result.data:
         from app.core.exceptions import NotFoundError
+
         raise NotFoundError("Opportunité", str(opportunity_id))
 
     o = result.data[0]

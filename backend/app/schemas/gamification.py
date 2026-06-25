@@ -2,26 +2,27 @@
 Schemas Pydantic pour la gamification.
 """
 
-from typing import Optional, List
-from pydantic import BaseModel, ConfigDict
-from uuid import UUID
 from datetime import datetime
+from typing import List, Optional
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict
 
 
 class Achievement(BaseModel):
     """Achievement/badge obtenu par l'utilisateur."""
-    
+
     id: UUID
     achievement_type: str
     achievement_data: dict = {}
     earned_at: datetime
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 
 class UserChallenge(BaseModel):
     """Challenge participation."""
-    
+
     id: UUID
     challenge_id: UUID
     title: str
@@ -30,13 +31,13 @@ class UserChallenge(BaseModel):
     status: str
     score: Optional[int] = None
     completed_at: Optional[datetime] = None
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 
 class GamificationStats(BaseModel):
     """Statistiques de gamification d'un utilisateur."""
-    
+
     total_xp: int = 0
     current_level: int = 1
     current_streak: int = 0
@@ -48,7 +49,7 @@ class GamificationStats(BaseModel):
 
 class GamificationProfile(BaseModel):
     """Profil complet de gamification."""
-    
+
     stats: GamificationStats
     achievements: List[Achievement] = []
     active_challenges: List[UserChallenge] = []

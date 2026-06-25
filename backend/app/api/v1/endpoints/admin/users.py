@@ -1,7 +1,7 @@
 """Admin users management endpoints."""
 
-from uuid import UUID
 from typing import Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request
 
@@ -9,12 +9,11 @@ from app.core.logging import get_logger
 from app.core.security import get_current_admin, get_current_super_admin
 from app.repositories.admin.users_admin_repository import get_users_admin_repository
 from app.schemas.admin.users import (
-    AdminUserListResponse,
     AdminUserDetail,
+    AdminUserListResponse,
     AdminUserUpdate,
     RoleUpdateRequest,
 )
-
 
 logger = get_logger("api.admin.users")
 
@@ -22,7 +21,6 @@ router = APIRouter()
 
 
 @router.get("", response_model=AdminUserListResponse)
-
 async def list_users(
     request: Request,
     page: int = Query(1, ge=1),
@@ -40,7 +38,6 @@ async def list_users(
 
 
 @router.get("/{user_id}", response_model=AdminUserDetail)
-
 async def get_user(
     request: Request,
     user_id: UUID,
@@ -52,7 +49,6 @@ async def get_user(
 
 
 @router.patch("/{user_id}", response_model=AdminUserDetail)
-
 async def update_user(
     request: Request,
     user_id: UUID,
@@ -67,7 +63,6 @@ async def update_user(
 
 
 @router.patch("/{user_id}/role")
-
 async def update_user_role(
     request: Request,
     user_id: UUID,
@@ -82,7 +77,6 @@ async def update_user_role(
 
 
 @router.patch("/{user_id}/deactivate")
-
 async def deactivate_user(
     request: Request,
     user_id: UUID,
@@ -96,7 +90,6 @@ async def deactivate_user(
 
 
 @router.patch("/{user_id}/activate")
-
 async def activate_user(
     request: Request,
     user_id: UUID,
@@ -112,14 +105,18 @@ async def activate_user(
 def _log_audit(admin, action, entity_type, entity_id, changes):
     try:
         from app.db.supabase_client import get_supabase_client
+
         db = get_supabase_client()
-        db.insert(table="admin_audit_log", data={
-            "admin_id": str(admin["user_id"]),
-            "action": action,
-            "entity_type": entity_type,
-            "entity_id": str(entity_id),
-            "changes": changes,
-        })
+        db.insert(
+            table="admin_audit_log",
+            data={
+                "admin_id": str(admin["user_id"]),
+                "action": action,
+                "entity_type": entity_type,
+                "entity_id": str(entity_id),
+                "changes": changes,
+            },
+        )
     except Exception:
         logger.error("Audit log failed, blocking action", exc_info=True)
         raise

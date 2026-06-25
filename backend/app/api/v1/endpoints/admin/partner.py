@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends
 from app.core.logging import get_logger
 from app.core.security import get_current_admin
 from app.schemas.partner import OrganizationResponse
-from app.services.partner_service import get_partner_service, PartnerService
+from app.services.partner_service import PartnerService, get_partner_service
 
 logger = get_logger("api.admin.partner")
 
@@ -24,5 +24,7 @@ async def approve_organization(
     service: PartnerService = Depends(get_partner_service),
 ):
     """Approuve une organisation partenaire (admin uniquement)."""
-    admin_id = admin["user_id"] if isinstance(admin["user_id"], UUID) else UUID(str(admin["user_id"]))
+    admin_id = (
+        admin["user_id"] if isinstance(admin["user_id"], UUID) else UUID(str(admin["user_id"]))
+    )
     return await service.approve_organization(org_id, admin_id)

@@ -12,11 +12,11 @@ import uuid
 from typing import AsyncGenerator, Optional
 
 from app.core.logging import get_logger
-from app.services.llm.session_manager import SessionManager
+from app.repositories.knowledge_base_repository import knowledge_base_repository
+from app.services.llm.groq_provider import GroqProvider
 from app.services.llm.prompt_builder import PromptBuilder
 from app.services.llm.safety_filter import SafetyFilter
-from app.services.llm.groq_provider import GroqProvider
-from app.repositories.knowledge_base_repository import knowledge_base_repository
+from app.services.llm.session_manager import SessionManager
 
 logger = get_logger("services.llm")
 

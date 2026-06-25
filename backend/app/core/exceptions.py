@@ -6,6 +6,7 @@ en reponses HTTP appropriees par le handler global.
 """
 
 from typing import Any, Optional
+
 from fastapi import HTTPException, status
 
 

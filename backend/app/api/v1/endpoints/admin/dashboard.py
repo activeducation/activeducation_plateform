@@ -7,7 +7,6 @@ from app.core.security import get_current_admin
 from app.repositories.admin.stats_repository import get_stats_repository
 from app.schemas.admin.dashboard import DashboardStats
 
-
 logger = get_logger("api.admin.dashboard")
 
 router = APIRouter()

@@ -3,11 +3,11 @@ Configuration centralisee du logging pour ActivEducation API.
 Support des logs JSON structures pour production.
 """
 
+import json
 import logging
 import sys
-from typing import Any
 from datetime import datetime, timezone
-import json
+from typing import Any
 
 from app.core.config import settings
 

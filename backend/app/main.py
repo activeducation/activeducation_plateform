@@ -8,16 +8,17 @@ Application FastAPI avec:
 """
 
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
-from starlette.exceptions import HTTPException as StarletteHTTPException
 from slowapi.errors import RateLimitExceeded
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.core.config import settings
-from app.core.logging import setup_logging, get_logger
+from app.core.logging import get_logger, setup_logging
 
 # Initialiser Sentry en premier (avant tout import applicatif)
 _sentry_dsn = __import__("os").getenv("SENTRY_DSN")
@@ -44,15 +45,16 @@ if _sentry_dsn:
     except ImportError:
         pass  # sentry-sdk non installe - ignorer silencieusement
 
+from app.api.v1.router import api_router  # noqa: E402
+
 # Imports applicatifs après init Sentry (ordre intentionnel — sinon les modules
 # importés ne seraient pas instrumentés). On muselle E402 pour ce bloc.
 from app.core.exceptions import AppException  # noqa: E402
-from app.api.v1.router import api_router  # noqa: E402
 from app.middleware import (  # noqa: E402
+    RequestLoggingMiddleware,
+    SecurityHeadersMiddleware,
     limiter,
     rate_limit_exceeded_handler,
-    SecurityHeadersMiddleware,
-    RequestLoggingMiddleware,
 )
 
 # Initialiser le logging
@@ -157,6 +159,7 @@ async def health_check(request: Request, response: Response):
     # Check Supabase
     try:
         from app.db.supabase_client import get_supabase_client
+
         db = get_supabase_client()
         result = db.health_check()
         checks["supabase"] = result
@@ -170,6 +173,7 @@ async def health_check(request: Request, response: Response):
     if settings.REDIS_URL:
         try:
             import redis.asyncio as aioredis
+
             r = aioredis.from_url(settings.REDIS_URL, socket_timeout=2)
             await r.ping()
             await r.close()
@@ -299,9 +303,7 @@ def _friendly_field_error(err: dict) -> str:
 
 
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(
-    request: Request, exc: RequestValidationError
-):
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """
     Transforme les erreurs de validation Pydantic (422) en messages francais
     lisibles, au lieu du tableau technique brut [{type, loc, msg}...].

@@ -9,9 +9,8 @@ Gere les interactions avec Supabase pour:
 """
 
 from datetime import datetime, timezone
-from typing import Any, Optional
-
 from functools import lru_cache
+from typing import Any, Optional
 
 from app.core.logging import get_logger
 from app.db.supabase_client import SupabaseClient, get_admin_supabase_client
@@ -91,7 +90,7 @@ class SchoolAdminRepository:
                 .execute()
             )
             lessons_by_module: dict[str, list] = {}
-            for lesson in (lessons_result.data or []):
+            for lesson in lessons_result.data or []:
                 mid = lesson["module_id"]
                 lessons_by_module.setdefault(mid, []).append(lesson)
             for mod in modules:
@@ -144,10 +143,12 @@ class SchoolAdminRepository:
         """Toggle la publication d'un cours."""
         result = (
             self._db.client.table("elearning_courses")
-            .update({
-                "is_published": is_published,
-                "updated_at": datetime.now(timezone.utc).isoformat(),
-            })
+            .update(
+                {
+                    "is_published": is_published,
+                    "updated_at": datetime.now(timezone.utc).isoformat(),
+                }
+            )
             .eq("id", course_id)
             .eq("school_id", school_id)
             .execute()
@@ -203,23 +204,32 @@ class SchoolAdminRepository:
         self, module_id: str, school_id: str, data: dict[str, Any]
     ) -> Optional[dict[str, Any]]:
         """Met a jour un module (verifie l'appartenance via le cours)."""
-        module = self._db.client.table("elearning_modules").select("course_id").eq("id", module_id).limit(1).execute()
+        module = (
+            self._db.client.table("elearning_modules")
+            .select("course_id")
+            .eq("id", module_id)
+            .limit(1)
+            .execute()
+        )
         if not module.data:
             return None
         if not self._verify_course_ownership(module.data[0]["course_id"], school_id):
             return None
         data["updated_at"] = datetime.now(timezone.utc).isoformat()
         result = (
-            self._db.client.table("elearning_modules")
-            .update(data)
-            .eq("id", module_id)
-            .execute()
+            self._db.client.table("elearning_modules").update(data).eq("id", module_id).execute()
         )
         return result.data[0] if result.data else None
 
     def delete_module(self, module_id: str, school_id: str) -> bool:
         """Supprime un module (verifie l'appartenance)."""
-        module = self._db.client.table("elearning_modules").select("course_id").eq("id", module_id).limit(1).execute()
+        module = (
+            self._db.client.table("elearning_modules")
+            .select("course_id")
+            .eq("id", module_id)
+            .limit(1)
+            .execute()
+        )
         if not module.data:
             return False
         if not self._verify_course_ownership(module.data[0]["course_id"], school_id):
@@ -230,7 +240,9 @@ class SchoolAdminRepository:
     def reorder_modules(self, school_id: str, ordered_ids: list[str]) -> bool:
         """Reordonne les modules par la liste d'IDs."""
         for idx, module_id in enumerate(ordered_ids):
-            self._db.client.table("elearning_modules").update({"display_order": idx}).eq("id", module_id).execute()
+            self._db.client.table("elearning_modules").update({"display_order": idx}).eq(
+                "id", module_id
+            ).execute()
         return True
 
     # =========================================================================
@@ -239,7 +251,13 @@ class SchoolAdminRepository:
 
     def _verify_module_ownership(self, module_id: str, school_id: str) -> bool:
         """Verifie que le module appartient a un cours de l'ecole."""
-        module = self._db.client.table("elearning_modules").select("course_id").eq("id", module_id).limit(1).execute()
+        module = (
+            self._db.client.table("elearning_modules")
+            .select("course_id")
+            .eq("id", module_id)
+            .limit(1)
+            .execute()
+        )
         if not module.data:
             return False
         return self._verify_course_ownership(module.data[0]["course_id"], school_id)
@@ -277,10 +295,12 @@ class SchoolAdminRepository:
 
         # Inserer le contenu si fourni
         if content_data and lesson.get("id"):
-            self._db.client.table("elearning_lesson_content").insert({
-                "lesson_id": lesson["id"],
-                "content_data": content_data,
-            }).execute()
+            self._db.client.table("elearning_lesson_content").insert(
+                {
+                    "lesson_id": lesson["id"],
+                    "content_data": content_data,
+                }
+            ).execute()
 
         return lesson
 
@@ -288,7 +308,13 @@ class SchoolAdminRepository:
         self, lesson_id: str, school_id: str, data: dict[str, Any]
     ) -> Optional[dict[str, Any]]:
         """Met a jour une lecon (verifie l'appartenance)."""
-        lesson = self._db.client.table("elearning_lessons").select("module_id").eq("id", lesson_id).limit(1).execute()
+        lesson = (
+            self._db.client.table("elearning_lessons")
+            .select("module_id")
+            .eq("id", lesson_id)
+            .limit(1)
+            .execute()
+        )
         if not lesson.data:
             return None
         if not self._verify_module_ownership(lesson.data[0]["module_id"], school_id):
@@ -297,25 +323,38 @@ class SchoolAdminRepository:
         content_data = data.pop("content_data", None)
         data["updated_at"] = datetime.now(timezone.utc).isoformat()
         result = (
-            self._db.client.table("elearning_lessons")
-            .update(data)
-            .eq("id", lesson_id)
-            .execute()
+            self._db.client.table("elearning_lessons").update(data).eq("id", lesson_id).execute()
         )
 
         # Mettre a jour le contenu si fourni
         if content_data is not None:
-            existing = self._db.client.table("elearning_lesson_content").select("id").eq("lesson_id", lesson_id).limit(1).execute()
+            existing = (
+                self._db.client.table("elearning_lesson_content")
+                .select("id")
+                .eq("lesson_id", lesson_id)
+                .limit(1)
+                .execute()
+            )
             if existing.data:
-                self._db.client.table("elearning_lesson_content").update({"content_data": content_data}).eq("lesson_id", lesson_id).execute()
+                self._db.client.table("elearning_lesson_content").update(
+                    {"content_data": content_data}
+                ).eq("lesson_id", lesson_id).execute()
             else:
-                self._db.client.table("elearning_lesson_content").insert({"lesson_id": lesson_id, "content_data": content_data}).execute()
+                self._db.client.table("elearning_lesson_content").insert(
+                    {"lesson_id": lesson_id, "content_data": content_data}
+                ).execute()
 
         return result.data[0] if result.data else None
 
     def delete_lesson(self, lesson_id: str, school_id: str) -> bool:
         """Supprime une lecon (verifie l'appartenance)."""
-        lesson = self._db.client.table("elearning_lessons").select("module_id").eq("id", lesson_id).limit(1).execute()
+        lesson = (
+            self._db.client.table("elearning_lessons")
+            .select("module_id")
+            .eq("id", lesson_id)
+            .limit(1)
+            .execute()
+        )
         if not lesson.data:
             return False
         if not self._verify_module_ownership(lesson.data[0]["module_id"], school_id):
@@ -354,7 +393,9 @@ class SchoolAdminRepository:
             enrollment_list = enrollments.data or []
             total_enrollments = len(enrollment_list)
             if total_enrollments > 0:
-                avg_progress = sum(e.get("progress_pct", 0) for e in enrollment_list) / total_enrollments
+                avg_progress = (
+                    sum(e.get("progress_pct", 0) for e in enrollment_list) / total_enrollments
+                )
 
         return {
             "total_courses": total_courses,
@@ -369,13 +410,7 @@ class SchoolAdminRepository:
 
     def get_school_profile(self, school_id: str) -> Optional[dict[str, Any]]:
         """Retourne le profil de l'ecole."""
-        result = (
-            self._db.client.table("schools")
-            .select("*")
-            .eq("id", school_id)
-            .limit(1)
-            .execute()
-        )
+        result = self._db.client.table("schools").select("*").eq("id", school_id).limit(1).execute()
         return result.data[0] if result.data else None
 
     def update_school_profile(
@@ -383,12 +418,7 @@ class SchoolAdminRepository:
     ) -> Optional[dict[str, Any]]:
         """Met a jour le profil de l'ecole."""
         data["updated_at"] = datetime.now(timezone.utc).isoformat()
-        result = (
-            self._db.client.table("schools")
-            .update(data)
-            .eq("id", school_id)
-            .execute()
-        )
+        result = self._db.client.table("schools").update(data).eq("id", school_id).execute()
         return result.data[0] if result.data else None
 
 

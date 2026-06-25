@@ -1,22 +1,21 @@
 """Admin mentors management endpoints."""
 
-from uuid import UUID
 from typing import Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request
 
+from app.core.exceptions import NotFoundError
 from app.core.logging import get_logger
 from app.core.security import get_current_admin
 from app.db.supabase_client import get_supabase_client
-from app.core.exceptions import NotFoundError
+from app.repositories.mentor_repository import get_mentor_repository
 from app.schemas.mentor import (
     MentorCreate,
     MentorTaskCreate,
-    MentorTaskUpdate,
     MentorTaskResponse,
+    MentorTaskUpdate,
 )
-from app.repositories.mentor_repository import get_mentor_repository
-
 
 logger = get_logger("api.admin.mentors")
 
@@ -26,20 +25,22 @@ router = APIRouter()
 def _log_audit(admin, action, entity_type, entity_id, changes=None):
     try:
         db = get_supabase_client()
-        db.insert(table="admin_audit_log", data={
-            "admin_id": str(admin["user_id"]),
-            "action": action,
-            "entity_type": entity_type,
-            "entity_id": str(entity_id) if entity_id else None,
-            "changes": changes,
-        })
+        db.insert(
+            table="admin_audit_log",
+            data={
+                "admin_id": str(admin["user_id"]),
+                "action": action,
+                "entity_type": entity_type,
+                "entity_id": str(entity_id) if entity_id else None,
+                "changes": changes,
+            },
+        )
     except Exception:
         logger.error("Audit log failed, blocking action", exc_info=True)
         raise
 
 
 @router.get("")
-
 async def list_mentors(
     request: Request,
     page: int = Query(1, ge=1),
@@ -73,7 +74,6 @@ async def list_mentors(
 
 
 @router.get("/{mentor_id}")
-
 async def get_mentor(
     request: Request,
     mentor_id: UUID,
@@ -81,9 +81,13 @@ async def get_mentor(
 ):
     """Detail d'un mentor."""
     db = get_supabase_client()
-    result = db.client.table("mentors").select(
-        "*, user_profiles(email, first_name, last_name, avatar_url, phone_number)"
-    ).eq("id", str(mentor_id)).limit(1).execute()
+    result = (
+        db.client.table("mentors")
+        .select("*, user_profiles(email, first_name, last_name, avatar_url, phone_number)")
+        .eq("id", str(mentor_id))
+        .limit(1)
+        .execute()
+    )
 
     if not result.data:
         raise NotFoundError("Mentor", str(mentor_id))
@@ -92,7 +96,6 @@ async def get_mentor(
 
 
 @router.patch("/{mentor_id}/verify")
-
 async def toggle_verify_mentor(
     request: Request,
     mentor_id: UUID,
@@ -106,7 +109,9 @@ async def toggle_verify_mentor(
 
     new_value = not mentor.get("is_verified", False)
     result = db.update(
-        table="mentors", id_column="id", id_value=str(mentor_id),
+        table="mentors",
+        id_column="id",
+        id_value=str(mentor_id),
         data={"is_verified": new_value},
     )
     _log_audit(admin, "verify", "mentor", mentor_id, {"is_verified": new_value})
@@ -114,7 +119,6 @@ async def toggle_verify_mentor(
 
 
 @router.patch("/{mentor_id}/toggle-active")
-
 async def toggle_active_mentor(
     request: Request,
     mentor_id: UUID,
@@ -128,7 +132,9 @@ async def toggle_active_mentor(
 
     new_value = not mentor.get("is_active", True)
     result = db.update(
-        table="mentors", id_column="id", id_value=str(mentor_id),
+        table="mentors",
+        id_column="id",
+        id_value=str(mentor_id),
         data={"is_active": new_value},
     )
     _log_audit(admin, "toggle_active", "mentor", mentor_id, {"is_active": new_value})
@@ -138,6 +144,7 @@ async def toggle_active_mentor(
 # ============================================================================
 # CREATION DIRECTE D'UN MENTOR
 # ============================================================================
+
 
 @router.post("", status_code=201)
 async def create_mentor(
@@ -157,6 +164,7 @@ async def create_mentor(
 # ============================================================================
 # TACHES ASSIGNEES AUX MENTORS
 # ============================================================================
+
 
 @router.get("/{mentor_id}/tasks")
 async def list_mentor_tasks(

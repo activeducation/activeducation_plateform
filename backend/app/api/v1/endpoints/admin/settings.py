@@ -1,15 +1,14 @@
 """Admin settings and announcements endpoints."""
 
-from uuid import UUID
 from typing import Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request
 
+from app.core.exceptions import NotFoundError
 from app.core.logging import get_logger
 from app.core.security import get_current_admin, get_current_super_admin
 from app.db.supabase_client import get_supabase_client
-from app.core.exceptions import NotFoundError
-
 
 logger = get_logger("api.admin.settings")
 
@@ -19,13 +18,16 @@ router = APIRouter()
 def _log_audit(admin, action, entity_type, entity_id, changes=None):
     try:
         db = get_supabase_client()
-        db.insert(table="admin_audit_log", data={
-            "admin_id": str(admin["user_id"]),
-            "action": action,
-            "entity_type": entity_type,
-            "entity_id": str(entity_id) if entity_id else None,
-            "changes": changes,
-        })
+        db.insert(
+            table="admin_audit_log",
+            data={
+                "admin_id": str(admin["user_id"]),
+                "action": action,
+                "entity_type": entity_type,
+                "entity_id": str(entity_id) if entity_id else None,
+                "changes": changes,
+            },
+        )
     except Exception:
         logger.error("Audit log failed, blocking action", exc_info=True)
         raise
@@ -35,8 +37,8 @@ def _log_audit(admin, action, entity_type, entity_id, changes=None):
 # APP SETTINGS
 # =========================================================================
 
-@router.get("/settings")
 
+@router.get("/settings")
 async def list_settings(
     request: Request,
     admin: dict = Depends(get_current_super_admin),
@@ -47,7 +49,6 @@ async def list_settings(
 
 
 @router.put("/settings/{key}")
-
 async def update_setting(
     request: Request,
     key: str,
@@ -61,17 +62,27 @@ async def update_setting(
     existing = db.client.table("app_settings").select("*").eq("key", key).limit(1).execute()
     if not existing.data:
         # Create if not exists
-        result = db.insert(table="app_settings", data={
-            "key": key,
-            "value": json.dumps(body.get("value")),
-            "description": body.get("description", ""),
-            "updated_by": str(admin["user_id"]),
-        })
+        result = db.insert(
+            table="app_settings",
+            data={
+                "key": key,
+                "value": json.dumps(body.get("value")),
+                "description": body.get("description", ""),
+                "updated_by": str(admin["user_id"]),
+            },
+        )
     else:
-        result = db.client.table("app_settings").update({
-            "value": json.dumps(body.get("value")),
-            "updated_by": str(admin["user_id"]),
-        }).eq("key", key).execute()
+        result = (
+            db.client.table("app_settings")
+            .update(
+                {
+                    "value": json.dumps(body.get("value")),
+                    "updated_by": str(admin["user_id"]),
+                }
+            )
+            .eq("key", key)
+            .execute()
+        )
         result = result.data
 
     _log_audit(admin, "update", "setting", key, body)
@@ -82,8 +93,8 @@ async def update_setting(
 # ANNOUNCEMENTS
 # =========================================================================
 
-@router.get("/announcements")
 
+@router.get("/announcements")
 async def list_announcements(
     request: Request,
     page: int = Query(1, ge=1),
@@ -110,7 +121,6 @@ async def list_announcements(
 
 
 @router.post("/announcements")
-
 async def create_announcement(
     request: Request,
     body: dict,
@@ -125,7 +135,6 @@ async def create_announcement(
 
 
 @router.put("/announcements/{announcement_id}")
-
 async def update_announcement(
     request: Request,
     announcement_id: UUID,
@@ -135,8 +144,10 @@ async def update_announcement(
     """Modifier une annonce."""
     db = get_supabase_client()
     result = db.update(
-        table="announcements", id_column="id",
-        id_value=str(announcement_id), data=body,
+        table="announcements",
+        id_column="id",
+        id_value=str(announcement_id),
+        data=body,
     )
     if not result:
         raise NotFoundError("Annonce", str(announcement_id))
@@ -145,7 +156,6 @@ async def update_announcement(
 
 
 @router.delete("/announcements/{announcement_id}")
-
 async def delete_announcement(
     request: Request,
     announcement_id: UUID,
@@ -162,8 +172,8 @@ async def delete_announcement(
 # AUDIT LOG
 # =========================================================================
 
-@router.get("/audit-log")
 
+@router.get("/audit-log")
 async def list_audit_log(
     request: Request,
     page: int = Query(1, ge=1),

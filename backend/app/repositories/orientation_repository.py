@@ -9,20 +9,19 @@ Gere les interactions avec la base de donnees Supabase pour:
 """
 
 from datetime import datetime, timezone
+from functools import lru_cache
 from typing import Any, Optional
 from uuid import UUID
 
-from functools import lru_cache
-
-from app.db.supabase_client import get_admin_supabase_client, SupabaseClient
-from app.db.local_fallback import FALLBACK_TESTS
-from app.core.logging import get_logger
 from app.core.exceptions import (
-    TestNotFoundError,
     CareerNotFoundError,
     NotFoundError,
     QueryError,
+    TestNotFoundError,
 )
+from app.core.logging import get_logger
+from app.db.local_fallback import FALLBACK_TESTS
+from app.db.supabase_client import SupabaseClient, get_admin_supabase_client
 from app.schemas.orientation import TestResult
 
 logger = get_logger("repositories.orientation")
@@ -106,7 +105,10 @@ class OrientationRepository:
         except Exception as e:
             error_msg = str(e)
             # Fallback local si Supabase est inaccessible (DNS fail, connexion refusee, etc.)
-            if any(kw in error_msg for kw in ("getaddrinfo", "Connection refused", "ConnectionError", "ConnectTimeout")):
+            if any(
+                kw in error_msg
+                for kw in ("getaddrinfo", "Connection refused", "ConnectionError", "ConnectTimeout")
+            ):
                 logger.warning(f"Supabase inaccessible, utilisation du fallback local: {error_msg}")
                 return [t for t in FALLBACK_TESTS if not active_only or t.get("is_active", True)]
             logger.error(f"Error fetching orientation tests: {e}", exc_info=True)
@@ -144,8 +146,13 @@ class OrientationRepository:
             raise
         except Exception as e:
             error_msg = str(e)
-            if any(kw in error_msg for kw in ("getaddrinfo", "Connection refused", "ConnectionError", "ConnectTimeout")):
-                logger.warning(f"Supabase inaccessible, recherche dans le fallback local pour test {test_id}")
+            if any(
+                kw in error_msg
+                for kw in ("getaddrinfo", "Connection refused", "ConnectionError", "ConnectTimeout")
+            ):
+                logger.warning(
+                    f"Supabase inaccessible, recherche dans le fallback local pour test {test_id}"
+                )
                 test_id_str = str(test_id)
                 for t in FALLBACK_TESTS:
                     if t["id"] == test_id_str:
@@ -268,11 +275,13 @@ class OrientationRepository:
             # si session_id fuite. Double verrou en attendant la reactivation RLS.
             update_result = (
                 self._db.client.table("user_test_sessions")
-                .update({
-                    "responses": responses,
-                    "status": "completed",
-                    "completed_at": datetime.now(timezone.utc).isoformat(),
-                })
+                .update(
+                    {
+                        "responses": responses,
+                        "status": "completed",
+                        "completed_at": datetime.now(timezone.utc).isoformat(),
+                    }
+                )
                 .eq("id", str(session_id))
                 .eq("user_id", str(user_id))
                 .execute()
@@ -406,9 +415,12 @@ class OrientationRepository:
         try:
             # Mapping francais (accentue) -> anglais + non-accentue pour compatibilite
             fr_to_en = {
-                "Réaliste": "Realistic", "Investigateur": "Investigative",
-                "Artistique": "Artistic", "Social": "Social",
-                "Entrepreneur": "Enterprising", "Conventionnel": "Conventional",
+                "Réaliste": "Realistic",
+                "Investigateur": "Investigative",
+                "Artistique": "Artistic",
+                "Social": "Social",
+                "Entrepreneur": "Enterprising",
+                "Conventionnel": "Conventional",
             }
             # Variantes sans accents (comme dans le seed SQL)
             fr_accent_to_no_accent = {
@@ -485,23 +497,26 @@ class OrientationRepository:
             enriched = []
             for p in programs_result.data:
                 school = schools_map.get(p["school_id"], {})
-                enriched.append({
-                    "program_id": p["id"],
-                    "program_name": p["name"],
-                    "program_level": p.get("level", ""),
-                    "program_duration": p.get("duration_years"),
-                    "school_id": p["school_id"],
-                    "school_name": school.get("name", ""),
-                    "school_city": school.get("city", ""),
-                    "school_logo_url": school.get("logo_url"),
-                    "school_type": school.get("type", ""),
-                })
+                enriched.append(
+                    {
+                        "program_id": p["id"],
+                        "program_name": p["name"],
+                        "program_level": p.get("level", ""),
+                        "program_duration": p.get("duration_years"),
+                        "school_id": p["school_id"],
+                        "school_name": school.get("name", ""),
+                        "school_city": school.get("city", ""),
+                        "school_logo_url": school.get("logo_url"),
+                        "school_type": school.get("type", ""),
+                    }
+                )
 
             return enriched[:limit]
 
         except Exception as e:
             logger.error(f"Error fetching matching school programs: {e}", exc_info=True)
             return []
+
 
 @lru_cache(maxsize=1)
 def get_orientation_repository() -> OrientationRepository:

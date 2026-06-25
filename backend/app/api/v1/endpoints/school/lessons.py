@@ -1,12 +1,12 @@
 """School admin lessons endpoints."""
 
-from fastapi import APIRouter, Depends, UploadFile, File
+from fastapi import APIRouter, Depends, File, UploadFile
 
+from app.core.exceptions import NotFoundError
 from app.core.logging import get_logger
 from app.core.security import get_current_school_admin
-from app.core.exceptions import NotFoundError
-from app.schemas.school_admin import SchoolLessonCreate, SchoolLessonUpdate
 from app.repositories.school_admin_repository import get_school_admin_repository
+from app.schemas.school_admin import SchoolLessonCreate, SchoolLessonUpdate
 
 logger = get_logger("api.school.lessons")
 
@@ -84,7 +84,13 @@ async def upload_video(
     db = get_supabase_client()
 
     # Verifier l'appartenance de la lecon
-    lesson = db.client.table("elearning_lessons").select("module_id").eq("id", lesson_id).limit(1).execute()
+    lesson = (
+        db.client.table("elearning_lessons")
+        .select("module_id")
+        .eq("id", lesson_id)
+        .limit(1)
+        .execute()
+    )
     if not lesson.data:
         raise NotFoundError("Lecon", lesson_id)
 
@@ -117,12 +123,22 @@ async def upload_video(
     public_url = db.client.storage.from_("elearning-videos").get_public_url(file_path)
 
     # Mettre a jour le contenu de la lecon
-    existing = db.client.table("elearning_lesson_content").select("id").eq("lesson_id", lesson_id).limit(1).execute()
+    existing = (
+        db.client.table("elearning_lesson_content")
+        .select("id")
+        .eq("lesson_id", lesson_id)
+        .limit(1)
+        .execute()
+    )
     video_data = {"video_url": public_url, "type": "video"}
     if existing.data:
-        db.client.table("elearning_lesson_content").update({"content_data": video_data}).eq("lesson_id", lesson_id).execute()
+        db.client.table("elearning_lesson_content").update({"content_data": video_data}).eq(
+            "lesson_id", lesson_id
+        ).execute()
     else:
-        db.client.table("elearning_lesson_content").insert({"lesson_id": lesson_id, "content_data": video_data}).execute()
+        db.client.table("elearning_lesson_content").insert(
+            {"lesson_id": lesson_id, "content_data": video_data}
+        ).execute()
 
     logger.info(f"Video uploaded for lesson {lesson_id} by school admin {admin['user_id']}")
 

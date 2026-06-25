@@ -15,22 +15,22 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from app.core.cache import get_cache, TTL_LISTS
+from app.core.cache import TTL_LISTS, get_cache
 from app.core.logging import get_logger
 from app.core.security import get_current_user_id, get_user_from_token
 from app.repositories.elearning_repository import get_elearning_repository
+from app.repositories.exam_repository import get_exam_repository
 from app.schemas.elearning import (
-    CourseListItem,
-    CourseDetail,
-    LessonDetail,
-    EnrollmentResponse,
     CompleteLessonRequest,
     CompleteLessonResponse,
-    MyCoursesResponse,
+    CourseDetail,
+    CourseListItem,
+    EnrollmentResponse,
+    LessonDetail,
     MyCourse,
+    MyCoursesResponse,
 )
-from app.schemas.exam import ExamPublic, ExamSubmission, ExamResult
-from app.repositories.exam_repository import get_exam_repository
+from app.schemas.exam import ExamPublic, ExamResult, ExamSubmission
 
 logger = get_logger("api.elearning")
 
@@ -284,9 +284,7 @@ async def get_my_courses(
                 course=CourseListItem(**course_data),
                 progress_pct=enrollment["progress_pct"],
                 last_lesson_id=(
-                    UUID(enrollment["last_lesson_id"])
-                    if enrollment.get("last_lesson_id")
-                    else None
+                    UUID(enrollment["last_lesson_id"]) if enrollment.get("last_lesson_id") else None
                 ),
                 enrolled_at=enrollment["enrolled_at"],
             )
@@ -351,6 +349,7 @@ async def complete_lesson(
 # EXAMEN DU COURS (QCM + badge a la reussite)
 # ============================================================================
 
+
 @router.get("/courses/{course_id}/exam", response_model=ExamPublic)
 async def get_course_exam_public(course_id: UUID):
     """Examen d'un cours pour l'etudiant (sans les bonnes reponses)."""
@@ -361,11 +360,13 @@ async def get_course_exam_public(course_id: UUID):
     questions = []
     for q in exam.get("questions", []):
         opts = q.get("options") or []
-        questions.append({
-            "id": q["id"],
-            "question": q["question"],
-            "options": [{"text": o.get("text", "")} for o in opts],
-        })
+        questions.append(
+            {
+                "id": q["id"],
+                "question": q["question"],
+                "options": [{"text": o.get("text", "")} for o in opts],
+            }
+        )
 
     return ExamPublic(
         id=exam["id"],
@@ -416,8 +417,12 @@ async def submit_course_exam(
     already_passed = repo.has_passed_before(user_id, exam["id"])
 
     repo.record_attempt(
-        user_id=user_id, exam_id=exam["id"], course_id=str(course_id),
-        score=score, passed=passed, answers=submission.answers,
+        user_id=user_id,
+        exam_id=exam["id"],
+        course_id=str(course_id),
+        score=score,
+        passed=passed,
+        answers=submission.answers,
     )
 
     xp_awarded = 0
@@ -427,7 +432,8 @@ async def submit_course_exam(
         badge_earned = True
         try:
             repo.grant_badge(
-                user_id, str(course_id),
+                user_id,
+                str(course_id),
                 exam.get("badge_title") or exam.get("title", "Cours réussi"),
                 exam.get("badge_icon"),
             )
@@ -437,10 +443,12 @@ async def submit_course_exam(
         xp = exam.get("xp_reward", 0) or 0
         if xp > 0:
             try:
-                from app.db.supabase_client import get_admin_supabase_client
                 from app.core.gamification_cache import (
-                    invalidate_gamification_profile, invalidate_leaderboard,
+                    invalidate_gamification_profile,
+                    invalidate_leaderboard,
                 )
+                from app.db.supabase_client import get_admin_supabase_client
+
                 db = get_admin_supabase_client()
                 db.client.rpc("award_xp", {"p_user_id": str(user_id), "p_amount": xp}).execute()
                 xp_awarded = xp

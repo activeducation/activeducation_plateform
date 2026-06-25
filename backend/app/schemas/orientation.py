@@ -16,7 +16,6 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-
 # =============================================================================
 # ENUMS
 # =============================================================================
@@ -182,8 +181,12 @@ class CareerSummary(BaseModel):
     salary_avg_fcfa: Optional[int] = None
     image_url: Optional[str] = None
     # Champs de matching (remplis lors des recommandations)
-    match_score: float = Field(default=0.0, ge=0, le=100, description="Score de correspondance avec le profil (0-100)")
-    matching_traits: list[str] = Field(default=[], description="Traits en commun avec le profil utilisateur")
+    match_score: float = Field(
+        default=0.0, ge=0, le=100, description="Score de correspondance avec le profil (0-100)"
+    )
+    matching_traits: list[str] = Field(
+        default=[], description="Traits en commun avec le profil utilisateur"
+    )
     # Champs enrichis pour le mobile
     required_skills: list[str] = []
     related_traits: list[str] = []

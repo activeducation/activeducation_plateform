@@ -1,24 +1,23 @@
 """Repository pour la gestion admin des ecoles."""
 
+from functools import lru_cache
 from typing import Optional
 from uuid import UUID
 
-from functools import lru_cache
-
-from app.db.supabase_client import get_admin_supabase_client, SupabaseClient
-from app.core.logging import get_logger
 from app.core.exceptions import NotFoundError
+from app.core.logging import get_logger
+from app.db.supabase_client import SupabaseClient, get_admin_supabase_client
 from app.schemas.admin.schools import (
-    SchoolListResponse,
-    SchoolSummary,
-    SchoolDetail,
-    SchoolCreate,
-    SchoolUpdate,
-    ProgramCreate,
-    ProgramUpdate,
-    ProgramSummary,
     ImageCreate,
     ImageSummary,
+    ProgramCreate,
+    ProgramSummary,
+    ProgramUpdate,
+    SchoolCreate,
+    SchoolDetail,
+    SchoolListResponse,
+    SchoolSummary,
+    SchoolUpdate,
 )
 
 logger = get_logger("repositories.admin.schools")
@@ -64,7 +63,7 @@ class SchoolsAdminRepository:
                     .in_("school_id", school_ids)
                     .execute()
                 )
-                for p in (programs_result.data or []):
+                for p in programs_result.data or []:
                     sid = p["school_id"]
                     programs_count_by_school[sid] = programs_count_by_school.get(sid, 0) + 1
             except Exception:
@@ -74,23 +73,25 @@ class SchoolsAdminRepository:
         for s in schools_data:
             programs_count = programs_count_by_school.get(s["id"], 0)
 
-            items.append(SchoolSummary(
-                id=s["id"],
-                name=s["name"],
-                type=s["type"],
-                city=s["city"],
-                is_public=s.get("is_public", True),
-                is_verified=s.get("is_verified", False),
-                is_active=s.get("is_active", True),
-                logo_url=s.get("logo_url"),
-                description=s.get("description"),
-                tuition_range=s.get("tuition_range"),
-                accreditations=s.get("accreditations", []),
-                student_count=s.get("student_count"),
-                founding_year=s.get("founding_year"),
-                programs_count=programs_count,
-                created_at=s.get("created_at"),
-            ))
+            items.append(
+                SchoolSummary(
+                    id=s["id"],
+                    name=s["name"],
+                    type=s["type"],
+                    city=s["city"],
+                    is_public=s.get("is_public", True),
+                    is_verified=s.get("is_verified", False),
+                    is_active=s.get("is_active", True),
+                    logo_url=s.get("logo_url"),
+                    description=s.get("description"),
+                    tuition_range=s.get("tuition_range"),
+                    accreditations=s.get("accreditations", []),
+                    student_count=s.get("student_count"),
+                    founding_year=s.get("founding_year"),
+                    programs_count=programs_count,
+                    created_at=s.get("created_at"),
+                )
+            )
 
         return SchoolListResponse(
             items=items,
@@ -100,9 +101,7 @@ class SchoolsAdminRepository:
         )
 
     async def get_school_detail(self, school_id: UUID) -> SchoolDetail:
-        school = self._db.fetch_one(
-            table="schools", id_column="id", id_value=str(school_id)
-        )
+        school = self._db.fetch_one(table="schools", id_column="id", id_value=str(school_id))
         if not school:
             raise NotFoundError("Ecole", str(school_id))
 
@@ -137,8 +136,10 @@ class SchoolsAdminRepository:
         update_data = data.model_dump(exclude_unset=True)
         if update_data:
             result = self._db.update(
-                table="schools", id_column="id",
-                id_value=str(school_id), data=update_data,
+                table="schools",
+                id_column="id",
+                id_value=str(school_id),
+                data=update_data,
             )
             if not result:
                 raise NotFoundError("Ecole", str(school_id))
@@ -155,8 +156,10 @@ class SchoolsAdminRepository:
             raise NotFoundError("Ecole", str(school_id))
         new_val = not school.get("is_verified", False)
         result = self._db.update(
-            table="schools", id_column="id",
-            id_value=str(school_id), data={"is_verified": new_val},
+            table="schools",
+            id_column="id",
+            id_value=str(school_id),
+            data={"is_verified": new_val},
         )
         return result[0] if result else {"is_verified": new_val}
 
@@ -166,8 +169,10 @@ class SchoolsAdminRepository:
             raise NotFoundError("Ecole", str(school_id))
         new_val = not school.get("is_active", True)
         result = self._db.update(
-            table="schools", id_column="id",
-            id_value=str(school_id), data={"is_active": new_val},
+            table="schools",
+            id_column="id",
+            id_value=str(school_id),
+            data={"is_active": new_val},
         )
         return result[0] if result else {"is_active": new_val}
 
@@ -181,8 +186,10 @@ class SchoolsAdminRepository:
     async def update_program(self, program_id: UUID, data: ProgramUpdate) -> dict:
         update_data = data.model_dump(exclude_unset=True)
         result = self._db.update(
-            table="school_programs", id_column="id",
-            id_value=str(program_id), data=update_data,
+            table="school_programs",
+            id_column="id",
+            id_value=str(program_id),
+            data=update_data,
         )
         if not result:
             raise NotFoundError("Programme", str(program_id))

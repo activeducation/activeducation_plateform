@@ -1,10 +1,11 @@
 """Schemas for opportunities management."""
 
 from datetime import datetime
-from typing import Optional, List
-from uuid import UUID
-from pydantic import BaseModel, Field, field_validator
 from enum import Enum
+from typing import List, Optional
+from uuid import UUID
+
+from pydantic import BaseModel, Field, field_validator
 
 
 class OpportunityType(str, Enum):

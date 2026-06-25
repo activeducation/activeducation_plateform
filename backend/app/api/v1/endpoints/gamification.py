@@ -2,23 +2,22 @@
 Endpoints API pour la gamification utilisateur.
 """
 
-from uuid import UUID
 import math
 from datetime import datetime
-
-from fastapi import APIRouter, Depends, Request, Query
-
 from functools import lru_cache
+from uuid import UUID
 
+from fastapi import APIRouter, Depends, Query, Request
+
+from app.core.cache import TTL_GAMIFICATION, TTL_LEADERBOARD, CacheClient, get_cache
 from app.core.logging import get_logger
 from app.core.security import get_current_user_id
-from app.core.cache import get_cache, CacheClient, TTL_GAMIFICATION, TTL_LEADERBOARD
 from app.db.supabase_client import get_supabase_client
 from app.middleware.rate_limiter import standard_limit
 from app.schemas.gamification import (
+    Achievement,
     GamificationProfile,
     GamificationStats,
-    Achievement,
     UserChallenge,
 )
 
@@ -59,44 +58,39 @@ async def get_my_gamification(
 
     db = get_supabase_client()
     user_id_str = str(user_id)
-    
+
     user_profile = db.fetch_one(
         table="user_profiles",
         id_column="id",
         id_value=user_id_str,
     )
-    
+
     achievements = db.fetch_all(
         table="user_achievements",
         filters={"user_id": user_id_str},
         order_by="earned_at.desc",
     )
-    
+
     user_challenges = db.fetch_all(
         table="user_challenges",
         filters={"user_id": user_id_str},
     )
-    
+
     challenges = db.fetch_all(table="challenges", filters={"is_active": True})
     challenges_map = {str(c["id"]): c for c in challenges}
-    
+
     completed_achievements = [a for a in achievements] if achievements else []
-    completed_challenges = [
-        uc for uc in (user_challenges or [])
-        if uc.get("status") == "completed"
-    ]
-    
+    completed_challenges = [uc for uc in (user_challenges or []) if uc.get("status") == "completed"]
+
     total_xp = user_profile.get("total_xp", 0) if user_profile else 0
     current_streak = user_profile.get("current_streak", 0) if user_profile else 0
     longest_streak = user_profile.get("longest_streak", 0) if user_profile else 0
-    
+
     current_level, next_level_xp, xp_to_next = _calculate_level(total_xp)
-    
+
     leaderboard_rank = None
     try:
-        rank_result = db.client.rpc(
-            "get_leaderboard_rank", {"p_user_id": user_id_str}
-        ).execute()
+        rank_result = db.client.rpc("get_leaderboard_rank", {"p_user_id": user_id_str}).execute()
         if rank_result.data:
             leaderboard_rank = rank_result.data[0]["rank"]
     except Exception:
@@ -111,7 +105,7 @@ async def get_my_gamification(
         completed_challenges=len(completed_challenges),
         leaderboard_rank=leaderboard_rank,
     )
-    
+
     achievement_models = [
         Achievement(
             id=a["id"],
@@ -121,9 +115,9 @@ async def get_my_gamification(
         )
         for a in completed_achievements
     ]
-    
+
     active_challenges = []
-    for uc in (user_challenges or []):
+    for uc in user_challenges or []:
         if uc.get("status") in ("not_started", "in_progress"):
             challenge = challenges_map.get(str(uc.get("challenge_id")))
             if challenge:
@@ -139,7 +133,7 @@ async def get_my_gamification(
                         completed_at=uc.get("completed_at"),
                     )
                 )
-    
+
     result = GamificationProfile(
         stats=stats,
         achievements=achievement_models[:10],
@@ -179,7 +173,8 @@ async def get_leaderboard(
 
     data = [
         {
-            "display_name": p.get("display_name") or f"{p.get('first_name', '')} {p.get('last_name', '')}".strip(),
+            "display_name": p.get("display_name")
+            or f"{p.get('first_name', '')} {p.get('last_name', '')}".strip(),
             "avatar_url": p.get("avatar_url"),
             "total_xp": p.get("total_xp", 0),
             "current_level": _calculate_level(p.get("total_xp", 0))[0],

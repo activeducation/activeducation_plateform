@@ -24,6 +24,7 @@ async def list_public_settings():
         key = s.get("key")
         if key in PUBLIC_SETTINGS_KEYS:
             import json
+
             try:
                 result[key] = json.loads(s.get("value", "null"))
             except (json.JSONDecodeError, TypeError):

@@ -2,15 +2,15 @@
 
 from fastapi import APIRouter, Depends
 
+from app.core.exceptions import NotFoundError
 from app.core.logging import get_logger
 from app.core.security import get_current_school_admin
-from app.core.exceptions import NotFoundError
+from app.repositories.school_admin_repository import get_school_admin_repository
 from app.schemas.school_admin import (
+    ReorderRequest,
     SchoolModuleCreate,
     SchoolModuleUpdate,
-    ReorderRequest,
 )
-from app.repositories.school_admin_repository import get_school_admin_repository
 
 logger = get_logger("api.school.modules")
 

@@ -4,11 +4,10 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Request
 
+from app.core.exceptions import NotFoundError
 from app.core.logging import get_logger
 from app.core.security import get_current_admin
 from app.db.supabase_client import get_supabase_client
-from app.core.exceptions import NotFoundError
-
 
 logger = get_logger("api.admin.gamification")
 
@@ -18,13 +17,16 @@ router = APIRouter()
 def _log_audit(admin, action, entity_type, entity_id, changes=None):
     try:
         db = get_supabase_client()
-        db.insert(table="admin_audit_log", data={
-            "admin_id": str(admin["user_id"]),
-            "action": action,
-            "entity_type": entity_type,
-            "entity_id": str(entity_id) if entity_id else None,
-            "changes": changes,
-        })
+        db.insert(
+            table="admin_audit_log",
+            data={
+                "admin_id": str(admin["user_id"]),
+                "action": action,
+                "entity_type": entity_type,
+                "entity_id": str(entity_id) if entity_id else None,
+                "changes": changes,
+            },
+        )
     except Exception:
         logger.error("Audit log failed, blocking action", exc_info=True)
         raise
@@ -34,8 +36,8 @@ def _log_audit(admin, action, entity_type, entity_id, changes=None):
 # ACHIEVEMENTS
 # =========================================================================
 
-@router.get("/achievements")
 
+@router.get("/achievements")
 async def list_achievements(
     request: Request,
     admin: dict = Depends(get_current_admin),
@@ -46,7 +48,6 @@ async def list_achievements(
 
 
 @router.post("/achievements")
-
 async def create_achievement(
     request: Request,
     body: dict,
@@ -60,7 +61,6 @@ async def create_achievement(
 
 
 @router.put("/achievements/{achievement_id}")
-
 async def update_achievement(
     request: Request,
     achievement_id: UUID,
@@ -69,7 +69,9 @@ async def update_achievement(
 ):
     """Modifier un achievement."""
     db = get_supabase_client()
-    result = db.update(table="achievements", id_column="id", id_value=str(achievement_id), data=body)
+    result = db.update(
+        table="achievements", id_column="id", id_value=str(achievement_id), data=body
+    )
     if not result:
         raise NotFoundError("Achievement", str(achievement_id))
     _log_audit(admin, "update", "achievement", achievement_id, body)
@@ -77,7 +79,6 @@ async def update_achievement(
 
 
 @router.delete("/achievements/{achievement_id}")
-
 async def delete_achievement(
     request: Request,
     achievement_id: UUID,
@@ -94,8 +95,8 @@ async def delete_achievement(
 # CHALLENGES
 # =========================================================================
 
-@router.get("/challenges")
 
+@router.get("/challenges")
 async def list_challenges(
     request: Request,
     admin: dict = Depends(get_current_admin),
@@ -106,7 +107,6 @@ async def list_challenges(
 
 
 @router.post("/challenges")
-
 async def create_challenge(
     request: Request,
     body: dict,
@@ -120,7 +120,6 @@ async def create_challenge(
 
 
 @router.put("/challenges/{challenge_id}")
-
 async def update_challenge(
     request: Request,
     challenge_id: UUID,
@@ -137,7 +136,6 @@ async def update_challenge(
 
 
 @router.delete("/challenges/{challenge_id}")
-
 async def delete_challenge(
     request: Request,
     challenge_id: UUID,

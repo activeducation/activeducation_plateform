@@ -4,12 +4,12 @@ import os
 import re
 import uuid
 
-from fastapi import APIRouter, Depends, File, UploadFile, HTTPException
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+
+from app.core.exceptions import ValidationError
 from app.core.logging import get_logger
 from app.core.security import get_current_admin
-from app.core.exceptions import ValidationError
 from app.db.supabase_client import get_supabase_client
-
 
 logger = get_logger("api.admin.upload")
 
@@ -80,7 +80,9 @@ async def upload_image(
         public_url = db.client.storage.from_(bucket).get_public_url(filename)
 
         # Log audit
-        _log_audit(admin["user_id"], "upload", "image", path, {"bucket": bucket, "filename": filename})
+        _log_audit(
+            admin["user_id"], "upload", "image", path, {"bucket": bucket, "filename": filename}
+        )
 
         return {"url": public_url, "path": filename, "bucket": bucket}
 
@@ -120,13 +122,16 @@ def _log_audit(admin_id, action, entity_type, entity_id, changes):
     """Helper pour loguer les actions admin."""
     try:
         db = get_supabase_client()
-        db.insert(table="admin_audit_log", data={
-            "admin_id": str(admin_id),
-            "action": action,
-            "entity_type": entity_type,
-            "entity_id": str(entity_id) if entity_id else None,
-            "changes": changes,
-        })
+        db.insert(
+            table="admin_audit_log",
+            data={
+                "admin_id": str(admin_id),
+                "action": action,
+                "entity_type": entity_type,
+                "entity_id": str(entity_id) if entity_id else None,
+                "changes": changes,
+            },
+        )
     except Exception:
         logger.error("Audit log failed, blocking action", exc_info=True)
         raise

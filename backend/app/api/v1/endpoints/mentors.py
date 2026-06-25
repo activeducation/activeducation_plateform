@@ -2,20 +2,19 @@
 Endpoints API publics pour les mentors.
 """
 
-from uuid import UUID
-from typing import Optional
-
-from fastapi import APIRouter, Query, Depends
-
 from functools import lru_cache
+from typing import Optional
+from uuid import UUID
 
-from app.core.logging import get_logger
-from app.core.cache import get_cache, CacheClient, TTL_MENTORS
-from app.db.supabase_client import get_supabase_client
-from app.core.security import get_current_user_id_optional
+from fastapi import APIRouter, Depends, Query
+
 from app.core import email as email_service
-from app.schemas.mentor import MentorApplicationCreate, MentorApplicationResponse
+from app.core.cache import TTL_MENTORS, CacheClient, get_cache
+from app.core.logging import get_logger
+from app.core.security import get_current_user_id_optional
+from app.db.supabase_client import get_supabase_client
 from app.repositories.mentor_repository import get_mentor_repository
+from app.schemas.mentor import MentorApplicationCreate, MentorApplicationResponse
 
 logger = get_logger("api.mentors")
 
@@ -119,9 +118,16 @@ async def list_mentors(
 
     # NB : on tri par rating_avg (colonne de schema.sql) — l'ancienne colonne
     # "rating" n'existe pas dans la table mentors actuelle.
-    query = db.client.table("mentors").select(
-        "id,full_name,specialty,bio,avatar_url,years_experience,is_verified,hourly_rate,available_slots,rating_avg"
-    ).eq("is_active", True).eq("is_verified", True).order("rating_avg", desc=True).range(offset, offset + limit - 1)
+    query = (
+        db.client.table("mentors")
+        .select(
+            "id,full_name,specialty,bio,avatar_url,years_experience,is_verified,hourly_rate,available_slots,rating_avg"
+        )
+        .eq("is_active", True)
+        .eq("is_verified", True)
+        .order("rating_avg", desc=True)
+        .range(offset, offset + limit - 1)
+    )
 
     if specialty:
         query = query.ilike("specialty", f"%{specialty}%")
@@ -161,12 +167,20 @@ async def get_mentor(mentor_id: UUID):
 
     db = get_supabase_client()
 
-    result = db.client.table("mentors").select(
-        "id,full_name,specialty,bio,avatar_url,years_experience,is_verified,hourly_rate,available_slots,location,linkedin_url"
-    ).eq("id", str(mentor_id)).eq("is_active", True).limit(1).execute()
+    result = (
+        db.client.table("mentors")
+        .select(
+            "id,full_name,specialty,bio,avatar_url,years_experience,is_verified,hourly_rate,available_slots,location,linkedin_url"
+        )
+        .eq("id", str(mentor_id))
+        .eq("is_active", True)
+        .limit(1)
+        .execute()
+    )
 
     if not result.data:
         from app.core.exceptions import NotFoundError
+
         raise NotFoundError("Mentor", str(mentor_id))
 
     m = result.data[0]
@@ -200,9 +214,14 @@ async def get_mentor_reviews(
     """
     db = get_supabase_client()
 
-    result = db.client.table("mentor_reviews").select(
-        "id,rating,comment,created_at,user_profiles(display_name,avatar_url)"
-    ).eq("mentor_id", str(mentor_id)).order("created_at.desc").limit(limit).execute()
+    result = (
+        db.client.table("mentor_reviews")
+        .select("id,rating,comment,created_at,user_profiles(display_name,avatar_url)")
+        .eq("mentor_id", str(mentor_id))
+        .order("created_at.desc")
+        .limit(limit)
+        .execute()
+    )
 
     return [
         {

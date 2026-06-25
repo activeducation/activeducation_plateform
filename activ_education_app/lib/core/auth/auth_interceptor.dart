@@ -39,7 +39,11 @@ class AuthInterceptor extends Interceptor {
   /// le token est expire et que le refresh echoue, on procede SANS token au
   /// lieu de bloquer la requete avec un 401 — sinon le catalogue public casse
   /// des que la session expire.
-  static const List<String> _optionalAuthRoutes = [
+  ///
+  /// ATTENTION : utilisé avec [startsWith] pour éviter que les sous-routes
+  /// (enroll, exam, complete, submit...) soient traitées comme optionnelles
+  /// alors qu'elles nécessitent une authentification obligatoire.
+  static const List<String> _optionalAuthPrefixes = [
     '/elearning/courses',
     '/elearning/lessons',
     '/mentors',
@@ -58,7 +62,7 @@ class AuthInterceptor extends Interceptor {
       return handler.next(options);
     }
 
-    final isOptionalAuth = _isOptionalAuthRoute(options.path);
+    final isOptionalAuth = _isOptionalAuthRoute(options.path, method: options.method);
 
     final isExpired = await _tokenStorage.isTokenExpired();
     if (isExpired) {
@@ -125,8 +129,12 @@ class AuthInterceptor extends Interceptor {
 
   /// Verifie si la route accepte une auth optionnelle (token attache si valide,
   /// sinon requete envoyee sans token au lieu d'etre bloquee).
-  bool _isOptionalAuthRoute(String path) {
-    return _optionalAuthRoutes.any((route) => path.contains(route));
+  ///
+  /// Seules les requetes GET sont concernees (catalogue public). Les mutations
+  /// (POST enroll, exam submit, etc.) necessitent une authentification ferme.
+  bool _isOptionalAuthRoute(String path, {String? method}) {
+    if (method != null && method != 'GET') return false;
+    return _optionalAuthPrefixes.any((prefix) => path.startsWith(prefix));
   }
 
   /// Gere le rafraichissement du token.

@@ -14,26 +14,26 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request
 
-from app.core.logging import get_logger
-from app.core.exceptions import TestNotFoundError, QueryError
-from app.core.security import get_current_user_id_optional
+from app.core.exceptions import QueryError, TestNotFoundError
 from app.core.gamification_cache import invalidate_gamification_profile, invalidate_leaderboard
+from app.core.logging import get_logger
+from app.core.security import get_current_user_id_optional
 from app.db.supabase_client import get_admin_supabase_client
+from app.middleware.rate_limiter import standard_limit, strict_limit
+from app.repositories.orientation_repository import (
+    OrientationRepository,
+    get_orientation_repository,
+)
 from app.schemas.orientation import (
+    Career,
+    CareerSummary,
     OrientationTest,
     OrientationTestSummary,
     TestResult,
     TestSubmission,
-    Career,
-    CareerSummary,
 )
-from app.services.orientation_engine import orientation_engine
 from app.services.career_matcher import career_matcher
-from app.repositories.orientation_repository import (
-    get_orientation_repository,
-    OrientationRepository,
-)
-from app.middleware.rate_limiter import standard_limit, strict_limit
+from app.services.orientation_engine import orientation_engine
 
 logger = get_logger("api.orientation")
 
@@ -402,17 +402,19 @@ def _convert_db_test_to_mobile(db_test: dict) -> dict:
         db_type = q.get("question_type", q.get("type", "likert"))
         mobile_type = _map_question_type(db_type)
 
-        questions.append({
-            "id": str(q["id"]),
-            "text": q.get("question_text", q.get("text", "")),
-            "type": mobile_type,
-            "category": q.get("category"),
-            "options": options,
-            "imageAsset": q.get("image_asset"),
-            "sectionTitle": q.get("section_title"),
-            "sliderLeftLabel": q.get("slider_left_label"),
-            "sliderRightLabel": q.get("slider_right_label"),
-        })
+        questions.append(
+            {
+                "id": str(q["id"]),
+                "text": q.get("question_text", q.get("text", "")),
+                "type": mobile_type,
+                "category": q.get("category"),
+                "options": options,
+                "imageAsset": q.get("image_asset"),
+                "sectionTitle": q.get("section_title"),
+                "sliderLeftLabel": q.get("slider_left_label"),
+                "sliderRightLabel": q.get("slider_right_label"),
+            }
+        )
 
     return {
         "id": str(db_test["id"]),
@@ -445,6 +447,7 @@ def _convert_db_career_to_mobile(db_career: dict) -> dict:
     education = db_career.get("education_path") or {}
     if isinstance(education, str):
         import json
+
         education = json.loads(education)
 
     return {
@@ -485,7 +488,7 @@ def _convert_db_career_to_mobile(db_career: dict) -> dict:
 
 def _convert_db_test_to_schema(db_test: dict) -> OrientationTest:
     """Convertit un test de la DB vers le schema Pydantic."""
-    from app.schemas.orientation import Question, Option
+    from app.schemas.orientation import Option, Question
 
     questions = []
     for q in db_test.get("questions", []):
@@ -520,5 +523,3 @@ def _convert_db_test_to_schema(db_test: dict) -> OrientationTest:
         is_active=db_test.get("is_active", True),
         display_order=db_test.get("display_order", 0),
     )
-
-
