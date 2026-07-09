@@ -64,6 +64,41 @@ class ChatRepository:
             logger.error("Erreur creation session chat: %s", e, exc_info=True)
             raise QueryError(f"Erreur lors de la creation de la session: {str(e)}")
 
+    async def ensure_session(
+        self,
+        session_id: UUID,
+        user_id: UUID,
+        subject_context: Optional[dict[str, Any]] = None,
+        provider: Optional[str] = None,
+    ) -> None:
+        """Cree la session si absente (upsert idempotent), sinon ne touche a rien.
+
+        Garantit l'existence de la ligne chat_sessions avant d'inserer des
+        messages (contrainte de cle etrangere). `ignore_duplicates` evite
+        d'ecraser une session existante (created_at, subject_context...).
+        Race-safe cote Postgres via ON CONFLICT DO NOTHING.
+        """
+        try:
+            now = datetime.now(timezone.utc).isoformat()
+            data = {
+                "id": str(session_id),
+                "user_id": str(user_id),
+                "subject_context": subject_context or {},
+                "provider": provider,
+                "message_count": 0,
+                "last_active_at": now,
+                "created_at": now,
+                "updated_at": now,
+            }
+            (
+                self._db.client.table(_SESSIONS)
+                .upsert(data, on_conflict="id", ignore_duplicates=True)
+                .execute()
+            )
+        except Exception as e:
+            logger.error("Erreur ensure_session %s: %s", session_id, e, exc_info=True)
+            raise QueryError(f"Erreur lors de la creation de la session: {str(e)}")
+
     async def get_session(
         self,
         session_id: UUID,

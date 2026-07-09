@@ -236,3 +236,92 @@ def test_llm_config_present_with_expected_defaults():
     assert settings.LLM_MODEL == "llama-3.1-8b-instant"
     assert settings.LLM_MAX_TOKENS == 800
     assert settings.TUTOR_PERSIST_SESSIONS is False
+
+
+# ---------------------------------------------------------------------------
+# Cablage llm_service + endpoint
+# ---------------------------------------------------------------------------
+
+
+async def test_session_store_db_mode_ensures_session_before_messages(monkeypatch):
+    settings = get_settings()
+    monkeypatch.setattr(settings, "TUTOR_PERSIST_SESSIONS", True)
+
+    store = SessionStore()
+    rec = {"ensure": [], "append": []}
+
+    class _RecRepo:
+        async def ensure_session(self, s, u, **k):
+            rec["ensure"].append((s, u))
+
+        async def append_message(self, s, u, role, content, token_count=None):
+            rec["append"].append((s, u, role, content))
+
+    store._repo = _RecRepo()
+    sid, uid = uuid4(), uuid4()
+
+    await store.append(sid, uid, "q", "a")
+
+    # La session doit etre garantie (FK) AVANT tout message.
+    assert rec["ensure"] == [(sid, uid)]
+    assert rec["append"] == [
+        (sid, uid, "user", "q"),
+        (sid, uid, "assistant", "a"),
+    ]
+
+
+async def test_llm_service_threads_user_id_to_store():
+    from app.services.llm_service import LLMService
+
+    svc = LLMService()
+
+    class _StubProvider:
+        async def complete(self, messages):
+            return "reponse test"
+
+        async def stream(self, messages):
+            yield "reponse test"
+
+    calls = {}
+
+    class _StubStore:
+        async def get_history(self, session_id, user_id, limit=None):
+            return []
+
+        def seed_from_client(self, client_history, limit):
+            return []
+
+        async def append(self, session_id, user_id, user_message, assistant_reply, token_count=None):
+            calls["append"] = (session_id, user_id)
+
+    svc._provider = _StubProvider()
+    svc._store = _StubStore()
+
+    uid, sid = uuid4(), uuid4()
+    result = await svc.chat("bonjour", session_id=sid, user_id=uid)
+
+    assert result["reply"] == "reponse test"
+    # Le user_id de l'auth (pas le prefixe client) doit remonter au store.
+    assert calls["append"] == (sid, uid)
+
+
+def test_resolve_session_parses_legacy_prefixed_id():
+    from app.api.v1.endpoints.chat import _resolve_session
+
+    user_id = uuid4()
+    inner = uuid4()
+    raw = f"{user_id}:{inner}"
+
+    session_uuid, session_str = _resolve_session(raw, user_id)
+
+    assert session_uuid == inner          # UUID extrait du suffixe
+    assert session_str == raw             # id client-facing preserve
+
+
+def test_resolve_session_generates_when_absent():
+    user_id = uuid4()
+    from app.api.v1.endpoints.chat import _resolve_session
+
+    session_uuid, session_str = _resolve_session(None, user_id)
+
+    assert session_str == f"{user_id}:{session_uuid}"

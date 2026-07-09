@@ -1,41 +1,48 @@
-"""
-LLMService — Façade du service AÏDA.
+"""LLMService — Façade du service AÏDA / TutorAI.
 
 Orchestre :
-- SessionManager  : historique des conversations
+- SessionStore    : historique des conversations (mémoire ou DB selon flag)
 - PromptBuilder   : construction des prompts système
 - SafetyFilter    : détection d'injections et contenu hors-domaine
-- GroqProvider    : appels Groq (principal) + Ollama (fallback)
+- LLMProvider     : appels LLM (Groq principal + Ollama fallback)
+
+L'historique est gouverné par `SessionStore` : identique à l'existant tant
+que TUTOR_PERSIST_SESSIONS est False (mémoire process), persisté en base
+sinon. Le `user_id` (issu de l'auth) est requis pour l'ownership.
 """
 
 import uuid
 from typing import AsyncGenerator, Optional
+from uuid import UUID
 
+from app.core.config import settings
 from app.core.logging import get_logger
-from app.services.llm.session_manager import SessionManager
 from app.services.llm.prompt_builder import PromptBuilder
 from app.services.llm.safety_filter import SafetyFilter
-from app.services.llm.groq_provider import GroqProvider
+from app.services.llm.providers import get_llm_provider
+from app.services.tutor.session_store import SessionStore
 from app.repositories.knowledge_base_repository import knowledge_base_repository
 
 logger = get_logger("services.llm")
 
+# Nombre de messages d'historique injectés dans le prompt (fenêtre de contexte).
 MAX_HISTORY = 10
 
 
 class LLMService:
-    """Service conversationnel AÏDA — Groq (principal) + Ollama (fallback)."""
+    """Service conversationnel AÏDA — provider abstrait + store d'historique."""
 
     def __init__(self) -> None:
-        self._sessions = SessionManager()
+        self._store = SessionStore()
         self._prompt_builder = PromptBuilder(knowledge_base_repository)
         self._safety = SafetyFilter()
-        self._provider = GroqProvider()
+        self._provider = get_llm_provider()
 
     async def chat(
         self,
         message: str,
-        session_id: str,
+        session_id: UUID,
+        user_id: UUID,
         orientation_context: Optional[dict] = None,
         client_history: Optional[list[dict]] = None,
     ) -> dict:
@@ -43,11 +50,11 @@ class LLMService:
         message = self._safety.sanitize(message)
 
         if self._safety.is_injection_attempt(message):
-            return {"reply": self._safety.get_rejection_message(), "session_id": session_id}
+            return {"reply": self._safety.get_rejection_message(), "session_id": str(session_id)}
 
-        history = self._sessions.get_history(session_id)
+        history = await self._store.get_history(session_id, user_id, limit=MAX_HISTORY)
         if not history and client_history:
-            history = self._sessions.seed_from_client(session_id, client_history)
+            history = self._store.seed_from_client(client_history, MAX_HISTORY)
 
         system_prompt = self._prompt_builder.build(orientation_context)
         messages = [{"role": "system", "content": system_prompt}]
@@ -63,16 +70,17 @@ class LLMService:
                     "Le service est temporairement indisponible. "
                     "Réessaie dans quelques instants !"
                 ),
-                "session_id": session_id,
+                "session_id": str(session_id),
             }
 
-        self._sessions.append(session_id, message, reply)
-        return {"reply": reply, "session_id": session_id}
+        await self._store.append(session_id, user_id, message, reply)
+        return {"reply": reply, "session_id": str(session_id)}
 
     async def chat_stream(
         self,
         message: str,
-        session_id: str,
+        session_id: UUID,
+        user_id: UUID,
         orientation_context: Optional[dict] = None,
         client_history: Optional[list[dict]] = None,
     ) -> AsyncGenerator[dict, None]:
@@ -84,9 +92,9 @@ class LLMService:
             yield {"done": True}
             return
 
-        history = self._sessions.get_history(session_id)
+        history = await self._store.get_history(session_id, user_id, limit=MAX_HISTORY)
         if not history and client_history:
-            history = self._sessions.seed_from_client(session_id, client_history)
+            history = self._store.seed_from_client(client_history, MAX_HISTORY)
 
         system_prompt = self._prompt_builder.build(orientation_context)
         messages = [{"role": "system", "content": system_prompt}]
@@ -101,15 +109,12 @@ class LLMService:
 
         full_reply = "".join(full_reply_parts)
         if full_reply:
-            self._sessions.append(session_id, message, full_reply)
+            await self._store.append(session_id, user_id, message, full_reply)
 
         yield {"done": True}
 
-    def clear_session(self, session_id: str) -> None:
-        self._sessions.clear(session_id)
-
-    def get_history(self, session_id: str) -> list[dict]:
-        return self._sessions.get_history(session_id)
+    async def clear_session(self, session_id: UUID, user_id: UUID) -> bool:
+        return await self._store.clear(session_id, user_id)
 
     @staticmethod
     def new_session_id() -> str:

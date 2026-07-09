@@ -99,6 +99,8 @@ class SessionStore:
         if self._persist:
             try:
                 repo = self._get_repo()
+                # Garantit l'existence de la session (FK) avant les messages.
+                await repo.ensure_session(session_id, user_id)
                 await repo.append_message(session_id, user_id, "user", user_message)
                 await repo.append_message(
                     session_id, user_id, "assistant", assistant_reply,
