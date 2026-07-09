@@ -63,6 +63,24 @@ class Settings(BaseSettings):
     # Nombre de messages d'historique injectes dans le contexte LLM.
     TUTOR_SESSION_HISTORY_LIMIT: int = 20
 
+    # TutorAI RAG — recherche semantique sur le contenu de cours.
+    # Embeddings via Ollama (nomic-embed-text, 768d) : gratuit, local,
+    # coherent avec le repli offline. Ollama + le modele doivent tourner la
+    # ou le backend calcule les embeddings (ingestion ET requete de chat).
+    # Defaut False : dormant tant que la migration 019 (pgvector) n'est pas
+    # appliquee et le flag pas active.
+    TUTOR_RAG_ENABLED: bool = False
+    EMBEDDING_PROVIDER: str = "ollama"       # ollama (768d)
+    EMBEDDING_MODEL: str = "nomic-embed-text"
+    EMBEDDING_DIM: int = 768                  # doit matcher vector(N) en base
+    EMBEDDING_TIMEOUT_SECONDS: float = 60.0
+    # Recherche : nb de chunks injectes dans le prompt + seuil de similarite.
+    RAG_TOP_K: int = 4
+    RAG_MIN_SIMILARITY: float = 0.3
+    # Decoupage du contenu (approximatif, en caracteres).
+    RAG_CHUNK_SIZE: int = 2000
+    RAG_CHUNK_OVERLAP: int = 200
+
     # Email (notifications candidatures mentor, etc.) — tout optionnel.
     # Si SMTP n'est pas configure, l'envoi est ignore silencieusement (best-effort).
     # L'adresse destinataire des notifications est aussi configurable a chaud via
