@@ -37,8 +37,31 @@ class Settings(BaseSettings):
     # explicitement via le validator ci-dessous.
     REDIS_URL: Optional[str] = None
 
-    # LLM - AÏDA
+    # LLM - AÏDA / TutorAI
     GROQ_API_KEY: Optional[str] = None
+
+    # Provider LLM actif et parametres de generation.
+    # Sortis du code (groq_provider) pour un point de verite unique,
+    # configurable par environnement sans redeploiement de code.
+    LLM_PROVIDER: str = "groq"              # groq | ollama
+    LLM_MODEL: str = "llama-3.1-8b-instant"
+    LLM_MAX_TOKENS: int = 800
+    LLM_TEMPERATURE: float = 0.7
+    LLM_TIMEOUT_SECONDS: float = 30.0
+
+    # Fallback local Ollama (auto-heberge, mode hors-ligne).
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
+    OLLAMA_MODEL: str = "llama3.1:8b"
+    OLLAMA_TIMEOUT_SECONDS: float = 90.0
+
+    # TutorAI — bascules de deploiement progressif (strangler fig).
+    # TUTOR_PERSIST_SESSIONS : quand True, les conversations sont persistees
+    # en base (chat_sessions/chat_messages) au lieu de la memoire process.
+    # Defaut False : le chemin /chat existant reste inchange tant que la
+    # migration 018 n'est pas appliquee et le flag pas active.
+    TUTOR_PERSIST_SESSIONS: bool = False
+    # Nombre de messages d'historique injectes dans le contexte LLM.
+    TUTOR_SESSION_HISTORY_LIMIT: int = 20
 
     # Email (notifications candidatures mentor, etc.) — tout optionnel.
     # Si SMTP n'est pas configure, l'envoi est ignore silencieusement (best-effort).
