@@ -11,7 +11,10 @@ part of '../chat_page.dart';
 
 class _MessageBubble extends StatelessWidget {
   final ChatMessage message;
-  const _MessageBubble({required this.message});
+
+  /// True quand cette bulle reçoit encore des fragments (curseur clignotant).
+  final bool isStreaming;
+  const _MessageBubble({required this.message, this.isStreaming = false});
 
   @override
   Widget build(BuildContext context) {
@@ -63,8 +66,8 @@ class _MessageBubble extends StatelessWidget {
   }
 
   Widget _buildContent(bool isUser) {
-    // Rendu Markdown basique : **gras**
-    final text = message.content;
+    // Rendu Markdown basique : **gras**. Curseur ajouté pendant le streaming.
+    final text = message.content + (isStreaming ? ' ▌' : '');
     if (!text.contains('**')) {
       return Text(
         text,

@@ -112,6 +112,7 @@ class ApiEndpoints {
   // ============================================
   static const String chat = '$apiV1/chat';
   static const String chatMessage = '$chat/message';
+  static const String chatMessageStream = '$chat/message/stream';
   static String chatSession(String sessionId) => '$chat/session/$sessionId';
 
   // ============================================
