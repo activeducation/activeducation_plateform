@@ -13,6 +13,22 @@ logger = get_logger("api.school.lessons")
 router = APIRouter()
 
 
+async def _reindex_lesson(lesson_id: str) -> None:
+    """Ré-indexe la leçon dans le RAG (best-effort, si TUTOR_RAG_ENABLED).
+
+    Ne bloque jamais la sauvegarde de la leçon : l'indexation est secondaire.
+    """
+    from app.core.config import settings
+    if not settings.TUTOR_RAG_ENABLED:
+        return
+    try:
+        from uuid import UUID
+        from app.services.rag.lesson_ingestion import get_lesson_ingestion_service
+        await get_lesson_ingestion_service().ingest_lesson(UUID(str(lesson_id)))
+    except Exception as e:
+        logger.warning("Reindex RAG lecon %s echoue (non bloquant): %s", lesson_id, e)
+
+
 @router.get("/modules/{module_id}/lessons")
 async def list_lessons(
     module_id: str,
@@ -36,6 +52,7 @@ async def create_lesson(
     lesson = repo.create_lesson(module_id, admin["school_id"], data)
     if not lesson:
         raise NotFoundError("Module", module_id)
+    await _reindex_lesson(str(lesson["id"]))
     return lesson
 
 
@@ -53,6 +70,7 @@ async def update_lesson(
     lesson = repo.update_lesson(lesson_id, admin["school_id"], data)
     if not lesson:
         raise NotFoundError("Lecon", lesson_id)
+    await _reindex_lesson(str(lesson_id))
     return lesson
 
 

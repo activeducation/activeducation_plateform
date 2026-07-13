@@ -109,6 +109,34 @@ class SkillRepository:
             logger.debug("find_skill_by_text a échoué (%s): %s", text, e)
             return None
 
+    async def set_lesson_skills(
+        self,
+        lesson_id: UUID,
+        skill_ids: list[UUID],
+    ) -> int:
+        """Remplace les compétences liées à une leçon (idempotent).
+
+        Supprime les liens existants puis recrée. Retourne le nombre de liens.
+        """
+        try:
+            (
+                self._db.client.table(_LESSON_SKILLS)
+                .delete()
+                .eq("lesson_id", str(lesson_id))
+                .execute()
+            )
+            if not skill_ids:
+                return 0
+            rows = [
+                {"lesson_id": str(lesson_id), "skill_id": str(sid), "weight": 1.0}
+                for sid in skill_ids
+            ]
+            result = self._db.insert(table=_LESSON_SKILLS, data=rows)
+            return len(result) if result else len(rows)
+        except Exception as e:
+            logger.error("Erreur set_lesson_skills %s: %s", lesson_id, e, exc_info=True)
+            raise QueryError(f"Erreur lors du lien lecon-competences: {str(e)}")
+
     async def get_skills_for_lesson(self, lesson_id: UUID) -> list[dict[str, Any]]:
         """Competences couvertes par une lecon (skill_id + weight)."""
         try:

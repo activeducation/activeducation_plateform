@@ -16,6 +16,8 @@ from pydantic import BaseModel, Field
 from app.core.security import get_current_admin
 from app.core.exceptions import ExternalServiceError
 from app.services.rag.ingestion import IngestionService
+from app.services.rag.lesson_ingestion import get_lesson_ingestion_service
+from app.repositories.skill_repository import get_skill_repository
 
 router = APIRouter()
 
@@ -43,6 +45,10 @@ class IngestRequest(BaseModel):
 class IngestResponse(BaseModel):
     chunks_inserted: int
     source_type: str
+
+
+class LessonSkillsRequest(BaseModel):
+    skill_ids: list[UUID] = Field(default_factory=list, max_length=20)
 
 
 @router.post(
@@ -84,3 +90,54 @@ async def ingest_content(
         chunks_inserted=inserted,
         source_type=request.source_type,
     )
+
+
+@router.post(
+    "/lessons/{lesson_id}/ingest",
+    summary="Indexer une leçon e-learning pour le RAG",
+)
+async def ingest_lesson(
+    lesson_id: UUID,
+    admin=Depends(get_current_admin),
+) -> dict:
+    try:
+        inserted = await get_lesson_ingestion_service().ingest_lesson(lesson_id)
+    except ExternalServiceError as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=exc.message)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erreur lors de l'indexation de la leçon.",
+        )
+    return {"lesson_id": str(lesson_id), "chunks_inserted": inserted}
+
+
+@router.post(
+    "/lessons/ingest-all",
+    summary="Backfill : indexer toutes les leçons du catalogue",
+)
+async def ingest_all_lessons(admin=Depends(get_current_admin)) -> dict:
+    try:
+        return await get_lesson_ingestion_service().ingest_all_lessons()
+    except ExternalServiceError as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=exc.message)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erreur lors du backfill des leçons.",
+        )
+
+
+@router.put(
+    "/lessons/{lesson_id}/skills",
+    summary="Lier une leçon à des compétences (lesson_skills)",
+)
+async def set_lesson_skills(
+    lesson_id: UUID,
+    request: LessonSkillsRequest,
+    admin=Depends(get_current_admin),
+) -> dict:
+    linked = await get_skill_repository().set_lesson_skills(
+        lesson_id, request.skill_ids,
+    )
+    return {"lesson_id": str(lesson_id), "skills_linked": linked}
