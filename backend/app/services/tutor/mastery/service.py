@@ -70,6 +70,21 @@ class MasteryService:
         )
         return result
 
+    async def record_answers(
+        self,
+        user_id: UUID,
+        skill_id: UUID,
+        answers: list[bool],
+    ) -> dict[str, Any]:
+        """Enregistre plusieurs réponses (un quiz) pour une compétence.
+
+        Applique le BKT séquentiellement et retourne l'état de maîtrise final.
+        """
+        result: dict[str, Any] = {}
+        for correct in answers:
+            result = await self.record_answer(user_id, skill_id, correct)
+        return result
+
     async def get_mastery(self, user_id: UUID) -> list[dict[str, Any]]:
         """Retourne toute la maitrise d'un utilisateur (faible d'abord)."""
         return await self._get_repo().list_for_user(user_id)

@@ -22,6 +22,8 @@ final _quiz = Quiz(questions: [
 void main() {
   late MockTutorRemoteDataSource ds;
 
+  setUpAll(() => registerFallbackValue(<bool>[]));
+
   setUp(() => ds = MockTutorRemoteDataSource());
 
   blocTest<QuizBloc, QuizState>(
@@ -84,4 +86,23 @@ void main() {
       predicate<QuizState>((s) => s is QuizFailure && !s.unavailable),
     ],
   );
+
+  test('SubmitQuizResults transmet skill_id et réponses au datasource', () async {
+    when(() => ds.submitQuiz(
+          skillId: any(named: 'skillId'),
+          answers: any(named: 'answers'),
+        )).thenAnswer((_) async => <String, dynamic>{});
+
+    final bloc = QuizBloc(ds);
+    bloc.add(const SubmitQuizResults('s1', [true, false, true]));
+    await Future<void>.delayed(Duration.zero);
+
+    final captured = verify(() => ds.submitQuiz(
+          skillId: captureAny(named: 'skillId'),
+          answers: captureAny(named: 'answers'),
+        )).captured;
+    expect(captured[0], 's1');
+    expect(captured[1], [true, false, true]);
+    await bloc.close();
+  });
 }

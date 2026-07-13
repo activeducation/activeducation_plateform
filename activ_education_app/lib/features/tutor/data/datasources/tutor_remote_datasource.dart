@@ -23,6 +23,10 @@ abstract class TutorRemoteDataSource {
     required String skillId,
     required bool correct,
   });
+  Future<Map<String, dynamic>> submitQuiz({
+    required String skillId,
+    required List<bool> answers,
+  });
   Future<List<MasterySkill>> getMastery();
   Future<Recommendation> getNextStep();
 }
@@ -50,6 +54,17 @@ class TutorRemoteDataSourceImpl implements TutorRemoteDataSource {
     required bool correct,
   }) async {
     return _post(ApiEndpoints.tutorSkillAnswer(skillId), {'correct': correct});
+  }
+
+  @override
+  Future<Map<String, dynamic>> submitQuiz({
+    required String skillId,
+    required List<bool> answers,
+  }) async {
+    return _post(ApiEndpoints.tutorQuizSubmit, {
+      'skill_id': skillId,
+      'answers': answers,
+    });
   }
 
   @override

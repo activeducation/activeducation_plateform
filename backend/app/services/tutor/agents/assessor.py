@@ -44,10 +44,17 @@ class AssessorAgent:
         topic: str,
         num_questions: int = 3,
         context: Optional[str] = None,
+        skill_id: Optional[Any] = None,
+        skill_title: Optional[str] = None,
     ) -> dict[str, Any]:
-        """Génère un quiz sur `topic`. Lève ExternalServiceError si échec."""
+        """Génère un quiz sur `topic`. Lève ExternalServiceError si échec.
+
+        Si `skill_id` est fourni, le quiz est tagué avec cette compétence : les
+        réponses pourront alimenter le BKT (via /tutor/quiz/submit).
+        """
         num_questions = max(1, min(num_questions, 10))
-        user_prompt = f"Génère {num_questions} question(s) de quiz sur : {topic}."
+        subject = skill_title or topic
+        user_prompt = f"Génère {num_questions} question(s) de quiz sur : {subject}."
         if context:
             user_prompt += (
                 f"\n\nAppuie-toi sur cet extrait de cours :\n{context[:3000]}"
@@ -62,7 +69,10 @@ class AssessorAgent:
             raise ExternalServiceError(
                 service="llm", message="Le générateur de quiz est indisponible."
             )
-        return self._parse_quiz(raw)
+        quiz = self._parse_quiz(raw)
+        # Tag compétence : permet de rattacher les réponses au BKT.
+        quiz["skill_id"] = str(skill_id) if skill_id else None
+        return quiz
 
     @staticmethod
     def _parse_quiz(raw: str) -> dict[str, Any]:

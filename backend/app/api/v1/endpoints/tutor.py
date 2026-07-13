@@ -51,6 +51,11 @@ class AnswerRequest(BaseModel):
     correct: bool
 
 
+class QuizSubmitRequest(BaseModel):
+    skill_id: UUID
+    answers: list[bool] = Field(..., min_length=1, max_length=50)
+
+
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
@@ -84,6 +89,24 @@ async def record_answer(
     )
     return {
         "skill_id": str(skill_id),
+        "p_mastery": result.get("p_mastery"),
+        "attempts": result.get("attempts"),
+        "correct": result.get("correct"),
+    }
+
+
+@router.post("/quiz/submit", summary="Enregistrer les réponses d'un quiz (maîtrise BKT)")
+async def submit_quiz(
+    request: QuizSubmitRequest,
+    user_id: UUID = Depends(get_current_user_id),
+    _: None = Depends(_require_enabled),
+) -> dict[str, Any]:
+    result = await get_mastery_service().record_answers(
+        user_id=user_id, skill_id=request.skill_id, answers=request.answers,
+    )
+    return {
+        "skill_id": str(request.skill_id),
+        "answers_recorded": len(request.answers),
         "p_mastery": result.get("p_mastery"),
         "attempts": result.get("attempts"),
         "correct": result.get("correct"),

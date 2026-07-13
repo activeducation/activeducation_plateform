@@ -87,6 +87,28 @@ class SkillRepository:
             logger.error("Erreur lien lecon-competence: %s", e, exc_info=True)
             raise QueryError(f"Erreur lors du lien lecon-competence: {str(e)}")
 
+    async def find_skill_by_text(self, text: str) -> Optional[dict[str, Any]]:
+        """Meilleure correspondance de compétence par titre (ILIKE), ou None.
+
+        Best-effort : sert à rattacher un sujet de quiz libre à une compétence
+        existante pour alimenter le BKT. Retourne None si rien de proche.
+        """
+        text = (text or "").strip()
+        if not text:
+            return None
+        try:
+            result = (
+                self._db.client.table(_SKILLS)
+                .select("id, subject, code, title")
+                .ilike("title", f"%{text}%")
+                .limit(1)
+                .execute()
+            )
+            return result.data[0] if result.data else None
+        except Exception as e:
+            logger.debug("find_skill_by_text a échoué (%s): %s", text, e)
+            return None
+
     async def get_skills_for_lesson(self, lesson_id: UUID) -> list[dict[str, Any]]:
         """Competences couvertes par une lecon (skill_id + weight)."""
         try:

@@ -31,6 +31,25 @@ void main() {
       expect(Quiz.fromJson({}).isEmpty, isTrue);
       expect(Quiz.fromJson({'questions': []}).isEmpty, isTrue);
     });
+
+    test('rattachement à une compétence via skill_id', () {
+      final bound = Quiz.fromJson({
+        'skill_id': 's1',
+        'questions': [
+          {
+            'question': 'q',
+            'options': [
+              {'text': 'a', 'is_correct': true}
+            ]
+          }
+        ],
+      });
+      expect(bound.skillId, 's1');
+      expect(bound.isSkillBound, isTrue);
+
+      final unbound = Quiz.fromJson({'questions': []});
+      expect(unbound.isSkillBound, isFalse);
+    });
   });
 
   group('MasterySkill / Recommendation', () {

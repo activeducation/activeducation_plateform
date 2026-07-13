@@ -26,6 +26,15 @@ class ResetQuiz extends QuizEvent {
   const ResetQuiz();
 }
 
+/// Soumet les résultats d'un quiz rattaché à une compétence (alimente le BKT).
+class SubmitQuizResults extends QuizEvent {
+  final String skillId;
+  final List<bool> answers;
+  const SubmitQuizResults(this.skillId, this.answers);
+  @override
+  List<Object?> get props => [skillId, answers];
+}
+
 // ===========================================================================
 // States
 // ===========================================================================
@@ -69,6 +78,22 @@ class QuizBloc extends Bloc<QuizEvent, QuizState> {
   QuizBloc(this._dataSource) : super(const QuizInitial()) {
     on<GenerateQuiz>(_onGenerate);
     on<ResetQuiz>((_, emit) => emit(const QuizInitial()));
+    on<SubmitQuizResults>(_onSubmitResults);
+  }
+
+  Future<void> _onSubmitResults(
+    SubmitQuizResults event,
+    Emitter<QuizState> emit,
+  ) async {
+    // Best-effort : alimenter le BKT ne doit pas perturber l'écran de score.
+    try {
+      await _dataSource.submitQuiz(
+        skillId: event.skillId,
+        answers: event.answers,
+      );
+    } catch (_) {
+      // silencieux : l'enregistrement de maîtrise est secondaire côté UX.
+    }
   }
 
   Future<void> _onGenerate(GenerateQuiz event, Emitter<QuizState> emit) async {

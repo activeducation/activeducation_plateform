@@ -120,6 +120,7 @@ class ApiEndpoints {
   // ============================================
   static const String tutor = '$apiV1/tutor';
   static const String tutorQuizGenerate = '$tutor/quiz/generate';
+  static const String tutorQuizSubmit = '$tutor/quiz/submit';
   static const String tutorMastery = '$tutor/mastery';
   static const String tutorNextStep = '$tutor/next-step';
   static String tutorSkillAnswer(String skillId) => '$tutor/skills/$skillId/answer';

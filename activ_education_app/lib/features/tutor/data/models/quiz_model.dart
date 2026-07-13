@@ -44,7 +44,11 @@ class QuizQuestion {
 class Quiz {
   final List<QuizQuestion> questions;
 
-  const Quiz({required this.questions});
+  /// Compétence ciblée (si le quiz est rattaché à une compétence connue) :
+  /// permet de soumettre les réponses pour alimenter le BKT.
+  final String? skillId;
+
+  const Quiz({required this.questions, this.skillId});
 
   factory Quiz.fromJson(Map<String, dynamic> json) {
     final rawQuestions = (json['questions'] as List?) ?? const [];
@@ -53,9 +57,11 @@ class Quiz {
           .whereType<Map<String, dynamic>>()
           .map(QuizQuestion.fromJson)
           .toList(),
+      skillId: json['skill_id'] as String?,
     );
   }
 
   bool get isEmpty => questions.isEmpty;
   int get length => questions.length;
+  bool get isSkillBound => skillId != null && skillId!.isNotEmpty;
 }

@@ -141,6 +141,14 @@ class _TutorViewState extends State<_TutorView> {
                 return QuizCard(
                   quiz: state.quiz,
                   onRestart: () => context.read<QuizBloc>().add(const ResetQuiz()),
+                  onCompleted: (results) {
+                    final quiz = state.quiz;
+                    if (quiz.isSkillBound) {
+                      context
+                          .read<QuizBloc>()
+                          .add(SubmitQuizResults(quiz.skillId!, results));
+                    }
+                  },
                 );
               }
               return _buildEmpty();

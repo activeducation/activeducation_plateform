@@ -68,9 +68,24 @@ async def dispatch_tool(name: str, args: dict[str, Any], user_id: UUID) -> str:
     try:
         if name == "generate_quiz":
             from app.services.tutor.agents import AssessorAgent
+            topic = str(args.get("topic", "")).strip() or "révision générale"
+            # Rattache le quiz à une compétence connue si le sujet en évoque une,
+            # pour que les réponses puissent alimenter le BKT.
+            skill_id = None
+            skill_title = None
+            try:
+                from app.repositories.skill_repository import get_skill_repository
+                skill = await get_skill_repository().find_skill_by_text(topic)
+                if skill:
+                    skill_id = skill.get("id")
+                    skill_title = skill.get("title")
+            except Exception:
+                pass
             quiz = await AssessorAgent().generate_quiz(
-                topic=str(args.get("topic", "")).strip() or "révision générale",
+                topic=topic,
                 num_questions=int(args.get("num_questions", 3) or 3),
+                skill_id=skill_id,
+                skill_title=skill_title,
             )
             return json.dumps(quiz, ensure_ascii=False)
 

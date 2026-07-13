@@ -11,7 +11,17 @@ class QuizCard extends StatefulWidget {
   final Quiz quiz;
   final VoidCallback? onRestart;
 
-  const QuizCard({super.key, required this.quiz, this.onRestart});
+  /// Appelé une fois le quiz terminé, avec la justesse de chaque réponse
+  /// (dans l'ordre). Permet au parent d'alimenter le BKT si le quiz est
+  /// rattaché à une compétence.
+  final ValueChanged<List<bool>>? onCompleted;
+
+  const QuizCard({
+    super.key,
+    required this.quiz,
+    this.onRestart,
+    this.onCompleted,
+  });
 
   @override
   State<QuizCard> createState() => _QuizCardState();
@@ -22,6 +32,7 @@ class _QuizCardState extends State<QuizCard> {
   int? _selected;
   int _score = 0;
   bool _finished = false;
+  final List<bool> _results = [];
 
   QuizQuestion get _question => widget.quiz.questions[_index];
   bool get _answered => _selected != null;
@@ -29,15 +40,18 @@ class _QuizCardState extends State<QuizCard> {
 
   void _select(int optionIndex) {
     if (_answered) return;
+    final isCorrect = _question.options[optionIndex].isCorrect;
     setState(() {
       _selected = optionIndex;
-      if (_question.options[optionIndex].isCorrect) _score++;
+      _results.add(isCorrect);
+      if (isCorrect) _score++;
     });
   }
 
   void _next() {
     if (_isLast) {
       setState(() => _finished = true);
+      widget.onCompleted?.call(List.of(_results));
       return;
     }
     setState(() {
@@ -52,6 +66,7 @@ class _QuizCardState extends State<QuizCard> {
       _selected = null;
       _score = 0;
       _finished = false;
+      _results.clear();
     });
     widget.onRestart?.call();
   }
