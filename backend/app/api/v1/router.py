@@ -14,6 +14,7 @@ from app.api.v1.endpoints.admin import (
     mentors as admin_mentors,
     settings as admin_settings,
     knowledge_base as admin_knowledge_base,
+    rag as admin_rag,
     opportunities as admin_opportunities,
     elearning as admin_elearning,
     partner as admin_partner,
@@ -78,6 +79,7 @@ api_router.include_router(admin_gamification.router, prefix="/admin/gamification
 api_router.include_router(admin_mentors.router, prefix="/admin/mentors", tags=["admin-mentors"])
 api_router.include_router(admin_settings.router, prefix="/admin", tags=["admin-settings"])
 api_router.include_router(admin_knowledge_base.router, prefix="/admin/knowledge-base", tags=["admin-knowledge-base"])
+api_router.include_router(admin_rag.router, prefix="/admin/rag", tags=["admin-rag"])
 api_router.include_router(admin_opportunities.router, prefix="/admin/opportunities", tags=["admin-opportunities"])
 api_router.include_router(admin_elearning.router, prefix="/admin/elearning", tags=["admin-elearning"])
 api_router.include_router(admin_partner.router, prefix="/admin", tags=["admin-partner"])

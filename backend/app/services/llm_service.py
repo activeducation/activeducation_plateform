@@ -21,6 +21,7 @@ from app.services.llm.prompt_builder import PromptBuilder
 from app.services.llm.safety_filter import SafetyFilter
 from app.services.llm.providers import get_llm_provider
 from app.services.tutor.session_store import SessionStore
+from app.services.rag.retrieval import RetrievalService
 from app.repositories.knowledge_base_repository import knowledge_base_repository
 
 logger = get_logger("services.llm")
@@ -37,6 +38,30 @@ class LLMService:
         self._prompt_builder = PromptBuilder(knowledge_base_repository)
         self._safety = SafetyFilter()
         self._provider = get_llm_provider()
+        self._retrieval = RetrievalService()
+
+    async def _build_system_prompt(
+        self,
+        message: str,
+        orientation_context: Optional[dict],
+    ) -> str:
+        """Construit le prompt système, enrichi du contexte RAG si activé.
+
+        Flag off (défaut) → identique à PromptBuilder.build (aucun changement).
+        Flag on → ajoute les extraits de cours pertinents, best-effort (un
+        échec RAG n'empêche pas la réponse).
+        """
+        system_prompt = self._prompt_builder.build(orientation_context)
+        if settings.TUTOR_RAG_ENABLED:
+            context = await self._retrieval.retrieve_context(message)
+            if context:
+                system_prompt += (
+                    "\n\n# Contenu de cours pertinent\n"
+                    "Appuie-toi sur ces extraits pour répondre et cite-les "
+                    "avec [n] quand tu t'en sers.\n"
+                    f"{context}"
+                )
+        return system_prompt
 
     async def chat(
         self,
@@ -56,7 +81,7 @@ class LLMService:
         if not history and client_history:
             history = self._store.seed_from_client(client_history, MAX_HISTORY)
 
-        system_prompt = self._prompt_builder.build(orientation_context)
+        system_prompt = await self._build_system_prompt(message, orientation_context)
         messages = [{"role": "system", "content": system_prompt}]
         messages.extend(history[-MAX_HISTORY:])
         messages.append({"role": "user", "content": message})
@@ -96,7 +121,7 @@ class LLMService:
         if not history and client_history:
             history = self._store.seed_from_client(client_history, MAX_HISTORY)
 
-        system_prompt = self._prompt_builder.build(orientation_context)
+        system_prompt = await self._build_system_prompt(message, orientation_context)
         messages = [{"role": "system", "content": system_prompt}]
         messages.extend(history[-MAX_HISTORY:])
         messages.append({"role": "user", "content": message})
