@@ -92,6 +92,14 @@ class Settings(BaseSettings):
     # Seuil au-dela duquel une competence est consideree maitrisee.
     MASTERY_THRESHOLD: float = 0.6
 
+    # TutorAI Tool-calling — AÏDA appelle elle-meme les outils (quiz,
+    # recommandation) pendant la conversation via le function-calling Groq.
+    # Defaut False : le chat reste une simple completion. Necessite Groq
+    # (llama-3.1-8b) ; sur repli Ollama, les outils sont ignores.
+    TUTOR_TOOLS_ENABLED: bool = False
+    # Nombre max d'aller-retours d'appels d'outils par tour de conversation.
+    TUTOR_TOOLS_MAX_ITERATIONS: int = 3
+
     # Email (notifications candidatures mentor, etc.) — tout optionnel.
     # Si SMTP n'est pas configure, l'envoi est ignore silencieusement (best-effort).
     # L'adresse destinataire des notifications est aussi configurable a chaud via

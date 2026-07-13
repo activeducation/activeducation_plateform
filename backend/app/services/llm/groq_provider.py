@@ -67,6 +67,42 @@ class GroqProvider:
         return await self._call_ollama(messages)
 
     # ------------------------------------------------------------------
+    # API publique — function-calling
+    # ------------------------------------------------------------------
+
+    async def complete_with_tools(self, messages: list[dict], tools: list[dict]) -> dict:
+        """Completion avec outils (Groq). Sur repli Ollama, outils ignorés."""
+        if not self._groq_enabled:
+            content = await self._call_ollama(messages)
+            return {"content": content, "tool_calls": None}
+        try:
+            async with httpx.AsyncClient(timeout=self._groq_timeout) as client:
+                resp = await client.post(
+                    GROQ_API_URL,
+                    headers={
+                        "Authorization": f"Bearer {self._groq_api_key}",
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": self._model,
+                        "messages": messages,
+                        "max_tokens": self._max_tokens,
+                        "temperature": self._temperature,
+                        "tools": tools,
+                        "tool_choice": "auto",
+                    },
+                )
+                resp.raise_for_status()
+            msg = resp.json()["choices"][0]["message"]
+            return {"content": msg.get("content"), "tool_calls": msg.get("tool_calls")}
+        except Exception as exc:
+            logger.warning("Groq tools erreur — completion simple: %s", exc)
+            content = await self._call_groq(messages)
+            if content is None:
+                content = await self._call_ollama(messages)
+            return {"content": content, "tool_calls": None}
+
+    # ------------------------------------------------------------------
     # API publique — streaming
     # ------------------------------------------------------------------
 

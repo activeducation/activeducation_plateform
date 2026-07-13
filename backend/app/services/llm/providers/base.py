@@ -45,6 +45,19 @@ class LLMProvider(Protocol):
         """Yield la reponse par morceaux (streaming)."""
         ...
 
+    async def complete_with_tools(
+        self,
+        messages: list[LLMMessage],
+        tools: list[dict],
+    ) -> dict:
+        """Completion avec function-calling.
+
+        Retourne {"content": str|None, "tool_calls": list|None}. Un provider
+        sans support d'outils renvoie simplement {"content": ..., "tool_calls":
+        None} (les outils sont alors ignores).
+        """
+        ...
+
 
 # ---------------------------------------------------------------------------
 # Registre de providers

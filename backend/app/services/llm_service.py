@@ -11,6 +11,7 @@ que TUTOR_PERSIST_SESSIONS est False (mémoire process), persisté en base
 sinon. Le `user_id` (issu de l'auth) est requis pour l'ownership.
 """
 
+import json
 import uuid
 from typing import AsyncGenerator, Optional
 from uuid import UUID
@@ -21,6 +22,7 @@ from app.services.llm.prompt_builder import PromptBuilder
 from app.services.llm.safety_filter import SafetyFilter
 from app.services.llm.providers import get_llm_provider
 from app.services.tutor.session_store import SessionStore
+from app.services.tutor.tools import get_tool_schemas, dispatch_tool
 from app.services.rag.retrieval import RetrievalService
 from app.repositories.knowledge_base_repository import knowledge_base_repository
 
@@ -63,6 +65,45 @@ class LLMService:
                 )
         return system_prompt
 
+    async def _run_with_tools(
+        self,
+        messages: list[dict],
+        user_id: UUID,
+    ) -> Optional[str]:
+        """Boucle de function-calling.
+
+        Le LLM peut appeler des outils (quiz, recommandation) avant de produire
+        sa réponse finale. On exécute les outils, on réinjecte leurs résultats,
+        et on reboucle jusqu'à obtenir une réponse texte (ou la limite d'itérations).
+        """
+        tools = get_tool_schemas()
+        for _ in range(settings.TUTOR_TOOLS_MAX_ITERATIONS):
+            result = await self._provider.complete_with_tools(messages, tools)
+            tool_calls = result.get("tool_calls")
+            if not tool_calls:
+                return result.get("content")
+
+            messages.append({
+                "role": "assistant",
+                "content": result.get("content") or "",
+                "tool_calls": tool_calls,
+            })
+            for call in tool_calls:
+                fn = call.get("function", {})
+                try:
+                    args = json.loads(fn.get("arguments") or "{}")
+                except (json.JSONDecodeError, TypeError):
+                    args = {}
+                tool_result = await dispatch_tool(fn.get("name", ""), args, user_id)
+                messages.append({
+                    "role": "tool",
+                    "tool_call_id": call.get("id"),
+                    "content": tool_result,
+                })
+
+        # Limite atteinte : forcer une réponse finale sans outils.
+        return await self._provider.complete(messages)
+
     async def chat(
         self,
         message: str,
@@ -86,7 +127,10 @@ class LLMService:
         messages.extend(history[-MAX_HISTORY:])
         messages.append({"role": "user", "content": message})
 
-        reply = await self._provider.complete(messages)
+        if settings.TUTOR_TOOLS_ENABLED:
+            reply = await self._run_with_tools(messages, user_id)
+        else:
+            reply = await self._provider.complete(messages)
 
         if reply is None:
             return {
@@ -128,9 +172,21 @@ class LLMService:
 
         full_reply_parts: list[str] = []
 
-        async for chunk in self._provider.stream(messages):
-            full_reply_parts.append(chunk)
-            yield {"chunk": chunk}
+        if settings.TUTOR_TOOLS_ENABLED:
+            # Le tool-calling nécessite des allers-retours non-streamables ; on
+            # résout d'abord la réponse finale, puis on la stream mot par mot
+            # pour préserver le contrat SSE côté app.
+            reply = await self._run_with_tools(messages, user_id)
+            if reply:
+                words = reply.split(" ")
+                for i, word in enumerate(words):
+                    token = word + ("" if i == len(words) - 1 else " ")
+                    full_reply_parts.append(token)
+                    yield {"chunk": token}
+        else:
+            async for chunk in self._provider.stream(messages):
+                full_reply_parts.append(chunk)
+                yield {"chunk": chunk}
 
         full_reply = "".join(full_reply_parts)
         if full_reply:
