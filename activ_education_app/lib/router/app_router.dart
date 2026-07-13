@@ -21,6 +21,7 @@ import '../features/orientation/domain/entities/test_result.dart';
 import '../features/orientation/domain/entities/career.dart';
 import '../features/profile/presentation/pages/profile_page.dart';
 import '../features/ai_chat/presentation/pages/chat_page.dart';
+import '../features/tutor/presentation/pages/tutor_page.dart';
 import '../features/elearning/presentation/pages/elearning_catalog_page.dart';
 import '../features/elearning/presentation/pages/course_detail_page.dart';
 import '../features/elearning/presentation/pages/lesson_page.dart';
@@ -236,6 +237,12 @@ class AppRouter {
         builder: (BuildContext context, GoRouterState state) {
           final args = state.extra as ChatPageArgs? ?? const ChatPageArgs();
           return ChatPage(args: args);
+        },
+      ),
+      GoRoute(
+        path: '/tutor',
+        builder: (BuildContext context, GoRouterState state) {
+          return _responsive(const TutorPage(), maxWidth: 640);
         },
       ),
       GoRoute(
