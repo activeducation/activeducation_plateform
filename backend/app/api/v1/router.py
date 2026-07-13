@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import orientation, auth, schools, chat, elearning, gamification
+from app.api.v1.endpoints import orientation, auth, schools, chat, elearning, gamification, tutor
 from app.api.v1.endpoints import mentors, opportunities, announcements, settings, search
 from app.api.v1.endpoints.partner import organizations as partner_organizations
 from app.api.v1.endpoints.admin import (
@@ -42,6 +42,9 @@ api_router.include_router(schools.router, prefix="/schools", tags=["schools"])
 
 # Chat IA — AÏDA (Groq, gratuit)
 api_router.include_router(chat.router, prefix="/chat", tags=["chat-ia"])
+
+# TutorAI — quiz, maitrise (BKT), recommandation
+api_router.include_router(tutor.router, prefix="/tutor", tags=["tutor"])
 
 # E-Learning — cours, modules, lecons, progression
 api_router.include_router(elearning.router, prefix="/elearning", tags=["elearning"])
