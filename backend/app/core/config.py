@@ -81,6 +81,17 @@ class Settings(BaseSettings):
     RAG_CHUNK_SIZE: int = 2000
     RAG_CHUNK_OVERLAP: int = 200
 
+    # TutorAI Maitrise — suivi par competence via Bayesian Knowledge Tracing.
+    # Dormant tant que la migration 020 n'est pas appliquee et le flag off.
+    TUTOR_MASTERY_ENABLED: bool = False
+    # Parametres BKT (defauts raisonnables, calibrables par matiere plus tard).
+    BKT_P_INIT: float = 0.3      # p(maitrise) initiale
+    BKT_P_TRANSIT: float = 0.15  # p(apprentissage) a chaque opportunite
+    BKT_P_SLIP: float = 0.1      # p(erreur alors que maitrise)
+    BKT_P_GUESS: float = 0.2     # p(bonne reponse par chance sans maitrise)
+    # Seuil au-dela duquel une competence est consideree maitrisee.
+    MASTERY_THRESHOLD: float = 0.6
+
     # Email (notifications candidatures mentor, etc.) — tout optionnel.
     # Si SMTP n'est pas configure, l'envoi est ignore silencieusement (best-effort).
     # L'adresse destinataire des notifications est aussi configurable a chaud via
