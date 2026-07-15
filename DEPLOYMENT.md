@@ -360,6 +360,38 @@ flutter build web --release --no-tree-shake-icons \
   --dart-define=API_BASE_URL=https://api.VOTRE_DOMAINE/api/v1
 ```
 
+> ⚠️ **Windows + Git Bash : `--base-href=/app/` est corrompu silencieusement.**
+> Git Bash (MSYS2) prend `/app/` pour un chemin Unix et le réécrit en chemin
+> Windows. Le build échoue avec :
+> ```
+> Received a --base-href value of "C:/Program Files/Git/app/"
+> --base-href should start and end with /
+> ```
+> Deux façons de s'en sortir :
+> ```bash
+> # 1) Désactiver la conversion de chemins pour cette commande (Git Bash)
+> MSYS_NO_PATHCONV=1 flutter build web --release --no-tree-shake-icons \
+>   --base-href=/app/ --dart-define=API_BASE_URL=https://api.VOTRE_DOMAINE
+> ```
+> ```powershell
+> # 2) Ou simplement builder depuis PowerShell / cmd, qui ne convertissent rien
+> flutter build web --release --no-tree-shake-icons `
+>   --base-href=/app/ --dart-define=API_BASE_URL=https://api.VOTRE_DOMAINE
+> ```
+> Ne concerne que l'app étudiante (l'admin n'utilise pas `--base-href`).
+> Sous Linux/macOS, rien à faire.
+
+**Vérifie toujours le build avant de l'envoyer** (30 s qui évitent un déploiement cassé) :
+
+```bash
+# L'app doit déclarer <base href="/app/"> — sinon 404 sur tous les assets
+grep -o '<base href="[^"]*"' activ_education_app/build/web/index.html
+
+# Chaque front doit embarquer SON URL d'API (et pas localhost)
+grep -o "api.VOTRE_DOMAINE"        activ_education_app/build/web/main.dart.js | head -1
+grep -o "api.VOTRE_DOMAINE/api/v1" admin_dashboard/build/web/main.dart.js | head -1
+```
+
 Puis envoie les builds sur le VPS :
 
 ```bash
@@ -504,6 +536,8 @@ docker compose exec backend alembic upgrade head
 # 1) Rebuild (local) avec les MÊMES flags qu'à l'Étape 7
 #    app   → --base-href=/app/  --dart-define=API_BASE_URL=https://api.VOTRE_DOMAINE
 #    admin → --dart-define=API_BASE_URL=https://api.VOTRE_DOMAINE/api/v1
+#    Git Bash/Windows : préfixer par MSYS_NO_PATHCONV=1 (sinon /app/ est corrompu).
+#    Oublier un --dart-define = front qui retombe sur localhost -> prod cassée.
 
 # 2) Pousser les builds
 scp -r activ_education_app/build/web/* root@VOTRE_IP:/opt/activeducation/activ_education_app/build/web/
@@ -578,7 +612,18 @@ Corrige les flags, rebuild, re-scp, restart, hard refresh.
 
 ### 🔴 `/app/` renvoie 404 ou page blanche
 Le build app doit être fait avec **`--base-href=/app/`**. Sinon les chemins
-d'assets pointent vers `/` et nginx renvoie 404. Rebuild avec le bon `base-href`.
+d'assets pointent vers `/` et nginx renvoie 404. Vérifie ce que contient
+réellement le build :
+```bash
+grep -o '<base href="[^"]*"' activ_education_app/build/web/index.html   # attendu : /app/
+```
+Rebuild avec le bon `base-href` si la valeur diffère.
+
+### 🔴 Le build échoue : `Received a --base-href value of "C:/Program Files/Git/app/"`
+Tu builds depuis **Git Bash sous Windows** : MSYS2 a pris `/app/` pour un chemin
+Unix et l'a réécrit en chemin Windows. Préfixe la commande par
+`MSYS_NO_PATHCONV=1`, ou build depuis PowerShell (cf. Étape 7). Le piège est
+sournois car le message ne parle pas de Git Bash.
 
 ### 🔴 Certificat TLS non émis (`docker compose logs traefik` montre une erreur ACME)
 - DNS pas encore propagé → `dig +short VOTRE_DOMAINE` doit renvoyer `VOTRE_IP`.
@@ -678,7 +723,8 @@ Docker. Édite `dynamic.yml` (router + service + middleware) puis
 4. ☐ Projet Supabase créé, clés + `DATABASE_URL` récupérées
 5. ☐ `git clone` dans `/opt/activeducation`, `git checkout main`
 6. ☐ `.env` racine (`REDIS_PASSWORD`) + `backend/.env.production` remplis
-7. ☐ Fronts buildés (app `--base-href=/app/` ; admin `/api/v1`) et présents
+7. ☐ Fronts buildés (app `--base-href=/app/` ; admin `/api/v1`) et **vérifiés**
+   (`<base href="/app/">` présent, URL d'API bakée — Git Bash : `MSYS_NO_PATHCONV=1`)
 8. ☐ `traefik/letsencrypt/acme.json` créé (`chmod 600`), email ACME personnalisé
 9. ☐ `docker compose up -d --build` → 6 conteneurs Up, certs TLS obtenus
 10. ☐ `docker compose exec backend alembic upgrade head`
