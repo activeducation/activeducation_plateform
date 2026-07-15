@@ -16,6 +16,31 @@ from uuid import UUID
 logger = get_logger("services.orientation_engine")
 DEFAULT_TEST_ID = UUID("00000000-0000-0000-0000-000000000000")
 
+# Echelle de Likert des questions : 1 = "pas du tout", 5 = "tout a fait".
+LIKERT_MIN = 1
+LIKERT_MAX = 5
+
+
+def normalize_likert(raw_total: int, count: int) -> float:
+    """Normalise un total de reponses Likert en pourcentage 0-100.
+
+    Le total minimum atteignable est ``count * LIKERT_MIN`` (et non 0) : il faut
+    donc retrancher cette base avant de diviser. Sans cela, repondre "pas du
+    tout" a tout donnait 20% et "neutre" a tout donnait 60%, ce qui ecrasait
+    l'echelle sur 20-100 et gonflait artificiellement tous les profils.
+
+    Le resultat est borne a [0, 100] : une question dont les options sortiraient
+    de l'echelle 1-5 ne peut pas produire un score aberrant.
+    """
+    if count <= 0:
+        return 0.0
+    lowest = count * LIKERT_MIN
+    span = count * (LIKERT_MAX - LIKERT_MIN)
+    if span <= 0:
+        return 0.0
+    pct = ((raw_total - lowest) / span) * 100
+    return round(max(0.0, min(100.0, pct)), 1)
+
 # ============================================================================
 # RIASEC : Labels et descriptions en francais
 # ============================================================================
@@ -207,15 +232,11 @@ class OrientationEngine:
                 raw_scores[fr_cat] += score_val
                 counts[fr_cat] += 1
 
-        # Normaliser les scores en pourcentage (0-100)
-        # Chaque question a un score max de 5 (echelle Likert typique)
+        # Normaliser les scores en pourcentage (0-100) sur l'echelle Likert,
+        # baseline comprise (cf. normalize_likert).
         scores = {}
         for trait_fr in RIASEC_FR:
-            if counts[trait_fr] > 0:
-                max_possible = counts[trait_fr] * 5
-                scores[trait_fr] = round((raw_scores[trait_fr] / max_possible) * 100, 1)
-            else:
-                scores[trait_fr] = 0.0
+            scores[trait_fr] = normalize_likert(raw_scores[trait_fr], counts[trait_fr])
 
         # Trier les traits par score
         sorted_traits = sorted(scores.items(), key=lambda x: x[1], reverse=True)
@@ -427,11 +448,10 @@ class OrientationEngine:
             scores[category] += self._parse_score(value)
             counts[category] += 1
 
-        # Normaliser en pourcentage
+        # Normaliser en pourcentage (meme baseline Likert que le RIASEC)
         final_scores = {}
         for cat, raw in scores.items():
-            max_possible = counts[cat] * 5
-            final_scores[cat] = round((raw / max_possible) * 100, 1) if max_possible > 0 else 0
+            final_scores[cat] = normalize_likert(raw, counts[cat])
 
         sorted_traits = sorted(final_scores.items(), key=lambda x: x[1], reverse=True)
         dominant_traits = [t[0] for t in sorted_traits[:3] if t[1] > 0]

@@ -39,9 +39,10 @@ async def test_calculate_riasec_with_categories_from_test_data():
 
     result = await engine.calculate_result(OrientationTestType.RIASEC, responses, test_data)
 
-    assert result.scores["Réaliste"] == 100.0
-    assert result.scores["Investigateur"] == 80.0
-    assert result.scores["Artistique"] == 60.0
+    # Baseline Likert retranchee : (valeur - 1) / 4 * 100
+    assert result.scores["Réaliste"] == 100.0       # 5 -> max
+    assert result.scores["Investigateur"] == 75.0   # 4
+    assert result.scores["Artistique"] == 50.0      # 3 -> neutre
     assert result.dominant_traits[0] == "Réaliste"
     assert result.recommendations == []
 
@@ -53,10 +54,13 @@ async def test_calculate_riasec_legacy_question_ids_fallback():
 
     result = await engine.calculate_result(OrientationTestType.RIASEC, responses, test_data=None)
 
-    assert result.scores["Social"] == 100.0
-    assert result.scores["Réaliste"] == 40.0
-    assert result.scores["Conventionnel"] == 20.0
+    assert result.scores["Social"] == 100.0        # 5
+    assert result.scores["Réaliste"] == 25.0       # 2
+    # "Pas du tout" sur l'unique question du trait => 0, et non 20 comme avant.
+    assert result.scores["Conventionnel"] == 0.0   # 1
     assert "Social" in result.dominant_traits
+    # Un trait a 0 n'est pas un trait dominant.
+    assert "Conventionnel" not in result.dominant_traits
 
 
 @pytest.mark.asyncio
@@ -72,9 +76,39 @@ async def test_calculate_generic_uses_default_score_for_invalid_values():
 
     result = await engine.calculate_result(OrientationTestType.SKILLS, responses, test_data)
 
-    # Deux reponses invalides -> fallback 1 chacune -> (2 / 10) * 100 = 20.0
-    assert result.scores["Logic"] == 20.0
-    assert result.dominant_traits == ["Logic"]
+    # Deux reponses invalides -> fallback 1 chacune -> plancher de l'echelle -> 0.0
+    # (et non 20.0 : la baseline Likert est desormais retranchee).
+    assert result.scores["Logic"] == 0.0
+    # Des reponses illisibles ne doivent pas produire de trait dominant.
+    assert result.dominant_traits == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "answer, expected",
+    [
+        ("1", 0.0),    # "pas du tout" partout -> 0 (et non 20 : bug de baseline)
+        ("2", 25.0),
+        ("3", 50.0),   # neutre partout -> 50 (et non 60)
+        ("4", 75.0),
+        ("5", 100.0),
+    ],
+)
+async def test_riasec_likert_baseline_covers_full_range(answer, expected):
+    """Le plancher de l'echelle Likert (1) doit valoir 0%, pas 20%.
+
+    Sans retrancher la baseline, l'echelle etait ecrasee sur 20-100 : tous les
+    profils paraissaient eleves et un eleve neutre obtenait 60% partout.
+    """
+    engine = OrientationEngine()
+    responses = {"q1": answer, "q2": answer}
+    test_data = {"questions": [{"id": "q1", "category": "R"}, {"id": "q2", "category": "R"}]}
+
+    result = await engine.calculate_result(OrientationTestType.RIASEC, responses, test_data)
+
+    assert result.scores["Réaliste"] == expected
+    # Les traits sans reponse restent a 0 et ne polluent pas le profil.
+    assert result.scores["Artistique"] == 0.0
 
 
 @pytest.mark.asyncio
@@ -125,8 +159,8 @@ async def test_calculate_personality_falls_back_to_category_scoring():
     )
 
     # Categories non-MBTI => fallback _calculate_generic (pourcentages)
-    # Linguistique: (5+4) / (2*5) * 100 = 90.0
-    # Logique: (3) / (1*5) * 100 = 60.0
-    assert result.scores["Linguistique"] == 90.0
-    assert result.scores["Logique"] == 60.0
+    # Linguistique: ((5+4) - 2*1) / (2*4) * 100 = 87.5
+    # Logique:      ((3)   - 1*1) / (1*4) * 100 = 50.0
+    assert result.scores["Linguistique"] == 87.5
+    assert result.scores["Logique"] == 50.0
     assert result.dominant_traits[0] == "Linguistique"
