@@ -162,24 +162,40 @@ class _TestExecutionView extends StatelessWidget {
       );
     }
 
-    if (state is TestSessionReadyToSubmit || context.read<OrientationBloc>().state is TestSubmitting) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const CircularProgressIndicator(color: AppColors.primary),
-            const SizedBox(height: AppSpacing.lg),
-            Text(
-              'Analyse de ton profil...',
-              style: AppTypography.titleMedium,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              'On prépare tes résultats !',
-              style: AppTypography.bodyMedium.copyWith(color: AppColors.textTertiary),
-            ),
-          ],
-        ).animate().fadeIn(duration: 400.ms).scale(begin: const Offset(0.8, 0.8)),
+    if (state is TestSessionReadyToSubmit) {
+      // TestSessionReadyToSubmit est un etat TERMINAL du TestSessionBloc : il ne
+      // changera plus. C'est donc l'OrientationBloc (via BlocBuilder, reactif)
+      // qui doit decider ce qu'on affiche, sinon un echec de soumission laisse
+      // l'eleve bloque indefiniment sur le spinner avec ses reponses perdues.
+      return BlocBuilder<OrientationBloc, OrientationState>(
+        builder: (context, submitState) {
+          if (submitState is OrientationError) {
+            return ErrorView(
+              message: submitState.message,
+              onRetry: () => context.read<OrientationBloc>().add(
+                    SubmitTestEvent(state.test.id, state.responses),
+                  ),
+            );
+          }
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const CircularProgressIndicator(color: AppColors.primary),
+                const SizedBox(height: AppSpacing.lg),
+                Text(
+                  'Analyse de ton profil...',
+                  style: AppTypography.titleMedium,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  'On prépare tes résultats !',
+                  style: AppTypography.bodyMedium.copyWith(color: AppColors.textTertiary),
+                ),
+              ],
+            ).animate().fadeIn(duration: 400.ms).scale(begin: const Offset(0.8, 0.8)),
+          );
+        },
       );
     }
 

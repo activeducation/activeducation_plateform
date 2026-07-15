@@ -17,8 +17,14 @@ class AuthInterceptor extends Interceptor {
   final TokenStorage _tokenStorage;
   final Dio _refreshDio;
 
-  // Lock pour eviter les rafraichissements multiples
-  bool _isRefreshing = false;
+  /// Refresh en cours, partage entre tous les appelants concurrents.
+  ///
+  /// Quand plusieurs requetes tombent en meme temps sur un token expire, elles
+  /// doivent TOUTES attendre le meme refresh puis repartir avec le nouveau
+  /// token. Un simple booleen faisait echouer les appelants concurrents
+  /// (return false), ce qui declenchait clearTokens() dans onRequest et
+  /// deconnectait l'utilisateur alors que le refresh etait en train de reussir.
+  Future<bool>? _refreshInFlight;
 
   // Routes qui ne necessitent pas d'authentification
   static const List<String> _publicRoutes = [
@@ -129,16 +135,26 @@ class AuthInterceptor extends Interceptor {
     return _optionalAuthRoutes.any((route) => path.contains(route));
   }
 
-  /// Gere le rafraichissement du token.
-  Future<bool> _handleTokenRefresh() async {
-    // Eviter les rafraichissements multiples simultanes
-    if (_isRefreshing) {
-      if (kDebugMode) debugPrint('[AuthInterceptor] Token refresh already in progress');
-      return false;
+  /// Gere le rafraichissement du token, en dedupliquant les appels concurrents.
+  ///
+  /// Si un refresh est deja en cours, on renvoie SA future : l'appelant attend
+  /// le meme resultat au lieu d'echouer. Un seul appel reseau est effectue.
+  Future<bool> _handleTokenRefresh() {
+    final inFlight = _refreshInFlight;
+    if (inFlight != null) {
+      if (kDebugMode) debugPrint('[AuthInterceptor] Refresh deja en cours — attente du resultat');
+      return inFlight;
     }
 
-    _isRefreshing = true;
+    final future = _performTokenRefresh();
+    _refreshInFlight = future;
+    // Liberer le verrou quoi qu'il arrive (succes, echec ou exception).
+    future.whenComplete(() => _refreshInFlight = null);
+    return future;
+  }
 
+  /// Effectue reellement l'appel de rafraichissement (un seul a la fois).
+  Future<bool> _performTokenRefresh() async {
     try {
       final refreshToken = await _tokenStorage.getRefreshToken();
       if (refreshToken == null) {
@@ -190,8 +206,6 @@ class AuthInterceptor extends Interceptor {
       }
     } catch (e) {
       if (kDebugMode) debugPrint('[AuthInterceptor] Token refresh error: $e');
-    } finally {
-      _isRefreshing = false;
     }
 
     return false;
