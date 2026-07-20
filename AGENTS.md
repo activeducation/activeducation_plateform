@@ -1,173 +1,101 @@
 # ActivEducation — Agent Guide
 
-## Repository overview
-
+## Repo overview
 ```
-activ_education_app/   # Flutter app for students (Dart ^3.12.2)
-admin_dashboard/       # Flutter admin dashboard (Dart ^3.12.2)
-backend/               # Python FastAPI REST API
-packages/shared_core/  # Shared Dart package (path dep from both Flutter apps)
-landing/               # Static HTML landing page served at root
-nginx/                 # Nginx configs for app/admin static serving
-traefik/               # Traefik v3 reverse proxy config (file-based, not labels)
+backend/               # FastAPI (Python 3.11, Supabase raw client, no SQLAlchemy)
+activ_education_app/   # Flutter student app (Dart ^3.8.0)
+admin_dashboard/       # Flutter admin dashboard (Dart ^3.10.8)
+frontend/              # Next.js 16 web app (student-facing, FR)
+landing/               # Static HTML landing page
+packages/shared_core/  # Shared Dart package (path dep)
+traefik/, nginx/       # Infra configs (file-based routing, Let's Encrypt)
 ```
 
 ## Backend (FastAPI + Supabase)
 
+### Critical gotchas
+- **No SQLAlchemy** — raw Supabase client (PostgREST). Alembic has `target_metadata = None`.
+- **Sentry init before app imports** (`main.py:23-46`).
+- **Settings validation** — rejects placeholder CI values and `*` CORS in production.
+- **`SECRET_KEY`** >32 chars, not `eyJ`-prefixed, not a default placeholder.
+- **Redis password** via `${REDIS_PASSWORD}` in compose; `REDIS_URL` built there, not in `.env.production`.
+- **Local backend can't reach Supabase Auth** (no `auth.refresh_session()`). Use Management API for SQL. 401 on token refresh is expected.
+
 ### Commands
 ```sh
-# Run dev server
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-
-# Supabase local dev (if needed)
-supabase start
-
-# Test with coverage floor at 48%
-pytest tests/ -v --cov=app --cov-fail-under=48
-
-# Lint / format / typecheck
-ruff check app/
-black app/ --line-length=100
-isort app/ --profile=black --line-length=100
-mypy app/ --ignore-missing-imports   # advisory only (1142+ existing errors)
-bandit -r app/ -ll                   # blocking in CI
-
-# Alembic migrations (must run manually, no auto-migrate on startup)
-alembic upgrade head
-
-# Create env file for dev
-cp .env.example .env   # then fill secrets
-
-# Create admin via script
-ADMIN_EMAIL=admin@activeducation.com ADMIN_PASSWORD='Admin@2024!' \
-  python -m scripts.create_super_admin
-
-# Update dependencies from requirements.in
-pip-compile requirements.in --output-file requirements.txt
+make backend-run              # uvicorn --reload :8000
+make backend-test             # pytest --cov=app --cov-fail-under=48
+make migrate-upgrade          # alembic upgrade head
+make update-deps              # pip-compile requirements.in
 ```
 
-### Gotchas
-- **Sentry must be initialized first** in `main.py` before any application imports.
-- **CORS validation in production**: `Settings` refuses to start if CORS is empty, contains `*`, or has placeholder CI values.
-- **`SECRET_KEY`** must be >32 chars, not a default placeholder, and must NOT start with `eyJ` (JWT-like).
-- **Redis password** is injected into `docker-compose.yml` via `${REDIS_PASSWORD}` from root `.env`; `REDIS_URL` is constructed in compose, not in `backend/.env.production`.
-- **Traefik routing in production is file-based** (`traefik/dynamic.yml`), not label-based. Labels in `docker-compose.yml` are documentation only.
-- Docker socket is accessed through `tecnativa/docker-socket-proxy` (read-only), not directly.
-- **`env.py`**: removed `config.set_main_option("sqlalchemy.url", ...)` which broke with `%` in URL-encoded passwords.
-- **Supabase network isolation**: local backend can't reach Supabase Auth (`auth.refresh_session()`, `sign_in()`). Use Supabase Management API (`/v1/projects/.../database/query`) to run SQL directly.
-- **Refresh token 401 in dev**: expected when Supabase isn't reachable locally. Tokens get cleared, user must re-login.
+### CI env requirements
+`ENVIRONMENT=testing`, `REDIS_URL=redis://localhost:6379/0`, `SUPABASE_KEY`/`SUPABASE_SERVICE_ROLE_KEY` must be 3-segment JWTs (base64.base64.base64) or import crashes.
+
+### Lint pipeline
+`ruff check app/` → `black app/ --line-length=100` → `isort app/ --profile=black --line-length=100` → `bandit -r app/ -ll -x app/tests` (blocking). `mypy app/ --ignore-missing-imports` is advisory (~1142 errors).
+
+### Migrations
+18 versions in `alembic/versions/`. Manual only (no auto-migration). Check head count with `alembic heads`.
 
 ## Flutter apps
 
-### Environment
-- Flutter SDK: **3.44.4** (Dart 3.12.2) — both apps updated.
-- CI enforces `flutter analyze --fatal-infos` with 0 issues.
+### API_BASE_URL trap (critical)
+- **Student app** appends `/api/v1` to endpoint paths → `API_BASE_URL` must NOT include `/api/v1`. Local default: `http://localhost:8000`.
+- **Admin dashboard** endpoints are bare → `API_BASE_URL` MUST include `/api/v1`. Default: `http://localhost:8000/api/v1`.
+- Compile-time via `--dart-define=API_BASE_URL=...` — hot restart (`r`), not hot reload.
 
-### Commands (student app / admin dashboard)
+### Build
 ```sh
-# Analyze (fatal in CI)
-flutter analyze --fatal-infos
+flutter analyze --fatal-infos                                  # CI blocking
+flutter pub run build_runner build --delete-conflicting-outputs # codegen
 
-# Test (advisory in CI, not enforced)
-flutter test --coverage
-
-# Generate code (freezed, json_serializable, injectable)
-flutter pub run build_runner build --delete-conflicting-outputs
-```
-
-### Run locally
-```sh
-# Student app (uses http://localhost:8000, endpoint paths already include /api/v1)
-flutter run -d chrome
-
-# Admin dashboard (uses http://localhost:8000/api/v1)
-flutter run -d chrome
-```
-
-### Build for production
-```sh
-# Student app — served under /app/ sub-path
+# Student (served under /app/)
 flutter build web --release --base-href=/app/ --no-tree-shake-icons \
   --dart-define=API_BASE_URL=https://api.activeducationhub.com
 
-# Admin dashboard — served at root of its subdomain
+# Admin (served at root)
 flutter build web --release --no-tree-shake-icons \
   --dart-define=API_BASE_URL=https://api.activeducationhub.com/api/v1
 ```
 
-### Critical API_BASE_URL convention
-- Student app endpoints **already include** `/api/v1` → `API_BASE_URL` must NOT include it.
-- Admin dashboard endpoints **do NOT** include the prefix → `API_BASE_URL` **MUST** include `/api/v1`.
-- Default for both in local dev is `http://localhost:8000` (student) / `http://localhost:8000/api/v1` (admin).
+### Quirks
+- `--no-tree-shake-icons` required (codepoint 0 crashes tree shaker, ~150KB gzip extra).
+- `SagaBloc` not in DI — created manually in `saga_page.dart:24`.
+- `LeaderboardPage` uses inline `_LeaderboardCubit` (not in DI). See `leaderboard_page.dart:35`.
+- Weekly leaderboard endpoint defined in `ApiEndpoints` but **not implemented** in backend.
+- Tests are advisory in CI (`continue-on-error: true`).
 
-### Flutter web build quirks
-- `--no-tree-shake-icons` is required (IconData with codepoint 0 crashes tree shaker). ~150KB gzip extra.
-- `--base-href=/app/` is required for the student app. Admin has no base-href.
-- `String.fromEnvironment` for `API_BASE_URL` is compile-time — hot reload won't pick up changes, use hot restart (`r`).
-
-### Flutter app fixes (June 25)
-- **Auth interceptor** (`lib/core/auth/auth_interceptor.dart`):
-  - `_isOptionalAuthRoute` changed from `contains` to `startsWith` + GET-only.
-  - Enrollment POST no longer treated as "optional auth" — prevents session-expired requests from being sent without token.
-- **Course BLoC** (`lib/features/elearning/presentation/bloc/course_bloc.dart`):
-  - `result.fold()` success callback was fire-and-forget (async ignored).
-  - Both callbacks now `async` + `await` on fold — reload after enrollment completes synchronously.
-- **Catalog shimmer overflow** (`lib/features/elearning/presentation/pages/elearning_catalog_page.widgets.dart:159`):
-  - `Row` with 4 pills overflowed by 26px → wrapped in `SingleChildScrollView(horizontal)`.
-- **Main shell** (`lib/router/widgets/main_shell.dart`):
-  - Removed sidebar layout, bottom navigation bar used on all screen sizes.
-
-### Admin dashboard fixes (June 25)
-- **API_BASE_URL default** (`lib/core/constants/api_endpoints.dart`):
-  - Changed from `https://` to `http://localhost:8000/api/v1` for local dev.
-- **Login page overflow** (`lib/features/auth/presentation/login_page.dart:398`):
-  - `_FeaturePill` Row overflowed in narrow Wrap → wrapped in `FittedBox(fit: BoxFit.scaleDown)`.
+## Frontend Next.js
+- Next.js 16, React 19, Tailwind CSS 4, lucide-react. Dev: `npm run dev` (port 3000). Build: `npm run build`.
+- **No emojis** — always `lucide-react` icons. Helper: `getSectorIcon()` in `src/lib/career-icons.ts`.
+- In-memory API cache at `src/lib/api.ts` (default TTL 30s, dedup in-flight). Call `api.invalidate()` after mutations.
+- Images: `onError={(e) => e.currentTarget.style.display='none'}` for silent fallback. Canonical field: `thumbnail_url`.
+- Responsive: `<SideNav>` (md+), bottom-nav (<md). `<NavGuard>` hides shell on auth/onboarding pages.
+- Pages: `/` `/login` `/register` `/onboarding/*` `/profil` `/classement` `/cours/*` `/lecon/[id]` `/ecoles/*` `/mentors/*` `/orientation/*` `/search` `/aida` `/notifications`
 
 ## Test credentials
-
 | Role | Email | Password |
 |------|-------|----------|
-| super_admin (seed) | `admin@activeducation.com` | `Admin@2024!` |
-| test user (script) | `test@activeducation.com` | `Test1234!` |
-| demo (login page) | `demo@activeducation.com` | `Demo1234!` |
+| super_admin | `admin@activeducation.com` | `Admin@2024!` |
+| test user | `test@activeducation.com` | `Test1234!` |
+| demo | `demo@activeducation.com` | `Demo1234!` |
 
-## CI/CD (4 GitHub Actions workflows)
-
-| Workflow | Trigger | Key details |
-|----------|---------|-------------|
-| `backend-ci.yml` | push/PR to main/develop (backend/**) | lint → test (48% coverage) → check-migrations → docker-build |
-| `frontend-ci.yml` | push/PR to main/develop (app or admin/**) | analyze both apps → build-student-web |
-| `deploy-staging.yml` | push to develop | Build + deploy to staging VPS |
-| `deploy-prod.yml` | manual dispatch on main | Requires "deploy-prod" confirmation, creates GitHub release |
-
-Branch strategy: `main` (prod, protected), `develop` (staging, auto-deploy), `feature/*`, `fix/*`, `hotfix/*`, `grace` (agent's working branch).
+## CI/CD
+- `backend-ci.yml`: lint → test (48%) → check-migrations → docker-build. `frontend-ci.yml`: analyze (both apps) → build student web.
+- `deploy-staging.yml`: auto on push `develop`. `deploy-prod.yml`: manual dispatch on `main` (requires "deploy-prod" confirmation).
+- Branch strategy: `main` (protected), `develop` (auto-deploy), `feature/*`, `fix/*`, `hotfix/*`.
 
 ## Commit conventions
-
-Enforced by pre-commit hooks + commitizen + commitlint. Format:
-```
-<type>(<scope>): <lowercase subject>  # header ≤120 chars, subject 5-100 chars
-```
+`<type>(<scope>): <lowercase subject>` — header ≤120 chars, subject 5-100 chars.
 Types: `feat|fix|docs|style|refactor|test|chore|perf|security|ci|revert`
 Scopes: `backend|app|admin|infra|ci|docs|deps`
+Enforced by pre-commit (commitizen) and commitlint.
 
-Pre-commit for Python: black (line-length=100), flake8 (with bugbear+simplify), isort (black profile). Runs only on `backend/` files.
+## Secrets
+- Root `.env`: only `REDIS_PASSWORD` (for docker-compose). Backend secrets: `backend/.env`.
+- `.env.example` templates at root and `backend/`. Never commit `.env`.
 
-## Secrets & .env
-- `.env`, `.env.production`, `backend/.env`, `backend/.env.production` in `.gitignore`.
-- Raw secrets bundle `env` also in `.gitignore`.
-- `backend/supabase/.temp/` in `.gitignore` (auto-generated by `supabase start`).
-- `.env.example` files exist at root and `backend/` with placeholder values — use as template.
-
-## Docker composition (6 services)
-
-| Service | Notes |
-|---------|-------|
-| `socket-proxy` | Read-only Docker socket proxy |
-| `traefik` | Reverse proxy, Let's Encrypt SSL |
-| `redis` | Cache + rate limiting, 7.2-alpine |
-| `backend` | FastAPI via uvicorn (2 workers) |
-| `app-frontend` | Nginx serving landing (root) + student app (`/app/`) |
-| `admin-frontend` | Nginx serving admin dashboard |
-
-No auto-migration on startup. Run: `docker compose exec backend alembic upgrade head`
+## Docker (6 services)
+`socket-proxy` (unused), `traefik` (file-based `traefik/`, labels in compose are docs only), `redis` (7.2-alpine, no persistence), `backend` (FastAPI, 2 workers), `app-frontend` (Nginx: landing + student app at `/app/`), `admin-frontend` (Nginx: admin dashboard).
+No auto-migration — run: `docker compose exec backend alembic upgrade head`
