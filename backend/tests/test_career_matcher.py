@@ -30,7 +30,7 @@ if str(BACKEND_ROOT) not in sys.path:
 from app.schemas.orientation import TestResult
 from app.services.career_matcher import (
     CareerMatcherService,
-    _diversify_by_tier,
+    _rank_within_tiers,
     _extract_education_level,
     _normalize_career_trait,
     _build_career_summary,
@@ -98,22 +98,29 @@ def test_extract_education_other_type():
 
 
 # =============================================================================
-# _diversify_by_tier
+# _rank_within_tiers
 # =============================================================================
 
 
-def _make_summary(score: float, name: str = "X") -> object:
-    """Helper : cree un objet minimal avec match_score et name."""
+def _make_summary(
+    score: float,
+    name: str = "X",
+    job_demand: str | None = None,
+    salary_avg_fcfa: int | None = None,
+) -> object:
+    """Helper : cree un objet minimal pour tester le classement."""
     s = MagicMock()
     s.match_score = score
     s.name = name
+    s.job_demand = job_demand
+    s.salary_avg_fcfa = salary_avg_fcfa
     return s
 
 
 def test_diversify_preserves_count():
     """La diversification ne supprime aucune carriere."""
     items = [_make_summary(s, f"C{i}") for i, s in enumerate([90, 85, 82, 60, 55])]
-    out = _diversify_by_tier(items)
+    out = _rank_within_tiers(items)
     assert len(out) == 5
 
 
@@ -121,9 +128,48 @@ def test_diversify_separates_tiers():
     """Les tiers separes par plus de TIER_MARGIN ne sont pas melanges."""
     # Tier1 (90-85), puis tier2 isole (50)
     items = [_make_summary(90, "A"), _make_summary(85, "B"), _make_summary(50, "Z")]
-    out = _diversify_by_tier(items)
+    out = _rank_within_tiers(items)
     # "Z" doit rester en dernier car tier distinct
     assert out[-1].name == "Z"
+
+
+def test_rank_within_tiers_is_deterministic():
+    """Deux appels identiques donnent le meme ordre (remplace random.shuffle).
+
+    Un eleve qui repasse le test, ou deux eleves au meme profil, doivent voir
+    exactement les memes recommandations dans le meme ordre.
+    """
+    def build():
+        return [
+            _make_summary(90, "Alpha", "medium", 200_000),
+            _make_summary(88, "Beta", "high", 150_000),
+            _make_summary(86, "Gamma", "high", 300_000),
+        ]
+
+    first = [c.name for c in _rank_within_tiers(build())]
+    second = [c.name for c in _rank_within_tiers(build())]
+    assert first == second
+
+
+def test_rank_within_tiers_prefers_job_demand_then_salary():
+    """Dans une meme tranche de score : forte demande d'abord, puis salaire."""
+    items = [
+        _make_summary(90, "Alpha", "medium", 900_000),
+        _make_summary(88, "Beta", "high", 150_000),
+        _make_summary(86, "Gamma", "high", 300_000),
+    ]
+
+    out = [c.name for c in _rank_within_tiers(items)]
+
+    # Les deux "high" passent devant le "medium", et entre eux le mieux paye.
+    assert out == ["Gamma", "Beta", "Alpha"]
+
+
+def test_rank_within_tiers_tolerates_missing_fields():
+    """Des champs absents ne cassent pas le tri (objets partiels)."""
+    items = [_make_summary(90, "Alpha"), _make_summary(89, "Beta")]
+    out = _rank_within_tiers(items)
+    assert {c.name for c in out} == {"Alpha", "Beta"}
 
 
 # =============================================================================
@@ -205,6 +251,50 @@ async def test_match_careers_sorts_and_limits():
     # permuter a l'interieur d'un tier de +/- TIER_MARGIN).
     for earlier, later in zip(out, out[1:]):
         assert earlier.match_score >= later.match_score - 8
+
+
+@pytest.mark.asyncio
+async def test_match_careers_scores_whole_pool_before_truncating():
+    """Le catalogue entier est scorE avant la coupe (rank-then-truncate).
+
+    Avant, la base renvoyait 25 metiers SANS tri puis on scorait : le meilleur
+    metier pouvait etre elimine avant d'avoir ete evalue. On verifie ici que la
+    couche service demande un large pool et que le meilleur remonte bien, meme
+    place en derniere position par la base.
+    """
+    service = CareerMatcherService()
+    result = _make_result(
+        traits=["Réaliste", "Investigateur"],
+        scores={"Réaliste": 90.0, "Investigateur": 85.0},
+    )
+
+    # 30 metiers non pertinents, PUIS le meilleur en tout dernier.
+    careers_data = [
+        {
+            "id": str(uuid4()),
+            "name": f"Hors sujet {i}",
+            "sector_name": "Autre",
+            "related_traits": ["A"],
+            "education_path": {"minimum_level": "BAC"},
+        }
+        for i in range(30)
+    ]
+    careers_data.append({
+        "id": str(uuid4()),
+        "name": "Le meilleur",
+        "sector_name": "Tech",
+        "related_traits": ["R", "I"],
+        "education_path": {"minimum_level": "BAC"},
+    })
+
+    repo = MagicMock()
+    repo.get_careers_by_traits = AsyncMock(return_value=careers_data)
+
+    out = await service._match_careers(result, repo)
+
+    # Le pool demande doit depasser largement les 6 recommandations finales.
+    assert repo.get_careers_by_traits.call_args.kwargs["limit"] >= 100
+    assert out[0].name == "Le meilleur"
 
 
 # =============================================================================

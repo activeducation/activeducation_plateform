@@ -8,6 +8,8 @@ Gere les interactions avec la base de donnees Supabase pour:
 - Carrieres
 """
 
+import re
+import unicodedata
 from datetime import datetime, timezone
 from typing import Any, Optional
 from uuid import UUID
@@ -26,6 +28,32 @@ from app.core.exceptions import (
 from app.schemas.orientation import TestResult
 
 logger = get_logger("repositories.orientation")
+
+# Mots outils ignores lors du rapprochement intitule de programme <-> profil :
+# presents partout, ils creeraient de fausses correspondances.
+_STOPWORDS = {
+    "de", "des", "du", "la", "le", "les", "et", "en", "aux", "au", "un", "une",
+    "pour", "sur", "dans", "par", "avec", "sciences", "science", "etudes",
+    "etude", "formation", "licence", "master", "bts", "dut", "specialite",
+}
+
+
+def _significant_tokens(text: str) -> set[str]:
+    """Decoupe un texte en mots significatifs, sans accents ni casse.
+
+    "Genie Civil & BTP" et "genie civil" partagent ainsi {genie, civil}.
+    Les mots de moins de 3 lettres et les mots outils sont ecartes.
+    """
+    if not isinstance(text, str) or not text:
+        return set()
+    # Retirer les accents pour que "Genie" et "Génie" se rejoignent.
+    normalized = unicodedata.normalize("NFKD", text.lower())
+    normalized = "".join(c for c in normalized if not unicodedata.combining(c))
+    return {
+        token
+        for token in re.split(r"[^a-z0-9]+", normalized)
+        if len(token) >= 3 and token not in _STOPWORDS
+    }
 
 
 class OrientationRepository:
@@ -442,14 +470,33 @@ class OrientationRepository:
             logger.error(f"Error fetching careers by traits: {e}", exc_info=True)
             raise QueryError(f"Erreur lors de la recherche de carrieres: {str(e)}")
 
+    @staticmethod
+    def _relevance_score(program: dict[str, Any], term_tokens: set[str]) -> int:
+        """Compte les mots significatifs communs entre un programme et le profil.
+
+        Rapproche l'intitule/description d'un programme ("Genie Civil") des
+        termes issus du profil ("Genie Civil & BTP", "Ingenieur Civil").
+        Retourne 0 si rien ne correspond : le programme reste candidat, mais
+        passe apres ceux qui correspondent.
+        """
+        haystack = f"{program.get('name', '')} {program.get('description', '')}"
+        program_tokens = _significant_tokens(haystack)
+        return len(program_tokens & term_tokens)
+
     async def get_matching_school_programs(
         self,
         sector_names: list[str],
         limit: int = 10,
     ) -> list[dict[str, Any]]:
         """
-        Recupere les programmes scolaires des ecoles correspondant aux secteurs recommandes.
-        Retourne les programmes avec le nom de l'ecole.
+        Recupere les programmes scolaires les plus pertinents pour le profil.
+
+        `sector_names` contient les termes du profil (secteurs recommandes,
+        secteurs et intitules des metiers retenus). Les programmes sont CLASSES
+        par pertinence, pas filtres : un profil sans correspondance obtient
+        quand meme des programmes (les plus generiques) au lieu d'une liste
+        vide. Auparavant ce parametre etait ignore et la fonction renvoyait des
+        programmes arbitraires, identiques pour tous les eleves.
         """
         try:
             client = self._db.client
@@ -481,23 +528,37 @@ class OrientationRepository:
             if not programs_result.data:
                 return []
 
-            # Enrichir avec les infos de l'ecole
+            # Tokens du profil, calcules une seule fois.
+            term_tokens: set[str] = set()
+            for term in sector_names or []:
+                term_tokens |= _significant_tokens(term)
+
+            # Enrichir avec les infos de l'ecole + score de pertinence
             enriched = []
             for p in programs_result.data:
                 school = schools_map.get(p["school_id"], {})
-                enriched.append({
-                    "program_id": p["id"],
-                    "program_name": p["name"],
-                    "program_level": p.get("level", ""),
-                    "program_duration": p.get("duration_years"),
-                    "school_id": p["school_id"],
-                    "school_name": school.get("name", ""),
-                    "school_city": school.get("city", ""),
-                    "school_logo_url": school.get("logo_url"),
-                    "school_type": school.get("type", ""),
-                })
+                enriched.append((
+                    self._relevance_score(p, term_tokens),
+                    {
+                        "program_id": p["id"],
+                        "program_name": p["name"],
+                        # Derive de schema : la migration 001 cree `degree_level`
+                        # alors que le back-office ecrit `level`. On lit les deux
+                        # pour ne pas renvoyer un niveau vide selon la base.
+                        "program_level": p.get("level") or p.get("degree_level") or "",
+                        "program_duration": p.get("duration_years"),
+                        "school_id": p["school_id"],
+                        "school_name": school.get("name", ""),
+                        "school_city": school.get("city", ""),
+                        "school_logo_url": school.get("logo_url"),
+                        "school_type": school.get("type", ""),
+                    },
+                ))
 
-            return enriched[:limit]
+            # Classement par pertinence decroissante ; a egalite, ordre stable
+            # par nom pour rester deterministe d'un appel a l'autre.
+            enriched.sort(key=lambda item: (-item[0], item[1]["program_name"]))
+            return [item[1] for item in enriched[:limit]]
 
         except Exception as e:
             logger.error(f"Error fetching matching school programs: {e}", exc_info=True)
