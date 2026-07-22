@@ -8,8 +8,6 @@ Gère :
 - La récupération des programmes scolaires correspondants
 """
 
-import random
-
 from app.core.logging import get_logger
 from app.schemas.orientation import CareerSummary, TestResult
 from app.services.orientation_engine import orientation_engine, EN_TO_FR, CODE_TO_FR
@@ -22,8 +20,17 @@ _NO_ACCENT_TO_ACCENT = {"Realiste": "Réaliste"}
 
 # Nombre max de carrières recommandées dans la réponse
 MAX_RECOMMENDATIONS = 6
-# Marge de score pour regrouper en "tier" avant diversification
+# Marge de score pour regrouper en "tier" avant départage
 TIER_MARGIN = 8
+
+# Borne de sécurité sur le nombre de candidats remontés de la base.
+# Ce n'est PAS une coupe de classement : on veut scorer tout le catalogue
+# (~quelques dizaines de métiers) avant de trier, sinon le meilleur métier
+# peut être éliminé par la base avant même d'avoir été évalué.
+CANDIDATE_POOL_LIMIT = 500
+
+# Ordre de préférence à score égal : un métier qui recrute passe devant.
+_DEMAND_RANK = {"high": 3, "medium": 2, "low": 1}
 
 
 def _normalize_career_trait(trait: str) -> str:
@@ -65,23 +72,47 @@ def _build_career_summary(c: dict, match_score: float, matching_traits: list[str
     )
 
 
-def _diversify_by_tier(ranked: list[CareerSummary]) -> list[CareerSummary]:
+def _tiebreak_key(career) -> tuple:
+    """Clé de départage à score de correspondance équivalent.
+
+    Ordre : forte demande d'emploi d'abord, puis salaire moyen, puis nom
+    (stabilité). Défensif : des champs absents ou non numériques ne cassent
+    pas le tri, ils retombent simplement en fin de tranche.
     """
-    Diversifie les recommandations en mélangeant les carrières dans la même
-    tranche de score (±TIER_MARGIN pts) pour éviter l'ordre alphabétique.
+    demand_raw = getattr(career, "job_demand", None)
+    demand = _DEMAND_RANK.get(demand_raw, 0) if isinstance(demand_raw, str) else 0
+
+    salary = getattr(career, "salary_avg_fcfa", None)
+    salary = salary if isinstance(salary, (int, float)) else 0
+
+    name = getattr(career, "name", "")
+    name = name if isinstance(name, str) else ""
+
+    return (-demand, -salary, name)
+
+
+def _rank_within_tiers(ranked: list[CareerSummary]) -> list[CareerSummary]:
     """
-    diversified: list[CareerSummary] = []
+    Départage les carrières d'une même tranche de score (±TIER_MARGIN pts)
+    de façon DÉTERMINISTE : demande d'emploi, puis salaire, puis nom.
+
+    Remplace un random.shuffle() : deux élèves au profil identique doivent
+    obtenir exactement les mêmes recommandations, et l'ordre doit pouvoir
+    s'expliquer ("ces métiers recrutent le plus"). Le hasard rendait le
+    résultat irreproductible et injustifiable — or l'explicabilité est le
+    coeur d'un outil d'orientation. L'objectif initial (ne pas retomber sur
+    l'ordre alphabétique de la base) reste atteint, mais par un critère utile.
+    """
+    out: list[CareerSummary] = []
     i = 0
     while i < len(ranked):
         tier_score = ranked[i].match_score
         j = i
         while j < len(ranked) and (tier_score - ranked[j].match_score) <= TIER_MARGIN:
             j += 1
-        tier = ranked[i:j]
-        random.shuffle(tier)
-        diversified.extend(tier)
+        out.extend(sorted(ranked[i:j], key=_tiebreak_key))
         i = j
-    return diversified
+    return out
 
 
 class CareerMatcherService:
@@ -118,7 +149,13 @@ class CareerMatcherService:
         calcule leur score de correspondance et les trie.
         """
         try:
-            careers = await repo.get_careers_by_traits(result.dominant_traits, limit=25)
+            # On remonte TOUT le catalogue correspondant (borne de sécurité
+            # seulement) : scorer d'abord, trier, puis couper. L'inverse
+            # (limit=25 sans tri côté base) laissait la base décider
+            # arbitrairement quels métiers seraient évalués.
+            careers = await repo.get_careers_by_traits(
+                result.dominant_traits, limit=CANDIDATE_POOL_LIMIT
+            )
         except Exception as e:
             logger.error("Erreur récupération carrières par traits : %s", e, exc_info=True)
             return []
@@ -136,20 +173,43 @@ class CareerMatcherService:
 
             enriched.append(_build_career_summary(c, match_score, matching))
 
+        # Trier sur la TOTALITÉ des candidats scorés, puis seulement couper.
         enriched.sort(key=lambda r: r.match_score, reverse=True)
-        return _diversify_by_tier(enriched)[:MAX_RECOMMENDATIONS]
+        return _rank_within_tiers(enriched)[:MAX_RECOMMENDATIONS]
 
     async def _fetch_school_programs(
         self,
         result: TestResult,
         repo: OrientationRepository,
     ) -> list:
-        """Récupère les programmes scolaires correspondant aux secteurs recommandés."""
+        """Récupère les programmes scolaires pertinents pour le profil.
+
+        Les termes de recherche combinent deux sources :
+        - les secteurs éditoriaux de l'interprétation (libellés du moteur) ;
+        - les secteurs et intitulés des métiers réellement recommandés, qui
+          proviennent de la BASE et sont donc le vocabulaire de vérité.
+
+        Sans les seconds, seuls les libellés codés en dur du moteur étaient
+        transmis, et ils ne correspondent à aucune valeur stockée.
+        """
         try:
-            sectors = result.interpretation.get("recommended_sectors", [])
-            if not sectors:
+            terms: list[str] = []
+            seen: set[str] = set()
+
+            def _add(value) -> None:
+                if isinstance(value, str) and value.strip() and value not in seen:
+                    seen.add(value)
+                    terms.append(value)
+
+            for sector in result.interpretation.get("recommended_sectors", []) or []:
+                _add(sector)
+            for career in result.recommendations or []:
+                _add(getattr(career, "sector_name", None))
+                _add(getattr(career, "name", None))
+
+            if not terms:
                 return []
-            return await repo.get_matching_school_programs(sectors, limit=8)
+            return await repo.get_matching_school_programs(terms, limit=8)
         except Exception as e:
             logger.error("Erreur récupération programmes scolaires : %s", e, exc_info=True)
             return []
