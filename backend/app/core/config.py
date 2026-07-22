@@ -100,6 +100,14 @@ class Settings(BaseSettings):
     # Nombre max d'aller-retours d'appels d'outils par tour de conversation.
     TUTOR_TOOLS_MAX_ITERATIONS: int = 3
 
+    # Orientation multi-criteres — poids relatifs des criteres de matching.
+    # Un critere sans donnee est exclu et les poids sont renormalises.
+    ORIENTATION_WEIGHT_RIASEC: float = 35.0     # tests de la plateforme
+    ORIENTATION_WEIGHT_ACADEMIC: float = 25.0   # notes dans les matieres cles
+    ORIENTATION_WEIGHT_INTERESTS: float = 20.0  # interets + matieres preferees
+    ORIENTATION_WEIGHT_PROJECT: float = 10.0    # projet professionnel
+    ORIENTATION_WEIGHT_BUDGET: float = 10.0     # faisabilite financiere
+
     # Email (notifications candidatures mentor, etc.) — tout optionnel.
     # Si SMTP n'est pas configure, l'envoi est ignore silencieusement (best-effort).
     # L'adresse destinataire des notifications est aussi configurable a chaud via
