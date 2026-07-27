@@ -10,7 +10,12 @@ Gère :
 
 from app.core.logging import get_logger
 from app.schemas.orientation import CareerSummary, TestResult
-from app.services.orientation_engine import orientation_engine, EN_TO_FR, CODE_TO_FR
+from app.services.orientation_engine import (
+    orientation_engine,
+    project_to_riasec,
+    EN_TO_FR,
+    CODE_TO_FR,
+)
 from app.repositories.orientation_repository import OrientationRepository
 
 logger = get_logger("services.career_matcher")
@@ -148,34 +153,72 @@ class CareerMatcherService:
         Récupère les carrières correspondant aux traits dominants,
         calcule leur score de correspondance et les trie.
         """
+        # Les métiers ne sont indexés qu'en RIASEC (+ intelligences de Gardner),
+        # alors que chaque test a son propre vocabulaire ("Leadership",
+        # "Visuel"...). Sans projection, 8 tests sur 10 ne remontaient AUCUN
+        # métier. On interroge et on score donc avec les traits du profil
+        # ENRICHIS de leur projection RIASEC.
+        projected, projected_scores = project_to_riasec(
+            result.dominant_traits, result.scores
+        )
+        search_traits = list(dict.fromkeys([*result.dominant_traits, *projected]))
+        search_scores = {**projected_scores, **result.scores}
+
         try:
             # On remonte TOUT le catalogue correspondant (borne de sécurité
             # seulement) : scorer d'abord, trier, puis couper. L'inverse
             # (limit=25 sans tri côté base) laissait la base décider
             # arbitrairement quels métiers seraient évalués.
             careers = await repo.get_careers_by_traits(
-                result.dominant_traits, limit=CANDIDATE_POOL_LIMIT
+                search_traits, limit=CANDIDATE_POOL_LIMIT
             )
         except Exception as e:
             logger.error("Erreur récupération carrières par traits : %s", e, exc_info=True)
             return []
+
+        if not careers:
+            # Aucune correspondance possible (ex. test de maturité de projet,
+            # dont les dimensions ne décrivent pas des intérêts). Mieux vaut
+            # proposer les métiers les plus porteurs qu'un écran vide.
+            logger.info(
+                "Aucun métier pour les traits %s — repli sur les métiers porteurs",
+                search_traits,
+            )
+            return await self._fallback_careers(repo)
 
         enriched: list[CareerSummary] = []
         for c in careers:
             career_traits = c.get("related_traits") or []
             match_score = orientation_engine.calculate_match_score(
                 career_traits=career_traits,
-                user_dominant_traits=result.dominant_traits,
-                user_scores=result.scores,
+                user_dominant_traits=search_traits,
+                user_scores=search_scores,
             )
             normalized_traits = [_normalize_career_trait(t) for t in career_traits]
-            matching = [t for t in normalized_traits if t in result.dominant_traits]
+            matching = [t for t in normalized_traits if t in search_traits]
 
             enriched.append(_build_career_summary(c, match_score, matching))
 
         # Trier sur la TOTALITÉ des candidats scorés, puis seulement couper.
         enriched.sort(key=lambda r: r.match_score, reverse=True)
         return _rank_within_tiers(enriched)[:MAX_RECOMMENDATIONS]
+
+    async def _fallback_careers(self, repo: OrientationRepository) -> list[CareerSummary]:
+        """Repli : métiers les plus porteurs, quand aucun trait ne correspond.
+
+        Le score de correspondance est laissé à 0 et matching_traits vide :
+        l'app peut ainsi distinguer une vraie correspondance d'une suggestion
+        de découverte, et ne pas afficher un pourcentage trompeur.
+        """
+        try:
+            careers = await repo.get_all_careers(limit=CANDIDATE_POOL_LIMIT)
+        except Exception as e:
+            logger.error("Erreur récupération métiers (repli) : %s", e, exc_info=True)
+            return []
+
+        summaries = [_build_career_summary(c, 0.0, []) for c in careers]
+        summaries.sort(key=_tiebreak_key)
+        return summaries[:MAX_RECOMMENDATIONS]
 
     async def _fetch_school_programs(
         self,

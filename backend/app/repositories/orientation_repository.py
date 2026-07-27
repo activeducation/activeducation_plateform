@@ -38,6 +38,18 @@ _STOPWORDS = {
 }
 
 
+def _strip_accents(text: str) -> str:
+    """Retire les accents en conservant casse, tirets et espaces.
+
+    "Logico-Mathématique" -> "Logico-Mathematique". Les deux orthographes
+    coexistent dans careers.related_traits.
+    """
+    if not isinstance(text, str) or not text:
+        return ""
+    normalized = unicodedata.normalize("NFKD", text)
+    return "".join(c for c in normalized if not unicodedata.combining(c))
+
+
 def _significant_tokens(text: str) -> set[str]:
     """Decoupe un texte en mots significatifs, sans accents ni casse.
 
@@ -444,15 +456,29 @@ class OrientationRepository:
             }
             en_to_fr = {v: k for k, v in fr_to_en.items()}
 
-            # Construire une liste etendue avec toutes les variantes
-            search_traits = list(traits)
+            # Construire une liste etendue avec toutes les variantes.
+            # overlaps() compare des chaines EXACTES : sans les variantes
+            # d'accent, "Logico-Mathematique" ne trouve pas les metiers
+            # enregistres en "Logico-Mathématique" (les deux coexistent en base).
+            search_traits: list[str] = []
+            seen: set[str] = set()
+
+            def _add(value: str) -> None:
+                if isinstance(value, str) and value and value not in seen:
+                    seen.add(value)
+                    search_traits.append(value)
+
             for t in traits:
+                _add(t)
                 if t in fr_to_en:
-                    search_traits.append(fr_to_en[t])
+                    _add(fr_to_en[t])
                 if t in fr_accent_to_no_accent:
-                    search_traits.append(fr_accent_to_no_accent[t])
+                    _add(fr_accent_to_no_accent[t])
                 if t in en_to_fr:
-                    search_traits.append(en_to_fr[t])
+                    _add(en_to_fr[t])
+                # Variante systematique sans accents (et l'inverse est couvert
+                # par les traits canoniques accentues deja presents).
+                _add(_strip_accents(t))
 
             client = self._db.client
             query = (
