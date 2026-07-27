@@ -8,6 +8,9 @@ Gere:
 - Calcul du score de correspondance carrieres
 """
 
+import re
+import unicodedata
+
 from app.schemas.orientation import TestResult, TestType
 from app.core.logging import get_logger
 from collections import defaultdict
@@ -159,6 +162,154 @@ RIASEC_FR = {
 # Mapping inverse anglais -> francais
 EN_TO_FR = {v["en"]: k for k, v in RIASEC_FR.items()}
 CODE_TO_FR = {v["code"]: k for k, v in RIASEC_FR.items()}
+
+
+def _fold(text: str) -> str:
+    """Cle de comparaison insensible aux accents, a la casse et aux separateurs.
+
+    Les donnees contiennent les deux orthographes ("Realiste"/"Réaliste",
+    "Logico-Mathematique"/"Logico-Mathématique") : sans repliement, la moitie
+    des correspondances est perdue silencieusement.
+    """
+    if not isinstance(text, str):
+        return ""
+    normalized = unicodedata.normalize("NFKD", text.strip().lower())
+    normalized = "".join(c for c in normalized if not unicodedata.combining(c))
+    return re.sub(r"[^a-z0-9]+", "", normalized)
+
+
+# ============================================================================
+# PROJECTION VERS LE RIASEC
+# ----------------------------------------------------------------------------
+# Les metiers ne sont indexes que par des traits RIASEC (+ intelligences de
+# Gardner). Or chaque test parle son propre vocabulaire : "Leadership",
+# "Visuel", "Securite"... Sans table de correspondance, la recherche de metiers
+# ne trouve rien et l'eleve termine son test avec une liste VIDE.
+#
+# Le RIASEC (Holland) sert donc de langue pivot : chaque dimension d'un test
+# secondaire est projetee sur un ou plusieurs traits RIASEC. Le profil affiche
+# a l'eleve reste inchange (il voit bien "Leadership") ; la projection ne sert
+# qu'a interroger et scorer le catalogue metiers.
+# ============================================================================
+DIMENSION_TO_RIASEC: dict[str, list[str]] = {
+    # --- Intelligences multiples (Gardner) ---
+    "Linguistique": ["Social", "Artistique"],
+    "Logico-Mathématique": ["Investigateur"],
+    "Spatiale": ["Artistique", "Réaliste"],
+    "Musicale": ["Artistique"],
+    "Kinesthésique": ["Réaliste"],
+    "Interpersonnelle": ["Social"],
+    "Intrapersonnelle": ["Investigateur"],
+    "Naturaliste": ["Réaliste", "Investigateur"],
+
+    # --- Personnalite (MBTI simplifie), libelles produits par le moteur ---
+    "Extraversion": ["Entrepreneur", "Social"],
+    "Introversion": ["Investigateur"],
+    "Sensation": ["Réaliste", "Conventionnel"],
+    "Intuition": ["Artistique", "Investigateur"],
+    "Pensée": ["Investigateur"],
+    "Sentiment": ["Social"],
+    "Jugement": ["Conventionnel"],
+    "Perception": ["Artistique"],
+
+    # --- Valeurs professionnelles ---
+    "Remuneration": ["Entrepreneur"],
+    "Altruisme": ["Social"],
+    "Securite": ["Conventionnel"],
+    "Autonomie": ["Entrepreneur", "Artistique"],
+    "Reconnaissance": ["Entrepreneur"],
+    "Equilibre": ["Conventionnel", "Social"],
+    "Creativite": ["Artistique"],
+    "Leadership": ["Entrepreneur"],
+    "Impact": ["Social"],
+    "Apprentissage": ["Investigateur"],
+
+    # --- Aptitudes naturelles ---
+    "Communication": ["Social"],
+    "Analytique": ["Investigateur"],
+    "Organisation": ["Conventionnel"],
+    "Visuelle": ["Artistique"],
+    "Mediation": ["Social"],
+    "Methode": ["Conventionnel"],
+    "Adaptabilite": ["Entrepreneur", "Réaliste"],
+    "Persuasion": ["Entrepreneur"],
+    "Gestion du temps": ["Conventionnel"],
+
+    # --- Potentiel entrepreneurial ---
+    "Initiative": ["Entrepreneur"],
+    "Resilience": ["Entrepreneur", "Réaliste"],
+    "Vision": ["Entrepreneur", "Artistique"],
+    "Prise de risque": ["Entrepreneur"],
+    "Experience": ["Réaliste"],
+    "Finance": ["Conventionnel"],
+    "Passion": ["Artistique", "Entrepreneur"],
+
+    # --- Ancres de carriere (Schein) ---
+    "Technique": ["Investigateur", "Réaliste"],
+    "Management": ["Entrepreneur"],
+    "Service": ["Social"],
+    "Defi": ["Entrepreneur", "Investigateur"],
+    "StyleDeVie": ["Social"],
+    "Entrepreneuriat": ["Entrepreneur"],
+
+    # --- Styles d'apprentissage (VARK) ---
+    "Visuel": ["Artistique"],
+    "Auditif": ["Social"],
+    "LectureEcriture": ["Investigateur", "Conventionnel"],
+
+    # --- Environnement de travail ideal ---
+    "Collaboration": ["Social"],
+    "Structure": ["Conventionnel"],
+    "Innovation": ["Artistique", "Investigateur"],
+    "Terrain": ["Réaliste"],
+    "Analyse": ["Investigateur"],
+
+    # NB : le "Test de Maturite du Projet Professionnel"
+    # (ConnaissanceDeSoi, ExplorationMetiers, PriseDecision, PlanAction) mesure
+    # l'avancement d'une demarche, pas des interets. Le projeter sur le RIASEC
+    # n'aurait aucun sens : il est volontairement absent de cette table et
+    # s'appuie sur le repli "metiers porteurs" du CareerMatcher.
+}
+
+# Index replie : tolere accents, casse, tirets et espaces.
+_DIMENSION_TO_RIASEC_FOLDED = {
+    _fold(k): v for k, v in DIMENSION_TO_RIASEC.items()
+}
+_RIASEC_FOLDED = {_fold(k): k for k in RIASEC_FR}
+
+
+def project_to_riasec(
+    traits: list[str],
+    scores: dict[str, float] | None = None,
+) -> tuple[list[str], dict[str, float]]:
+    """Projette des dimensions de test vers les traits RIASEC correspondants.
+
+    Retourne les traits RIASEC deduits et leur score, un trait RIASEC heritant
+    du MEILLEUR score parmi les dimensions qui y menent. Les traits deja RIASEC
+    sont conserves tels quels (avec leur orthographe canonique accentuee).
+
+    Sert uniquement au rapprochement avec le catalogue metiers : le profil
+    affiche a l'eleve n'est pas modifie.
+    """
+    scores = scores or {}
+    projected: list[str] = []
+    projected_scores: dict[str, float] = {}
+
+    for trait in traits or []:
+        key = _fold(trait)
+        # Un trait deja RIASEC (quelle que soit son orthographe) est garde.
+        canonical = _RIASEC_FOLDED.get(key)
+        targets = [canonical] if canonical else _DIMENSION_TO_RIASEC_FOLDED.get(key, [])
+
+        source_score = scores.get(trait, 0.0)
+        for target in targets:
+            if target not in projected_scores:
+                projected.append(target)
+                projected_scores[target] = source_score
+            else:
+                projected_scores[target] = max(projected_scores[target], source_score)
+
+    return projected, projected_scores
 
 # MBTI descriptions en francais
 MBTI_FR = {

@@ -16,7 +16,7 @@ if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
 
 from app.schemas.orientation import TestType as OrientationTestType
-from app.services.orientation_engine import OrientationEngine
+from app.services.orientation_engine import OrientationEngine, project_to_riasec
 
 
 # ============================================================================
@@ -164,3 +164,79 @@ async def test_calculate_personality_falls_back_to_category_scoring():
     assert result.scores["Linguistique"] == 87.5
     assert result.scores["Logique"] == 50.0
     assert result.dominant_traits[0] == "Linguistique"
+
+
+# ============================================================================
+# project_to_riasec : les metiers ne sont indexes qu'en RIASEC, chaque test
+# parle son propre vocabulaire. Sans projection, 8 tests sur 10 ne
+# remontaient AUCUN metier.
+# ============================================================================
+
+
+def test_project_keeps_riasec_traits_unchanged():
+    """Un trait deja RIASEC est conserve sous sa forme canonique."""
+    traits, scores = project_to_riasec(["Investigateur", "Social"], {"Investigateur": 80.0})
+    assert traits == ["Investigateur", "Social"]
+    assert scores["Investigateur"] == 80.0
+
+
+def test_project_maps_secondary_dimensions():
+    """Les dimensions des tests secondaires atteignent le RIASEC."""
+    traits, _ = project_to_riasec(["Leadership"], {})
+    assert traits == ["Entrepreneur"]
+
+    traits, _ = project_to_riasec(["Analytique"], {})
+    assert traits == ["Investigateur"]
+
+    # VARK
+    traits, _ = project_to_riasec(["Kinesthesique"], {})
+    assert traits == ["Réaliste"]
+
+
+def test_project_is_accent_and_case_insensitive():
+    """Les deux orthographes coexistent en base : les deux doivent matcher."""
+    accented, _ = project_to_riasec(["Logico-Mathématique"], {})
+    plain, _ = project_to_riasec(["logico-mathematique"], {})
+    assert accented == plain == ["Investigateur"]
+
+    # "Realiste" sans accent doit retrouver le trait canonique accentue.
+    traits, _ = project_to_riasec(["Realiste"], {})
+    assert traits == ["Réaliste"]
+
+
+def test_project_inherits_best_source_score():
+    """Un trait RIASEC issu de plusieurs dimensions garde le MEILLEUR score."""
+    _, scores = project_to_riasec(
+        ["Leadership", "Initiative"],
+        {"Leadership": 40.0, "Initiative": 90.0},
+    )
+    assert scores["Entrepreneur"] == 90.0
+
+
+def test_project_ignores_unmappable_dimensions():
+    """Les dimensions hors interets (maturite de projet) ne sont pas projetees."""
+    traits, _ = project_to_riasec(["ConnaissanceDeSoi", "PlanAction"], {})
+    assert traits == []
+
+
+@pytest.mark.asyncio
+async def test_mbti_output_projects_to_riasec():
+    """Bout en bout : les libelles MBTI produits par le moteur sont projetables."""
+    engine = OrientationEngine()
+    responses, questions = {}, []
+    for i, dim in enumerate(["E-I", "S-N", "T-F", "J-P"]):
+        for j in range(4):
+            qid = f"q{i}{j}"
+            responses[qid] = "5"
+            questions.append({"id": qid, "category": dim})
+
+    result = await engine.calculate_result(
+        OrientationTestType.PERSONALITY, responses, {"questions": questions}
+    )
+    projected, _ = project_to_riasec(result.dominant_traits, result.scores)
+
+    assert projected, "le MBTI doit atteindre au moins un trait RIASEC"
+    assert set(projected) <= {
+        "Réaliste", "Investigateur", "Artistique",
+        "Social", "Entrepreneur", "Conventionnel",
+    }

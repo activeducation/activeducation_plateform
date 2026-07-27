@@ -297,6 +297,59 @@ async def test_match_careers_scores_whole_pool_before_truncating():
     assert out[0].name == "Le meilleur"
 
 
+@pytest.mark.asyncio
+async def test_match_careers_projects_secondary_dimensions_to_riasec():
+    """Un profil non-RIASEC ("Leadership") doit quand meme trouver des metiers.
+
+    Avant la projection, 8 tests sur 10 (valeurs, aptitudes, ancres, VARK...)
+    interrogeaient le catalogue avec un vocabulaire absent de related_traits et
+    ne remontaient AUCUN metier.
+    """
+    service = CareerMatcherService()
+    result = _make_result(traits=["Leadership", "Vision"], scores={"Leadership": 90.0, "Vision": 80.0})
+
+    repo = MagicMock()
+    repo.get_careers_by_traits = AsyncMock(return_value=[{
+        "id": str(uuid4()),
+        "name": "Chef d'entreprise",
+        "sector_name": "Commerce",
+        "related_traits": ["Entrepreneur"],
+        "education_path": {"minimum_level": "BAC"},
+    }])
+
+    out = await service._match_careers(result, repo)
+
+    # Le trait RIASEC projete doit figurer dans la requete envoyee au repo.
+    queried = repo.get_careers_by_traits.call_args.args[0]
+    assert "Entrepreneur" in queried
+    # Et le metier doit obtenir un score non nul (scoring sur traits projetes).
+    assert out and out[0].match_score > 0
+
+
+@pytest.mark.asyncio
+async def test_match_careers_falls_back_when_no_trait_matches():
+    """Aucune correspondance -> metiers porteurs plutot qu'un ecran vide."""
+    service = CareerMatcherService()
+    result = _make_result(traits=["ConnaissanceDeSoi"], scores={"ConnaissanceDeSoi": 70.0})
+
+    repo = MagicMock()
+    repo.get_careers_by_traits = AsyncMock(return_value=[])
+    repo.get_all_careers = AsyncMock(return_value=[
+        {"id": str(uuid4()), "name": "Metier peu demande", "sector_name": "X",
+         "related_traits": [], "job_demand": "low", "education_path": {}},
+        {"id": str(uuid4()), "name": "Metier porteur", "sector_name": "Y",
+         "related_traits": [], "job_demand": "high", "education_path": {}},
+    ])
+
+    out = await service._match_careers(result, repo)
+
+    repo.get_all_careers.assert_awaited_once()
+    assert out[0].name == "Metier porteur"
+    # Score a 0 : c'est une suggestion de decouverte, pas une correspondance.
+    assert out[0].match_score == 0.0
+    assert out[0].matching_traits == []
+
+
 # =============================================================================
 # _fetch_school_programs
 # =============================================================================
