@@ -147,6 +147,34 @@ class OrientationProfileRepository:
     # ECRITURES ADMIN (donnees de matching)
     # =========================================================================
 
+    async def list_careers_with_subjects(self) -> list[dict[str, Any]]:
+        """Metiers avec leurs matieres cles (ecran admin de saisie)."""
+        try:
+            result = (
+                self._db.client.table(_CAREERS)
+                .select("id, name, sector_id, key_subjects, is_active")
+                .order("name")
+                .execute()
+            )
+            return result.data or []
+        except Exception as e:
+            logger.error("Erreur liste carrieres/matieres: %s", e, exc_info=True)
+            raise QueryError(f"Erreur lors de la lecture des carrieres: {str(e)}")
+
+    async def list_programs_with_cost(self) -> list[dict[str, Any]]:
+        """Formations avec leur cout annuel (ecran admin de saisie)."""
+        try:
+            result = (
+                self._db.client.table(_PROGRAMS)
+                .select("id, name, degree_level, tuition_annual_fcfa, is_public")
+                .order("name")
+                .execute()
+            )
+            return result.data or []
+        except Exception as e:
+            logger.error("Erreur liste formations/couts: %s", e, exc_info=True)
+            raise QueryError(f"Erreur lors de la lecture des formations: {str(e)}")
+
     async def set_career_key_subjects(
         self,
         career_id: UUID,

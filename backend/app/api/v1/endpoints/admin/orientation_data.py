@@ -34,6 +34,28 @@ class ProgramCostRequest(BaseModel):
     is_public: Optional[bool] = None
 
 
+@router.get(
+    "/careers",
+    summary="Lister les métiers avec leurs matières clés",
+)
+async def list_careers_with_subjects(
+    admin=Depends(get_current_admin),
+) -> dict[str, Any]:
+    careers = await get_orientation_profile_repository().list_careers_with_subjects()
+    return {"careers": careers, "total": len(careers)}
+
+
+@router.get(
+    "/programs",
+    summary="Lister les formations avec leur coût annuel",
+)
+async def list_programs_with_cost(
+    admin=Depends(get_current_admin),
+) -> dict[str, Any]:
+    programs = await get_orientation_profile_repository().list_programs_with_cost()
+    return {"programs": programs, "total": len(programs)}
+
+
 @router.patch(
     "/careers/{career_id}",
     summary="Définir les matières clés d'un métier (critère notes)",
