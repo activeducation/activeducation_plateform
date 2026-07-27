@@ -22,6 +22,8 @@ import '../features/orientation/domain/entities/career.dart';
 import '../features/profile/presentation/pages/profile_page.dart';
 import '../features/ai_chat/presentation/pages/chat_page.dart';
 import '../features/tutor/presentation/pages/tutor_page.dart';
+import '../features/orientation_match/presentation/pages/orientation_profile_page.dart';
+import '../features/orientation_match/presentation/pages/orientation_recommendations_page.dart';
 import '../features/elearning/presentation/pages/elearning_catalog_page.dart';
 import '../features/elearning/presentation/pages/course_detail_page.dart';
 import '../features/elearning/presentation/pages/lesson_page.dart';
@@ -243,6 +245,18 @@ class AppRouter {
         path: '/tutor',
         builder: (BuildContext context, GoRouterState state) {
           return _responsive(const TutorPage(), maxWidth: 640);
+        },
+      ),
+      GoRoute(
+        path: '/orientation/profile',
+        builder: (BuildContext context, GoRouterState state) {
+          return _responsive(const OrientationProfilePage(), maxWidth: 640);
+        },
+      ),
+      GoRoute(
+        path: '/orientation/recommendations',
+        builder: (BuildContext context, GoRouterState state) {
+          return _responsive(const OrientationRecommendationsPage(), maxWidth: 720);
         },
       ),
       GoRoute(

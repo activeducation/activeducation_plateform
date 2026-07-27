@@ -69,6 +69,8 @@ class ApiEndpoints {
   static String submitSession(String id) => '$sessions/$id/submit';
   static String sessionResults(String id) => '$sessions/$id/results';
   static const String recommendations = '$orientation/recommendations';
+  static const String orientationProfile = '$orientation/profile';
+  static const String orientationMultiFactor = '$orientation/recommendations/multi-factor';
 
   // ============================================
   // CARRIERES
