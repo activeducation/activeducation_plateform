@@ -608,6 +608,9 @@ class ResultsPage extends StatelessWidget {
   Widget _buildActions(BuildContext context) {
     return Column(
       children: [
+        // Affiner avec les autres critères (notes, budget, projet…)
+        _buildRefineCard(context),
+        const SizedBox(height: AppSpacing.md),
         // Bouton principal : discuter avec AÏDA
         GradientButton(
           text: 'Discuter avec AÏDA',
@@ -647,6 +650,74 @@ class ResultsPage extends StatelessWidget {
           ],
         ),
       ],
+    );
+  }
+
+  /// Invite à compléter le profil pour croiser ce test avec les notes, le
+  /// budget et le projet professionnel (moteur d'orientation multi-critères).
+  Widget _buildRefineCard(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => context.push('/orientation/profile'),
+        borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.secondarySurface,
+            borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+            border: Border.all(
+              color: AppColors.secondary.withValues(alpha: 0.35),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(9),
+                decoration: BoxDecoration(
+                  color: AppColors.secondary.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: const Icon(
+                  Icons.tune_rounded,
+                  color: AppColors.secondaryDark,
+                  size: 19,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Affine tes résultats',
+                      style: AppTypography.labelLarge.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Ajoute tes notes, ton budget et ton projet pour des '
+                      'recommandations sur mesure.',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              const Icon(
+                Icons.arrow_forward_rounded,
+                color: AppColors.secondaryDark,
+                size: 18,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
