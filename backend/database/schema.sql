@@ -85,6 +85,13 @@ CREATE TABLE IF NOT EXISTS test_questions (
 -- Index pour charger les questions d'un test
 CREATE INDEX idx_test_questions_test_id ON test_questions(test_id);
 
+-- Contrainte d'unicite semantique : empeche les doublons de questions
+-- quand le seed est rejoue. Sans index, rejouer seed_tests.sql cree
+-- systematiquement des doublons (uuid_generate_v4 genere toujours
+-- de nouveaux UUIDs, donc ON CONFLICT (id) ne matche rien).
+CREATE UNIQUE INDEX IF NOT EXISTS uq_test_questions_test_text
+    ON test_questions (test_id, question_text);
+
 -- Options de reponse pour les questions
 CREATE TABLE IF NOT EXISTS question_options (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -97,6 +104,11 @@ CREATE TABLE IF NOT EXISTS question_options (
 
 -- Index pour charger les options d'une question
 CREATE INDEX idx_question_options_question_id ON question_options(question_id);
+
+-- Contrainte d'unicite semantique : empeche les doublons d'options Likert
+-- (ex: "Pas du tout d'accord" x2) quand le seed est rejoue.
+CREATE UNIQUE INDEX IF NOT EXISTS uq_question_options_question_text
+    ON question_options (question_id, option_text);
 
 -- Sessions de test utilisateur
 CREATE TABLE IF NOT EXISTS user_test_sessions (
@@ -465,37 +477,43 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO test_questions (test_id, question_text, question_type, category, display_order) VALUES
     ('123e4567-e89b-12d3-a456-426614174000', 'J''aime reparer des appareils electriques ou mecaniques.', 'likert', 'Realistic', 1),
     ('123e4567-e89b-12d3-a456-426614174000', 'Je prefere travailler avec des outils et des machines.', 'likert', 'Realistic', 2),
-    ('123e4567-e89b-12d3-a456-426614174000', 'J''aime construire ou fabriquer des objets de mes mains.', 'likert', 'Realistic', 3);
+    ('123e4567-e89b-12d3-a456-426614174000', 'J''aime construire ou fabriquer des objets de mes mains.', 'likert', 'Realistic', 3)
+ON CONFLICT (test_id, question_text) DO NOTHING;
 
 -- Investigative
 INSERT INTO test_questions (test_id, question_text, question_type, category, display_order) VALUES
     ('123e4567-e89b-12d3-a456-426614174000', 'J''aime resoudre des problemes mathematiques complexes.', 'likert', 'Investigative', 4),
     ('123e4567-e89b-12d3-a456-426614174000', 'Je suis curieux et j''aime comprendre comment les choses fonctionnent.', 'likert', 'Investigative', 5),
-    ('123e4567-e89b-12d3-a456-426614174000', 'J''aime mener des experiences et analyser des donnees.', 'likert', 'Investigative', 6);
+    ('123e4567-e89b-12d3-a456-426614174000', 'J''aime mener des experiences et analyser des donnees.', 'likert', 'Investigative', 6)
+ON CONFLICT (test_id, question_text) DO NOTHING;
 
 -- Artistic
 INSERT INTO test_questions (test_id, question_text, question_type, category, display_order) VALUES
     ('123e4567-e89b-12d3-a456-426614174000', 'J''aime dessiner, peindre ou faire de la musique.', 'likert', 'Artistic', 7),
     ('123e4567-e89b-12d3-a456-426614174000', 'J''ai une imagination debordante et j''aime creer.', 'likert', 'Artistic', 8),
-    ('123e4567-e89b-12d3-a456-426614174000', 'Je prefere m''exprimer de maniere creative plutot que suivre des regles.', 'likert', 'Artistic', 9);
+    ('123e4567-e89b-12d3-a456-426614174000', 'Je prefere m''exprimer de maniere creative plutot que suivre des regles.', 'likert', 'Artistic', 9)
+ON CONFLICT (test_id, question_text) DO NOTHING;
 
 -- Social
 INSERT INTO test_questions (test_id, question_text, question_type, category, display_order) VALUES
     ('123e4567-e89b-12d3-a456-426614174000', 'J''aime aider les autres et leur enseigner de nouvelles choses.', 'likert', 'Social', 10),
     ('123e4567-e89b-12d3-a456-426614174000', 'Je suis a l''aise pour parler en public ou animer des groupes.', 'likert', 'Social', 11),
-    ('123e4567-e89b-12d3-a456-426614174000', 'Je me soucie du bien-etre des autres et j''aime les conseiller.', 'likert', 'Social', 12);
+    ('123e4567-e89b-12d3-a456-426614174000', 'Je me soucie du bien-etre des autres et j''aime les conseiller.', 'likert', 'Social', 12)
+ON CONFLICT (test_id, question_text) DO NOTHING;
 
 -- Enterprising
 INSERT INTO test_questions (test_id, question_text, question_type, category, display_order) VALUES
     ('123e4567-e89b-12d3-a456-426614174000', 'J''aime diriger une equipe et prendre des decisions.', 'likert', 'Enterprising', 13),
     ('123e4567-e89b-12d3-a456-426614174000', 'Je suis motive par la reussite et les defis ambitieux.', 'likert', 'Enterprising', 14),
-    ('123e4567-e89b-12d3-a456-426614174000', 'J''aime convaincre et negocier avec les autres.', 'likert', 'Enterprising', 15);
+    ('123e4567-e89b-12d3-a456-426614174000', 'J''aime convaincre et negocier avec les autres.', 'likert', 'Enterprising', 15)
+ON CONFLICT (test_id, question_text) DO NOTHING;
 
 -- Conventional
 INSERT INTO test_questions (test_id, question_text, question_type, category, display_order) VALUES
     ('123e4567-e89b-12d3-a456-426614174000', 'J''aime organiser des dossiers et des donnees de maniere ordonnee.', 'likert', 'Conventional', 16),
     ('123e4567-e89b-12d3-a456-426614174000', 'Je prefere suivre des procedures etablies et claires.', 'likert', 'Conventional', 17),
-    ('123e4567-e89b-12d3-a456-426614174000', 'Je suis minutieux et attentif aux details.', 'likert', 'Conventional', 18);
+    ('123e4567-e89b-12d3-a456-426614174000', 'Je suis minutieux et attentif aux details.', 'likert', 'Conventional', 18)
+ON CONFLICT (test_id, question_text) DO NOTHING;
 
 -- Options pour les questions Likert (1-5)
 -- Cette requete insere les options pour toutes les questions likert du test RIASEC
@@ -515,7 +533,8 @@ CROSS JOIN (
         ('Passionnement', 5)
 ) AS opt(text, value)
 WHERE q.test_id = '123e4567-e89b-12d3-a456-426614174000'
-AND q.question_type = 'likert';
+AND q.question_type = 'likert'
+ON CONFLICT (question_id, option_text) DO NOTHING;
 
 -- Achievements initiaux
 INSERT INTO achievements (name, description, icon, category, points_reward, requirement_type, requirement_value) VALUES

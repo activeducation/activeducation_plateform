@@ -114,44 +114,52 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO test_questions (test_id, question_text, question_type, category, display_order) VALUES
     ('223e4567-e89b-12d3-a456-426614174001', 'J''aime lire des livres et ecrire des histoires.', 'likert', 'Linguistique', 1),
     ('223e4567-e89b-12d3-a456-426614174001', 'Je m''exprime facilement a l''oral et a l''ecrit.', 'likert', 'Linguistique', 2),
-    ('223e4567-e89b-12d3-a456-426614174001', 'J''apprends mieux en lisant ou en ecoutant des explications.', 'likert', 'Linguistique', 3);
+    ('223e4567-e89b-12d3-a456-426614174001', 'J''apprends mieux en lisant ou en ecoutant des explications.', 'likert', 'Linguistique', 3)
+ON CONFLICT (test_id, question_text) DO NOTHING;
 
 -- Logico-Mathematique
 INSERT INTO test_questions (test_id, question_text, question_type, category, display_order) VALUES
     ('223e4567-e89b-12d3-a456-426614174001', 'J''aime resoudre des enigmes et des problemes logiques.', 'likert', 'Logico-Mathematique', 4),
     ('223e4567-e89b-12d3-a456-426614174001', 'Je suis a l''aise avec les chiffres et les calculs.', 'likert', 'Logico-Mathematique', 5),
-    ('223e4567-e89b-12d3-a456-426614174001', 'Je cherche toujours a comprendre le "pourquoi" des choses.', 'likert', 'Logico-Mathematique', 6);
+    ('223e4567-e89b-12d3-a456-426614174001', 'Je cherche toujours a comprendre le "pourquoi" des choses.', 'likert', 'Logico-Mathematique', 6)
+ON CONFLICT (test_id, question_text) DO NOTHING;
 
 -- Spatiale
 INSERT INTO test_questions (test_id, question_text, question_type, category, display_order) VALUES
     ('223e4567-e89b-12d3-a456-426614174001', 'Je visualise facilement des objets en 3D dans ma tete.', 'likert', 'Spatiale', 7),
     ('223e4567-e89b-12d3-a456-426614174001', 'J''ai un bon sens de l''orientation.', 'likert', 'Spatiale', 8),
-    ('223e4567-e89b-12d3-a456-426614174001', 'J''aime dessiner, creer des schemas ou des cartes.', 'likert', 'Spatiale', 9);
+    ('223e4567-e89b-12d3-a456-426614174001', 'J''aime dessiner, creer des schemas ou des cartes.', 'likert', 'Spatiale', 9)
+ON CONFLICT (test_id, question_text) DO NOTHING;
 
 -- Musicale
 INSERT INTO test_questions (test_id, question_text, question_type, category, display_order) VALUES
     ('223e4567-e89b-12d3-a456-426614174001', 'Je retiens facilement les melodies et les rythmes.', 'likert', 'Musicale', 10),
-    ('223e4567-e89b-12d3-a456-426614174001', 'J''aime chanter, jouer d''un instrument ou ecouter de la musique.', 'likert', 'Musicale', 11);
+    ('223e4567-e89b-12d3-a456-426614174001', 'J''aime chanter, jouer d''un instrument ou ecouter de la musique.', 'likert', 'Musicale', 11)
+ON CONFLICT (test_id, question_text) DO NOTHING;
 
 -- Kinesthesique
 INSERT INTO test_questions (test_id, question_text, question_type, category, display_order) VALUES
     ('223e4567-e89b-12d3-a456-426614174001', 'J''apprends mieux en faisant les choses moi-meme.', 'likert', 'Kinesthesique', 12),
-    ('223e4567-e89b-12d3-a456-426614174001', 'Je suis habile de mes mains et j''aime le sport.', 'likert', 'Kinesthesique', 13);
+    ('223e4567-e89b-12d3-a456-426614174001', 'Je suis habile de mes mains et j''aime le sport.', 'likert', 'Kinesthesique', 13)
+ON CONFLICT (test_id, question_text) DO NOTHING;
 
 -- Interpersonnelle
 INSERT INTO test_questions (test_id, question_text, question_type, category, display_order) VALUES
     ('223e4567-e89b-12d3-a456-426614174001', 'Je comprends facilement les emotions des autres.', 'likert', 'Interpersonnelle', 14),
-    ('223e4567-e89b-12d3-a456-426614174001', 'J''aime travailler en equipe et aider les autres.', 'likert', 'Interpersonnelle', 15);
+    ('223e4567-e89b-12d3-a456-426614174001', 'J''aime travailler en equipe et aider les autres.', 'likert', 'Interpersonnelle', 15)
+ON CONFLICT (test_id, question_text) DO NOTHING;
 
 -- Intrapersonnelle
 INSERT INTO test_questions (test_id, question_text, question_type, category, display_order) VALUES
     ('223e4567-e89b-12d3-a456-426614174001', 'Je me connais bien et je sais identifier mes forces et faiblesses.', 'likert', 'Intrapersonnelle', 16),
-    ('223e4567-e89b-12d3-a456-426614174001', 'J''aime reflechir seul et planifier mes objectifs.', 'likert', 'Intrapersonnelle', 17);
+    ('223e4567-e89b-12d3-a456-426614174001', 'J''aime reflechir seul et planifier mes objectifs.', 'likert', 'Intrapersonnelle', 17)
+ON CONFLICT (test_id, question_text) DO NOTHING;
 
 -- Naturaliste
 INSERT INTO test_questions (test_id, question_text, question_type, category, display_order) VALUES
     ('223e4567-e89b-12d3-a456-426614174001', 'J''aime observer et classer les elements de la nature.', 'likert', 'Naturaliste', 18),
-    ('223e4567-e89b-12d3-a456-426614174001', 'Je suis sensible a l''environnement et a la protection de la nature.', 'likert', 'Naturaliste', 19);
+    ('223e4567-e89b-12d3-a456-426614174001', 'Je suis sensible a l''environnement et a la protection de la nature.', 'likert', 'Naturaliste', 19)
+ON CONFLICT (test_id, question_text) DO NOTHING;
 
 -- ============================================================================
 -- Questions pour le test Valeurs Professionnelles
@@ -167,7 +175,8 @@ INSERT INTO test_questions (test_id, question_text, question_type, category, dis
     ('323e4567-e89b-12d3-a456-426614174002', 'Je veux un travail creatif ou je peux innover.', 'likert', 'Creativite', 7),
     ('323e4567-e89b-12d3-a456-426614174002', 'Diriger une equipe et avoir du pouvoir m''attire.', 'likert', 'Leadership', 8),
     ('323e4567-e89b-12d3-a456-426614174002', 'Je veux un metier qui a un impact positif sur la societe.', 'likert', 'Impact', 9),
-    ('323e4567-e89b-12d3-a456-426614174002', 'Apprendre continuellement de nouvelles choses est important pour moi.', 'likert', 'Apprentissage', 10);
+    ('323e4567-e89b-12d3-a456-426614174002', 'Apprendre continuellement de nouvelles choses est important pour moi.', 'likert', 'Apprentissage', 10)
+ON CONFLICT (test_id, question_text) DO NOTHING;
 
 -- ============================================================================
 -- Questions pour le test MBTI Simplifie
@@ -181,7 +190,8 @@ INSERT INTO test_questions (test_id, question_text, question_type, category, dis
     ('423e4567-e89b-12d3-a456-426614174003', 'Les fetes et les grands rassemblements me donnent de l''energie.', 'likert', 'E-I', 5),
     ('423e4567-e89b-12d3-a456-426614174003', 'Je fais confiance a mon experience plutot qu''a mon intuition.', 'likert', 'S-N', 6),
     ('423e4567-e89b-12d3-a456-426614174003', 'L''harmonie dans le groupe est plus importante que la verite.', 'likert', 'T-F', 7),
-    ('423e4567-e89b-12d3-a456-426614174003', 'J''aime avoir mes affaires bien rangees et organisees.', 'likert', 'J-P', 8);
+    ('423e4567-e89b-12d3-a456-426614174003', 'J''aime avoir mes affaires bien rangees et organisees.', 'likert', 'J-P', 8)
+ON CONFLICT (test_id, question_text) DO NOTHING;
 
 -- ============================================================================
 -- Questions pour le test Aptitudes Naturelles
@@ -197,7 +207,8 @@ INSERT INTO test_questions (test_id, question_text, question_type, category, dis
     ('523e4567-e89b-12d3-a456-426614174004', 'Je suis patient et methodique dans mon travail.', 'likert', 'Methode', 7),
     ('523e4567-e89b-12d3-a456-426614174004', 'Je m''adapte facilement aux nouvelles situations.', 'likert', 'Adaptabilite', 8),
     ('523e4567-e89b-12d3-a456-426614174004', 'Je suis bon pour convaincre et negocier.', 'likert', 'Persuasion', 9),
-    ('523e4567-e89b-12d3-a456-426614174004', 'Je gere bien mon temps et mes priorites.', 'likert', 'Gestion du temps', 10);
+    ('523e4567-e89b-12d3-a456-426614174004', 'Je gere bien mon temps et mes priorites.', 'likert', 'Gestion du temps', 10)
+ON CONFLICT (test_id, question_text) DO NOTHING;
 
 -- ============================================================================
 -- Questions pour le test Potentiel Entrepreneurial
@@ -211,7 +222,8 @@ INSERT INTO test_questions (test_id, question_text, question_type, category, dis
     ('623e4567-e89b-12d3-a456-426614174005', 'J''ai deja vendu quelque chose ou eu une petite activite generant des revenus.', 'likert', 'Experience', 5),
     ('623e4567-e89b-12d3-a456-426614174005', 'Je suis capable de motiver et entrainer les autres dans mes projets.', 'likert', 'Leadership', 6),
     ('623e4567-e89b-12d3-a456-426614174005', 'Je gere bien mon argent et je comprends les bases de la finance.', 'likert', 'Finance', 7),
-    ('623e4567-e89b-12d3-a456-426614174005', 'Je suis passionne et pret a travailler dur pour realiser mes reves.', 'likert', 'Passion', 8);
+    ('623e4567-e89b-12d3-a456-426614174005', 'Je suis passionne et pret a travailler dur pour realiser mes reves.', 'likert', 'Passion', 8)
+ON CONFLICT (test_id, question_text) DO NOTHING;
 
 -- ============================================================================
 -- Questions pour le test Ancres de Carriere
@@ -233,7 +245,8 @@ INSERT INTO test_questions (test_id, question_text, question_type, category, dis
     ('723e4567-e89b-12d3-a456-426614174006', 'Je veux un metier compatible avec ma vie personnelle.', 'likert', 'StyleDeVie', 13),
     ('723e4567-e89b-12d3-a456-426614174006', 'L''equilibre global compte plus que le statut.', 'likert', 'StyleDeVie', 14),
     ('723e4567-e89b-12d3-a456-426614174006', 'J''aime creer des projets a partir de zero.', 'likert', 'Entrepreneuriat', 15),
-    ('723e4567-e89b-12d3-a456-426614174006', 'Prendre des risques calcules ne me fait pas peur.', 'likert', 'Entrepreneuriat', 16);
+    ('723e4567-e89b-12d3-a456-426614174006', 'Prendre des risques calcules ne me fait pas peur.', 'likert', 'Entrepreneuriat', 16)
+ON CONFLICT (test_id, question_text) DO NOTHING;
 
 -- ============================================================================
 -- Questions pour le test Styles d'Apprentissage (VARK)
@@ -251,7 +264,8 @@ INSERT INTO test_questions (test_id, question_text, question_type, category, dis
     ('823e4567-e89b-12d3-a456-426614174007', 'Je prefere les supports textes aux videos.', 'likert', 'LectureEcriture', 9),
     ('823e4567-e89b-12d3-a456-426614174007', 'Je retiens mieux en pratiquant directement.', 'likert', 'Kinesthesique', 10),
     ('823e4567-e89b-12d3-a456-426614174007', 'Les exercices concrets me font progresser rapidement.', 'likert', 'Kinesthesique', 11),
-    ('823e4567-e89b-12d3-a456-426614174007', 'Je prefere apprendre via des projets plutot que par theorie seule.', 'likert', 'Kinesthesique', 12);
+    ('823e4567-e89b-12d3-a456-426614174007', 'Je prefere apprendre via des projets plutot que par theorie seule.', 'likert', 'Kinesthesique', 12)
+ON CONFLICT (test_id, question_text) DO NOTHING;
 
 -- ============================================================================
 -- Questions pour le test Environnement de Travail Ideal
@@ -269,7 +283,8 @@ INSERT INTO test_questions (test_id, question_text, question_type, category, dis
     ('923e4567-e89b-12d3-a456-426614174008', 'Je prefere les activites de terrain aux taches de bureau.', 'likert', 'Terrain', 9),
     ('923e4567-e89b-12d3-a456-426614174008', 'Bouger et voir des situations reelles me motive.', 'likert', 'Terrain', 10),
     ('923e4567-e89b-12d3-a456-426614174008', 'J''aime analyser des donnees avant de prendre une decision.', 'likert', 'Analyse', 11),
-    ('923e4567-e89b-12d3-a456-426614174008', 'Les missions qui demandent de la rigueur intellectuelle me plaisent.', 'likert', 'Analyse', 12);
+    ('923e4567-e89b-12d3-a456-426614174008', 'Les missions qui demandent de la rigueur intellectuelle me plaisent.', 'likert', 'Analyse', 12)
+ON CONFLICT (test_id, question_text) DO NOTHING;
 
 -- ============================================================================
 -- Questions pour le test Maturite du Projet Professionnel
@@ -287,7 +302,8 @@ INSERT INTO test_questions (test_id, question_text, question_type, category, dis
     ('a23e4567-e89b-12d3-a456-426614174009', 'Je prends des decisions sans rester bloque trop longtemps.', 'likert', 'PriseDecision', 9),
     ('a23e4567-e89b-12d3-a456-426614174009', 'J''ai defini des etapes concretes pour atteindre mon objectif.', 'likert', 'PlanAction', 10),
     ('a23e4567-e89b-12d3-a456-426614174009', 'Je sais quelles competences je dois developper cette annee.', 'likert', 'PlanAction', 11),
-    ('a23e4567-e89b-12d3-a456-426614174009', 'Je passe a l''action (stages, projets, rencontres) pour avancer.', 'likert', 'PlanAction', 12);
+    ('a23e4567-e89b-12d3-a456-426614174009', 'Je passe a l''action (stages, projets, rencontres) pour avancer.', 'likert', 'PlanAction', 12)
+ON CONFLICT (test_id, question_text) DO NOTHING;
 
 -- ============================================================================
 -- Options Likert pour tous les nouveaux tests
@@ -319,4 +335,5 @@ WHERE q.test_id IN (
     '923e4567-e89b-12d3-a456-426614174008',
     'a23e4567-e89b-12d3-a456-426614174009'
 )
-AND q.question_type = 'likert';
+AND q.question_type = 'likert'
+ON CONFLICT (question_id, option_text) DO NOTHING;
