@@ -73,6 +73,8 @@ class _BottomAction extends StatelessWidget {
         }
       }
 
+      final allCompleted = nextLessonId == null;
+
       return Row(
         children: [
           if (nextLessonId != null && course.progressPct != null) ...[
@@ -104,17 +106,35 @@ class _BottomAction extends StatelessWidget {
               ],
             ),
             const SizedBox(width: 12),
-          ],
-          Expanded(
-            child: GradientButton(
-              text: nextLessonId != null ? 'Continuer' : 'Passer l\'examen',
-              icon: nextLessonId != null ? Iconsax.play : Iconsax.medal_star,
-              showArrow: nextLessonId != null,
-              onPressed: nextLessonId != null
-                  ? () => context.push('/elearning/lesson/$nextLessonId')
-                  : () => context.push('/elearning/course/${course.id}/exam'),
+            Expanded(
+              child: GradientButton(
+                text: 'Continuer',
+                icon: Iconsax.play,
+                showArrow: true,
+                onPressed: () => context.push('/elearning/lesson/$nextLessonId'),
+              ),
             ),
-          ),
+          ],
+          if (allCompleted) ...[
+            Expanded(
+              child: GradientButton(
+                text: 'Certificat',
+                icon: Iconsax.document_text,
+                showArrow: false,
+                onPressed: () => _downloadCertificate(context, course.id, color),
+              ),
+            ),
+            const SizedBox(width: 8),
+            OutlinedButton(
+              onPressed: () => context.push('/elearning/course/${course.id}/exam'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                side: const BorderSide(color: AppColors.border),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Icon(Iconsax.medal_star, size: 20),
+            ),
+          ],
         ],
       );
     }
@@ -155,6 +175,63 @@ class _BottomAction extends StatelessWidget {
   }
 }
 
+void _downloadCertificate(BuildContext context, String courseId, Color color) async {
+  try {
+    final dio = getIt<Dio>(instanceName: 'apiClient');
+    final res = await dio.get(
+      ApiEndpoints.elearningCourseExam(courseId).replaceAll('/exam', '/certificate'),
+      options: Options(responseType: ResponseType.bytes),
+    );
+    final bytes = res.data as List<int>;
+
+    // Audit #7 (2026-07-30) : avant ce fix, on affichait un snackbar de
+    // succes sans rien faire (les bytes etaient perdus). On ouvre
+    // maintenant le PDF reellement cote navigateur via une Data URL
+    // base64, ce qui marche sans nouvelle dep (url_launcher deja
+    // present). Pour mobile/desktop (non servis en prod), on affiche
+    // un message d'info.
+    if (!kIsWeb) {
+      if (context.mounted) {
+        AppSnackbar.info(context,
+            'Certificat disponible sur le web — ouvrez la version navigateur.');
+      }
+      return;
+    }
+
+    final b64 = base64Encode(bytes);
+    final dataUrl = 'data:application/pdf;base64,$b64';
+    final uri = Uri.parse(dataUrl);
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+
+    if (context.mounted) {
+      if (opened) {
+        AppSnackbar.success(context, 'Certificat ouvert dans un nouvel onglet.');
+      } else {
+        AppSnackbar.error(context,
+            "Impossible d'ouvrir le certificat. Réessayez ou contactez le support.");
+      }
+    }
+  } on DioException catch (e) {
+    if (e.response?.statusCode == 400 || e.response?.statusCode == 403) {
+      if (context.mounted) {
+        AppSnackbar.info(context, 'Terminez toutes les leçons pour obtenir votre certificat.');
+      }
+    } else if (e.response?.statusCode == 501) {
+      if (context.mounted) {
+        AppSnackbar.info(context, 'Génération de certificat temporairement indisponible.');
+      }
+    } else {
+      if (context.mounted) {
+        AppSnackbar.error(context, 'Erreur lors du téléchargement.');
+      }
+    }
+  } catch (_) {
+    if (context.mounted) {
+      AppSnackbar.error(context, 'Erreur lors du téléchargement.');
+    }
+  }
+}
+
 // ─── Shimmer ──────────────────────────────────────────────────────────────────
 
 class _DetailShimmer extends StatelessWidget {
@@ -165,7 +242,7 @@ class _DetailShimmer extends StatelessWidget {
     return Column(
       children: [
         // Dark hero shimmer
-        Container(height: 248, color: AppColors.darkBg2),
+        Container(height: 200, color: AppColors.darkBg2),
         Expanded(
           child: Shimmer.fromColors(
             baseColor: AppColors.surface,
