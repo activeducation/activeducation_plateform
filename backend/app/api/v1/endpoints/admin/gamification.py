@@ -104,40 +104,34 @@ async def list_gamification_users(
     request: Request,
     admin: dict = Depends(get_current_admin),
 ):
-    """Liste paginee des utilisateurs avec leurs stats XP/niveau."""
+    """Liste paginee des utilisateurs avec leurs stats XP/niveau.
+
+    Audit #7 (2026-07-30) : l'ancienne implementation construisait une
+    requete SQL par f-string avec `search`/`per_page`/`offset` interpoles
+    dans la clause WHERE / LIMIT / OFFSET. C'etait du SQL injection
+    classique. Le code reel utilisait deja le client PostgREST chainable
+    ci-dessous, donc la query textuelle etait du dead code. On supprime
+    le bloc mort pour eliminer le risque latent : si quelqu'un branche
+    cette query sur un `.rpc()` plus tard, plus d'injection possible.
+    """
     db = get_supabase_client()
     page = int(request.query_params.get("page", "1"))
     per_page = int(request.query_params.get("per_page", "20"))
     search = request.query_params.get("search", "")
 
+    # Plafonner la pagination pour eviter qu'un admin demande per_page=100000
+    per_page = max(1, min(int(per_page), 100))
+    page = max(1, int(page))
     offset = (page - 1) * per_page
-    query = """
-        SELECT u.id, u.full_name, u.email,
-               COALESCE(g.total_xp, 0) as total_xp,
-               COALESCE(g.current_level, 1) as current_level,
-               COALESCE(g.current_streak, 0) as current_streak,
-               g.last_active_at
-        FROM user_profiles u
-        LEFT JOIN gamification_profiles g ON g.user_id = u.id
-    """
-    count_query = "SELECT COUNT(*) FROM user_profiles u"
 
-    if search:
-        search_clause = f" WHERE (u.full_name ILIKE '%{search}%' OR u.email ILIKE '%{search}%')"
-        query += search_clause
-        count_query += search_clause
-
-    query += " ORDER BY g.total_xp DESC NULLS LAST"
-    query += f" LIMIT {per_page} OFFSET {offset}"
-
-    result = db.client.table("user_profiles").select("id, full_name, email").execute()
-    # On utilise un raw query via RPC pour la requete JOIN
-    # Fallback: requete par lots
     from app.db.supabase_client import get_admin_supabase_client
     admin_db = get_admin_supabase_client()
 
     try:
-        # Essayer une requete directe sur le client PostgREST - sans JOIN, on fait 2 passes
+        # PostgREST ne supporte pas ILIKE parametre cote serveur en chainable,
+        # on filtre donc en memoire apres le fetch (le volume reste raisonnable
+        # car admin uniquement). Si le besoin evolue, basculer sur un .rpc()
+        # avec une fonction SQL parametree.
         users_res = (
             admin_db.client.table("user_profiles")
             .select("id, full_name, email")
@@ -145,6 +139,15 @@ async def list_gamification_users(
             .execute()
         )
         users = users_res.data or []
+
+        if search:
+            s = search.lower()
+            users = [
+                u for u in users
+                if s in (u.get("full_name") or "").lower()
+                or s in (u.get("email") or "").lower()
+            ]
+
         user_ids = [u["id"] for u in users]
 
         # Charger les profils gamification en batch
@@ -168,8 +171,7 @@ async def list_gamification_users(
         # Trier par XP descendant et paginer
         users.sort(key=lambda u: u.get("total_xp", 0), reverse=True)
         total = len(users)
-        start = (page - 1) * per_page
-        users = users[start:start + per_page]
+        users = users[offset:offset + per_page]
     except Exception as e:
         logger.warning(f"Error fetching gamification users: {e}")
         users = []
