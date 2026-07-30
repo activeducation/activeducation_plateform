@@ -351,8 +351,34 @@ async def complete_lesson(
 
 
 @router.get("/courses/{course_id}/exam", response_model=ExamPublic)
-async def get_course_exam_public(course_id: UUID):
-    """Examen d'un cours pour l'etudiant (sans les bonnes reponses)."""
+async def get_course_exam_public(
+    course_id: UUID,
+    user_id: UUID = Depends(get_current_user_id),
+):
+    """Examen d'un cours pour l'etudiant (sans les bonnes reponses).
+
+    Audit #15 (2026-07-30) : l'endpoint etait accessible sans auth ni
+    condition d'inscription. Un appelant anonyme pouvait scraper toutes
+    les questions / reponses / badges de tous les cours et bruteforcer
+    les single_choice pour identifier la bonne reponse. Fix :
+    - Auth obligatoire (Depends get_current_user_id)
+    - L'utilisateur doit etre inscrit au cours (enrollment row existe)
+
+    La completion de toutes les lecons n'est pas exigee ici volontairement
+    : certains etudiants apprennent en parallele (autres MOOC, amis,
+    pratique) et viennent valider ensuite.
+    """
+    # Verifier l'inscription d'abord pour eviter de leak l'existence de
+    # l'examen a un appelant non inscrit.
+    repo = get_elearning_repository()
+    enrollments = await repo.get_user_enrollments(user_id=str(user_id))
+    is_enrolled = any(e.get("course", {}).get("id") == str(course_id) for e in enrollments)
+    if not is_enrolled:
+        raise HTTPException(
+            status_code=403,
+            detail="Inscrivez-vous au cours avant de passer l'examen.",
+        )
+
     exam = get_exam_repository().get_exam_by_course(course_id)
     if not exam or not exam.get("is_active", True):
         raise HTTPException(status_code=404, detail="Aucun examen pour ce cours.")
