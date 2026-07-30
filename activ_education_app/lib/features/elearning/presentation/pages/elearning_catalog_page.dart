@@ -38,32 +38,43 @@ class _CatalogViewState extends State<_CatalogView> {
   String _searchQuery = '';
   bool _searchFocused = false;
 
-  static const _categories = [
+  static final _categories = [
     'Tous',
-    'Informatique',
-    'Mathématiques',
-    'Sciences',
-    'Orientation',
-    'Hackathons',
+    for (final c in CourseCategory.values) c.label,
   ];
 
-  static const _categoryIcons = <IconData>[
-    Iconsax.element_4,
-    Iconsax.monitor,
-    Iconsax.math,
-    Iconsax.discover_1,
-    Iconsax.routing_2,
-    Iconsax.code,
+  static final _categoryIcons = <IconData>[
+    Iconsax.element_4,  // Tous
+    for (final c in CourseCategory.values) _iconForCategory(c),
   ];
 
-  static const _categoryColors = <Color>[
-    AppColors.secondary,           // Tous → orange logo
-    AppColors.primary,             // Informatique → bleu logo
-    AppColors.categoryTechnology,  // Mathématiques
-    AppColors.categoryScience,     // Sciences
-    AppColors.categoryEconomics,   // Orientation
-    Color(0xFF1060CF),             // Hackathons → bleu accent logo
+  static final _categoryColors = <Color>[
+    AppColors.secondary,  // Tous → orange logo
+    for (final c in CourseCategory.values) _colorForCategory(c),
   ];
+
+  // Wires up the index-based UI to the CourseCategory enum. These
+  // helpers are inlined here (not exported from course_card.dart) to
+  // keep the catalog page self-contained.
+  static IconData _iconForCategory(CourseCategory c) {
+    switch (c) {
+      case CourseCategory.informatique: return Iconsax.monitor;
+      case CourseCategory.mathematiques: return Iconsax.math;
+      case CourseCategory.sciences: return Iconsax.discover_1;
+      case CourseCategory.orientation: return Iconsax.routing_2;
+      case CourseCategory.hackathons: return Iconsax.code;
+    }
+  }
+
+  static Color _colorForCategory(CourseCategory c) {
+    switch (c) {
+      case CourseCategory.informatique: return AppColors.primary;
+      case CourseCategory.mathematiques: return AppColors.categoryTechnology;
+      case CourseCategory.sciences: return AppColors.categoryScience;
+      case CourseCategory.orientation: return AppColors.categoryEconomics;
+      case CourseCategory.hackathons: return Color(0xFF1060CF);
+    }
+  }
 
   List<Course> _filterCourses(List<Course> courses) {
     var filtered = courses;
@@ -255,11 +266,11 @@ class _CatalogViewState extends State<_CatalogView> {
                                         state.myCourses.isNotEmpty
                                             ? '${state.myCourses.length} en cours · ${state.courses.length} disponibles'
                                             : '${state.courses.length} cours disponibles',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: AppColors.darkTextSecondary,
-                                          fontWeight: FontWeight.w500,
-                                        ),
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: AppColors.darkTextSecondary,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                       ),
                                     ],
                                   ),
@@ -278,12 +289,12 @@ class _CatalogViewState extends State<_CatalogView> {
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        const Text('🔥', style: TextStyle(fontSize: 13)),
+                                        const Icon(Icons.local_fire_department_rounded, size: 13, color: AppColors.xpGold),
                                         const SizedBox(width: 4),
                                         Text(
                                           '${state.myCourses.length}',
                                           style: const TextStyle(
-                                            fontSize: 13,
+                                            fontSize: 14,
                                             fontWeight: FontWeight.w800,
                                             color: AppColors.xpGold,
                                           ),
@@ -369,6 +380,39 @@ class _CatalogViewState extends State<_CatalogView> {
 
                 const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
+                // ── Quick access tabs (Saga, Succès, Classement) ──
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        _QuickTab(
+                          icon: Iconsax.map_1,
+                          label: 'Ma Saga',
+                          color: AppColors.primary,
+                          onTap: () => context.push('/elearning/saga'),
+                        ),
+                        const SizedBox(width: 8),
+                        _QuickTab(
+                          icon: Iconsax.cup,
+                          label: 'Succès',
+                          color: AppColors.xpGold,
+                          onTap: () => context.push('/elearning/success'),
+                        ),
+                        const SizedBox(width: 8),
+                        _QuickTab(
+                          icon: Iconsax.ranking_1,
+                          label: 'Classement',
+                          color: AppColors.levelPurple,
+                          onTap: () => context.push('/elearning/leaderboard'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
                 // ── Category chips ──
                 SliverToBoxAdapter(
                   child: SizedBox(
@@ -421,7 +465,7 @@ class _CatalogViewState extends State<_CatalogView> {
                                 Text(
                                   _categories[index],
                                   style: TextStyle(
-                                    fontSize: 12,
+                                    fontSize: 13,
                                     fontWeight: isSelected
                                         ? FontWeight.w700
                                         : FontWeight.w500,

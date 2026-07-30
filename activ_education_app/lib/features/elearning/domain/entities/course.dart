@@ -6,6 +6,50 @@ enum LessonType { video, article, quiz, pdf, challenge }
 
 enum LessonStatus { not_started, in_progress, completed }
 
+/// Canonical list of course categories used in the catalog UI and the
+/// admin seed (backend/database/seed_elearning_50_courses.sql).
+///
+/// The DB column is still a free STRING (allowing admins to introduce
+/// new categories without a migration), but the front-end offers only
+/// these 5 in the catalog filter chips and maps them to brand colors.
+///
+/// New categories from the backend that don't match any of these are
+/// kept as raw strings via [CourseCategory.maybeFrom] returning null,
+/// and the rendering helpers fall back to a neutral color + book icon.
+enum CourseCategory {
+  informatique('Informatique'),
+  mathematiques('Mathématiques'),
+  sciences('Sciences'),
+  orientation('Orientation'),
+  hackathons('Hackathons');
+
+  final String label;
+  const CourseCategory(this.label);
+
+  /// Parse a backend category string into the canonical enum.
+  /// Uses exact-match first, then a few well-known aliases.
+  /// Returns null when the category is unknown so the rendering layer
+  /// can apply a logged fallback instead of guessing.
+  static CourseCategory? maybeFrom(String? raw) {
+    if (raw == null) return null;
+    final trimmed = raw.trim();
+    for (final c in values) {
+      if (c.label == trimmed) return c;
+    }
+    // A few legacy / French-with-accents aliases
+    const aliases = {
+      'mathematiques': mathematiques,
+      'maths': mathematiques,
+      'info': informatique,
+      'tech': informatique,
+      'technologie': informatique,
+      'orientation scolaire': orientation,
+      'hackathon': hackathons,
+    };
+    return aliases[trimmed.toLowerCase()];
+  }
+}
+
 class Course extends Equatable {
   final String id;
   final String title;

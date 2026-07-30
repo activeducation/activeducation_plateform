@@ -32,36 +32,45 @@ class CourseCard extends StatelessWidget {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 Color colorForCategory(String category) {
-  switch (category.trim()) {
-    case 'Informatique':
-      return AppColors.primary;
-    case 'Mathématiques':
-      return AppColors.categoryTechnology;
-    case 'Sciences':
-      return AppColors.categoryScience;
-    case 'Orientation':
-      return AppColors.categoryEconomics;
-    case 'Hackathons':
-      return AppColors.secondary;
-    default:
-      final lower = category.toLowerCase();
-      if (lower.contains('info') || lower.contains('tech')) return AppColors.primary;
-      if (lower.contains('math')) return AppColors.categoryTechnology;
-      if (lower.contains('scien')) return AppColors.categoryScience;
-      if (lower.contains('orient')) return AppColors.categoryEconomics;
-      if (lower.contains('hack')) return AppColors.secondary;
-      return AppColors.categoryScience;
-  }
+  final parsed = CourseCategory.maybeFrom(category);
+  if (parsed != null) return colorForKnownCategory(parsed);
+  return AppColors.categoryScience;
 }
 
 IconData iconForCategory(String category) {
-  final lower = category.toLowerCase();
-  if (lower.contains('info') || lower.contains('tech')) return Iconsax.monitor;
-  if (lower.contains('math')) return Iconsax.math;
-  if (lower.contains('scien')) return Iconsax.discover_1;
-  if (lower.contains('orient')) return Iconsax.routing_2;
-  if (lower.contains('hack')) return Iconsax.code;
+  final parsed = CourseCategory.maybeFrom(category);
+  if (parsed != null) return iconForKnownCategory(parsed);
   return Iconsax.book_1;
+}
+
+Color colorForKnownCategory(CourseCategory category) {
+  switch (category) {
+    case CourseCategory.informatique:
+      return AppColors.primary;
+    case CourseCategory.mathematiques:
+      return AppColors.categoryTechnology;
+    case CourseCategory.sciences:
+      return AppColors.categoryScience;
+    case CourseCategory.orientation:
+      return AppColors.categoryEconomics;
+    case CourseCategory.hackathons:
+      return AppColors.secondary;
+  }
+}
+
+IconData iconForKnownCategory(CourseCategory category) {
+  switch (category) {
+    case CourseCategory.informatique:
+      return Iconsax.monitor;
+    case CourseCategory.mathematiques:
+      return Iconsax.math;
+    case CourseCategory.sciences:
+      return Iconsax.discover_1;
+    case CourseCategory.orientation:
+      return Iconsax.routing_2;
+    case CourseCategory.hackathons:
+      return Iconsax.code;
+  }
 }
 
 Color _colorForDifficulty(CourseDifficulty difficulty) {
@@ -129,8 +138,9 @@ class _FullCourseCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Image de presentation (remplit l'espace dispo, plus de vide) ──
-              Expanded(
+              // ── Image de presentation (taille reduite, plus professionnel) ──
+              SizedBox(
+                height: 100,
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
@@ -152,7 +162,7 @@ class _FullCourseCard extends StatelessWidget {
                         child: Text(
                           diffLabel,
                           style: const TextStyle(
-                            fontSize: 9.5,
+                            fontSize: 11,
                             fontWeight: FontWeight.w700,
                             color: Colors.white,
                             letterSpacing: 0.2,
@@ -190,7 +200,7 @@ class _FullCourseCard extends StatelessWidget {
                             Text(
                               '+${course.pointsReward} XP',
                               style: const TextStyle(
-                                fontSize: 10.5,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w800,
                                 color: AppColors.textOnAccent,
                               ),
@@ -223,14 +233,14 @@ class _FullCourseCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       course.description,
-                      style: AppTypography.bodySmall.copyWith(
+                      style: AppTypography.bodyMedium.copyWith(
                         color: AppColors.textTertiary,
                         height: 1.4,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 12),
                     if (hasProgress)
                       Row(
                         children: [
@@ -251,7 +261,7 @@ class _FullCourseCard extends StatelessWidget {
                           Text(
                             '${course.progressPct}%',
                             style: TextStyle(
-                              fontSize: 10.5,
+                              fontSize: 11.5,
                               fontWeight: FontWeight.w800,
                               color: color,
                             ),
@@ -284,7 +294,7 @@ class _FullCourseCard extends StatelessWidget {
                           Text(
                             diffLabel,
                             style: TextStyle(
-                              fontSize: 10.5,
+                              fontSize: 11.5,
                               fontWeight: FontWeight.w600,
                               color: diffColor,
                             ),
@@ -457,7 +467,7 @@ class _CompactCourseCard extends StatelessWidget {
                             child: Text(
                               '+${course.pointsReward} XP',
                               style: const TextStyle(
-                                fontSize: 9.5,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w800,
                                 color: AppColors.xpGoldDark,
                               ),
@@ -495,7 +505,7 @@ class _CompactCourseCard extends StatelessWidget {
                             Text(
                               '${course.progressPct}%',
                               style: TextStyle(
-                                fontSize: 10,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w800,
                                 color: color,
                               ),
