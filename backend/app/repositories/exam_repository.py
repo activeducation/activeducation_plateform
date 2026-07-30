@@ -44,7 +44,14 @@ class ExamRepository:
             .order("display_order")
             .execute()
         )
-        return res.data or []
+        questions = res.data or []
+        for q in questions:
+            opts = q.get("options") or []
+            qtype = "single_choice"
+            if opts and isinstance(opts[0], dict) and "_type" in opts[0]:
+                qtype = opts[0].pop("_type", "single_choice")
+            q["question_type"] = qtype
+        return questions
 
     # ── Upsert (admin) ────────────────────────────────────────────────────────
 
@@ -79,11 +86,16 @@ class ExamRepository:
         if questions:
             rows = []
             for i, q in enumerate(questions):
+                opts = q.get("options") or []
+                # Embed le type de question dans options pour eviter une migration
+                qtype = q.get("question_type", "single_choice")
+                if qtype != "single_choice" and opts:
+                    opts[0]["_type"] = qtype
                 rows.append(
                     {
                         "exam_id": exam_id,
                         "question": q["question"],
-                        "options": q["options"],  # liste de {text, is_correct}
+                        "options": opts,
                         "points": q.get("points", 1),
                         "display_order": i,
                     }

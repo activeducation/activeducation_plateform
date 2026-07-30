@@ -30,7 +30,7 @@ from app.schemas.elearning import (
     MyCourse,
     MyCoursesResponse,
 )
-from app.schemas.exam import ExamPublic, ExamResult, ExamSubmission
+from app.schemas.exam import ExamPublic, ExamResult, ExamSubmission, QuestionType
 
 logger = get_logger("api.elearning")
 
@@ -360,11 +360,20 @@ async def get_course_exam_public(course_id: UUID):
     questions = []
     for q in exam.get("questions", []):
         opts = q.get("options") or []
+        qtype = q.get("question_type", "single_choice")
+        if qtype == "text_input":
+            public_opts = [{"text": ""}]
+        elif qtype == "ordering":
+            # Envoyer les textes (le frontend melangera l'ordre)
+            public_opts = [{"text": o.get("text", "")} for o in opts]
+        else:
+            public_opts = [{"text": o.get("text", "")} for o in opts]
         questions.append(
             {
                 "id": q["id"],
                 "question": q["question"],
-                "options": [{"text": o.get("text", "")} for o in opts],
+                "question_type": qtype,
+                "options": public_opts,
             }
         )
 
@@ -396,18 +405,87 @@ async def submit_course_exam(
     if not questions:
         raise HTTPException(status_code=400, detail="Cet examen n'a pas de questions.")
 
-    # Scoring : pour chaque question, l'index choisi doit pointer une option correcte.
+    # Scoring dispatch par type de question
     total_points = 0
     earned_points = 0
     correct_count = 0
+    details = []
+
+    def _opts_without_type(opts: list[dict]) -> list[dict]:
+        return [dict(o) for o in opts if isinstance(o, dict)]
+
     for q in questions:
         pts = q.get("points", 1)
         total_points += pts
-        opts = q.get("options") or []
-        chosen = submission.answers.get(str(q["id"]))
-        if chosen is not None and 0 <= chosen < len(opts) and opts[chosen].get("is_correct"):
+        opts_clean = _opts_without_type(q.get("options") or [])
+        qtype = q.get("question_type", "single_choice")
+        qid = str(q["id"])
+        chosen = submission.answers.get(qid)
+        correct = False
+
+        if qtype == QuestionType.SINGLE_CHOICE:
+            # Index unique pointant vers une option correcte
+            if isinstance(chosen, int) and 0 <= chosen < len(opts_clean):
+                correct = opts_clean[chosen].get("is_correct", False)
+
+        elif qtype == QuestionType.MULTIPLE_CHOICE:
+            # Liste d'indices ; toutes les correctes selectionnees, aucune incorrecte
+            if isinstance(chosen, list):
+                selected = set(chosen)
+                correct_indices = {i for i, o in enumerate(opts_clean) if o.get("is_correct")}
+                correct = (
+                    selected == correct_indices
+                    if selected
+                    else False
+                )
+
+        elif qtype == QuestionType.TEXT_INPUT:
+            # Texte libre comparé (insensible à la casse, strip) aux réponses acceptées
+            if isinstance(chosen, str):
+                normalized = chosen.strip().lower()
+                accepted = [
+                    o.get("text", "").strip().lower()
+                    for o in opts_clean
+                    if o.get("is_correct")
+                ]
+                correct = any(normalized == a for a in accepted)
+
+        elif qtype == QuestionType.ORDERING:
+            # Liste d'identifiants d'option dans l'ordre choisi par l'utilisateur.
+            # On accepte deux formats :
+            #   - liste d'indices (legacy, contract shuffle-dependent)
+            #   - liste de textes (nouveau contract, robuste au shuffle initial)
+            # L'ordre canonique est opts_clean trie par display_order croissant.
+            opts_sorted = sorted(opts_clean, key=lambda o: o.get("display_order", 0))
+            canonical_texts = [o.get("text", "") for o in opts_sorted]
+            expected_text_set = {t for t in canonical_texts}
+
+            if isinstance(chosen, list) and len(chosen) == len(opts_clean):
+                # Tentative d'interprétation en textes (nouveau contract)
+                if all(isinstance(x, str) for x in chosen):
+                    if set(chosen) == expected_text_set:
+                        correct = chosen == canonical_texts
+                    else:
+                        # Tous des strings mais pas les bons textes -> fallback indices
+                        expected_indices = list(range(len(opts_clean)))
+                        correct = chosen == expected_indices
+                else:
+                    # Legacy : liste d'indices. Compare a l'ordre canonique 0..N-1
+                    # (le mobile peut envoyer l'ordre shuffled initial qui sera
+                    # considere comme incorrect, sauf si l'utilisateur l'a restaure
+                    # manuellement a l'ordre canonique)
+                    expected_indices = list(range(len(opts_clean)))
+                    correct = chosen == expected_indices
+
+        if correct:
             earned_points += pts
             correct_count += 1
+        details.append({
+            "question_id": qid,
+            "question_type": qtype,
+            "correct": correct,
+            "points": pts,
+        })
 
     score = round((earned_points / total_points) * 100) if total_points else 0
     passing = exam.get("passing_score", 80)
@@ -428,6 +506,32 @@ async def submit_course_exam(
     xp_awarded = 0
     badge_earned = False
     if passed and not already_passed:
+        # Notification email de felicitation
+        try:
+            from app.core import email as email_service
+            user_email = None
+            try:
+                profile = repo._db.client.table("user_profiles").select("email").eq("id", str(user_id)).limit(1).execute()
+                if profile.data:
+                    user_email = profile.data[0].get("email")
+            except Exception:
+                pass
+            if user_email:
+                course_title = exam.get("title", "Cours")
+                await email_service.send_email_async(
+                    to_email=user_email,
+                    subject="Félicitations ! Vous avez réussi l'examen du cours !",
+                    html_body=f"""
+                        <h2>Félicitations !</h2>
+                        <p>Vous avez réussi l'examen du cours <strong>{course_title}</strong>.</p>
+                        <p>Vous pouvez télécharger votre certificat depuis votre espace personnel.</p>
+                        <br/>
+                        <p>L'équipe ActivEducation</p>
+                    """,
+                )
+        except Exception:
+            logger.info("Notification email skipped (exam pass)")
+
         # Badge (achievement)
         badge_earned = True
         try:
@@ -467,4 +571,96 @@ async def submit_course_exam(
         badge_earned=badge_earned,
         badge_title=exam.get("badge_title"),
         badge_icon=exam.get("badge_icon"),
+        details=details,
     )
+
+
+# ============================================================================
+# CERTIFICAT DE COMPLETION (PDF)
+# ============================================================================
+
+
+@router.get("/courses/{course_id}/certificate")
+async def get_course_certificate(
+    course_id: UUID,
+    user_id: UUID = Depends(get_current_user_id),
+):
+    """Genere un certificat PDF de completion du cours."""
+    from fastapi.responses import Response
+
+    # Verifier que l'utilisateur a complete toutes les lecons
+    repo = get_elearning_repository()
+    enrollments = await repo.get_user_enrollments(user_id=str(user_id))
+    enrollment = next(
+        (e for e in enrollments if e.get("course", {}).get("id") == str(course_id)),
+        None,
+    )
+
+    if not enrollment:
+        raise HTTPException(status_code=403, detail="Vous n'etes pas inscrit a ce cours.")
+
+    if (enrollment.get("progress_pct") or 0) < 100:
+        raise HTTPException(status_code=400, detail="Vous n'avez pas encore termine ce cours.")
+
+    course_data = await repo.get_course_detail(course_id=str(course_id), user_id=None)
+    if not course_data:
+        raise HTTPException(status_code=404, detail="Cours introuvable.")
+
+    # Recuperer le nom de l'utilisateur
+    user_name = str(user_id)
+    try:
+        db = get_elearning_repository()._db
+        profile = db.client.table("user_profiles").select("full_name").eq("id", str(user_id)).limit(1).execute()
+        if profile.data and profile.data[0].get("full_name"):
+            user_name = profile.data[0]["full_name"]
+    except Exception:
+        pass
+
+    try:
+        from fpdf import FPDF
+
+        pdf = FPDF(orientation="L", unit="mm", format="A4")
+        pdf.add_page()
+        pdf.set_font("Helvetica", "B", 36)
+        pdf.cell(0, 30, "CERTIFICAT", align="C", new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(10)
+        pdf.set_font("Helvetica", "", 16)
+        pdf.cell(0, 12, "Ce certificat est decerne a", align="C", new_x="LMARGIN", new_y="NEXT")
+        pdf.set_font("Helvetica", "B", 28)
+        pdf.cell(0, 20, user_name, align="C", new_x="LMARGIN", new_y="NEXT")
+        pdf.set_font("Helvetica", "", 16)
+        pdf.cell(0, 12, "pour avoir complete avec succes le cours", align="C", new_x="LMARGIN", new_y="NEXT")
+        pdf.set_font("Helvetica", "B", 22)
+        pdf.cell(0, 18, course_data["title"], align="C", new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(10)
+        from datetime import date
+        pdf.set_font("Helvetica", "", 12)
+        pdf.cell(0, 10, f"Date : {date.today().strftime('%d/%m/%Y')}", align="C", new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(15)
+        pdf.set_font("Helvetica", "", 10)
+        pdf.cell(0, 8, "ActivEducation - Plateforme d'orientation scolaire et professionnelle", align="C")
+
+        pdf_bytes = pdf.output()
+
+        # Notification interne de generation de certificat
+        try:
+            from app.core import email as email_service
+            await email_service.notify_internal(
+                subject=f"Certificat généré : {user_name} a terminé {course_data['title']}",
+                html_body=f"<p>L'utilisateur <b>{user_name}</b> a téléchargé son certificat pour le cours <b>{course_data['title']}</b>.</p>",
+            )
+        except Exception:
+            pass
+
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="certificat-{course_data["title"]}.pdf"'
+            },
+        )
+    except ImportError:
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="Generation de PDF non disponible (fpdf2 non installe).",
+        )
