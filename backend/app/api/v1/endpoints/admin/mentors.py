@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, Query, Request
 from app.core.exceptions import NotFoundError
 from app.core.logging import get_logger
 from app.core.security import get_current_admin
-from app.db.supabase_client import get_supabase_client
+from app.db.supabase_client import get_admin_supabase_client
 from app.repositories.mentor_repository import get_mentor_repository
 from app.schemas.mentor import (
     MentorCreate,
@@ -24,7 +24,7 @@ router = APIRouter()
 
 def _log_audit(admin, action, entity_type, entity_id, changes=None):
     try:
-        db = get_supabase_client()
+        db = get_admin_supabase_client()
         db.insert(
             table="admin_audit_log",
             data={
@@ -36,8 +36,11 @@ def _log_audit(admin, action, entity_type, entity_id, changes=None):
             },
         )
     except Exception:
-        logger.error("Audit log failed, blocking action", exc_info=True)
-        raise
+        # Audit log failures must never block the admin action: the
+        # underlying mutation has already been applied. Failing to
+        # record the audit trail is bad, failing the user request is
+        # worse. See audit #4 (2026-07-30).
+        logger.warning("Audit log failed (action already applied)", exc_info=True)
 
 
 @router.get("")
@@ -51,7 +54,7 @@ async def list_mentors(
     admin: dict = Depends(get_current_admin),
 ):
     """Liste paginee des mentors."""
-    db = get_supabase_client()
+    db = get_admin_supabase_client()
     offset = (page - 1) * per_page
 
     query = db.client.table("mentors").select(
@@ -64,6 +67,9 @@ async def list_mentors(
         query = query.eq("is_active", is_active)
 
     result = query.order("created_at", desc=True).range(offset, offset + per_page - 1).execute()
+
+    if result.data:
+        logger.info(f"Mentors data sample: full_name={result.data[0].get('full_name')!r}, profession={result.data[0].get('profession')!r}, user_id={result.data[0].get('user_id')!r}, user_profiles={result.data[0].get('user_profiles')!r}")
 
     return {
         "items": result.data,
@@ -80,7 +86,7 @@ async def get_mentor(
     admin: dict = Depends(get_current_admin),
 ):
     """Detail d'un mentor."""
-    db = get_supabase_client()
+    db = get_admin_supabase_client()
     result = (
         db.client.table("mentors")
         .select("*, user_profiles(email, first_name, last_name, avatar_url, phone_number)")
@@ -102,7 +108,7 @@ async def toggle_verify_mentor(
     admin: dict = Depends(get_current_admin),
 ):
     """Basculer la verification d'un mentor."""
-    db = get_supabase_client()
+    db = get_admin_supabase_client()
     mentor = db.fetch_one(table="mentors", id_column="id", id_value=str(mentor_id))
     if not mentor:
         raise NotFoundError("Mentor", str(mentor_id))
@@ -125,7 +131,7 @@ async def toggle_active_mentor(
     admin: dict = Depends(get_current_admin),
 ):
     """Basculer l'etat actif d'un mentor."""
-    db = get_supabase_client()
+    db = get_admin_supabase_client()
     mentor = db.fetch_one(table="mentors", id_column="id", id_value=str(mentor_id))
     if not mentor:
         raise NotFoundError("Mentor", str(mentor_id))
@@ -154,8 +160,12 @@ async def create_mentor(
     """Cree un mentor directement (sans candidature)."""
     repo = get_mentor_repository()
     data = body.model_dump(exclude_none=True)
+    data.setdefault("profession", data.get("specialty"))
     data["source"] = "manual"
     data.setdefault("is_active", True)
+    data["is_verified"] = True
+    if not data.get("bio"):
+        data["bio"] = "Mentor"
     mentor = repo.create_mentor(data)
     _log_audit(admin, "create", "mentor", mentor.get("id"), {"full_name": body.full_name})
     return mentor
@@ -182,7 +192,7 @@ async def create_mentor_task(
     admin: dict = Depends(get_current_admin),
 ):
     """Assigne une tache a un mentor."""
-    db = get_supabase_client()
+    db = get_admin_supabase_client()
     mentor = db.fetch_one(table="mentors", id_column="id", id_value=str(mentor_id))
     if not mentor:
         raise NotFoundError("Mentor", str(mentor_id))

@@ -5,6 +5,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request
 
+from app.core.cache import invalidate_cache
 from app.core.logging import get_logger
 from app.core.security import get_current_admin, get_current_super_admin
 from app.repositories.admin.schools_repository import get_schools_admin_repository
@@ -23,6 +24,11 @@ logger = get_logger("api.admin.schools")
 router = APIRouter()
 
 
+def _invalidate_public_school_cache() -> None:
+    """Refresh school data displayed in the student application after an admin change."""
+    invalidate_cache("schools:*")
+
+
 def _log_audit(admin, action, entity_type, entity_id, changes=None):
     try:
         from app.db.supabase_client import get_supabase_client
@@ -39,8 +45,11 @@ def _log_audit(admin, action, entity_type, entity_id, changes=None):
             },
         )
     except Exception:
-        logger.error("Audit log failed, blocking action", exc_info=True)
-        raise
+        # Audit log failures must never block the admin action: the
+        # underlying mutation has already been applied. Failing to
+        # record the audit trail is bad, failing the user request is
+        # worse. See audit #4 (2026-07-30).
+        logger.warning("Audit log failed (action already applied)", exc_info=True)
 
 
 # =========================================================================
@@ -92,6 +101,7 @@ async def create_school(
     repo = get_schools_admin_repository()
     result = await repo.create_school(body)
     _log_audit(admin, "create", "school", result.id, body.model_dump())
+    _invalidate_public_school_cache()
     return result
 
 
@@ -106,6 +116,7 @@ async def update_school(
     repo = get_schools_admin_repository()
     result = await repo.update_school(school_id, body)
     _log_audit(admin, "update", "school", school_id, body.model_dump(exclude_unset=True))
+    _invalidate_public_school_cache()
     return result
 
 
@@ -119,6 +130,7 @@ async def delete_school(
     repo = get_schools_admin_repository()
     await repo.delete_school(school_id)
     _log_audit(admin, "delete", "school", school_id)
+    _invalidate_public_school_cache()
     return {"success": True, "message": "Ecole supprimee"}
 
 
@@ -132,6 +144,7 @@ async def toggle_verify(
     repo = get_schools_admin_repository()
     result = await repo.toggle_verify(school_id)
     _log_audit(admin, "verify", "school", school_id, {"is_verified": result["is_verified"]})
+    _invalidate_public_school_cache()
     return result
 
 

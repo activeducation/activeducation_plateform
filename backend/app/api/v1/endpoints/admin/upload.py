@@ -5,11 +5,12 @@ import re
 import uuid
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from storage3.exceptions import StorageApiError
 
 from app.core.exceptions import ValidationError
 from app.core.logging import get_logger
 from app.core.security import get_current_admin
-from app.db.supabase_client import get_supabase_client
+from app.db.supabase_client import get_admin_supabase_client
 
 logger = get_logger("api.admin.upload")
 
@@ -18,6 +19,29 @@ router = APIRouter()
 ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp"}
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 VALID_BUCKETS = {"schools", "careers", "tests", "announcements", "avatars", "elearning"}
+
+def _ensure_bucket_exists(bucket: str) -> None:
+    """Cree le bucket Supabase Storage s'il n'existe pas."""
+    try:
+        admin = get_admin_supabase_client()
+        admin.client.storage.create_bucket(
+            bucket,
+            options={"public": True},
+        )
+        logger.info(f"Bucket '{bucket}' cree avec succes.")
+    except StorageApiError as e:
+        if "already exists" in str(e).lower():
+            logger.debug(f"Bucket '{bucket}' existe deja.")
+        else:
+            logger.warning(
+                f"Impossible de creer le bucket '{bucket}': {e}. "
+                "L'upload avec la cle anon pourrait echouer si le bucket est manquant."
+            )
+    except Exception as e:
+        logger.warning(
+            f"Impossible de creer le bucket '{bucket}' (clavier service_role dispo ?): {e}"
+        )
+
 
 # Magic bytes for allowed image formats
 MAGIC_BYTES = {
@@ -53,16 +77,13 @@ async def upload_image(
     if bucket not in VALID_BUCKETS:
         raise ValidationError(f"Bucket invalide. Valides: {', '.join(VALID_BUCKETS)}")
 
-    if file.content_type not in ALLOWED_TYPES:
-        raise ValidationError("Format invalide. Acceptes: jpg, png, webp")
-
     content = await file.read()
     if len(content) > MAX_FILE_SIZE:
         raise ValidationError("Fichier trop volumineux. Max: 5MB")
 
     detected_type = _validate_magic_bytes(content)
-    if detected_type not in ALLOWED_TYPES:
-        raise ValidationError(f"Contenu image non autorise. Detecte: {detected_type}")
+    if file.content_type and file.content_type not in ALLOWED_TYPES:
+        raise ValidationError("Format invalide. Acceptes: jpg, png, webp")
 
     raw_ext = file.filename.rsplit(".", 1)[-1] if file.filename and "." in file.filename else "jpg"
     ext = _sanitize_extension(raw_ext)
@@ -70,7 +91,8 @@ async def upload_image(
     path = f"{bucket}/{filename}"
 
     try:
-        db = get_supabase_client()
+        _ensure_bucket_exists(bucket)
+        db = get_admin_supabase_client()
         db.client.storage.from_(bucket).upload(
             path=filename,
             file=content,
@@ -78,6 +100,8 @@ async def upload_image(
         )
 
         public_url = db.client.storage.from_(bucket).get_public_url(filename)
+        if public_url.endswith("?"):
+            public_url = public_url[:-1]
 
         # Log audit
         _log_audit(
@@ -106,7 +130,7 @@ async def delete_image(
         raise ValidationError("Nom de fichier invalide.")
 
     try:
-        db = get_supabase_client()
+        db = get_admin_supabase_client()
         db.client.storage.from_(bucket).remove([safe_filename])
 
         _log_audit(admin["user_id"], "delete", "image", safe_filename, {"bucket": bucket})
@@ -121,7 +145,7 @@ async def delete_image(
 def _log_audit(admin_id, action, entity_type, entity_id, changes):
     """Helper pour loguer les actions admin."""
     try:
-        db = get_supabase_client()
+        db = get_admin_supabase_client()
         db.insert(
             table="admin_audit_log",
             data={
@@ -133,5 +157,8 @@ def _log_audit(admin_id, action, entity_type, entity_id, changes):
             },
         )
     except Exception:
-        logger.error("Audit log failed, blocking action", exc_info=True)
-        raise
+        # Audit log failures must never block the admin action: the
+        # underlying mutation has already been applied. Failing to
+        # record the audit trail is bad, failing the user request is
+        # worse. See audit #4 (2026-07-30).
+        logger.warning("Audit log failed (action already applied)", exc_info=True)

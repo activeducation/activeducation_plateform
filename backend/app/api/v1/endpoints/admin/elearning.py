@@ -5,6 +5,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
 
+from app.core.cache import invalidate_cache
 from app.core.logging import get_logger
 from app.core.security import get_current_admin
 from app.db.supabase_client import get_admin_supabase_client
@@ -39,8 +40,11 @@ def _log_audit(admin, action, entity_type, entity_id, changes=None):
             }
         ).execute()
     except Exception:
-        logger.error("Audit log failed, blocking action", exc_info=True)
-        raise
+        # Audit log failures must never block the admin action: the
+        # underlying mutation has already been applied. Failing to
+        # record the audit trail is bad, failing the user request is
+        # worse. See audit #4 (2026-07-30).
+        logger.warning("Audit log failed (action already applied)", exc_info=True)
 
 
 @router.get("/courses")
@@ -57,8 +61,6 @@ async def list_all_courses(
     offset = (page - 1) * per_page
 
     query = db.client.table("elearning_courses").select("*", count="exact")
-    if school_id:
-        query = query.eq("school_id", school_id)
     if is_published is not None:
         query = query.eq("is_published", is_published)
     if search:
@@ -77,39 +79,41 @@ async def list_all_courses(
     # Requête 1 : comptes modules (batch)
     mod_res = (
         db.client.table("elearning_modules")
-        .select("course_id", count="exact")
+        .select("id, course_id")
         .in_("course_id", course_ids)
         .execute()
     )
     modules_by_course: dict[str, int] = {}
+    module_ids: list[str] = []
     for row in mod_res.data or []:
         cid = row["course_id"]
         modules_by_course[cid] = modules_by_course.get(cid, 0) + 1
+        module_ids.append(row["id"])
 
-    # Requête 2 : comptes leçons (batch)
-    les_res = (
-        db.client.table("elearning_lessons")
-        .select("course_id", count="exact")
-        .in_("course_id", course_ids)
-        .execute()
-    )
+    # Requête 2 : comptes leçons via module_id (batch)
     lessons_by_course: dict[str, int] = {}
-    for row in les_res.data or []:
-        cid = row["course_id"]
-        lessons_by_course[cid] = lessons_by_course.get(cid, 0) + 1
+    if module_ids:
+        les_res = (
+            db.client.table("elearning_lessons")
+            .select("module_id", count="exact")
+            .in_("module_id", module_ids)
+            .execute()
+        )
+        lessons_by_module: dict[str, int] = {}
+        for row in les_res.data or []:
+            mid = row["module_id"]
+            lessons_by_module[mid] = lessons_by_module.get(mid, 0) + 1
 
-    # Requête 3 : noms d'écoles (batch)
-    school_ids = list({c["school_id"] for c in courses if c.get("school_id")})
-    schools_map: dict[str, str] = {}
-    if school_ids:
-        sch_res = db.client.table("schools").select("id, name").in_("id", school_ids).execute()
-        schools_map = {s["id"]: s["name"] for s in (sch_res.data or [])}
+        module_to_course = {r["id"]: r["course_id"] for r in (mod_res.data or [])}
+        for mid, count in lessons_by_module.items():
+            cid = module_to_course.get(mid)
+            if cid:
+                lessons_by_course[cid] = lessons_by_course.get(cid, 0) + count
 
     # Enrichissement en mémoire
     for course in courses:
         course["modules_count"] = modules_by_course.get(course["id"], 0)
         course["lessons_count"] = lessons_by_course.get(course["id"], 0)
-        course["school_name"] = schools_map.get(course.get("school_id"))
 
     total_pages = (total + per_page - 1) // per_page
     return {
@@ -157,12 +161,6 @@ async def get_course(
         )
         module["lessons"] = lessons.data or []
 
-    if course_data.get("school_id"):
-        school = (
-            db.client.table("schools").select("name").eq("id", course_data["school_id"]).execute()
-        )
-        course_data["school_name"] = school.data[0]["name"] if school.data else None
-
     return course_data
 
 
@@ -183,6 +181,8 @@ async def delete_course(
     db.client.table("elearning_courses").delete().eq("id", course_id).execute()
 
     _log_audit(admin, "delete", "elearning_course", course_id)
+    invalidate_cache("elearning:courses:*")
+    invalidate_cache("elearning:course:*")
     return {"success": True, "message": "Cours supprimé"}
 
 
@@ -206,6 +206,7 @@ async def create_course(
 
     course = result.data[0]
     _log_audit(admin, "create", "elearning_course", course["id"])
+    invalidate_cache("elearning:courses:*")
     return course
 
 
@@ -231,6 +232,20 @@ async def update_course(
     result = db.client.table("elearning_courses").update(update_data).eq("id", course_id).execute()
     course = result.data[0]
     _log_audit(admin, "update", "elearning_course", course_id, update_data)
+
+    invalidate_cache("elearning:courses:*")
+    invalidate_cache("elearning:course:*")
+
+    if body.is_published is True:
+        try:
+            from app.core import email as email_service
+            await email_service.notify_internal(
+                subject=f"Cours publié : {course.get('title', 'Sans titre')}",
+                html_body=f"<p>Le cours <b>{course.get('title', 'Sans titre')}</b> a été publié par {admin.get('full_name', admin.get('email', 'Admin'))}.</p>",
+            )
+        except Exception:
+            pass
+
     return course
 
 
@@ -306,6 +321,29 @@ async def delete_module(
     return {"success": True, "message": "Module supprimé"}
 
 
+def _build_content_data(body: LessonCreate) -> dict:
+    """Construit le content_data JSONB selon le type de lecon."""
+    content_data: dict = {}
+    if body.lesson_type == "video":
+        content_data["url"] = body.video_url or ""
+        content_data["provider"] = body.video_provider or "youtube"
+        content_data["duration_seconds"] = 0
+    elif body.lesson_type in ("article", "text"):
+        content_data["body"] = body.markdown_body or body.content or ""
+        content_data["format"] = "markdown"
+    elif body.lesson_type == "challenge":
+        content_data["instructions"] = body.challenge_instructions or ""
+        content_data["starter_code"] = body.challenge_starter_code or ""
+        content_data["language"] = body.challenge_language or ""
+    elif body.lesson_type == "quiz":
+        # Quiz integre dans la lecon (non-examen de fin de cours)
+        content_data["questions"] = []
+    elif body.lesson_type == "pdf":
+        content_data["url"] = body.content or ""
+        content_data["filename"] = ""
+    return content_data
+
+
 @router.post("/modules/{module_id}/lessons")
 async def create_lesson(
     module_id: str,
@@ -323,9 +361,12 @@ async def create_lesson(
 
         raise NotFoundError("Module", module_id)
 
-    lesson_data = body.model_dump()
-    lesson_data["module_id"] = module_id
-    lesson_data["course_id"] = module.data[0]["course_id"]
+    lesson_data = {
+        "module_id": module_id,
+        "title": body.title,
+        "lesson_type": body.lesson_type,
+        "display_order": body.display_order,
+    }
     result = db.client.table("elearning_lessons").insert(lesson_data).execute()
 
     if not result.data:
@@ -333,7 +374,16 @@ async def create_lesson(
 
         raise DatabaseError("Erreur lors de la création de la leçon", operation="insert_lesson")
 
-    _log_audit(admin, "create", "elearning_lesson", result.data[0]["id"])
+    lesson_id = result.data[0]["id"]
+
+    # Creer le contenu structure si applicable
+    content_data = _build_content_data(body)
+    if content_data:
+        db.client.table("elearning_lesson_content").insert(
+            {"lesson_id": lesson_id, "content_data": content_data}
+        ).execute()
+
+    _log_audit(admin, "create", "elearning_lesson", lesson_id)
     return result.data[0]
 
 
@@ -346,19 +396,66 @@ async def update_lesson(
     """Mettre à jour une leçon."""
     db = get_admin_supabase_client()
 
-    existing = db.client.table("elearning_lessons").select("id").eq("id", lesson_id).execute()
+    existing = db.client.table("elearning_lessons").select("id, lesson_type").eq("id", lesson_id).execute()
     if not existing.data:
         from app.core.exceptions import NotFoundError
 
         raise NotFoundError("Leçon", lesson_id)
 
+    lesson_type = body.lesson_type or existing.data[0]["lesson_type"]
     update_data = body.model_dump(exclude_unset=True)
     if not update_data:
         return existing.data[0]
 
     result = db.client.table("elearning_lessons").update(update_data).eq("id", lesson_id).execute()
+
+    # Mettre a jour le contenu structure si fourni
+    content_data = _build_content_data_update(body, lesson_type)
+    if content_data is not None:
+        existing_content = (
+            db.client.table("elearning_lesson_content")
+            .select("id")
+            .eq("lesson_id", lesson_id)
+            .limit(1)
+            .execute()
+        )
+        if existing_content.data:
+            db.client.table("elearning_lesson_content").update(
+                {"content_data": content_data}
+            ).eq("lesson_id", lesson_id).execute()
+        elif content_data:
+            db.client.table("elearning_lesson_content").insert(
+                {"lesson_id": lesson_id, "content_data": content_data}
+            ).execute()
+
     _log_audit(admin, "update", "elearning_lesson", lesson_id, update_data)
     return result.data[0]
+
+
+def _build_content_data_update(body: LessonUpdate, lesson_type: str) -> Optional[dict]:
+    """Construit le content_data pour les mises a jour, ou None si rien a changer."""
+    content_data: Optional[dict] = None
+    if lesson_type == "video" and (body.video_url is not None or body.video_provider is not None):
+        content_data = {}
+        if body.video_url is not None:
+            content_data["url"] = body.video_url
+        if body.video_provider is not None:
+            content_data["provider"] = body.video_provider
+    elif lesson_type in ("article", "text") and body.markdown_body is not None:
+        content_data = {"body": body.markdown_body, "format": "markdown"}
+    elif lesson_type == "challenge" and (
+        body.challenge_instructions is not None
+        or body.challenge_starter_code is not None
+        or body.challenge_language is not None
+    ):
+        content_data = {}
+        if body.challenge_instructions is not None:
+            content_data["instructions"] = body.challenge_instructions
+        if body.challenge_starter_code is not None:
+            content_data["starter_code"] = body.challenge_starter_code
+        if body.challenge_language is not None:
+            content_data["language"] = body.challenge_language
+    return content_data
 
 
 @router.delete("/lessons/{lesson_id}")
@@ -385,37 +482,199 @@ async def delete_lesson(
 async def list_schools_with_courses(
     admin: dict = Depends(get_current_admin),
 ):
-    """Liste des écoles qui ont des cours e-learning."""
+    """Liste des écoles (sans filtre cours, car school_id n'existe pas en base)."""
     db = get_admin_supabase_client()
 
-    result = (
-        db.client.table("elearning_courses")
-        .select("school_id")
-        .not_.is_("school_id", "null")
-        .execute()
-    )
-
-    counts: dict[str, int] = {}
-    for row in result.data or []:
-        sid = row["school_id"]
-        counts[sid] = counts.get(sid, 0) + 1
-
-    if not counts:
-        return []
-
-    sch_res = (
-        db.client.table("schools").select("id, name, city").in_("id", list(counts.keys())).execute()
-    )
+    sch_res = db.client.table("schools").select("id, name, city").order("name").execute()
 
     return [
         {
             "id": s["id"],
             "name": s["name"],
             "city": s.get("city"),
-            "courses_count": counts.get(s["id"], 0),
+            "courses_count": 0,
         }
         for s in (sch_res.data or [])
     ]
+
+
+# ============================================================================
+# DUPLICATION
+# ============================================================================
+
+
+@router.post("/courses/{course_id}/duplicate")
+async def duplicate_course(
+    course_id: str,
+    body: dict = {},  # {"new_title": "Copie de ..."} optionnel
+    admin: dict = Depends(get_current_admin),
+):
+    """Duplique un cours : metadonnees, modules, lecons, contenu, examen."""
+    db = get_admin_supabase_client()
+
+    # 1. Charger le cours source
+    course = db.client.table("elearning_courses").select("*").eq("id", course_id).execute()
+    if not course.data:
+        from app.core.exceptions import NotFoundError
+        raise NotFoundError("Cours", course_id)
+    src = course.data[0]
+
+    # 2. Creer le nouveau cours
+    new_title = body.get("new_title") or f"{src['title']} (copie)"
+    new_course = {
+        "title": new_title,
+        "description": src.get("description"),
+        "thumbnail_url": src.get("thumbnail_url"),
+        "category": src.get("category"),
+        "difficulty": src.get("difficulty", "debutant"),
+        "duration_minutes": src.get("duration_minutes", 0),
+        "points_reward": src.get("points_reward", 0),
+        "is_published": False,
+        "display_order": 999,
+    }
+    res = db.client.table("elearning_courses").insert(new_course).execute()
+    new_course_id = res.data[0]["id"]
+
+    # 3. Copier les modules
+    modules = (
+        db.client.table("elearning_modules")
+        .select("*")
+        .eq("course_id", course_id)
+        .order("display_order")
+        .execute()
+    )
+    module_id_map: dict[str, str] = {}
+    for mod in modules.data or []:
+        new_mod = {
+            "course_id": new_course_id,
+            "title": mod["title"],
+            "description": mod.get("description"),
+            "display_order": mod["display_order"],
+        }
+        r = db.client.table("elearning_modules").insert(new_mod).execute()
+        old_id = mod["id"]
+        new_id = r.data[0]["id"]
+        module_id_map[old_id] = new_id
+
+    # 4. Copier les lecons + contenu
+    for old_mod_id, new_mod_id in module_id_map.items():
+        lessons = (
+            db.client.table("elearning_lessons")
+            .select("*")
+            .eq("module_id", old_mod_id)
+            .order("display_order")
+            .execute()
+        )
+        for les in lessons.data or []:
+            new_lesson = {
+                "module_id": new_mod_id,
+                "title": les["title"],
+                "lesson_type": les["lesson_type"],
+                "duration_minutes": les.get("duration_minutes", 0),
+                "points_reward": les.get("points_reward", 0),
+                "is_free": les.get("is_free", False),
+                "display_order": les["display_order"],
+            }
+            r = db.client.table("elearning_lessons").insert(new_lesson).execute()
+            new_lesson_id = r.data[0]["id"]
+
+            # Copier le contenu structure
+            content = (
+                db.client.table("elearning_lesson_content")
+                .select("content_data")
+                .eq("lesson_id", les["id"])
+                .limit(1)
+                .execute()
+            )
+            if content.data:
+                db.client.table("elearning_lesson_content").insert(
+                    {"lesson_id": new_lesson_id, "content_data": content.data[0]["content_data"]}
+                ).execute()
+
+    # 5. Copier l'examen
+    exam = (
+        db.client.table("course_exams")
+        .select("*")
+        .eq("course_id", course_id)
+        .limit(1)
+        .execute()
+    )
+    if exam.data:
+        src_exam = exam.data[0]
+        new_exam = {
+            "course_id": new_course_id,
+            "title": src_exam.get("title", "Examen final"),
+            "description": src_exam.get("description"),
+            "passing_score": src_exam.get("passing_score", 80),
+            "xp_reward": src_exam.get("xp_reward", 100),
+            "badge_title": src_exam.get("badge_title"),
+            "badge_icon": src_exam.get("badge_icon"),
+            "is_active": False,
+        }
+        r = db.client.table("course_exams").insert(new_exam).execute()
+        new_exam_id = r.data[0]["id"]
+
+        # Copier les questions
+        questions = (
+            db.client.table("exam_questions")
+            .select("*")
+            .eq("exam_id", src_exam["id"])
+            .order("display_order")
+            .execute()
+        )
+        for q in questions.data or []:
+            db.client.table("exam_questions").insert(
+                {
+                    "exam_id": new_exam_id,
+                    "question": q["question"],
+                    "options": q["options"],
+                    "points": q.get("points", 1),
+                    "display_order": q["display_order"],
+                }
+            ).execute()
+
+    _log_audit(admin, "duplicate", "elearning_course", new_course_id)
+    invalidate_cache("elearning:courses:*")
+    return {"id": new_course_id, "title": new_title, "message": "Cours dupliqué avec succès"}
+
+
+# ============================================================================
+# REORDONNANCEMENT
+# ============================================================================
+
+
+@router.put("/courses/{course_id}/modules/reorder")
+async def reorder_modules(
+    course_id: str,
+    body: dict,  # {"module_ids": ["uuid1", "uuid2", ...]}
+    admin: dict = Depends(get_current_admin),
+):
+    """Reordonne les modules d'un cours par ordre de module_ids."""
+    db = get_admin_supabase_client()
+    module_ids = body.get("module_ids", [])
+    for i, mid in enumerate(module_ids):
+        db.client.table("elearning_modules").update({"display_order": i}).eq("id", mid).eq(
+            "course_id", course_id
+        ).execute()
+    _log_audit(admin, "reorder", "elearning_module", course_id, {"count": len(module_ids)})
+    return {"success": True}
+
+
+@router.put("/modules/{module_id}/lessons/reorder")
+async def reorder_lessons(
+    module_id: str,
+    body: dict,  # {"lesson_ids": ["uuid1", "uuid2", ...]}
+    admin: dict = Depends(get_current_admin),
+):
+    """Reordonne les lecons d'un module par ordre de lesson_ids."""
+    db = get_admin_supabase_client()
+    lesson_ids = body.get("lesson_ids", [])
+    for i, lid in enumerate(lesson_ids):
+        db.client.table("elearning_lessons").update({"display_order": i}).eq("id", lid).eq(
+            "module_id", module_id
+        ).execute()
+    _log_audit(admin, "reorder", "elearning_lesson", module_id, {"count": len(lesson_ids)})
+    return {"success": True}
 
 
 # ============================================================================

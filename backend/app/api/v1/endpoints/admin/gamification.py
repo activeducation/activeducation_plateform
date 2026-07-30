@@ -28,8 +28,11 @@ def _log_audit(admin, action, entity_type, entity_id, changes=None):
             },
         )
     except Exception:
-        logger.error("Audit log failed, blocking action", exc_info=True)
-        raise
+        # Audit log failures must never block the admin action: the
+        # underlying mutation has already been applied. Failing to
+        # record the audit trail is bad, failing the user request is
+        # worse. See audit #4 (2026-07-30).
+        logger.warning("Audit log failed (action already applied)", exc_info=True)
 
 
 # =========================================================================
@@ -89,6 +92,140 @@ async def delete_achievement(
     db.delete(table="achievements", id_column="id", id_value=str(achievement_id))
     _log_audit(admin, "delete", "achievement", achievement_id)
     return {"success": True, "message": "Achievement supprime"}
+
+
+# =========================================================================
+# USER XP / GAMIFICATION PROFILES (ADMIN VIEW)
+# =========================================================================
+
+
+@router.get("/users")
+async def list_gamification_users(
+    request: Request,
+    admin: dict = Depends(get_current_admin),
+):
+    """Liste paginee des utilisateurs avec leurs stats XP/niveau."""
+    db = get_supabase_client()
+    page = int(request.query_params.get("page", "1"))
+    per_page = int(request.query_params.get("per_page", "20"))
+    search = request.query_params.get("search", "")
+
+    offset = (page - 1) * per_page
+    query = """
+        SELECT u.id, u.full_name, u.email,
+               COALESCE(g.total_xp, 0) as total_xp,
+               COALESCE(g.current_level, 1) as current_level,
+               COALESCE(g.current_streak, 0) as current_streak,
+               g.last_active_at
+        FROM user_profiles u
+        LEFT JOIN gamification_profiles g ON g.user_id = u.id
+    """
+    count_query = "SELECT COUNT(*) FROM user_profiles u"
+
+    if search:
+        search_clause = f" WHERE (u.full_name ILIKE '%{search}%' OR u.email ILIKE '%{search}%')"
+        query += search_clause
+        count_query += search_clause
+
+    query += " ORDER BY g.total_xp DESC NULLS LAST"
+    query += f" LIMIT {per_page} OFFSET {offset}"
+
+    result = db.client.table("user_profiles").select("id, full_name, email").execute()
+    # On utilise un raw query via RPC pour la requete JOIN
+    # Fallback: requete par lots
+    from app.db.supabase_client import get_admin_supabase_client
+    admin_db = get_admin_supabase_client()
+
+    try:
+        # Essayer une requete directe sur le client PostgREST - sans JOIN, on fait 2 passes
+        users_res = (
+            admin_db.client.table("user_profiles")
+            .select("id, full_name, email")
+            .order("created_at", desc=True)
+            .execute()
+        )
+        users = users_res.data or []
+        user_ids = [u["id"] for u in users]
+
+        # Charger les profils gamification en batch
+        profiles_map = {}
+        if user_ids:
+            profiles_res = (
+                admin_db.client.table("gamification_profiles")
+                .select("user_id, total_xp, current_level, current_streak, last_active_at")
+                .in_("user_id", user_ids)
+                .execute()
+            )
+            for p in profiles_res.data or []:
+                profiles_map[p["user_id"]] = p
+
+        for u in users:
+            p = profiles_map.get(u["id"], {})
+            u["total_xp"] = p.get("total_xp", 0)
+            u["current_level"] = p.get("current_level", 1)
+            u["current_streak"] = p.get("current_streak", 0)
+
+        # Trier par XP descendant et paginer
+        users.sort(key=lambda u: u.get("total_xp", 0), reverse=True)
+        total = len(users)
+        start = (page - 1) * per_page
+        users = users[start:start + per_page]
+    except Exception as e:
+        logger.warning(f"Error fetching gamification users: {e}")
+        users = []
+        total = 0
+
+    return {"items": users, "total": total, "page": page, "per_page": per_page}
+
+
+@router.post("/users/{user_id}/award-xp")
+async def award_xp_to_user(
+    request: Request,
+    user_id: UUID,
+    admin: dict = Depends(get_current_admin),
+):
+    """Attribuer manuellement des XP a un utilisateur."""
+    body = await request.json()
+    amount = int(body.get("amount", 0))
+    reason = body.get("reason", "Attribution manuelle")
+
+    if amount <= 0:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="Le montant doit etre > 0")
+
+    try:
+        from app.db.supabase_client import get_admin_supabase_client
+        db = get_admin_supabase_client()
+        db.client.rpc("award_xp", {"p_user_id": str(user_id), "p_amount": amount}).execute()
+        _log_audit(admin, "award_xp", "user", user_id, {"amount": amount, "reason": reason})
+        return {"success": True, "xp_awarded": amount}
+    except Exception as e:
+        logger.error(f"award_xp error: {e}")
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail=f"Erreur: {str(e)}")
+
+
+@router.get("/users/{user_id}/achievements")
+async def get_user_achievements(
+    request: Request,
+    user_id: UUID,
+    admin: dict = Depends(get_current_admin),
+):
+    """Liste des achievements d'un utilisateur."""
+    try:
+        from app.db.supabase_client import get_admin_supabase_client
+        db = get_admin_supabase_client()
+        res = (
+            db.client.table("user_achievements")
+            .select("*")
+            .eq("user_id", str(user_id))
+            .order("earned_at", desc=True)
+            .execute()
+        )
+        return res.data or []
+    except Exception as e:
+        logger.warning(f"Error fetching user achievements: {e}")
+        return []
 
 
 # =========================================================================

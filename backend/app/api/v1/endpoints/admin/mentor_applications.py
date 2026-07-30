@@ -9,7 +9,7 @@ from app.core import email as email_service
 from app.core.exceptions import NotFoundError
 from app.core.logging import get_logger
 from app.core.security import get_current_admin
-from app.db.supabase_client import get_supabase_client
+from app.db.supabase_client import get_admin_supabase_client, get_supabase_client
 from app.repositories.mentor_repository import get_mentor_repository
 from app.schemas.mentor import MentorApplicationReview
 
@@ -63,23 +63,37 @@ async def approve_application(
     # Creer le mentor a partir de la candidature
     mentor_data = {
         "full_name": app.get("full_name"),
+        "profession": app.get("specialty"),
         "specialty": app.get("specialty"),
-        "bio": app.get("bio"),
+        "bio": app.get("bio") or app.get("motivation") or "Candidature mentor",
         "email": app.get("email"),
         "phone": app.get("phone"),
         "years_experience": app.get("years_experience"),
         "expertise_areas": app.get("expertise_areas"),
         "linkedin_url": app.get("linkedin_url"),
+        "portfolio": app.get("portfolio") or {},
         "is_verified": True,
         "is_active": True,
         "source": "application",
     }
-    # Si le candidat a un compte, lier le mentor a son profil
-    if app.get("user_id"):
-        mentor_data["id"] = app["user_id"]
     mentor_data = {k: v for k, v in mentor_data.items() if v is not None}
 
-    mentor = repo.create_mentor(mentor_data)
+    # Si le candidat a un compte, verifier si un mentor existe deja
+    db = get_admin_supabase_client()
+    existing_mentor = None
+    if app.get("user_id"):
+        existing = (
+            db.client.table("mentors").select("id").eq("id", app["user_id"]).limit(1).execute()
+        )
+        if existing.data:
+            existing_mentor = existing.data[0]
+            db.client.table("mentors").update(mentor_data).eq("id", app["user_id"]).execute()
+            mentor = existing_mentor
+        else:
+            mentor_data["id"] = app["user_id"]
+            mentor = repo.create_mentor(mentor_data)
+    else:
+        mentor = repo.create_mentor(mentor_data)
 
     updated = repo.update_application(
         app_id,
