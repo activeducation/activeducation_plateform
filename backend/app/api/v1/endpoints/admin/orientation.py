@@ -19,32 +19,11 @@ from app.schemas.admin.orientation import (
     TestUpdate,
 )
 
+from ._helpers import log_audit_action
+
 logger = get_logger("api.admin.orientation")
 
 router = APIRouter()
-
-
-def _log_audit(admin, action, entity_type, entity_id, changes=None):
-    try:
-        from app.db.supabase_client import get_supabase_client
-
-        db = get_supabase_client()
-        db.insert(
-            table="admin_audit_log",
-            data={
-                "admin_id": str(admin["user_id"]),
-                "action": action,
-                "entity_type": entity_type,
-                "entity_id": str(entity_id) if entity_id else None,
-                "changes": changes,
-            },
-        )
-    except Exception:
-        # Audit log failures must never block the admin action: the
-        # underlying mutation has already been applied. Failing to
-        # record the audit trail is bad, failing the user request is
-        # worse. See audit #4 (2026-07-30).
-        logger.warning("Audit log failed (action already applied)", exc_info=True)
 
 
 # =========================================================================
@@ -95,7 +74,7 @@ async def create_test(
     try:
         repo = get_tests_admin_repository()
         result = await repo.create_test(body)
-        _log_audit(admin, "create", "test", result.id, body.model_dump())
+        log_audit_action(admin, "create", "test", result.id, body.model_dump())
         return result
     except Exception as e:
         logger.error(f"Error creating test: {e}", exc_info=True)
@@ -112,7 +91,7 @@ async def update_test(
     """Modifier un test."""
     repo = get_tests_admin_repository()
     result = await repo.update_test(test_id, body)
-    _log_audit(admin, "update", "test", test_id, body.model_dump(exclude_unset=True))
+    log_audit_action(admin, "update", "test", test_id, body.model_dump(exclude_unset=True))
     return result
 
 
@@ -125,7 +104,7 @@ async def delete_test(
     """Supprimer un test (super_admin)."""
     repo = get_tests_admin_repository()
     await repo.delete_test(test_id)
-    _log_audit(admin, "delete", "test", test_id)
+    log_audit_action(admin, "delete", "test", test_id)
     return {"success": True, "message": "Test supprime"}
 
 
@@ -138,7 +117,7 @@ async def duplicate_test(
     """Dupliquer un test avec toutes ses questions et options."""
     repo = get_tests_admin_repository()
     result = await repo.duplicate_test(test_id)
-    _log_audit(admin, "duplicate", "test", result.id, {"source_test_id": str(test_id)})
+    log_audit_action(admin, "duplicate", "test", result.id, {"source_test_id": str(test_id)})
     return result
 
 
@@ -157,7 +136,7 @@ async def add_question(
     """Ajouter une question a un test."""
     repo = get_tests_admin_repository()
     result = await repo.add_question(test_id, body)
-    _log_audit(admin, "create", "question", result.get("id"))
+    log_audit_action(admin, "create", "question", result.get("id"))
     return result
 
 
@@ -172,7 +151,7 @@ async def update_question(
     """Modifier une question."""
     repo = get_tests_admin_repository()
     result = await repo.update_question(question_id, body)
-    _log_audit(admin, "update", "question", question_id)
+    log_audit_action(admin, "update", "question", question_id)
     return result
 
 
@@ -186,7 +165,7 @@ async def delete_question(
     """Supprimer une question."""
     repo = get_tests_admin_repository()
     await repo.delete_question(question_id)
-    _log_audit(admin, "delete", "question", question_id)
+    log_audit_action(admin, "delete", "question", question_id)
     return {"success": True, "message": "Question supprimee"}
 
 

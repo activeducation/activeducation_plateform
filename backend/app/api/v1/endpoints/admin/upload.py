@@ -11,6 +11,7 @@ from app.core.exceptions import ValidationError
 from app.core.logging import get_logger
 from app.core.security import get_current_admin
 from app.db.supabase_client import get_admin_supabase_client
+from ._helpers import log_audit_action
 
 logger = get_logger("api.admin.upload")
 
@@ -104,7 +105,7 @@ async def upload_image(
             public_url = public_url[:-1]
 
         # Log audit
-        _log_audit(
+        log_audit_action(
             admin["user_id"], "upload", "image", path, {"bucket": bucket, "filename": filename}
         )
 
@@ -133,7 +134,7 @@ async def delete_image(
         db = get_admin_supabase_client()
         db.client.storage.from_(bucket).remove([safe_filename])
 
-        _log_audit(admin["user_id"], "delete", "image", safe_filename, {"bucket": bucket})
+        log_audit_action(admin["user_id"], "delete", "image", safe_filename, {"bucket": bucket})
 
         return {"success": True, "message": "Image supprimee"}
 
@@ -142,23 +143,3 @@ async def delete_image(
         raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression: {str(e)}")
 
 
-def _log_audit(admin_id, action, entity_type, entity_id, changes):
-    """Helper pour loguer les actions admin."""
-    try:
-        db = get_admin_supabase_client()
-        db.insert(
-            table="admin_audit_log",
-            data={
-                "admin_id": str(admin_id),
-                "action": action,
-                "entity_type": entity_type,
-                "entity_id": str(entity_id) if entity_id else None,
-                "changes": changes,
-            },
-        )
-    except Exception:
-        # Audit log failures must never block the admin action: the
-        # underlying mutation has already been applied. Failing to
-        # record the audit trail is bad, failing the user request is
-        # worse. See audit #4 (2026-07-30).
-        logger.warning("Audit log failed (action already applied)", exc_info=True)

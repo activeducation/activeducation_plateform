@@ -17,30 +17,11 @@ from app.schemas.mentor import (
     MentorTaskUpdate,
 )
 
+from ._helpers import log_audit_action
+
 logger = get_logger("api.admin.mentors")
 
 router = APIRouter()
-
-
-def _log_audit(admin, action, entity_type, entity_id, changes=None):
-    try:
-        db = get_admin_supabase_client()
-        db.insert(
-            table="admin_audit_log",
-            data={
-                "admin_id": str(admin["user_id"]),
-                "action": action,
-                "entity_type": entity_type,
-                "entity_id": str(entity_id) if entity_id else None,
-                "changes": changes,
-            },
-        )
-    except Exception:
-        # Audit log failures must never block the admin action: the
-        # underlying mutation has already been applied. Failing to
-        # record the audit trail is bad, failing the user request is
-        # worse. See audit #4 (2026-07-30).
-        logger.warning("Audit log failed (action already applied)", exc_info=True)
 
 
 @router.get("")
@@ -120,7 +101,7 @@ async def toggle_verify_mentor(
         id_value=str(mentor_id),
         data={"is_verified": new_value},
     )
-    _log_audit(admin, "verify", "mentor", mentor_id, {"is_verified": new_value})
+    log_audit_action(admin, "verify", "mentor", mentor_id, {"is_verified": new_value})
     return result[0] if result else {"is_verified": new_value}
 
 
@@ -143,7 +124,7 @@ async def toggle_active_mentor(
         id_value=str(mentor_id),
         data={"is_active": new_value},
     )
-    _log_audit(admin, "toggle_active", "mentor", mentor_id, {"is_active": new_value})
+    log_audit_action(admin, "toggle_active", "mentor", mentor_id, {"is_active": new_value})
     return result[0] if result else {"is_active": new_value}
 
 
@@ -167,7 +148,7 @@ async def create_mentor(
     if not data.get("bio"):
         data["bio"] = "Mentor"
     mentor = repo.create_mentor(data)
-    _log_audit(admin, "create", "mentor", mentor.get("id"), {"full_name": body.full_name})
+    log_audit_action(admin, "create", "mentor", mentor.get("id"), {"full_name": body.full_name})
     return mentor
 
 
@@ -200,7 +181,7 @@ async def create_mentor_task(
     data = body.model_dump(exclude_none=True)
     data["assigned_by"] = str(admin["user_id"])
     task = get_mentor_repository().create_task(mentor_id, data)
-    _log_audit(admin, "create", "mentor_task", task.get("id"), {"title": body.title})
+    log_audit_action(admin, "create", "mentor_task", task.get("id"), {"title": body.title})
     return task
 
 
@@ -217,7 +198,7 @@ async def update_mentor_task(
     task = get_mentor_repository().update_task(task_id, changes)
     if not task:
         raise NotFoundError("Tâche", str(task_id))
-    _log_audit(admin, "update", "mentor_task", task_id, changes)
+    log_audit_action(admin, "update", "mentor_task", task_id, changes)
     return task
 
 
@@ -228,5 +209,5 @@ async def delete_mentor_task(
 ):
     """Supprime une tache mentor."""
     get_mentor_repository().delete_task(task_id)
-    _log_audit(admin, "delete", "mentor_task", task_id, None)
+    log_audit_action(admin, "delete", "mentor_task", task_id, None)
     return None

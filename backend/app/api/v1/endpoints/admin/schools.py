@@ -19,6 +19,8 @@ from app.schemas.admin.schools import (
     SchoolUpdate,
 )
 
+from ._helpers import log_audit_action
+
 logger = get_logger("api.admin.schools")
 
 router = APIRouter()
@@ -27,29 +29,6 @@ router = APIRouter()
 def _invalidate_public_school_cache() -> None:
     """Refresh school data displayed in the student application after an admin change."""
     invalidate_cache("schools:*")
-
-
-def _log_audit(admin, action, entity_type, entity_id, changes=None):
-    try:
-        from app.db.supabase_client import get_supabase_client
-
-        db = get_supabase_client()
-        db.insert(
-            table="admin_audit_log",
-            data={
-                "admin_id": str(admin["user_id"]),
-                "action": action,
-                "entity_type": entity_type,
-                "entity_id": str(entity_id) if entity_id else None,
-                "changes": changes,
-            },
-        )
-    except Exception:
-        # Audit log failures must never block the admin action: the
-        # underlying mutation has already been applied. Failing to
-        # record the audit trail is bad, failing the user request is
-        # worse. See audit #4 (2026-07-30).
-        logger.warning("Audit log failed (action already applied)", exc_info=True)
 
 
 # =========================================================================
@@ -100,7 +79,7 @@ async def create_school(
     """Creer une ecole."""
     repo = get_schools_admin_repository()
     result = await repo.create_school(body)
-    _log_audit(admin, "create", "school", result.id, body.model_dump())
+    log_audit_action(admin, "create", "school", result.id, body.model_dump())
     _invalidate_public_school_cache()
     return result
 
@@ -115,7 +94,7 @@ async def update_school(
     """Modifier une ecole."""
     repo = get_schools_admin_repository()
     result = await repo.update_school(school_id, body)
-    _log_audit(admin, "update", "school", school_id, body.model_dump(exclude_unset=True))
+    log_audit_action(admin, "update", "school", school_id, body.model_dump(exclude_unset=True))
     _invalidate_public_school_cache()
     return result
 
@@ -129,7 +108,7 @@ async def delete_school(
     """Supprimer une ecole (super_admin)."""
     repo = get_schools_admin_repository()
     await repo.delete_school(school_id)
-    _log_audit(admin, "delete", "school", school_id)
+    log_audit_action(admin, "delete", "school", school_id)
     _invalidate_public_school_cache()
     return {"success": True, "message": "Ecole supprimee"}
 
@@ -143,7 +122,7 @@ async def toggle_verify(
     """Basculer la verification d'une ecole."""
     repo = get_schools_admin_repository()
     result = await repo.toggle_verify(school_id)
-    _log_audit(admin, "verify", "school", school_id, {"is_verified": result["is_verified"]})
+    log_audit_action(admin, "verify", "school", school_id, {"is_verified": result["is_verified"]})
     _invalidate_public_school_cache()
     return result
 
@@ -157,7 +136,7 @@ async def toggle_active(
     """Basculer l'etat actif d'une ecole."""
     repo = get_schools_admin_repository()
     result = await repo.toggle_active(school_id)
-    _log_audit(admin, "toggle_active", "school", school_id)
+    log_audit_action(admin, "toggle_active", "school", school_id)
     return result
 
 
@@ -176,7 +155,7 @@ async def add_program(
     """Ajouter une filiere a une ecole."""
     repo = get_schools_admin_repository()
     result = await repo.add_program(school_id, body)
-    _log_audit(admin, "create", "school_program", result.get("id"), body.model_dump())
+    log_audit_action(admin, "create", "school_program", result.get("id"), body.model_dump())
     return result
 
 
@@ -191,7 +170,7 @@ async def update_program(
     """Modifier une filiere."""
     repo = get_schools_admin_repository()
     result = await repo.update_program(program_id, body)
-    _log_audit(admin, "update", "school_program", program_id, body.model_dump(exclude_unset=True))
+    log_audit_action(admin, "update", "school_program", program_id, body.model_dump(exclude_unset=True))
     return result
 
 
@@ -205,7 +184,7 @@ async def delete_program(
     """Supprimer une filiere."""
     repo = get_schools_admin_repository()
     await repo.delete_program(program_id)
-    _log_audit(admin, "delete", "school_program", program_id)
+    log_audit_action(admin, "delete", "school_program", program_id)
     return {"success": True, "message": "Filiere supprimee"}
 
 
@@ -224,7 +203,7 @@ async def add_image(
     """Ajouter une image a une ecole."""
     repo = get_schools_admin_repository()
     result = await repo.add_image(school_id, body)
-    _log_audit(admin, "create", "school_image", result.get("id"))
+    log_audit_action(admin, "create", "school_image", result.get("id"))
     return result
 
 
@@ -238,5 +217,5 @@ async def delete_image(
     """Supprimer une image d'une ecole."""
     repo = get_schools_admin_repository()
     await repo.delete_image(image_id)
-    _log_audit(admin, "delete", "school_image", image_id)
+    log_audit_action(admin, "delete", "school_image", image_id)
     return {"success": True, "message": "Image supprimee"}

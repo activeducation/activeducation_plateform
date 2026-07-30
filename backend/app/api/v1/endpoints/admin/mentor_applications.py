@@ -12,27 +12,11 @@ from app.core.security import get_current_admin
 from app.db.supabase_client import get_admin_supabase_client, get_supabase_client
 from app.repositories.mentor_repository import get_mentor_repository
 from app.schemas.mentor import MentorApplicationReview
+from ._helpers import log_audit_action
 
 logger = get_logger("api.admin.mentor_applications")
 
 router = APIRouter()
-
-
-def _log_audit(admin, action, entity_id, changes=None):
-    try:
-        db = get_supabase_client()
-        db.insert(
-            table="admin_audit_log",
-            data={
-                "admin_id": str(admin["user_id"]),
-                "action": action,
-                "entity_type": "mentor_application",
-                "entity_id": str(entity_id) if entity_id else None,
-                "changes": changes,
-            },
-        )
-    except Exception:
-        logger.warning("Audit log (mentor_application) failed", exc_info=True)
 
 
 @router.get("/mentor-applications")
@@ -105,7 +89,7 @@ async def approve_application(
             "created_mentor_id": mentor.get("id"),
         },
     )
-    _log_audit(admin, "approve", app_id, {"mentor_id": mentor.get("id")})
+    log_audit_action(admin, "approve", "mentor_application", app_id, {"mentor_id": mentor.get("id")})
 
     # Email de bienvenue (best-effort)
     try:
@@ -147,7 +131,7 @@ async def reject_application(
             "reviewed_at": _now_iso(),
         },
     )
-    _log_audit(admin, "reject", app_id, {"note": (body.note if body else None)})
+    log_audit_action(admin, "reject", "mentor_application", app_id, {"note": (body.note if body else None)})
 
     # Email de refus courtois (best-effort)
     try:

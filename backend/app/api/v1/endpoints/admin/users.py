@@ -15,6 +15,8 @@ from app.schemas.admin.users import (
     RoleUpdateRequest,
 )
 
+from ._helpers import log_audit_action
+
 logger = get_logger("api.admin.users")
 
 router = APIRouter()
@@ -58,7 +60,7 @@ async def update_user(
     """Met a jour un utilisateur."""
     repo = get_users_admin_repository()
     result = await repo.update_user(user_id, body)
-    _log_audit(admin, "update", "user", user_id, body.model_dump(exclude_unset=True))
+    log_audit_action(admin, "update", "user", user_id, body.model_dump(exclude_unset=True))
     return result
 
 
@@ -72,7 +74,7 @@ async def update_user_role(
     """Change le role d'un utilisateur (super_admin uniquement)."""
     repo = get_users_admin_repository()
     result = await repo.update_role(user_id, body.role)
-    _log_audit(admin, "update_role", "user", user_id, {"new_role": body.role})
+    log_audit_action(admin, "update_role", "user", user_id, {"new_role": body.role})
     return result
 
 
@@ -85,7 +87,7 @@ async def deactivate_user(
     """Desactive un utilisateur."""
     repo = get_users_admin_repository()
     result = await repo.toggle_active(user_id, False)
-    _log_audit(admin, "deactivate", "user", user_id, {"is_active": False})
+    log_audit_action(admin, "deactivate", "user", user_id, {"is_active": False})
     return result
 
 
@@ -98,28 +100,7 @@ async def activate_user(
     """Reactive un utilisateur."""
     repo = get_users_admin_repository()
     result = await repo.toggle_active(user_id, True)
-    _log_audit(admin, "activate", "user", user_id, {"is_active": True})
+    log_audit_action(admin, "activate", "user", user_id, {"is_active": True})
     return result
 
 
-def _log_audit(admin, action, entity_type, entity_id, changes):
-    try:
-        from app.db.supabase_client import get_supabase_client
-
-        db = get_supabase_client()
-        db.insert(
-            table="admin_audit_log",
-            data={
-                "admin_id": str(admin["user_id"]),
-                "action": action,
-                "entity_type": entity_type,
-                "entity_id": str(entity_id),
-                "changes": changes,
-            },
-        )
-    except Exception:
-        # Audit log failures must never block the admin action: the
-        # underlying mutation has already been applied. Failing to
-        # record the audit trail is bad, failing the user request is
-        # worse. See audit #4 (2026-07-30).
-        logger.warning("Audit log failed (action already applied)", exc_info=True)

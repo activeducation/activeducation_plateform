@@ -9,31 +9,11 @@ from app.core.exceptions import NotFoundError
 from app.core.logging import get_logger
 from app.core.security import get_current_admin, get_current_super_admin
 from app.db.supabase_client import get_supabase_client
+from ._helpers import log_audit_action
 
 logger = get_logger("api.admin.settings")
 
 router = APIRouter()
-
-
-def _log_audit(admin, action, entity_type, entity_id, changes=None):
-    try:
-        db = get_supabase_client()
-        db.insert(
-            table="admin_audit_log",
-            data={
-                "admin_id": str(admin["user_id"]),
-                "action": action,
-                "entity_type": entity_type,
-                "entity_id": str(entity_id) if entity_id else None,
-                "changes": changes,
-            },
-        )
-    except Exception:
-        # Audit log failures must never block the admin action: the
-        # underlying mutation has already been applied. Failing to
-        # record the audit trail is bad, failing the user request is
-        # worse. See audit #4 (2026-07-30).
-        logger.warning("Audit log failed (action already applied)", exc_info=True)
 
 
 # =========================================================================
@@ -88,7 +68,7 @@ async def update_setting(
         )
         result = result.data
 
-    _log_audit(admin, "update", "setting", key, body)
+    log_audit_action(admin, "update", "setting", key, body)
     return result[0] if result else body
 
 
@@ -133,7 +113,7 @@ async def create_announcement(
     db = get_supabase_client()
     body["created_by"] = str(admin["user_id"])
     result = db.insert(table="announcements", data=body)
-    _log_audit(admin, "create", "announcement", result[0].get("id") if result else None, body)
+    log_audit_action(admin, "create", "announcement", result[0].get("id") if result else None, body)
     return result[0] if result else body
 
 
@@ -154,7 +134,7 @@ async def update_announcement(
     )
     if not result:
         raise NotFoundError("Annonce", str(announcement_id))
-    _log_audit(admin, "update", "announcement", announcement_id, body)
+    log_audit_action(admin, "update", "announcement", announcement_id, body)
     return result[0]
 
 
@@ -167,7 +147,7 @@ async def delete_announcement(
     """Supprimer une annonce."""
     db = get_supabase_client()
     db.delete(table="announcements", id_column="id", id_value=str(announcement_id))
-    _log_audit(admin, "delete", "announcement", announcement_id)
+    log_audit_action(admin, "delete", "announcement", announcement_id)
     return {"success": True, "message": "Annonce supprimee"}
 
 

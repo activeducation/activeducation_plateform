@@ -8,31 +8,11 @@ from app.core.exceptions import NotFoundError
 from app.core.logging import get_logger
 from app.core.security import get_current_admin
 from app.db.supabase_client import get_supabase_client
+from ._helpers import log_audit_action
 
 logger = get_logger("api.admin.gamification")
 
 router = APIRouter()
-
-
-def _log_audit(admin, action, entity_type, entity_id, changes=None):
-    try:
-        db = get_supabase_client()
-        db.insert(
-            table="admin_audit_log",
-            data={
-                "admin_id": str(admin["user_id"]),
-                "action": action,
-                "entity_type": entity_type,
-                "entity_id": str(entity_id) if entity_id else None,
-                "changes": changes,
-            },
-        )
-    except Exception:
-        # Audit log failures must never block the admin action: the
-        # underlying mutation has already been applied. Failing to
-        # record the audit trail is bad, failing the user request is
-        # worse. See audit #4 (2026-07-30).
-        logger.warning("Audit log failed (action already applied)", exc_info=True)
 
 
 # =========================================================================
@@ -59,7 +39,7 @@ async def create_achievement(
     """Creer un achievement."""
     db = get_supabase_client()
     result = db.insert(table="achievements", data=body)
-    _log_audit(admin, "create", "achievement", result[0].get("id") if result else None, body)
+    log_audit_action(admin, "create", "achievement", result[0].get("id") if result else None, body)
     return result[0] if result else body
 
 
@@ -77,7 +57,7 @@ async def update_achievement(
     )
     if not result:
         raise NotFoundError("Achievement", str(achievement_id))
-    _log_audit(admin, "update", "achievement", achievement_id, body)
+    log_audit_action(admin, "update", "achievement", achievement_id, body)
     return result[0]
 
 
@@ -90,7 +70,7 @@ async def delete_achievement(
     """Supprimer un achievement."""
     db = get_supabase_client()
     db.delete(table="achievements", id_column="id", id_value=str(achievement_id))
-    _log_audit(admin, "delete", "achievement", achievement_id)
+    log_audit_action(admin, "delete", "achievement", achievement_id)
     return {"success": True, "message": "Achievement supprime"}
 
 
@@ -199,7 +179,7 @@ async def award_xp_to_user(
         from app.db.supabase_client import get_admin_supabase_client
         db = get_admin_supabase_client()
         db.client.rpc("award_xp", {"p_user_id": str(user_id), "p_amount": amount}).execute()
-        _log_audit(admin, "award_xp", "user", user_id, {"amount": amount, "reason": reason})
+        log_audit_action(admin, "award_xp", "user", user_id, {"amount": amount, "reason": reason})
         return {"success": True, "xp_awarded": amount}
     except Exception as e:
         logger.error(f"award_xp error: {e}")
@@ -254,7 +234,7 @@ async def create_challenge(
     """Creer un challenge."""
     db = get_supabase_client()
     result = db.insert(table="challenges", data=body)
-    _log_audit(admin, "create", "challenge", result[0].get("id") if result else None, body)
+    log_audit_action(admin, "create", "challenge", result[0].get("id") if result else None, body)
     return result[0] if result else body
 
 
@@ -270,7 +250,7 @@ async def update_challenge(
     result = db.update(table="challenges", id_column="id", id_value=str(challenge_id), data=body)
     if not result:
         raise NotFoundError("Challenge", str(challenge_id))
-    _log_audit(admin, "update", "challenge", challenge_id, body)
+    log_audit_action(admin, "update", "challenge", challenge_id, body)
     return result[0]
 
 
@@ -283,5 +263,5 @@ async def delete_challenge(
     """Supprimer un challenge."""
     db = get_supabase_client()
     db.delete(table="challenges", id_column="id", id_value=str(challenge_id))
-    _log_audit(admin, "delete", "challenge", challenge_id)
+    log_audit_action(admin, "delete", "challenge", challenge_id)
     return {"success": True, "message": "Challenge supprime"}

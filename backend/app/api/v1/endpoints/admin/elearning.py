@@ -19,32 +19,11 @@ from app.schemas.admin.elearning import (
     ModuleUpdate,
 )
 from app.schemas.exam import ExamResponse, ExamUpsert
+from ._helpers import log_audit_action
 
 logger = get_logger("api.admin.elearning")
 
 router = APIRouter()
-
-
-def _log_audit(admin, action, entity_type, entity_id, changes=None):
-    try:
-        from app.db.supabase_client import get_admin_supabase_client
-
-        db = get_admin_supabase_client()
-        db.client.table("admin_audit_log").insert(
-            {
-                "admin_id": str(admin["user_id"]),
-                "action": action,
-                "entity_type": entity_type,
-                "entity_id": str(entity_id) if entity_id else None,
-                "changes": changes,
-            }
-        ).execute()
-    except Exception:
-        # Audit log failures must never block the admin action: the
-        # underlying mutation has already been applied. Failing to
-        # record the audit trail is bad, failing the user request is
-        # worse. See audit #4 (2026-07-30).
-        logger.warning("Audit log failed (action already applied)", exc_info=True)
 
 
 @router.get("/courses")
@@ -180,7 +159,7 @@ async def delete_course(
 
     db.client.table("elearning_courses").delete().eq("id", course_id).execute()
 
-    _log_audit(admin, "delete", "elearning_course", course_id)
+    log_audit_action(admin, "delete", "elearning_course", course_id)
     invalidate_cache("elearning:courses:*")
     invalidate_cache("elearning:course:*")
     return {"success": True, "message": "Cours supprimé"}
@@ -205,7 +184,7 @@ async def create_course(
         raise DatabaseError("Erreur lors de la création du cours", operation="insert_course")
 
     course = result.data[0]
-    _log_audit(admin, "create", "elearning_course", course["id"])
+    log_audit_action(admin, "create", "elearning_course", course["id"])
     invalidate_cache("elearning:courses:*")
     return course
 
@@ -231,7 +210,7 @@ async def update_course(
 
     result = db.client.table("elearning_courses").update(update_data).eq("id", course_id).execute()
     course = result.data[0]
-    _log_audit(admin, "update", "elearning_course", course_id, update_data)
+    log_audit_action(admin, "update", "elearning_course", course_id, update_data)
 
     invalidate_cache("elearning:courses:*")
     invalidate_cache("elearning:course:*")
@@ -273,7 +252,7 @@ async def create_module(
 
         raise DatabaseError("Erreur lors de la création du module", operation="insert_module")
 
-    _log_audit(admin, "create", "elearning_module", result.data[0]["id"])
+    log_audit_action(admin, "create", "elearning_module", result.data[0]["id"])
     return result.data[0]
 
 
@@ -297,7 +276,7 @@ async def update_module(
         return existing.data[0]
 
     result = db.client.table("elearning_modules").update(update_data).eq("id", module_id).execute()
-    _log_audit(admin, "update", "elearning_module", module_id, update_data)
+    log_audit_action(admin, "update", "elearning_module", module_id, update_data)
     return result.data[0]
 
 
@@ -317,7 +296,7 @@ async def delete_module(
 
     db.client.table("elearning_modules").delete().eq("id", module_id).execute()
 
-    _log_audit(admin, "delete", "elearning_module", module_id)
+    log_audit_action(admin, "delete", "elearning_module", module_id)
     return {"success": True, "message": "Module supprimé"}
 
 
@@ -383,7 +362,7 @@ async def create_lesson(
             {"lesson_id": lesson_id, "content_data": content_data}
         ).execute()
 
-    _log_audit(admin, "create", "elearning_lesson", lesson_id)
+    log_audit_action(admin, "create", "elearning_lesson", lesson_id)
     return result.data[0]
 
 
@@ -428,7 +407,7 @@ async def update_lesson(
                 {"lesson_id": lesson_id, "content_data": content_data}
             ).execute()
 
-    _log_audit(admin, "update", "elearning_lesson", lesson_id, update_data)
+    log_audit_action(admin, "update", "elearning_lesson", lesson_id, update_data)
     return result.data[0]
 
 
@@ -474,7 +453,7 @@ async def delete_lesson(
 
     db.client.table("elearning_lessons").delete().eq("id", lesson_id).execute()
 
-    _log_audit(admin, "delete", "elearning_lesson", lesson_id)
+    log_audit_action(admin, "delete", "elearning_lesson", lesson_id)
     return {"success": True, "message": "Leçon supprimée"}
 
 
@@ -661,7 +640,7 @@ async def duplicate_course(
                 }
             ).execute()
 
-    _log_audit(admin, "duplicate", "elearning_course", new_course_id)
+    log_audit_action(admin, "duplicate", "elearning_course", new_course_id)
     invalidate_cache("elearning:courses:*")
     return {"id": new_course_id, "title": new_title, "message": "Cours dupliqué avec succès"}
 
@@ -684,7 +663,7 @@ async def reorder_modules(
         db.client.table("elearning_modules").update({"display_order": i}).eq("id", mid).eq(
             "course_id", course_id
         ).execute()
-    _log_audit(admin, "reorder", "elearning_module", course_id, {"count": len(module_ids)})
+    log_audit_action(admin, "reorder", "elearning_module", course_id, {"count": len(module_ids)})
     return {"success": True}
 
 
@@ -701,7 +680,7 @@ async def reorder_lessons(
         db.client.table("elearning_lessons").update({"display_order": i}).eq("id", lid).eq(
             "module_id", module_id
         ).execute()
-    _log_audit(admin, "reorder", "elearning_lesson", module_id, {"count": len(lesson_ids)})
+    log_audit_action(admin, "reorder", "elearning_lesson", module_id, {"count": len(lesson_ids)})
     return {"success": True}
 
 
@@ -730,7 +709,7 @@ async def upsert_course_exam(
     questions = [q.model_dump() for q in body.questions]
     data = body.model_dump(exclude={"questions"})
     exam = get_exam_repository().upsert_exam(course_id, data, questions)
-    _log_audit(admin, "upsert", "course_exam", course_id, {"questions": len(questions)})
+    log_audit_action(admin, "upsert", "course_exam", course_id, {"questions": len(questions)})
     return exam
 
 
@@ -741,5 +720,5 @@ async def delete_course_exam(
 ):
     """Supprime l'examen d'un cours."""
     get_exam_repository().delete_exam(course_id)
-    _log_audit(admin, "delete", "course_exam", course_id, None)
+    log_audit_action(admin, "delete", "course_exam", course_id, None)
     return None

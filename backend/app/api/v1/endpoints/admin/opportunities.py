@@ -15,6 +15,8 @@ from app.schemas.admin.opportunities import (
     OpportunityUpdate,
 )
 
+from ._helpers import log_audit_action
+
 logger = get_logger("api.admin.opportunities")
 
 router = APIRouter()
@@ -24,28 +26,6 @@ def _get_repo():
     from app.repositories.admin.opportunities_repository import get_opportunities_admin_repository
 
     return get_opportunities_admin_repository()
-
-
-def _log_audit(admin, action, entity_type, entity_id, changes=None):
-    try:
-        from app.db.supabase_client import get_admin_supabase_client
-
-        db = get_admin_supabase_client()
-        db.client.table("admin_audit_log").insert(
-            {
-                "admin_id": str(admin["user_id"]),
-                "action": action,
-                "entity_type": entity_type,
-                "entity_id": str(entity_id) if entity_id else None,
-                "changes": changes,
-            }
-        ).execute()
-    except Exception:
-        # Audit log failures must never block the admin action: the
-        # underlying mutation has already been applied. Failing to
-        # record the audit trail is bad, failing the user request is
-        # worse. See audit #4 (2026-07-30).
-        logger.warning("Audit log failed (action already applied)", exc_info=True)
 
 
 @router.get("", response_model=OpportunityListResponse)
@@ -86,7 +66,7 @@ async def create_opportunity(
     """Créer une nouvelle opportunité."""
     repo = _get_repo()
     opportunity = repo.create_opportunity(data, admin["user_id"])
-    _log_audit(admin, "create", "opportunity", opportunity.id)
+    log_audit_action(admin, "create", "opportunity", opportunity.id)
     return opportunity
 
 
@@ -99,7 +79,7 @@ async def update_opportunity(
     """Mettre à jour une opportunité."""
     repo = _get_repo()
     opportunity = repo.update_opportunity(opportunity_id, data)
-    _log_audit(admin, "update", "opportunity", opportunity_id, data.model_dump(exclude_unset=True))
+    log_audit_action(admin, "update", "opportunity", opportunity_id, data.model_dump(exclude_unset=True))
     return opportunity
 
 
@@ -111,7 +91,7 @@ async def delete_opportunity(
     """Supprimer une opportunité."""
     repo = _get_repo()
     repo.delete_opportunity(opportunity_id)
-    _log_audit(admin, "delete", "opportunity", opportunity_id)
+    log_audit_action(admin, "delete", "opportunity", opportunity_id)
     return {"success": True, "message": "Opportunité supprimée"}
 
 
@@ -125,7 +105,7 @@ async def toggle_publish(
     repo = _get_repo()
     opportunity = repo.toggle_publish(opportunity_id, is_published)
     action = "publish" if is_published else "unpublish"
-    _log_audit(admin, action, "opportunity", opportunity_id)
+    log_audit_action(admin, action, "opportunity", opportunity_id)
     status = "publiée" if is_published else "masquée"
     return {"success": True, "message": f"Opportunité {status}", "opportunity": opportunity}
 
@@ -140,6 +120,6 @@ async def toggle_featured(
     repo = _get_repo()
     opportunity = repo.toggle_featured(opportunity_id, is_featured)
     action = "feature" if is_featured else "unfeature"
-    _log_audit(admin, action, "opportunity", opportunity_id)
+    log_audit_action(admin, action, "opportunity", opportunity_id)
     status = "envedette" if is_featured else "retirée des vedettes"
     return {"success": True, "message": f"Opportunité {status}", "opportunity": opportunity}

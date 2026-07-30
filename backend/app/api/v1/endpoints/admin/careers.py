@@ -7,6 +7,8 @@ from fastapi import APIRouter, Depends, Query, Request
 
 from app.core.logging import get_logger
 from app.core.security import get_current_admin, get_current_super_admin
+
+from ._helpers import log_audit_action
 from app.repositories.admin.careers_repository import get_careers_admin_repository
 from app.schemas.admin.careers import (
     CareerCreate,
@@ -21,29 +23,6 @@ from app.schemas.admin.careers import (
 logger = get_logger("api.admin.careers")
 
 router = APIRouter()
-
-
-def _log_audit(admin, action, entity_type, entity_id, changes=None):
-    try:
-        from app.db.supabase_client import get_supabase_client
-
-        db = get_supabase_client()
-        db.insert(
-            table="admin_audit_log",
-            data={
-                "admin_id": str(admin["user_id"]),
-                "action": action,
-                "entity_type": entity_type,
-                "entity_id": str(entity_id) if entity_id else None,
-                "changes": changes,
-            },
-        )
-    except Exception:
-        # Audit log failures must never block the admin action: the
-        # underlying mutation has already been applied. Failing to
-        # record the audit trail is bad, failing the user request is
-        # worse. See audit #4 (2026-07-30).
-        logger.warning("Audit log failed (action already applied)", exc_info=True)
 
 
 # =========================================================================
@@ -70,7 +49,7 @@ async def create_sector(
     """Creer un secteur."""
     repo = get_careers_admin_repository()
     result = await repo.create_sector(body)
-    _log_audit(admin, "create", "sector", result.get("id"), body.model_dump())
+    log_audit_action(admin, "create", "sector", result.get("id"), body.model_dump())
     return result
 
 
@@ -84,7 +63,7 @@ async def update_sector(
     """Modifier un secteur."""
     repo = get_careers_admin_repository()
     result = await repo.update_sector(sector_id, body)
-    _log_audit(admin, "update", "sector", sector_id, body.model_dump(exclude_unset=True))
+    log_audit_action(admin, "update", "sector", sector_id, body.model_dump(exclude_unset=True))
     return result
 
 
@@ -97,7 +76,7 @@ async def delete_sector(
     """Supprimer un secteur (super_admin)."""
     repo = get_careers_admin_repository()
     await repo.delete_sector(sector_id)
-    _log_audit(admin, "delete", "sector", sector_id)
+    log_audit_action(admin, "delete", "sector", sector_id)
     return {"success": True, "message": "Secteur supprime"}
 
 
@@ -149,7 +128,7 @@ async def create_career(
     """Creer une carriere."""
     repo = get_careers_admin_repository()
     result = await repo.create_career(body)
-    _log_audit(admin, "create", "career", result.id, body.model_dump())
+    log_audit_action(admin, "create", "career", result.id, body.model_dump())
     return result
 
 
@@ -163,7 +142,7 @@ async def update_career(
     """Modifier une carriere."""
     repo = get_careers_admin_repository()
     result = await repo.update_career(career_id, body)
-    _log_audit(admin, "update", "career", career_id, body.model_dump(exclude_unset=True))
+    log_audit_action(admin, "update", "career", career_id, body.model_dump(exclude_unset=True))
     return result
 
 
@@ -176,5 +155,5 @@ async def delete_career(
     """Supprimer une carriere (super_admin)."""
     repo = get_careers_admin_repository()
     await repo.delete_career(career_id)
-    _log_audit(admin, "delete", "career", career_id)
+    log_audit_action(admin, "delete", "career", career_id)
     return {"success": True, "message": "Carriere supprimee"}
