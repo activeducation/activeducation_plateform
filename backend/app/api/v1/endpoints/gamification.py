@@ -65,11 +65,17 @@ async def get_my_gamification(
         id_value=user_id_str,
     )
 
-    achievements = db.fetch_all(
-        table="user_achievements",
-        filters={"user_id": user_id_str},
-        order_by="earned_at.desc",
-    )
+    try:
+        achievements = db.fetch_all(
+            table="user_achievements",
+            filters={"user_id": user_id_str},
+            order_by="earned_at.desc",
+        )
+    except Exception:
+        achievements = db.fetch_all(
+            table="user_achievements",
+            filters={"user_id": user_id_str},
+        )
 
     user_challenges = db.fetch_all(
         table="user_challenges",
@@ -181,6 +187,68 @@ async def get_leaderboard(
         }
         for p in (profiles or [])
     ]
+
+    _cache().set(cache_key, data, ttl=TTL_LEADERBOARD)
+    return data
+
+
+@router.get("/leaderboard/weekly")
+@standard_limit()
+async def get_leaderboard_weekly(
+    request: Request,
+    user_id: str = Depends(get_current_user_id),
+    limit: int = Query(10, ge=1, le=50),
+):
+    """
+    Classement hebdomadaire : utilisateurs actifs sur les 7 derniers jours.
+    """
+    from datetime import datetime, timedelta, timezone
+
+    cache_key = f"gamification:leaderboard:weekly:l{limit}"
+    cached = _cache().get(cache_key)
+    if cached is not None:
+        return cached
+
+    from app.db.supabase_client import get_admin_supabase_client
+
+    db = get_admin_supabase_client()
+    week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+
+    try:
+        res = (
+            db.client.table("gamification_profiles")
+            .select("user_id, total_xp, current_level, current_streak")
+            .gte("last_active_at", week_ago)
+            .order("total_xp", desc=True)
+            .limit(limit)
+            .execute()
+        )
+        user_ids = [row["user_id"] for row in (res.data or [])]
+        names_map = {}
+        if user_ids:
+            names_res = (
+                db.client.table("user_profiles")
+                .select("id, display_name, first_name, last_name, avatar_url")
+                .in_("id", user_ids)
+                .execute()
+            )
+            for u in names_res.data or []:
+                names_map[u["id"]] = u
+
+        data = []
+        for row in res.data or []:
+            profile = names_map.get(row["user_id"], {})
+            data.append({
+                "display_name": profile.get("display_name")
+                    or f"{profile.get('first_name', '')} {profile.get('last_name', '')}".strip()
+                    or "Utilisateur",
+                "avatar_url": profile.get("avatar_url"),
+                "total_xp": row.get("total_xp", 0),
+                "current_level": row.get("current_level", 1),
+                "weekly_xp": row.get("total_xp", 0),  # approximation
+            })
+    except Exception:
+        data = []
 
     _cache().set(cache_key, data, ttl=TTL_LEADERBOARD)
     return data
