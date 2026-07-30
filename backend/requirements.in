@@ -38,6 +38,9 @@ python-dotenv>=1.0.1
 # Monitoring
 sentry-sdk[fastapi]>=2.0.0
 
+# PDF Generation (certificats)
+fpdf2>=2.8.0
+
 # Testing (dev only)
 pytest>=8.0.2
 pytest-asyncio>=0.23.5
