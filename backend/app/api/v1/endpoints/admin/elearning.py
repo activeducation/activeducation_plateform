@@ -480,22 +480,50 @@ async def delete_lesson(
 
 @router.get("/schools")
 async def list_schools_with_courses(
+    search: Optional[str] = Query(None, description="Recherche par nom (ILIKE)"),
+    page: int = Query(1, ge=1, description="Numero de page"),
+    per_page: int = Query(50, ge=1, le=100, description="Resultats par page"),
     admin: dict = Depends(get_current_admin),
 ):
-    """Liste des écoles (sans filtre cours, car school_id n'existe pas en base)."""
+    """Liste paginee des ecoles actives pour le selecteur de cours.
+
+    Audit #13 (2026-07-30) : l'ancien endpoint faisait un SELECT * FROM
+    schools ORDER BY name, ce qui retournait toutes les ecoles (actives
+    + desactivees) d'un coup. Avec ~100 ecoles c'est OK, mais le contrat
+    de pagination est attendu par le frontend (memes query params que les
+    autres listes admin) et le filtre is_active evitait de proposer une
+    ecole archivee dans le selecteur.
+
+    Fix :
+    - Filtre is_active=True par defaut
+    - Pagination avec cap a 100 (defaut 50, adapte aux selecteurs)
+    - Recherche par nom optionnelle (ILIKE %search%)
+    - Reponse { items, total, page, per_page } pour coherence
+    """
     db = get_admin_supabase_client()
+    offset = (page - 1) * per_page
 
-    sch_res = db.client.table("schools").select("id, name, city").order("name").execute()
+    query = db.client.table("schools").select("id, name, city", count="exact").eq("is_active", True)
+    if search:
+        query = query.ilike("name", f"%{search}%")
 
-    return [
+    result = query.order("name").range(offset, offset + per_page - 1).execute()
+
+    items = [
         {
             "id": s["id"],
             "name": s["name"],
             "city": s.get("city"),
             "courses_count": 0,
         }
-        for s in (sch_res.data or [])
+        for s in (result.data or [])
     ]
+    return {
+        "items": items,
+        "total": result.count or len(items),
+        "page": page,
+        "per_page": per_page,
+    }
 
 
 # ============================================================================

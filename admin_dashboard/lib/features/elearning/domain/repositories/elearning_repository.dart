@@ -13,7 +13,11 @@ abstract class ElearningRepository {
 
   Future<void> deleteCourse(String id);
 
-  Future<List<SchoolWithCourses>> getSchoolsWithCourses();
+  Future<List<SchoolWithCourses>> getSchoolsWithCourses({
+    String? search,
+    int page = 1,
+    int perPage = 50,
+  });
 }
 
 class SchoolWithCourses {

@@ -22,8 +22,8 @@ class ElearningRepositoryImpl implements ElearningRepository {
         'page': page,
         'per_page': perPage,
         if (search?.isNotEmpty == true) 'search': search,
-        'school_id': ?schoolId,
-        'is_published': ?isPublished,
+        if (schoolId != null) 'school_id': schoolId,
+        if (isPublished != null) 'is_published': isPublished,
       };
       final response = await _apiClient.get<Map<String, dynamic>>(
         ApiEndpoints.adminElearningCourses,
@@ -61,12 +61,23 @@ class ElearningRepositoryImpl implements ElearningRepository {
   }
 
   @override
-  Future<List<SchoolWithCourses>> getSchoolsWithCourses() async {
+  Future<List<SchoolWithCourses>> getSchoolsWithCourses({
+    String? search,
+    int page = 1,
+    int perPage = 50,
+  }) async {
     try {
-      final response = await _apiClient.get<List<dynamic>>(
+      final response = await _apiClient.get<Map<String, dynamic>>(
         ApiEndpoints.adminElearningSchools,
+        queryParameters: {
+          if (search != null && search.isNotEmpty) 'search': search,
+          'page': page,
+          'per_page': perPage,
+        },
       );
-      return (response.data ?? [])
+      final data = response.data ?? const {};
+      final items = (data['items'] as List?) ?? const [];
+      return items
           .map((e) => SchoolWithCourses.fromJson(e as Map<String, dynamic>))
           .toList();
     } catch (e) {
