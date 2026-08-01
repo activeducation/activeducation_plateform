@@ -78,7 +78,7 @@ extension _ProfileCards on _ProfilePageState {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text('🔥', style: TextStyle(fontSize: 14)),
+                        const Icon(Icons.local_fire_department_rounded, size: 14, color: AppColors.goldDark),
                         const SizedBox(width: 4),
                         Text(
                           '${profile.stats.currentStreak}j',
@@ -176,9 +176,10 @@ extension _ProfileCards on _ProfilePageState {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
+                        Icon(
                           achievement.icon,
-                          style: const TextStyle(fontSize: 14),
+                          size: 14,
+                          color: AppColors.goldDark,
                         ),
                         const SizedBox(width: 6),
                         Text(

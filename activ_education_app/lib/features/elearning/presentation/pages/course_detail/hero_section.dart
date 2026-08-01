@@ -16,7 +16,7 @@ class _HeroAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SliverAppBar(
-      expandedHeight: 248,
+      expandedHeight: 200,
       pinned: true,
       backgroundColor: AppColors.darkBg,
       surfaceTintColor: Colors.transparent,
@@ -99,8 +99,8 @@ class _HeroBackground extends StatelessWidget {
             top: -40,
             right: -30,
             child: Container(
-              width: 200,
-              height: 200,
+              width: 160,
+              height: 160,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: color.withValues(alpha: 0.12),
@@ -111,8 +111,8 @@ class _HeroBackground extends StatelessWidget {
             bottom: -20,
             left: -20,
             child: Container(
-              width: 120,
-              height: 120,
+              width: 100,
+              height: 100,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: Colors.white.withValues(alpha: 0.04),
@@ -162,7 +162,7 @@ class _HeroBottomContent extends StatelessWidget {
                     Text(
                       course.category,
                       style: const TextStyle(
-                        fontSize: 11,
+                        fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
                         letterSpacing: 0.2,
@@ -188,7 +188,7 @@ class _HeroBottomContent extends StatelessWidget {
                       Text(
                         'Inscrit',
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 12,
                           fontWeight: FontWeight.w700,
                           color: Colors.white,
                         ),

@@ -1,4 +1,5 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../core/constants/app_colors.dart';
 import '../features/auth/presentation/pages/splash_page.dart';
@@ -25,6 +26,10 @@ import '../features/elearning/presentation/pages/elearning_catalog_page.dart';
 import '../features/elearning/presentation/pages/course_detail_page.dart';
 import '../features/elearning/presentation/pages/lesson_page.dart';
 import '../features/elearning/presentation/pages/course_exam_page.dart';
+import '../features/elearning/presentation/pages/saga_page.dart';
+import '../features/elearning/presentation/bloc/exam_bloc.dart';
+import '../features/elearning/presentation/pages/success_page.dart';
+import '../features/elearning/presentation/pages/leaderboard_page.dart';
 import '../features/mentors/presentation/pages/mentors_page.dart';
 import '../features/search/presentation/search_page.dart';
 import '../features/partner/presentation/pages/create_organization_page.dart';
@@ -166,8 +171,25 @@ class AppRouter {
           ),
           GoRoute(
             path: '/elearning/course/:id/exam',
-            builder: (context, state) =>
-                CourseExamPage(courseId: state.pathParameters['id']!),
+            builder: (context, state) => BlocProvider(
+              create: (_) => ExamBloc(),
+              child: CourseExamPage(courseId: state.pathParameters['id']!),
+            ),
+          ),
+          GoRoute(
+            path: '/elearning/saga',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: SagaPage()),
+          ),
+          GoRoute(
+            path: '/elearning/success',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: SuccessPage()),
+          ),
+          GoRoute(
+            path: '/elearning/leaderboard',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: LeaderboardPage()),
           ),
           GoRoute(
             path: '/search',

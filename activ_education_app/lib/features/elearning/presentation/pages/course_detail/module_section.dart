@@ -362,7 +362,7 @@ class _LessonRow extends StatelessWidget {
                           child: const Text(
                             'Gratuit',
                             style: TextStyle(
-                              fontSize: 9,
+                              fontSize: 10,
                               fontWeight: FontWeight.w700,
                               color: AppColors.success,
                             ),

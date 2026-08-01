@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_typography.dart';
 
 class StatChip extends StatelessWidget {
-  final String icon;
+  final IconData icon;
   final String value;
   final String label;
   final Color valueColor;
@@ -23,7 +23,7 @@ class StatChip extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(icon, style: const TextStyle(fontSize: 14)),
+              Icon(icon, size: 14, color: valueColor),
               const SizedBox(width: 5),
               Text(
                 value,

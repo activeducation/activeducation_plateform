@@ -59,29 +59,33 @@ class GradientButton extends StatelessWidget {
             padding: EdgeInsets.symmetric(
               horizontal: isSmall ? AppSpacing.md : AppSpacing.buttonPaddingHorizontal,
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: width == null ? MainAxisSize.max : MainAxisSize.min,
-              children: [
-                if (icon != null) ...[
-                  Icon(icon, color: Colors.white, size: isSmall ? 16 : 20),
-                  const SizedBox(width: AppSpacing.xs),
-                ],
-                Text(
-                  text,
-                  style: isSmall
-                      ? AppTypography.labelMedium.copyWith(color: Colors.white, fontWeight: FontWeight.w600)
-                      : AppTypography.buttonText,
-                ),
-                if (showArrow) ...[
-                  const SizedBox(width: AppSpacing.sm),
-                  Icon(
-                    Icons.arrow_forward,
-                    color: Colors.white,
-                    size: isSmall ? 16 : 20,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              clipBehavior: Clip.none,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: width == null ? MainAxisSize.max : MainAxisSize.min,
+                children: [
+                  if (icon != null) ...[
+                    Icon(icon, color: Colors.white, size: isSmall ? 16 : 20),
+                    const SizedBox(width: AppSpacing.xs),
+                  ],
+                  Text(
+                    text,
+                    style: isSmall
+                        ? AppTypography.labelMedium.copyWith(color: Colors.white, fontWeight: FontWeight.w600)
+                        : AppTypography.buttonText,
                   ),
+                  if (showArrow) ...[
+                    const SizedBox(width: AppSpacing.sm),
+                    Icon(
+                      Icons.arrow_forward,
+                      color: Colors.white,
+                      size: isSmall ? 16 : 20,
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),

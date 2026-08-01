@@ -313,9 +313,10 @@ class _SectionTransition extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  Text(
+                  Icon(
                     _getSectionEmoji(),
-                    style: const TextStyle(fontSize: 48),
+                    size: 48,
+                    color: AppColors.accent,
                   ).animate().scale(
                     begin: const Offset(0, 0),
                     end: const Offset(1, 1),
@@ -371,8 +372,17 @@ class _SectionTransition extends StatelessWidget {
     );
   }
 
-  String _getSectionEmoji() {
-    final emojis = ['🎯', '🧠', '💎', '🪞', '📚', '🚀', '⚡', '🎨'];
-    return emojis[sectionIndex % emojis.length];
+  IconData _getSectionEmoji() {
+    final icons = <IconData>[
+      Icons.track_changes_rounded,
+      Icons.psychology_rounded,
+      Icons.diamond_rounded,
+      Icons.face_rounded,
+      Icons.menu_book_rounded,
+      Icons.rocket_launch_rounded,
+      Icons.bolt_rounded,
+      Icons.palette_rounded,
+    ];
+    return icons[sectionIndex % icons.length];
   }
 }

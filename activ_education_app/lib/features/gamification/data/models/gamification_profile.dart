@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 class GamificationStats {
   final int totalXp;
   final int currentLevel;
@@ -74,14 +76,14 @@ class AchievementModel {
     }
   }
 
-  String get icon {
-    if (achievementType.contains('streak')) return '🔥';
-    if (achievementType.contains('test')) return '📝';
-    if (achievementType.contains('course')) return '📚';
-    if (achievementType.contains('mentor')) return '👨‍🏫';
-    if (achievementType.contains('career')) return '💼';
-    if (achievementType.contains('school')) return '🏫';
-    return '🏆';
+  IconData get icon {
+    if (achievementType.contains('streak')) return Icons.local_fire_department_rounded;
+    if (achievementType.contains('test')) return Icons.assignment_rounded;
+    if (achievementType.contains('course')) return Icons.menu_book_rounded;
+    if (achievementType.contains('mentor')) return Icons.school_rounded;
+    if (achievementType.contains('career')) return Icons.work_history_rounded;
+    if (achievementType.contains('school')) return Icons.business_rounded;
+    return Icons.emoji_events_rounded;
   }
 
   factory AchievementModel.fromJson(Map<String, dynamic> json) {

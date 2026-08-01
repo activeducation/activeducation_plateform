@@ -86,7 +86,7 @@ class _StatItem extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                fontSize: 10.5,
+                fontSize: 12,
                 fontWeight: FontWeight.w700,
                 color: color,
                 letterSpacing: 0.1,
@@ -262,13 +262,21 @@ class _ProgressBanner extends StatelessWidget {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    Text(
-                      progressPct == 100
-                          ? 'Cours terminé 🎉'
-                          : 'Continuez votre apprentissage',
-                      style: AppTypography.labelSmall.copyWith(
-                        color: color.withValues(alpha: 0.7),
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          progressPct == 100
+                              ? 'Cours terminé'
+                              : 'Continuez votre apprentissage',
+                          style: AppTypography.labelSmall.copyWith(
+                            color: color.withValues(alpha: 0.7),
+                          ),
+                        ),
+                        if (progressPct == 100) ...[
+                          const SizedBox(width: 4),
+                          const Icon(Icons.celebration_rounded, size: 14, color: AppColors.xpGold),
+                        ],
+                      ],
                     ),
                   ],
                 ),

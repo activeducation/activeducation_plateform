@@ -77,21 +77,21 @@ class HeroHeader extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           StatChip(
-            icon: '⭐',
+            icon: Icons.star_rounded,
             value: 'Niv. --',
             label: 'NIVEAU',
             valueColor: AppColors.xpGold,
           ),
           StatDivider(),
           StatChip(
-            icon: '🔥',
+            icon: Icons.local_fire_department_rounded,
             value: '--',
             label: 'STREAK',
             valueColor: AppColors.streakFire,
           ),
           StatDivider(),
           StatChip(
-            icon: '⚡',
+            icon: Icons.bolt_rounded,
             value: '--',
             label: 'XP',
             valueColor: AppColors.xpBar,
@@ -121,21 +121,21 @@ class HeroHeader extends StatelessWidget {
           Row(
             children: [
               StatChip(
-                icon: '⭐',
+                icon: Icons.star_rounded,
                 value: 'Niv. $level',
                 label: 'NIVEAU',
                 valueColor: AppColors.xpGold,
               ),
               StatDivider(),
               StatChip(
-                icon: '🔥',
+                icon: Icons.local_fire_department_rounded,
                 value: '$streak',
                 label: 'STREAK',
                 valueColor: AppColors.streakFire,
               ),
               StatDivider(),
               StatChip(
-                icon: '⚡',
+                icon: Icons.bolt_rounded,
                 value: '$xp',
                 label: 'XP',
                 valueColor: AppColors.xpBar,
@@ -223,11 +223,21 @@ class HeroHeader extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'Bonjour, $firstName 👋',
-                              style: AppTypography.heroTitle.copyWith(
-                                fontSize: 22,
-                              ),
+                            Row(
+                              children: [
+                                Text(
+                                  'Bonjour, $firstName',
+                                  style: AppTypography.heroTitle.copyWith(
+                                    fontSize: 22,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                const Icon(
+                                  Icons.waving_hand_rounded,
+                                  size: 22,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 3),
                             Text(

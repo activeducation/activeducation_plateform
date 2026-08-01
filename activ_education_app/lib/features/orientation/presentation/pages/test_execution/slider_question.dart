@@ -48,12 +48,12 @@ class _SliderQuestionState extends State<_SliderQuestion> {
     }
   }
 
-  String _getDynamicEmoji() {
-    if (_value < 20) return '😎';
-    if (_value < 40) return '🤔';
-    if (_value < 60) return '😐';
-    if (_value < 80) return '🧐';
-    return '🔥';
+  IconData _getDynamicEmoji() {
+    if (_value < 20) return Icons.sentiment_very_satisfied_rounded;
+    if (_value < 40) return Icons.sentiment_neutral_rounded;
+    if (_value < 60) return Icons.sentiment_dissatisfied_rounded;
+    if (_value < 80) return Icons.psychology_rounded;
+    return Icons.local_fire_department_rounded;
   }
 
   @override
@@ -64,9 +64,10 @@ class _SliderQuestionState extends State<_SliderQuestion> {
     return Column(
       children: [
         const SizedBox(height: AppSpacing.xl),
-        Text(
+        Icon(
           _getDynamicEmoji(),
-          style: const TextStyle(fontSize: 48),
+          size: 48,
+          color: AppColors.primary,
         ).animate(
           key: ValueKey(_getDynamicEmoji()),
         ).scale(

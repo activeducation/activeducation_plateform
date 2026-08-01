@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
 import '../../domain/entities/orientation_test.dart';
 
 // Events
@@ -124,7 +125,7 @@ class TestSessionReadyToSubmit extends TestSessionState {
 
 class SectionInfo {
   final String title;
-  final String emoji;
+  final IconData emoji;
   final int startIndex;
   final int endIndex; // inclusive
   final String feedbackTemplate;
@@ -277,19 +278,19 @@ class TestSessionBloc extends Bloc<TestSessionEvent, TestSessionState> {
     return sections;
   }
 
-  String _getSectionEmoji(String? title) {
-    if (title == null) return '📝';
+  IconData _getSectionEmoji(String? title) {
+    if (title == null) return Icons.assignment_rounded;
     final lower = title.toLowerCase();
-    if (lower.contains('intérêt') || lower.contains('riasec')) return '🎯';
-    if (lower.contains('intelligence')) return '🧠';
-    if (lower.contains('valeur')) return '💎';
-    if (lower.contains('personnalité') || lower.contains('mbti')) return '🪞';
-    if (lower.contains('aptitude')) return '📚';
-    if (lower.contains('entrepreneur')) return '🚀';
-    if (lower.contains('scénario')) return '🎬';
-    if (lower.contains('préférence')) return '⚡';
-    if (lower.contains('style')) return '🎨';
-    return '📝';
+    if (lower.contains('intérêt') || lower.contains('riasec')) return Icons.track_changes_rounded;
+    if (lower.contains('intelligence')) return Icons.psychology_rounded;
+    if (lower.contains('valeur')) return Icons.diamond_rounded;
+    if (lower.contains('personnalité') || lower.contains('mbti')) return Icons.face_rounded;
+    if (lower.contains('aptitude')) return Icons.menu_book_rounded;
+    if (lower.contains('entrepreneur')) return Icons.rocket_launch_rounded;
+    if (lower.contains('scénario')) return Icons.movie_rounded;
+    if (lower.contains('préférence')) return Icons.bolt_rounded;
+    if (lower.contains('style')) return Icons.palette_rounded;
+    return Icons.assignment_rounded;
   }
 
   String _getSectionFeedbackTemplate(String? title) {

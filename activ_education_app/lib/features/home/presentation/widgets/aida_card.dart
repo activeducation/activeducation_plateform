@@ -114,12 +114,21 @@ class AidaCard extends StatelessWidget {
                   bottomRight: Radius.circular(16),
                 ),
               ),
-              child: Text(
-                'Salut ! Je suis là pour t\'aider à trouver ta voie. Pose-moi tes questions 💬',
-                style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.primaryDark,
-                  height: 1.5,
-                ),
+              child: Row(
+                children: [
+                  const Icon(Icons.chat_bubble_outline_rounded,
+                      size: 16, color: AppColors.primaryDark),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Salut ! Je suis là pour t\'aider à trouver ta voie. Pose-moi tes questions',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.primaryDark,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 10),

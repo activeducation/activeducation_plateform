@@ -145,7 +145,11 @@ class ElearningRemoteDataSourceImpl implements ElearningRemoteDataSource {
       }
 
       return coursesList
-          .map((json) => CourseModel.fromJson(json as Map<String, dynamic>))
+          .map((json) {
+            final item = json as Map<String, dynamic>;
+            final courseJson = item['course'] as Map<String, dynamic>;
+            return CourseModel.fromJson(courseJson);
+          })
           .toList();
     } on DioException catch (e) {
       throw ElearningApiException(
