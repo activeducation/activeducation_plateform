@@ -58,6 +58,11 @@ class ApiEndpoints {
   static const String adminChallenges = '/admin/gamification/challenges';
   static String adminChallengeById(String id) =>
       '/admin/gamification/challenges/$id';
+  static const String adminGamificationUsers = '/admin/gamification/users';
+  static String adminGamificationUserAwardXp(String id) =>
+      '/admin/gamification/users/$id/award-xp';
+  static String adminGamificationUserAchievements(String id) =>
+      '/admin/gamification/users/$id/achievements';
 
   // Mentors
   static const String adminMentors = '/admin/mentors';
@@ -92,10 +97,13 @@ class ApiEndpoints {
   // E-Learning Modules
   static String adminElearningModule(String id) => '/admin/elearning/modules/$id';
   static String adminElearningModuleLessons(String id) => '/admin/elearning/modules/$id/lessons';
+  static String adminElearningReorderModules(String courseId) => '/admin/elearning/courses/$courseId/modules/reorder';
+  static String adminElearningReorderLessons(String moduleId) => '/admin/elearning/modules/$moduleId/lessons/reorder';
 
   // E-Learning Lessons
   static String adminElearningLesson(String id) => '/admin/elearning/lessons/$id';
   static String adminElearningCourseExam(String id) => '/admin/elearning/courses/$id/exam';
+  static String adminElearningCourseDuplicate(String id) => '/admin/elearning/courses/$id/duplicate';
 
   // Opportunities
   static const String adminOpportunities = '/admin/opportunities';
@@ -124,4 +132,9 @@ class ApiEndpoints {
 
   // Partner
   static String adminApproveOrg(String id) => '/admin/partner/organizations/$id/approve';
+
+  // Mentor Contact Requests
+  static const String adminMentorContactRequests = '/admin/mentor-contact-requests';
+  static String adminMentorContactRequestRead(String id) => '/admin/mentor-contact-requests/$id/read';
+  static String adminMentorContactRequestById(String id) => '/admin/mentor-contact-requests/$id';
 }

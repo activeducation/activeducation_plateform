@@ -7,7 +7,13 @@ import '../../../core/di/injection_container.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/widgets/feedback/admin_snackbar.dart';
 
-/// Editeur d'examen QCM d'un cours (questions, score de passage, badge).
+const _questionTypes = [
+  {'value': 'single_choice', 'label': 'Choix unique'},
+  {'value': 'multiple_choice', 'label': 'Choix multiples'},
+  {'value': 'text_input', 'label': 'Réponse libre'},
+  {'value': 'ordering', 'label': 'Ordonnancement'},
+];
+
 class ExamEditorDialog extends StatefulWidget {
   final String courseId;
   const ExamEditorDialog({super.key, required this.courseId});
@@ -53,15 +59,28 @@ class _ExamEditorDialogState extends State<ExamEditorDialog> {
         _badgeTitle.text = data['badge_title'] ?? '';
         _badgeIcon.text = data['badge_icon'] ?? '🏅';
         for (final q in (data['questions'] as List? ?? [])) {
-          final opts = (q['options'] as List? ?? [])
-              .map((o) => _ODraft(
-                    TextEditingController(text: o['text'] ?? ''),
-                    o['is_correct'] == true,
-                  ))
-              .toList();
+          final qtype = q['question_type'] ?? 'single_choice';
+          final opts = (q['options'] as List? ?? []);
+          List<_ODraft> parsedOptions;
+          if (qtype == 'text_input') {
+            final accepted = opts.where((o) => o['is_correct'] == true).toList();
+            parsedOptions = accepted.isEmpty
+                ? [_ODraft(TextEditingController(), true)]
+                : accepted.map((o) => _ODraft(TextEditingController(text: o['text'] ?? ''), true)).toList();
+          } else if (qtype == 'ordering') {
+            parsedOptions = opts.map((o) => _ODraft(TextEditingController(text: o['text'] ?? ''), false)).toList();
+          } else {
+            parsedOptions = opts
+                .map((o) => _ODraft(
+                      TextEditingController(text: o['text'] ?? ''),
+                      o['is_correct'] == true,
+                    ))
+                .toList();
+          }
           _questions.add(_QDraft(
+            qtype,
             TextEditingController(text: q['question'] ?? ''),
-            opts.isEmpty ? _defaultOptions() : opts,
+            parsedOptions.isEmpty ? _defaultOptions() : parsedOptions,
           ));
         }
       }
@@ -74,12 +93,32 @@ class _ExamEditorDialogState extends State<ExamEditorDialog> {
   List<_ODraft> _defaultOptions() =>
       [_ODraft(TextEditingController(), true), _ODraft(TextEditingController(), false)];
 
+  List<_ODraft> _optionsForType(String qtype) {
+    switch (qtype) {
+      case 'text_input':
+        return [_ODraft(TextEditingController(), true)];
+      case 'ordering':
+        return [
+          _ODraft(TextEditingController(), false),
+          _ODraft(TextEditingController(), false),
+          _ODraft(TextEditingController(), false),
+        ];
+      default:
+        return _defaultOptions();
+    }
+  }
+
   void _addQuestion() {
-    setState(() => _questions.add(_QDraft(TextEditingController(), _defaultOptions())));
+    setState(() {
+      _questions.add(_QDraft(
+        'single_choice',
+        TextEditingController(),
+        _optionsForType('single_choice'),
+      ));
+    });
   }
 
   Future<void> _save() async {
-    // Validation basique
     if (_questions.isEmpty) {
       AdminSnackbar.error(context, 'Ajoutez au moins une question');
       return;
@@ -89,14 +128,35 @@ class _ExamEditorDialogState extends State<ExamEditorDialog> {
         AdminSnackbar.error(context, 'Une question est vide');
         return;
       }
-      final filled = q.options.where((o) => o.text.text.trim().isNotEmpty).toList();
-      if (filled.length < 2) {
-        AdminSnackbar.error(context, 'Chaque question doit avoir au moins 2 options');
+      if (q.type == 'ordering' && q.options.length < 2) {
+        AdminSnackbar.error(context, 'Chaque question d\'ordonnancement doit avoir au moins 2 éléments');
         return;
       }
-      if (!filled.any((o) => o.isCorrect)) {
-        AdminSnackbar.error(context, 'Chaque question doit avoir une bonne réponse');
+      if (q.type == 'text_input' && q.options.isNotEmpty && q.options.first.text.text.trim().isEmpty) {
+        AdminSnackbar.error(context, 'Une question de réponse libre doit avoir une réponse attendue');
         return;
+      }
+      if (q.type == 'single_choice') {
+        final filled = q.options.where((o) => o.text.text.trim().isNotEmpty).toList();
+        if (filled.length < 2) {
+          AdminSnackbar.error(context, 'Chaque question choix unique doit avoir au moins 2 options');
+          return;
+        }
+        if (filled.where((o) => o.isCorrect).length != 1) {
+          AdminSnackbar.error(context, 'Chaque question doit avoir exactement une bonne réponse');
+          return;
+        }
+      }
+      if (q.type == 'multiple_choice') {
+        final filled = q.options.where((o) => o.text.text.trim().isNotEmpty).toList();
+        if (filled.length < 2) {
+          AdminSnackbar.error(context, 'Chaque question choix multiples doit avoir au moins 2 options');
+          return;
+        }
+        if (filled.where((o) => o.isCorrect).length < 1) {
+          AdminSnackbar.error(context, 'Chaque question doit avoir au moins une bonne réponse');
+          return;
+        }
       }
     }
 
@@ -110,12 +170,19 @@ class _ExamEditorDialogState extends State<ExamEditorDialog> {
         'badge_title': _badgeTitle.text.trim().isNotEmpty ? _badgeTitle.text.trim() : null,
         'badge_icon': _badgeIcon.text.trim().isNotEmpty ? _badgeIcon.text.trim() : null,
         'is_active': true,
-        'questions': _questions.map((q) => {
-          'question': q.question.text.trim(),
-          'options': q.options
-              .where((o) => o.text.text.trim().isNotEmpty)
-              .map((o) => {'text': o.text.text.trim(), 'is_correct': o.isCorrect})
-              .toList(),
+        'questions': _questions.map((q) {
+          final base = {'question': q.question.text.trim(), 'question_type': q.type, 'options': <Map<String, dynamic>>[]};
+          if (q.type == 'text_input') {
+            base['options'] = q.options.map((o) => {'text': o.text.text.trim(), 'is_correct': true}).toList();
+          } else if (q.type == 'ordering') {
+            base['options'] = q.options.map((o) => {'text': o.text.text.trim(), 'is_correct': false}).toList();
+          } else {
+            base['options'] = q.options
+                .where((o) => o.text.text.trim().isNotEmpty)
+                .map((o) => {'text': o.text.text.trim(), 'is_correct': o.isCorrect})
+                .toList();
+          }
+          return base;
         }).toList(),
       });
       if (mounted) {
@@ -149,7 +216,6 @@ class _ExamEditorDialogState extends State<ExamEditorDialog> {
                       IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
                     ]),
                     const SizedBox(height: 12),
-                    // Reglages
                     Row(children: [
                       Expanded(child: TextField(controller: _title, decoration: const InputDecoration(labelText: 'Titre'))),
                       const SizedBox(width: 12),
@@ -214,49 +280,105 @@ class _ExamEditorDialogState extends State<ExamEditorDialog> {
           const SizedBox(width: 8),
           Expanded(child: TextField(controller: q.question,
               decoration: const InputDecoration(labelText: 'Énoncé de la question', isDense: true))),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 140,
+            child: DropdownButtonFormField<String>(
+              value: q.type,
+              isDense: true,
+              decoration: const InputDecoration(labelText: 'Type', isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8)),
+              items: _questionTypes.map((t) => DropdownMenuItem(value: t['value'], child: Text(t['label']!, style: const TextStyle(fontSize: 12)))).toList(),
+              onChanged: (v) {
+                if (v == null) return;
+                setState(() {
+                  q.type = v;
+                  q.options = _optionsForType(v);
+                });
+              },
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.delete_outline, color: AppColors.error, size: 20),
             onPressed: () => setState(() => _questions.removeAt(i)),
           ),
         ]),
         const SizedBox(height: 6),
-        ...List.generate(q.options.length, (j) {
-          final o = q.options[j];
-          return Padding(
-            padding: const EdgeInsets.only(left: 40, bottom: 4),
-            child: Row(children: [
-              IconButton(
-                tooltip: o.isCorrect ? 'Bonne réponse' : 'Marquer comme correcte',
-                icon: Icon(
-                  o.isCorrect ? Icons.check_circle : Icons.radio_button_unchecked,
-                  color: o.isCorrect ? AppColors.success : AppColors.textMuted,
+        if (q.type == 'text_input')
+          Padding(
+            padding: const EdgeInsets.only(left: 40),
+            child: TextField(
+              controller: q.options.isNotEmpty ? q.options.first.text : TextEditingController(),
+              decoration: const InputDecoration(labelText: 'Réponse attendue', isDense: true),
+            ),
+          ),
+        if (q.type == 'single_choice' || q.type == 'multiple_choice')
+          ...List.generate(q.options.length, (j) {
+            final o = q.options[j];
+            return Padding(
+              padding: const EdgeInsets.only(left: 40, bottom: 4),
+              child: Row(children: [
+                IconButton(
+                  tooltip: o.isCorrect ? 'Bonne réponse' : 'Marquer comme correcte',
+                  icon: Icon(
+                    q.type == 'single_choice'
+                        ? (o.isCorrect ? Icons.check_circle : Icons.radio_button_unchecked)
+                        : (o.isCorrect ? Icons.check_box : Icons.check_box_outline_blank),
+                    color: o.isCorrect ? AppColors.success : AppColors.textMuted,
+                  ),
+                  onPressed: () => setState(() {
+                    if (q.type == 'single_choice') {
+                      for (final e in q.options) {
+                        e.isCorrect = false;
+                      }
+                      q.options[j].isCorrect = true;
+                    } else {
+                      q.options[j].isCorrect = !o.isCorrect;
+                    }
+                  }),
                 ),
-                onPressed: () => setState(() {
-                  for (final e in q.options) {
-                    e.isCorrect = false;
-                  }
-                  q.options[j].isCorrect = true;
-                }),
-              ),
-              Expanded(child: TextField(controller: o.text,
-                  decoration: InputDecoration(
-                    labelText: 'Option ${j + 1}${o.isCorrect ? ' (correcte)' : ''}',
-                    isDense: true,
-                  ))),
-              IconButton(
-                icon: const Icon(Icons.close, size: 16),
-                onPressed: q.options.length > 2
-                    ? () => setState(() => q.options.removeAt(j))
-                    : null,
-              ),
-            ]),
-          );
-        }),
+                Expanded(child: TextField(controller: o.text,
+                    decoration: InputDecoration(labelText: 'Option ${j + 1}', isDense: true))),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 16),
+                  onPressed: q.options.length > (q.type == 'single_choice' ? 2 : 2)
+                      ? () => setState(() => q.options.removeAt(j))
+                      : null,
+                ),
+              ]),
+            );
+          }),
+        if (q.type == 'ordering')
+          ...List.generate(q.options.length, (j) {
+            final o = q.options[j];
+            return Padding(
+              padding: const EdgeInsets.only(left: 40, bottom: 4),
+              child: Row(children: [
+                Container(
+                  width: 24, height: 24,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text('${j + 1}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+                ),
+                const SizedBox(width: 8),
+                Expanded(child: TextField(controller: o.text,
+                    decoration: InputDecoration(labelText: 'Élément ${j + 1}', isDense: true))),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 16),
+                  onPressed: q.options.length > 2
+                      ? () => setState(() => q.options.removeAt(j))
+                      : null,
+                ),
+              ]),
+            );
+          }),
         Padding(
           padding: const EdgeInsets.only(left: 40),
           child: TextButton.icon(
             icon: const Icon(Icons.add, size: 16),
-            label: const Text('Option'),
+            label: Text(q.type == 'ordering' ? 'Élément' : 'Option'),
             onPressed: q.options.length < 8
                 ? () => setState(() => q.options.add(_ODraft(TextEditingController(), false)))
                 : null,
@@ -268,9 +390,10 @@ class _ExamEditorDialogState extends State<ExamEditorDialog> {
 }
 
 class _QDraft {
+  String type;
   final TextEditingController question;
-  final List<_ODraft> options;
-  _QDraft(this.question, this.options);
+  List<_ODraft> options;
+  _QDraft(this.type, this.question, this.options);
 }
 
 class _ODraft {

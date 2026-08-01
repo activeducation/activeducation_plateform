@@ -60,8 +60,35 @@ class _SchoolProfilePageState extends State<SchoolProfilePage> {
               ]))),
               const SizedBox(width: 24),
               Expanded(child: Card(child: Padding(padding: const EdgeInsets.all(24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text('Informations de l\'école', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                if (_profile?['school']?['cover_image_url'] != null && _profile!['school']!['cover_image_url'].toString().isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        _profile!['school']!['cover_image_url'],
+                        height: 150,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, e, s) => Container(
+                          height: 150,
+                          color: AppColors.surfaceVariant,
+                          child: const Center(child: Icon(Icons.broken_image, color: AppColors.textMuted)),
+                        ),
+                      ),
+                    ),
+                  ),
+                 const Text('Informations de l\'école', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
+                if (_profile?['school']?['logo_url'] != null && _profile!['school']!['logo_url'].toString().isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Image.network(
+                      _profile!['school']!['logo_url'],
+                      height: 80,
+                      errorBuilder: (_, e, s) => const Icon(Icons.school, size: 48),
+                    ),
+                  ),
                 _buildInfoRow('Nom', _profile?['school']?['name'] ?? tokenStorage.schoolName ?? '-'),
                 _buildInfoRow('Ville', _profile?['school']?['city'] ?? '-'),
                 _buildInfoRow('Pays', _profile?['school']?['country'] ?? '-'),

@@ -43,12 +43,14 @@ class _OpportunitiesListPageState extends State<OpportunitiesListPage> {
 
       final response = await api.get(ApiEndpoints.adminOpportunities, queryParameters: params);
       final data = response.data as Map<String, dynamic>;
+      if (!mounted) return;
       setState(() {
         _opportunities = data['items'] as List? ?? [];
         _total = data['total'] as int? ?? 0;
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _isLoading = false);
     }
   }
@@ -150,7 +152,14 @@ class _OpportunitiesListPageState extends State<OpportunitiesListPage> {
                             ConstrainedBox(constraints: const BoxConstraints(maxWidth: 200), child: Text(opp['title'] ?? '', overflow: TextOverflow.ellipsis)),
                           ])),
                           DataCell(_buildTypeChip(opp['opportunity_type'])),
-                          DataCell(Text(opp['organization_name'] ?? '')),
+                          DataCell(Row(mainAxisSize: MainAxisSize.min, children: [
+                            if (opp['organization_logo'] != null && opp['organization_logo'].toString().isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 6),
+                                child: Image.network(opp['organization_logo'], width: 24, height: 24, errorBuilder: (_, e, s) => const SizedBox.shrink()),
+                              ),
+                            Text(opp['organization_name'] ?? ''),
+                          ])),
                           DataCell(Text(opp['application_deadline'] != null ? _formatDate(opp['application_deadline']) : '-')),
                           DataCell(Row(mainAxisSize: MainAxisSize.min, children: [
                             Switch(value: opp['is_published'] ?? false, onChanged: (v) => _togglePublish(opp['id'], opp['is_published'])),

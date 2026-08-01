@@ -290,7 +290,7 @@ class _SchoolsListPageState extends State<SchoolsListPage> {
                                                 borderRadius:
                                                     BorderRadius.circular(6),
                                               ),
-                                              child: school.logoUrl != null
+                                              child: school.logoUrl != null && school.logoUrl!.isNotEmpty
                                                   ? ClipRRect(
                                                       borderRadius:
                                                           BorderRadius.circular(
@@ -305,7 +305,7 @@ class _SchoolsListPageState extends State<SchoolsListPage> {
                                                               _,
                                                               _,
                                                             ) => const Icon(
-                                                              Icons.school,
+                                                              Icons.broken_image,
                                                               size: 16,
                                                               color: AppColors
                                                                   .textMuted,

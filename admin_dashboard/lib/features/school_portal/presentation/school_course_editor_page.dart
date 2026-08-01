@@ -23,6 +23,7 @@ class _SchoolCourseEditorPageState extends State<SchoolCourseEditorPage> {
 
   final _titleCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
+  final _thumbnailUrlCtrl = TextEditingController();
   String _level = 'beginner';
   bool _isPublished = false;
   List<dynamic> _modules = [];
@@ -37,6 +38,7 @@ class _SchoolCourseEditorPageState extends State<SchoolCourseEditorPage> {
   void dispose() {
     _titleCtrl.dispose();
     _descCtrl.dispose();
+    _thumbnailUrlCtrl.dispose();
     super.dispose();
   }
 
@@ -48,14 +50,21 @@ class _SchoolCourseEditorPageState extends State<SchoolCourseEditorPage> {
       final data = response.data as Map<String, dynamic>;
       _titleCtrl.text = data['title'] ?? '';
       _descCtrl.text = data['description'] ?? '';
-      _level = data['level'] ?? 'beginner';
+      _thumbnailUrlCtrl.text = data['thumbnail_url'] ?? '';
+      _level = _mapDifficulty(data['difficulty'] as String? ?? 'beginner');
       _isPublished = data['is_published'] ?? false;
       _modules = List.from(data['modules'] ?? []);
     } catch (e) {
       if (mounted) AdminSnackbar.error(context, 'Erreur de chargement');
     }
-    setState(() => _isLoading = false);
+    if (mounted) setState(() => _isLoading = false);
   }
+
+  String _unmapDifficulty(String v) =>
+      v == 'beginner' ? 'debutant' : v == 'intermediate' ? 'intermediaire' : 'avance';
+
+  static String _mapDifficulty(String v) =>
+      v == 'debutant' ? 'beginner' : v == 'intermediaire' ? 'intermediate' : 'advanced';
 
   Future<void> _saveCourse() async {
     if (_titleCtrl.text.isEmpty || _descCtrl.text.isEmpty) {
@@ -66,7 +75,7 @@ class _SchoolCourseEditorPageState extends State<SchoolCourseEditorPage> {
 
     try {
       final api = getIt<ApiClient>();
-      final data = {'title': _titleCtrl.text, 'description': _descCtrl.text, 'level': _level};
+      final data = {'title': _titleCtrl.text, 'description': _descCtrl.text, 'difficulty': _unmapDifficulty(_level), 'thumbnail_url': _thumbnailUrlCtrl.text.isNotEmpty ? _thumbnailUrlCtrl.text : null};
 
       if (_isEditing) {
         await api.put(ApiEndpoints.schoolCourseById(widget.courseId!), data: data);
@@ -234,19 +243,44 @@ class _SchoolCourseEditorPageState extends State<SchoolCourseEditorPage> {
             Row(children: [
               Expanded(child: TextField(controller: _titleCtrl, decoration: const InputDecoration(labelText: 'Titre *'))),
               const SizedBox(width: 16),
-              SizedBox(width: 150, child: DropdownButtonFormField<String>(
-                initialValue: _level,
-                decoration: const InputDecoration(labelText: 'Niveau'),
-                items: const [
-                  DropdownMenuItem(value: 'beginner', child: Text('Débutant')),
-                  DropdownMenuItem(value: 'intermediate', child: Text('Intermédiaire')),
-                  DropdownMenuItem(value: 'advanced', child: Text('Avancé')),
-                ],
-                onChanged: (v) => setState(() => _level = v!),
-              )),
+              SizedBox(
+                width: 140,
+                child: DropdownButtonFormField<String>(
+                  initialValue: _level,
+                  decoration: const InputDecoration(
+                    labelText: 'Niveau',
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                  ),
+                  isExpanded: true,
+                  items: const [
+                    DropdownMenuItem(value: 'beginner', child: Text('Débutant', overflow: TextOverflow.ellipsis)),
+                    DropdownMenuItem(value: 'intermediate', child: Text('Intermédiaire', overflow: TextOverflow.ellipsis)),
+                    DropdownMenuItem(value: 'advanced', child: Text('Avancé', overflow: TextOverflow.ellipsis)),
+                  ],
+                  onChanged: (v) => setState(() => _level = v!),
+                ),
+              ),
             ]),
             const SizedBox(height: 16),
             TextField(controller: _descCtrl, decoration: const InputDecoration(labelText: 'Description *'), maxLines: 4),
+            const SizedBox(height: 16),
+            TextField(controller: _thumbnailUrlCtrl, decoration: const InputDecoration(labelText: 'URL miniature'), onChanged: (_) => setState(() {})),
+            const SizedBox(height: 8),
+            ValueListenableBuilder<TextEditingValue>(
+              valueListenable: _thumbnailUrlCtrl,
+              builder: (_, v, child) => v.text.isNotEmpty
+                  ? Container(
+                      height: 120,
+                      width: double.infinity,
+                      decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(8)),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(v.text, fit: BoxFit.contain, errorBuilder: (_, e, s) => const Center(child: Icon(Icons.broken_image, size: 48))),
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
           ]))),
           const SizedBox(height: 24),
           if (_isEditing) ...[

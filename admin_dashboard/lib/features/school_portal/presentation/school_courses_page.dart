@@ -102,10 +102,20 @@ class _SchoolCoursesPageState extends State<SchoolCoursesPage> {
                         onTap: () => context.go('/school-portal/courses/${course['id']}/edit'),
                         borderRadius: BorderRadius.circular(12),
                         child: Padding(padding: const EdgeInsets.all(16), child: Row(children: [
-                          Container(
-                            width: 60, height: 60,
-                            decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                            child: const Icon(Icons.school_rounded, color: AppColors.primary),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: SizedBox(
+                              width: 60, height: 60,
+                              child: course['thumbnail_url'] != null && course['thumbnail_url'].toString().isNotEmpty
+                                  ? Image.network(course['thumbnail_url'], fit: BoxFit.cover, errorBuilder: (_, e, s) => Container(
+                                      decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1)),
+                                      child: const Icon(Icons.school_rounded, color: AppColors.primary),
+                                    ))
+                                  : Container(
+                                      decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1)),
+                                      child: const Icon(Icons.school_rounded, color: AppColors.primary),
+                                    ),
+                            ),
                           ),
                           const SizedBox(width: 16),
                           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

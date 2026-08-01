@@ -56,15 +56,21 @@ class _CourseEditorPageState extends State<CourseEditorPage> {
       _titleCtrl.text = data['title'] ?? '';
       _descCtrl.text = data['description'] ?? '';
       _thumbnailCtrl.text = data['thumbnail_url'] ?? '';
-      _level = data['level'] ?? 'beginner';
+      _level = _mapDifficulty(data['difficulty'] as String? ?? 'beginner');
       _isPublished = data['is_published'] ?? false;
       _selectedSchoolId = data['school_id'];
       _modules = List.from(data['modules'] ?? []);
     } catch (e) {
       if (mounted) AdminSnackbar.error(context, 'Erreur de chargement');
     }
-    setState(() => _isLoading = false);
+    if (mounted) setState(() => _isLoading = false);
   }
+
+  String _unmapDifficulty(String v) =>
+      v == 'beginner' ? 'debutant' : v == 'intermediate' ? 'intermediaire' : 'avance';
+
+  static String _mapDifficulty(String v) =>
+      v == 'debutant' ? 'beginner' : v == 'intermediaire' ? 'intermediate' : 'advanced';
 
   Future<void> _saveCourse() async {
     if (_titleCtrl.text.isEmpty || _descCtrl.text.isEmpty) {
@@ -79,7 +85,7 @@ class _CourseEditorPageState extends State<CourseEditorPage> {
         'title': _titleCtrl.text,
         'description': _descCtrl.text,
         'thumbnail_url': _thumbnailCtrl.text.isNotEmpty ? _thumbnailCtrl.text : null,
-        'level': _level,
+        'difficulty': _unmapDifficulty(_level),
       };
 
       if (_isEditing) {
@@ -118,6 +124,36 @@ class _CourseEditorPageState extends State<CourseEditorPage> {
 
   bool _uploadingImage = false;
 
+  Future<void> _duplicateCourse() async {
+    final titleCtrl = TextEditingController(text: '${_titleCtrl.text} (copie)');
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Dupliquer le cours'),
+        content: TextField(controller: titleCtrl, decoration: const InputDecoration(labelText: 'Titre de la copie')),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Dupliquer')),
+        ],
+      ),
+    );
+    if (result != true) return;
+
+    try {
+      final api = getIt<ApiClient>();
+      final res = await api.post(
+        ApiEndpoints.adminElearningCourseDuplicate(widget.courseId!),
+        data: {'new_title': titleCtrl.text},
+      );
+      if (mounted) {
+        AdminSnackbar.success(context, 'Cours dupliqué');
+        context.go('/elearning/courses/${res.data['id']}/edit');
+      }
+    } catch (e) {
+      if (mounted) AdminSnackbar.error(context, 'Erreur lors de la duplication');
+    }
+  }
+
   Future<void> _uploadImage() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.image,
@@ -132,8 +168,14 @@ class _CourseEditorPageState extends State<CourseEditorPage> {
     setState(() => _uploadingImage = true);
     try {
       final api = getIt<ApiClient>();
+      final ext = file.name.split('.').last.toLowerCase();
+      final contentType = switch (ext) {
+        'png' => DioMediaType.parse('image/png'),
+        'webp' => DioMediaType.parse('image/webp'),
+        _ => DioMediaType.parse('image/jpeg'),
+      };
       final form = FormData.fromMap({
-        'file': MultipartFile.fromBytes(file.bytes!, filename: file.name),
+        'file': MultipartFile.fromBytes(file.bytes!, filename: file.name, contentType: contentType),
       });
       final res = await api.post(ApiEndpoints.adminUpload('elearning'), data: form);
       final url = res.data['url'] as String?;
@@ -212,6 +254,11 @@ class _CourseEditorPageState extends State<CourseEditorPage> {
     String lessonType = 'text';
     final contentCtrl = TextEditingController();
     final videoCtrl = TextEditingController();
+    final videoProvider = TextEditingController(text: 'youtube');
+    final markdownCtrl = TextEditingController();
+    final challengeInstructionsCtrl = TextEditingController();
+    final challengeCodeCtrl = TextEditingController();
+    final challengeLanguageCtrl = TextEditingController(text: 'python');
 
     final result = await showDialog<bool>(
       context: context,
@@ -219,7 +266,7 @@ class _CourseEditorPageState extends State<CourseEditorPage> {
         builder: (ctx, setDialogState) => AlertDialog(
           title: const Text('Nouvelle leçon'),
           content: SizedBox(
-            width: 400,
+            width: 480,
             child: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
               TextField(controller: titleCtrl, decoration: const InputDecoration(labelText: 'Titre *')),
               const SizedBox(height: 12),
@@ -228,7 +275,9 @@ class _CourseEditorPageState extends State<CourseEditorPage> {
                 decoration: const InputDecoration(labelText: 'Type'),
                 items: const [
                   DropdownMenuItem(value: 'text', child: Text('Texte')),
+                  DropdownMenuItem(value: 'article', child: Text('Article (Markdown)')),
                   DropdownMenuItem(value: 'video', child: Text('Vidéo')),
+                  DropdownMenuItem(value: 'challenge', child: Text('Défi')),
                   DropdownMenuItem(value: 'quiz', child: Text('Quiz')),
                   DropdownMenuItem(value: 'pdf', child: Text('PDF')),
                 ],
@@ -236,9 +285,32 @@ class _CourseEditorPageState extends State<CourseEditorPage> {
               ),
               const SizedBox(height: 12),
               if (lessonType == 'text')
-                TextField(controller: contentCtrl, decoration: const InputDecoration(labelText: 'Contenu'), maxLines: 4),
-              if (lessonType == 'video')
+                TextField(controller: contentCtrl, decoration: const InputDecoration(labelText: 'Contenu'), maxLines: 6),
+              if (lessonType == 'article') ...[
+                TextField(controller: markdownCtrl, decoration: const InputDecoration(labelText: 'Contenu (Markdown)', hintText: '# Titre\n\nParagraphe avec **gras** et - listes'), maxLines: 10),
+              ],
+              if (lessonType == 'video') ...[
                 TextField(controller: videoCtrl, decoration: const InputDecoration(labelText: 'URL vidéo')),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  initialValue: videoProvider.text,
+                  decoration: const InputDecoration(labelText: 'Plateforme', isDense: true),
+                  items: const [
+                    DropdownMenuItem(value: 'youtube', child: Text('YouTube')),
+                    DropdownMenuItem(value: 'vimeo', child: Text('Vimeo')),
+                  ],
+                  onChanged: (v) => setDialogState(() => videoProvider.text = v!),
+                ),
+              ],
+              if (lessonType == 'challenge') ...[
+                TextField(controller: challengeInstructionsCtrl, decoration: const InputDecoration(labelText: 'Instructions'), maxLines: 6),
+                const SizedBox(height: 8),
+                TextField(controller: challengeCodeCtrl, decoration: const InputDecoration(labelText: 'Code de départ (optionnel)'), maxLines: 6, style: const TextStyle(fontFamily: 'monospace')),
+                const SizedBox(height: 8),
+                TextField(controller: challengeLanguageCtrl, decoration: const InputDecoration(labelText: 'Langage (python, dart, etc.)')),
+              ],
+              if (lessonType == 'pdf')
+                TextField(controller: contentCtrl, decoration: const InputDecoration(labelText: 'URL du PDF')),
             ])),
           ),
           actions: [
@@ -253,16 +325,25 @@ class _CourseEditorPageState extends State<CourseEditorPage> {
 
     try {
       final api = getIt<ApiClient>();
-      final data = {
+      final data = <String, dynamic>{
         'title': titleCtrl.text,
         'lesson_type': lessonType,
         'display_order': 0,
       };
-      if (lessonType == 'text' && contentCtrl.text.isNotEmpty) {
-        data['content'] = contentCtrl.text;
-      }
       if (lessonType == 'video' && videoCtrl.text.isNotEmpty) {
         data['video_url'] = videoCtrl.text;
+        data['video_provider'] = videoProvider.text;
+      }
+      if (lessonType == 'article') {
+        data['markdown_body'] = markdownCtrl.text;
+      }
+      if (lessonType == 'challenge') {
+        data['challenge_instructions'] = challengeInstructionsCtrl.text;
+        data['challenge_starter_code'] = challengeCodeCtrl.text;
+        data['challenge_language'] = challengeLanguageCtrl.text;
+      }
+      if ((lessonType == 'text' || lessonType == 'pdf') && contentCtrl.text.isNotEmpty) {
+        data['content'] = contentCtrl.text;
       }
 
       await api.post(ApiEndpoints.adminElearningModuleLessons(moduleId), data: data);
@@ -271,6 +352,26 @@ class _CourseEditorPageState extends State<CourseEditorPage> {
     } catch (e) {
       if (mounted) AdminSnackbar.error(context, 'Erreur');
     }
+  }
+
+  Future<void> _reorderModules() async {
+    try {
+      final api = getIt<ApiClient>();
+      await api.put(
+        ApiEndpoints.adminElearningReorderModules(widget.courseId!),
+        data: {'module_ids': _modules.map((m) => m['id'] as String).toList()},
+      );
+    } catch (_) {}
+  }
+
+  Future<void> _reorderLessons(String moduleId, List lessons) async {
+    try {
+      final api = getIt<ApiClient>();
+      await api.put(
+        ApiEndpoints.adminElearningReorderLessons(moduleId),
+        data: {'lesson_ids': lessons.map((l) => l['id'] as String).toList()},
+      );
+    } catch (_) {}
   }
 
   Future<void> _deleteLesson(String lessonId) async {
@@ -301,6 +402,12 @@ class _CourseEditorPageState extends State<CourseEditorPage> {
               label: Text(_isPublished ? 'Masquer' : 'Publier'),
               onPressed: _togglePublish,
             ),
+          if (_isEditing)
+            TextButton.icon(
+              icon: const Icon(Icons.copy, size: 18),
+              label: const Text('Dupliquer'),
+              onPressed: _duplicateCourse,
+            ),
           const SizedBox(width: 8),
           FilledButton(
             onPressed: _isSaving ? null : _saveCourse,
@@ -318,16 +425,24 @@ class _CourseEditorPageState extends State<CourseEditorPage> {
             Row(children: [
               Expanded(child: TextField(controller: _titleCtrl, decoration: const InputDecoration(labelText: 'Titre *'))),
               const SizedBox(width: 16),
-              SizedBox(width: 150, child: DropdownButtonFormField<String>(
-                initialValue: _level,
-                decoration: const InputDecoration(labelText: 'Niveau'),
-                items: const [
-                  DropdownMenuItem(value: 'beginner', child: Text('Débutant')),
-                  DropdownMenuItem(value: 'intermediate', child: Text('Intermédiaire')),
-                  DropdownMenuItem(value: 'advanced', child: Text('Avancé')),
-                ],
-                onChanged: (v) => setState(() => _level = v!),
-              )),
+              SizedBox(
+                width: 140,
+                child: DropdownButtonFormField<String>(
+                  initialValue: _level,
+                  decoration: const InputDecoration(
+                    labelText: 'Niveau',
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                  ),
+                  isExpanded: true,
+                  items: const [
+                    DropdownMenuItem(value: 'beginner', child: Text('Débutant', overflow: TextOverflow.ellipsis)),
+                    DropdownMenuItem(value: 'intermediate', child: Text('Intermédiaire', overflow: TextOverflow.ellipsis)),
+                    DropdownMenuItem(value: 'advanced', child: Text('Avancé', overflow: TextOverflow.ellipsis)),
+                  ],
+                  onChanged: (v) => setState(() => _level = v!),
+                ),
+              ),
             ]),
             const SizedBox(height: 16),
             TextField(controller: _descCtrl, decoration: const InputDecoration(labelText: 'Description *'), maxLines: 4),
@@ -399,28 +514,62 @@ class _CourseEditorPageState extends State<CourseEditorPage> {
             if (_modules.isEmpty)
               const Card(child: Padding(padding: EdgeInsets.all(32), child: Center(child: Text('Aucun module. Ajoutez un module pour commencer.'))))
             else
-              ...List.generate(_modules.length, (i) {
-                final module = _modules[i];
-                final lessons = List.from(module['lessons'] ?? []);
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  child: ExpansionTile(
-                    leading: CircleAvatar(child: Text('${i + 1}')),
-                    title: Text(module['title'] ?? ''),
-                    subtitle: Text('${lessons.length} leçons'),
-                    trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                      IconButton(icon: const Icon(Icons.add), tooltip: 'Ajouter une leçon', onPressed: () => _addLesson(module['id'])),
-                      IconButton(icon: const Icon(Icons.delete, color: AppColors.error), tooltip: 'Supprimer', onPressed: () => _deleteModule(module['id'])),
-                    ]),
-                    children: lessons.map<Widget>((lesson) => ListTile(
-                      leading: Icon(_getLessonIcon(lesson['lesson_type'])),
-                      title: Text(lesson['title'] ?? ''),
-                      subtitle: Text(lesson['lesson_type'] ?? ''),
-                      trailing: IconButton(icon: const Icon(Icons.delete, color: AppColors.error, size: 20), onPressed: () => _deleteLesson(lesson['id'])),
-                    )).toList(),
-                  ),
-                );
-              }),
+              ReorderableListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _modules.length,
+                onReorder: (oldIndex, newIndex) {
+                  setState(() {
+                    if (newIndex > oldIndex) newIndex--;
+                    final item = _modules.removeAt(oldIndex);
+                    _modules.insert(newIndex, item);
+                  });
+                  _reorderModules();
+                },
+                itemBuilder: (_, i) {
+                  final module = _modules[i];
+                  final lessons = List.from(module['lessons'] ?? []);
+                  return Card(
+                    key: ValueKey(module['id']),
+                    margin: const EdgeInsets.only(bottom: 12),
+                    child: ExpansionTile(
+                      leading: CircleAvatar(child: Text('${i + 1}')),
+                      title: Text(module['title'] ?? ''),
+                      subtitle: Text('${lessons.length} leçons'),
+                      trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                        IconButton(icon: const Icon(Icons.drag_handle), tooltip: 'Réordonner', onPressed: () {}),
+                        IconButton(icon: const Icon(Icons.add), tooltip: 'Ajouter une leçon', onPressed: () => _addLesson(module['id'])),
+                        IconButton(icon: const Icon(Icons.delete, color: AppColors.error), tooltip: 'Supprimer', onPressed: () => _deleteModule(module['id'])),
+                      ]),
+                      children: [
+                        ReorderableListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: lessons.length,
+                          onReorder: (oldIndex, newIndex) {
+                            if (newIndex > oldIndex) newIndex--;
+                            final item = lessons.removeAt(oldIndex);
+                            lessons.insert(newIndex, item);
+                            module['lessons'] = lessons;
+                            _reorderLessons(module['id'], lessons);
+                          },
+                          itemBuilder: (_, j) => ListTile(
+                            key: ValueKey(lessons[j]['id']),
+                            leading: Icon(_getLessonIcon(lessons[j]['lesson_type'])),
+                            title: Text(lessons[j]['title'] ?? ''),
+                            subtitle: Text(lessons[j]['lesson_type'] ?? ''),
+                            trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                              const Icon(Icons.drag_handle, size: 18, color: AppColors.textMuted),
+                              const SizedBox(width: 4),
+                              IconButton(icon: const Icon(Icons.delete, color: AppColors.error, size: 20), onPressed: () => _deleteLesson(lessons[j]['id'])),
+                            ]),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
           ],
         ]),
       ),
@@ -432,6 +581,8 @@ class _CourseEditorPageState extends State<CourseEditorPage> {
       case 'video': return Icons.play_circle;
       case 'quiz': return Icons.quiz;
       case 'pdf': return Icons.picture_as_pdf;
+      case 'challenge': return Icons.code;
+      case 'article': return Icons.article;
       default: return Icons.article;
     }
   }

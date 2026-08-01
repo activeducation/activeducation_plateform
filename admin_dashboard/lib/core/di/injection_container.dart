@@ -31,6 +31,11 @@ import '../../features/orientation_tests/domain/repositories/tests_repository.da
 import '../../features/orientation_tests/domain/usecases/get_tests_usecase.dart';
 import '../../features/orientation_tests/presentation/bloc/tests_bloc.dart';
 
+// E-Learning
+import '../../features/elearning/data/repositories/elearning_repository_impl.dart';
+import '../../features/elearning/domain/repositories/elearning_repository.dart';
+import '../../features/elearning/presentation/bloc/courses_bloc.dart';
+
 // Gamification
 import '../../features/gamification/data/repositories/gamification_repository_impl.dart';
 import '../../features/gamification/domain/repositories/gamification_repository.dart';
@@ -103,6 +108,15 @@ Future<void> configureDependencies() async {
     () => GetTestsUseCase(getIt<TestsRepository>()),
   );
   getIt.registerFactory<TestsBloc>(() => TestsBloc(getIt<GetTestsUseCase>()));
+
+  // ── E-Learning ────────────────────────────────────────────────────────────
+
+  getIt.registerLazySingleton<ElearningRepository>(
+    () => ElearningRepositoryImpl(getIt<ApiClient>()),
+  );
+  getIt.registerFactory<CoursesBloc>(
+    () => CoursesBloc(getIt<ElearningRepository>()),
+  );
 
   // ── Gamification ──────────────────────────────────────────────────────────
 

@@ -184,8 +184,23 @@ class _OpportunityEditorPageState extends State<OpportunityEditorPage> {
             Row(children: [
               Expanded(child: TextField(controller: _orgCtrl, decoration: const InputDecoration(labelText: 'Nom *'))),
               const SizedBox(width: 16),
-              Expanded(child: TextField(controller: _orgLogoCtrl, decoration: const InputDecoration(labelText: 'Logo URL'))),
+              Expanded(child: TextField(controller: _orgLogoCtrl, decoration: const InputDecoration(labelText: 'Logo URL'), onChanged: (_) => setState(() {}))),
             ]),
+            const SizedBox(height: 8),
+            ValueListenableBuilder<TextEditingValue>(
+              valueListenable: _orgLogoCtrl,
+              builder: (_, v, child) => v.text.isNotEmpty
+                  ? Container(
+                      height: 80,
+                      width: 80,
+                      decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(8)),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(v.text, fit: BoxFit.contain, errorBuilder: (_, e, s) => const Center(child: Icon(Icons.broken_image, size: 32))),
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
           ]))),
           const SizedBox(height: 16),
           Card(child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

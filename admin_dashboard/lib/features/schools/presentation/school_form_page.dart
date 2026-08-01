@@ -114,7 +114,7 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
     } catch (e) {
       if (mounted) AdminSnackbar.error(context, 'Erreur de chargement');
     }
-    setState(() => _isLoading = false);
+    if (mounted) setState(() => _isLoading = false);
   }
 
   Future<void> _save() async {
@@ -179,7 +179,7 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
     } catch (e) {
       if (mounted) AdminSnackbar.error(context, 'Erreur de sauvegarde: $e');
     }
-    setState(() => _isSaving = false);
+    if (mounted) setState(() => _isSaving = false);
   }
 
   // =========================================================================
@@ -224,7 +224,11 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
       final response = await api.dio.post(
         ApiEndpoints.adminUpload('schools'),
         data: formData,
-        options: Options(contentType: 'multipart/form-data'),
+        options: Options(
+          contentType: 'multipart/form-data',
+          receiveTimeout: const Duration(seconds: 120),
+          sendTimeout: const Duration(seconds: 120),
+        ),
       );
 
       final url = (response.data as Map<String, dynamic>)['url'] as String;
@@ -240,13 +244,15 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
       if (mounted) AdminSnackbar.error(context, 'Erreur d\'upload: $e');
     }
 
-    setState(() {
-      if (isLogo) {
-        _isUploadingLogo = false;
-      } else {
-        _isUploadingCover = false;
-      }
-    });
+    if (mounted) {
+      setState(() {
+        if (isLogo) {
+          _isUploadingLogo = false;
+        } else {
+          _isUploadingCover = false;
+        }
+      });
+    }
   }
 
   // =========================================================================

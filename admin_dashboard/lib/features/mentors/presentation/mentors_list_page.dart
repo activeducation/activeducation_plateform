@@ -183,8 +183,11 @@ class _MentorsListPageState extends State<MentorsListPage> {
                           final mentor = m as Map<String, dynamic>;
                           final userInfo = mentor['user_profiles'] as Map<String, dynamic>? ?? {};
                           final name = '${userInfo['first_name'] ?? ''} ${userInfo['last_name'] ?? ''}'.trim();
+                          final displayName = name.isNotEmpty
+                              ? name
+                              : (userInfo['email'] as String? ?? mentor['full_name'] as String? ?? '-');
                           return DataRow(cells: [
-                            DataCell(Text(name.isEmpty ? userInfo['email'] ?? '-' : name)),
+                            DataCell(Text(displayName)),
                             DataCell(Text(mentor['profession'] ?? '')),
                             DataCell(Text(mentor['company'] ?? '-')),
                             DataCell(Text('${mentor['years_experience'] ?? '-'} ans')),
@@ -212,7 +215,7 @@ class _MentorsListPageState extends State<MentorsListPage> {
                                 icon: const Icon(Icons.task_alt, size: 18, color: AppColors.secondary),
                                 onPressed: () => _showTasksSheet(
                                     mentor['id'].toString(),
-                                    name.isEmpty ? (userInfo['email'] ?? 'Mentor') : name),
+                                    displayName == '-' ? 'Mentor' : displayName),
                                 tooltip: 'Tâches',
                               ),
                             ])),

@@ -59,6 +59,11 @@ class AppColors {
   static const Color info = Color(0xFF3B82F6);
   static const Color infoSurface = Color(0xFFEFF6FF);
 
+  // Gamification
+  static const Color xpBar = Color(0xFF34D399);
+  static const Color streakFire = Color(0xFFFF6B35);
+  static const Color levelPurple = Color(0xFF8B5CF6);
+
   // Shadows
   static const Color cardShadow = Color(0x05000000);
   static const Color cardShadowHover = Color(0x12000000);

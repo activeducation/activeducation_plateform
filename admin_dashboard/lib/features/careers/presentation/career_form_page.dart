@@ -220,7 +220,22 @@ class _CareerFormPageState extends State<CareerFormPage> with SingleTickerProvid
               TextFormField(controller: _sectorNameCtrl, decoration: const InputDecoration(labelText: 'Secteur *'),
                   validator: (v) => v == null || v.isEmpty ? 'Requis' : null),
               const SizedBox(height: 12),
-              TextFormField(controller: _imageUrlCtrl, decoration: const InputDecoration(labelText: 'URL image')),
+              TextFormField(controller: _imageUrlCtrl, decoration: const InputDecoration(labelText: 'URL image'), onChanged: (_) => setState(() {})),
+              const SizedBox(height: 8),
+              ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _imageUrlCtrl,
+                builder: (_, v, child) => v.text.isNotEmpty
+                    ? Container(
+                        height: 120,
+                        width: double.infinity,
+                        decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(8)),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(v.text, fit: BoxFit.contain, errorBuilder: (_, e, s) => const Center(child: Icon(Icons.broken_image, size: 48))),
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              ),
               const SizedBox(height: 16),
               Text('Competences', style: AppTypography.label),
               const SizedBox(height: 8),

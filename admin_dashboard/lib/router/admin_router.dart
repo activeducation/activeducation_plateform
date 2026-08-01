@@ -18,8 +18,10 @@ import '../features/orientation_tests/presentation/tests_list_page.dart';
 import '../features/orientation_tests/presentation/test_editor_page.dart';
 import '../features/gamification/presentation/achievements_page.dart';
 import '../features/gamification/presentation/challenges_page.dart';
+import '../features/gamification/presentation/users_gamification_page.dart';
 import '../features/mentors/presentation/mentors_list_page.dart';
 import '../features/mentors/presentation/mentor_applications_page.dart';
+import '../features/mentors/presentation/mentor_contact_requests_page.dart';
 import '../features/settings/presentation/settings_page.dart';
 import '../features/settings/presentation/announcements_page.dart';
 import '../features/settings/presentation/audit_log_page.dart';
@@ -136,12 +138,20 @@ GoRouter createAdminRouter() {
             builder: (context, state) => const ChallengesPage(),
           ),
           GoRoute(
+            path: '/gamification/users',
+            builder: (context, state) => const UsersGamificationPage(),
+          ),
+          GoRoute(
             path: '/mentors',
             builder: (context, state) => const MentorsListPage(),
           ),
           GoRoute(
             path: '/mentors/applications',
             builder: (context, state) => const MentorApplicationsPage(),
+          ),
+          GoRoute(
+            path: '/mentors/contact-requests',
+            builder: (context, state) => const MentorContactRequestsPage(),
           ),
           GoRoute(
             path: '/settings',

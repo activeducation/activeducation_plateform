@@ -155,6 +155,12 @@ class _Sidebar extends StatelessWidget {
                   currentPath: currentPath,
                 ),
                 _SidebarItem(
+                  icon: Icons.menu_book_rounded,
+                  label: 'Cours',
+                  path: '/elearning/courses',
+                  currentPath: currentPath,
+                ),
+                _SidebarItem(
                   icon: Icons.groups_rounded,
                   label: 'Partenaires',
                   path: '/partner/organizations',
@@ -174,6 +180,12 @@ class _Sidebar extends StatelessWidget {
                   currentPath: currentPath,
                 ),
                 _SidebarItem(
+                  icon: Icons.monetization_on_rounded,
+                  label: 'XP & Niveaux',
+                  path: '/gamification/users',
+                  currentPath: currentPath,
+                ),
+                _SidebarItem(
                   icon: Icons.person_search_rounded,
                   label: 'Mentors',
                   path: '/mentors',
@@ -183,6 +195,12 @@ class _Sidebar extends StatelessWidget {
                   icon: Icons.how_to_reg_rounded,
                   label: 'Candidatures',
                   path: '/mentors/applications',
+                  currentPath: currentPath,
+                ),
+                _SidebarItem(
+                  icon: Icons.contact_mail_rounded,
+                  label: 'Demandes contact',
+                  path: '/mentors/contact-requests',
                   currentPath: currentPath,
                 ),
                 const _SidebarSection(label: 'SYSTEME'),
@@ -493,10 +511,13 @@ class _TopBar extends StatelessWidget {
     if (path.startsWith('/tests')) return 'Tests d\'orientation';
     if (path.startsWith('/gamification/achievements')) return 'Achievements';
     if (path.startsWith('/gamification/challenges')) return 'Challenges';
+    if (path.startsWith('/gamification/users')) return 'XP & Niveaux';
+    if (path.startsWith('/mentors/contact-requests')) return 'Demandes de contact';
     if (path.startsWith('/mentors')) return 'Mentors';
     if (path.startsWith('/announcements')) return 'Annonces';
     if (path.startsWith('/settings')) return 'Parametres';
     if (path.startsWith('/audit-log')) return 'Journal d\'audit';
+    if (path.startsWith('/elearning')) return 'Cours E-Learning';
     if (path.startsWith('/partner/organizations')) return 'Organisations partenaires';
     return 'Dashboard';
   }

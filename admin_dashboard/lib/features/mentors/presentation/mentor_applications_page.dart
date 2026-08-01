@@ -174,14 +174,23 @@ class _AppCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              CircleAvatar(
-                backgroundColor: AppColors.primary.withValues(alpha: 0.12),
-                child: Text(
-                  (app['full_name'] as String? ?? '?').characters.first.toUpperCase(),
-                  style: AppTypography.body.copyWith(
-                      color: AppColors.primary, fontWeight: FontWeight.bold),
-                ),
-              ),
+              app['avatar_url'] != null && app['avatar_url'].toString().isNotEmpty
+                  ? CircleAvatar(
+                      radius: 20,
+                      backgroundImage: NetworkImage(app['avatar_url']),
+                      onBackgroundImageError: (_, e) {},
+                      child: Text(
+                        (app['full_name'] as String? ?? '?').characters.first.toUpperCase(),
+                        style: AppTypography.body.copyWith(color: AppColors.primary, fontWeight: FontWeight.bold),
+                      ),
+                    )
+                  : CircleAvatar(
+                      backgroundColor: AppColors.primary.withValues(alpha: 0.12),
+                      child: Text(
+                        (app['full_name'] as String? ?? '?').characters.first.toUpperCase(),
+                        style: AppTypography.body.copyWith(color: AppColors.primary, fontWeight: FontWeight.bold),
+                      ),
+                    ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(

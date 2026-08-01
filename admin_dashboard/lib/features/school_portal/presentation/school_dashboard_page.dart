@@ -132,10 +132,20 @@ class _SchoolDashboardPageState extends State<SchoolDashboardPage> {
                     borderRadius: BorderRadius.circular(12),
                     child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Row(children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                          child: const Icon(Icons.school_rounded, color: AppColors.primary, size: 20),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: SizedBox(
+                            width: 36, height: 36,
+                            child: course['thumbnail_url'] != null && course['thumbnail_url'].toString().isNotEmpty
+                                ? Image.network(course['thumbnail_url'], fit: BoxFit.cover, errorBuilder: (_, e, s) => Container(
+                                    decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1)),
+                                    child: const Icon(Icons.school_rounded, color: AppColors.primary, size: 20),
+                                  ))
+                                : Container(
+                                    decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1)),
+                                    child: const Icon(Icons.school_rounded, color: AppColors.primary, size: 20),
+                                  ),
+                          ),
                         ),
                         const Spacer(),
                         Container(
