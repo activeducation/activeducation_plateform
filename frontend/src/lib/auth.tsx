@@ -35,20 +35,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => { refreshUser(); }, [refreshUser]);
 
-  // Précharge les données lourdes de la home en arrière-plan
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (!localStorage.getItem('access_token')) return;
-    const timer = setTimeout(() => {
-      Promise.allSettled([
-        api.get('/gamification/profile').catch(() => null),
-        api.get('/orientation/tests').catch(() => []),
-        api.get('/elearning/my-courses').catch(() => ({ courses: [] })),
-      ]);
-    }, 100);
-    return () => clearTimeout(timer);
-  }, []);
-
   const login = async (email: string, password: string) => {
     const data = await api.post<{ user: User; tokens: { access_token: string; refresh_token: string } }>('/auth/login', { email, password });
     localStorage.setItem('access_token', data.tokens.access_token);

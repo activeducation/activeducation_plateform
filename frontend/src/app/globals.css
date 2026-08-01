@@ -1,0 +1,208 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-brand-primary: #3133DD;
+  --color-brand-primary-light: #6062E8;
+  --color-brand-primary-mid: #2322D3;
+  --color-brand-primary-dark: #0E00C8;
+  --color-brand-primary-surface: #E1E0FF;
+  --color-brand-primary-surface2: #C0C1FF;
+
+  --color-brand-secondary: #FAA100;
+  --color-brand-secondary-light: #FFB94D;
+  --color-brand-secondary-dark: #D48700;
+  --color-brand-secondary-surface: #FFF3E0;
+
+  --color-brand-accent: #FAA100;
+  --color-brand-accent-surface: #FFF3E0;
+
+  --color-brand-gold: #FAA100;
+  --color-brand-gold-dark: #D48700;
+  --color-brand-gold-surface: #FFF3E0;
+  --color-brand-xp-gold: #FAA100;
+  --color-brand-xp-gold-dark: #D48700;
+  --color-brand-xp-gold-surface: #FFF8DC;
+  --color-brand-xp-bar: #34D399;
+
+  --color-brand-streak-fire: #FF6B35;
+  --color-brand-streak-fire-light: #FF9060;
+  --color-brand-streak-fire-surface: #FFF0EA;
+  --color-brand-level-purple: #8B5CF6;
+  --color-brand-level-purple-surface: #F3EBFF;
+
+  --color-brand-rank-gold: #FFD700;
+  --color-brand-rank-silver: #C0C0C0;
+  --color-brand-rank-bronze: #CD7F32;
+
+  --color-brand-success: #10B981;
+  --color-brand-success-light: #ECFDF5;
+  --color-brand-success-surface: #ECFDF5;
+  --color-brand-success-dark: #15803D;
+
+  --color-brand-warning: #F59E0B;
+  --color-brand-warning-light: #FFFBEB;
+  --color-brand-warning-surface: #FFFBEB;
+  --color-brand-warning-dark: #A16207;
+
+  --color-brand-error: #EF4444;
+  --color-brand-error-light: #FEF2F2;
+  --color-brand-error-surface: #FEF2F2;
+  --color-brand-error-dark: #93000A;
+
+  --color-brand-info: #3B82F6;
+  --color-brand-info-light: #EFF6FF;
+  --color-brand-info-surface: #EFF6FF;
+  --color-brand-info-dark: #1D4ED8;
+
+  --color-brand-background: #FBF8FF;
+  --color-brand-background-alt: #F6F2FA;
+  --color-brand-card: #FFFFFF;
+  --color-brand-surface: #FBF8FF;
+  --color-brand-surface-light: #EEF2FF;
+  --color-brand-surface-low: #F6F2FA;
+  --color-brand-surface-container: #F0ECF4;
+
+  --color-brand-text-primary: #1B1B20;
+  --color-brand-text-secondary: #454556;
+  --color-brand-text-tertiary: #767587;
+  --color-brand-text-disabled: #C6C4D8;
+
+  --color-brand-border: #E4E1E9;
+  --color-brand-border-light: #F0ECF4;
+
+  --color-brand-dark-bg: #2A2BB5;
+  --color-brand-dark-bg2: #3133DD;
+  --color-brand-dark-bg3: #3E40E0;
+  --color-brand-dark-surface: #4446D6;
+  --color-brand-dark-surface2: #4F51E0;
+  --color-brand-dark-surface3: #6163E8;
+  --color-brand-dark-border: #5759C8;
+  --color-brand-dark-border2: #6E70EC;
+  --color-brand-dark-divider: #4446D6;
+
+  --color-brand-dark-text-primary: #FFFFFF;
+  --color-brand-dark-text-secondary: #D6D7F7;
+  --color-brand-dark-text-muted: #ADAEEE;
+  --color-brand-dark-accent-blue: #B9C6FF;
+  --color-brand-dark-accent-amber: #FAA100;
+
+  --color-brand-category-science: #0891B2;
+  --color-brand-category-literature: #DB2777;
+  --color-brand-category-economics: #16A34A;
+  --color-brand-category-technology: #7C3AED;
+  --color-brand-category-arts: #F59E0B;
+  --color-brand-category-health: #EF4444;
+
+  --font-sans: 'Hanken Grotesque', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --animate-fade-in: fade-in 0.5s ease-out;
+  --animate-scale-in: scale-in 0.3s ease-out;
+  --animate-slide-up: slide-up 0.5s ease-out;
+  --animate-slide-down: slide-down 0.3s ease-out;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse-dot {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
+}
+@keyframes float-particle {
+  0%, 100% { transform: translateY(0) translateX(0); opacity: 0.3; }
+  25% { transform: translateY(-15px) translateX(5px); opacity: 0.6; }
+  50% { transform: translateY(-5px) translateX(-5px); opacity: 0.4; }
+  75% { transform: translateY(-20px) translateX(3px); opacity: 0.7; }
+}
+@keyframes shimmer {
+  0%, 100% { transform: translateX(-30%); }
+  50% { transform: translateX(30%); }
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+body {
+  background: var(--color-brand-background);
+  color: var(--color-brand-text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+@layer utilities {
+  .text-gradient-primary {
+    background: linear-gradient(135deg, #3133DD, #6062E8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .text-gradient-gold {
+    background: linear-gradient(135deg, #FAA100, #D48700);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .bg-gradient-hero {
+    background: linear-gradient(135deg, #2A2BB5 0%, #3133DD 50%, #1060CF 100%);
+  }
+  .bg-gradient-primary {
+    background: linear-gradient(135deg, #3133DD, #6062E8);
+  }
+  .bg-gradient-card {
+    background: linear-gradient(135deg, #FFFFFF, #F5F3FF);
+  }
+  .bg-gradient-xp {
+    background: linear-gradient(135deg, #34D399, #10B981);
+  }
+  .shadow-card {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.05);
+  }
+  .shadow-card-hover {
+    box-shadow: 0 4px 12px rgba(49,51,221,0.08), 0 8px 24px rgba(49,51,221,0.06);
+  }
+  .shadow-glow {
+    box-shadow: 0 0 20px rgba(49,51,221,0.15);
+  }
+  .shadow-nav {
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.06);
+  }
+  .shadow-fab {
+    box-shadow: 0 6px 20px rgba(49,51,221,0.35);
+  }
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar { display: none; }
+}
+
+.dark body {
+  --color-brand-background: #12121A;
+  --color-brand-surface: #1E1E2A;
+  --color-brand-surface-light: #282840;
+  --color-brand-surface-low: #1A1A24;
+  --color-brand-surface-container: #24243A;
+  --color-brand-text-primary: #EEEEF4;
+  --color-brand-text-secondary: #C0C0D0;
+  --color-brand-text-tertiary: #8888A0;
+  --color-brand-border: #2E2E42;
+  --color-brand-border-light: #363650;
+  --color-brand-card: #1A1A28;
+}

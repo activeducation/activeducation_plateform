@@ -7,6 +7,13 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'ActivEducation',
   description: "Plateforme d'orientation et d'apprentissage",
+  icons: {
+    // Override the default Next.js favicon: icon.jpeg already points to
+    // public/logo.jpeg (the ActivEducation logo). Without this, browsers
+    // pick src/app/favicon.ico (the Next.js black mark) over icon.jpeg.
+    icon: [{ url: '/icon.jpeg', type: 'image/jpeg' }],
+    apple: [{ url: '/apple-icon.jpeg', type: 'image/jpeg' }],
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

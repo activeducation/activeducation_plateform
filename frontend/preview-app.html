@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ActivEducation — Aperçu design frontend</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesque:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --blue: #3133DD; --blue-mid: #2322D3; --blue-dark: #0E00C8; --blue-light: #6062E8;
+    --blue-soft: #E1E0FF; --blue-softer: #C0C1FF;
+    --amber: #FAA100; --amber-light: #FFB94D; --amber-dark: #D48700; --amber-soft: #FFF3E0;
+    --streak: #FF6B35; --level: #8B5CF6; --xp: #34D399;
+    --success: #10B981; --error: #EF4444; --warning: #F59E0B; --info: #3B82F6;
+    --cat-science: #0891B2; --cat-litterature: #DB2777; --cat-economie: #16A34A;
+    --cat-techno: #7C3AED; --cat-arts: #F59E0B; --cat-sante: #EF4444;
+    --bg: #FBF8FF; --bg-alt: #F6F2FA; --surface: #FFFFFF; --surface-low: #F0ECF4;
+    --text-1: #1B1B20; --text-2: #454556; --text-3: #767587; --text-disabled: #C6C4D8;
+    --border: #E4E1E9; --border-light: #F0ECF4;
+    --shadow-1: 0 1px 2px rgba(49,51,221,.04), 0 1px 1px rgba(49,51,221,.06);
+    --shadow-2: 0 4px 8px rgba(49,51,221,.06), 0 2px 4px rgba(49,51,221,.04);
+    --shadow-3: 0 12px 24px rgba(49,51,221,.08), 0 4px 8px rgba(49,51,221,.04);
+    --shadow-nav: 0 -2px 12px rgba(49,51,221,.06);
+    --r-sm: 10px; --r: 16px; --r-lg: 24px; --r-xl: 32px; --r-pill: 999px;
+    --font: 'Hanken Grotesque', system-ui, -apple-system, sans-serif;
+    --spring: cubic-bezier(.22, 1, .36, 1);
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; font-family: var(--font); color: var(--text-1); background: #E4E1E9; -webkit-font-smoothing: antialiased; min-height: 100vh; }
+  a { color: inherit; text-decoration: none; }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; }
+  img, svg { display: block; max-width: 100%; }
+
+  .preview-bar { position: sticky; top: 0; z-index: 100; background: #1B1B20; color: #fff; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; font-size: 13px; }
+  .preview-bar__title { font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .preview-bar__title-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--xp); }
+  .preview-bar__nav { display: flex; gap: 4px; flex-wrap: wrap; }
+  .preview-bar__nav a { padding: 6px 12px; border-radius: var(--r-pill); color: rgba(255,255,255,.7); font-size: 12px; font-weight: 500; }
+  .preview-bar__nav a:hover, .preview-bar__nav a.active { background: rgba(255,255,255,.1); color: #fff; }
+
+  .preview-stage { display: flex; align-items: flex-start; justify-content: center; padding: 32px 16px 80px; gap: 24px; background: linear-gradient(180deg, #E4E1E9 0%, #C6C4D8 100%); min-height: calc(100vh - 56px); }
+  .phone-frame { width: 400px; max-width: 100%; background: #1B1B20; border-radius: 44px; padding: 12px; box-shadow: 0 30px 60px rgba(0,0,0,.25), 0 10px 20px rgba(0,0,0,.15); position: relative; flex-shrink: 0; }
+  .phone-frame::before { content: ''; position: absolute; top: 18px; left: 50%; transform: translateX(-50%); width: 110px; height: 26px; background: #1B1B20; border-radius: 0 0 16px 16px; z-index: 2; }
+  .phone-screen { background: var(--bg); border-radius: 32px; height: 820px; overflow: hidden; position: relative; }
+
+  .page { display: none; height: 100%; overflow-y: auto; padding: 28px 20px 100px; }
+  .page.active { display: block; animation: pageIn .35s var(--spring); }
+  @keyframes pageIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .page::-webkit-scrollbar { width: 4px; }
+  .page::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .bottom-nav { position: absolute; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid var(--border-light); box-shadow: var(--shadow-nav); display: grid; grid-template-columns: repeat(7, 1fr); padding: 8px 2px 12px; z-index: 10; }
+  .bottom-nav__item { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 2px; border-radius: 14px; font-size: 9.5px; font-weight: 500; color: var(--text-3); transition: all .15s; }
+  .bottom-nav__item.active { color: var(--blue-dark); font-weight: 600; }
+  .bottom-nav__item.active .bottom-nav__icon-wrap { background: var(--blue-soft); }
+  .bottom-nav__icon-wrap { width: 44px; height: 28px; border-radius: 10px; display: grid; place-items: center; transition: background .15s; }
+  .bottom-nav__item:not(.aida):active { transform: scale(.95); }
+  .bottom-nav__item.aida { position: relative; top: -16px; }
+  .bottom-nav__item.aida .bottom-nav__icon-wrap { width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, var(--blue), var(--blue-light)); color: #fff; box-shadow: 0 8px 20px rgba(49,51,221,.35); }
+  .bottom-nav__item.aida { color: var(--text-3); font-size: 9.5px; }
+
+  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .page-header__left { display: flex; align-items: center; gap: 10px; }
+  .avatar { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 14px; flex-shrink: 0; }
+  .icon-btn { width: 40px; height: 40px; border-radius: 50%; background: #fff; border: 1px solid var(--border); display: grid; place-items: center; color: var(--text-2); transition: all .15s; }
+  .icon-btn:hover { background: var(--bg-alt); color: var(--text-1); }
+  .icon-btn:active { transform: scale(.92); }
+  .page-greeting { font-size: 13px; color: var(--text-3); margin: 0; }
+  .page-name { font-size: 18px; font-weight: 800; letter-spacing: -.01em; margin: 0; }
+
+  .section-title { display: flex; align-items: center; justify-content: space-between; margin: 24px 0 12px; }
+  .section-title h2 { font-size: 17px; font-weight: 700; letter-spacing: -.01em; margin: 0; }
+  .section-title a { font-size: 13px; font-weight: 600; color: var(--blue); display: inline-flex; align-items: center; gap: 2px; }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 44px; padding: 0 20px; border-radius: var(--r-pill); font-weight: 600; font-size: 15px; transition: all .2s var(--spring); }
+  .btn--primary { background: var(--blue); color: #fff; box-shadow: var(--shadow-1); }
+  .btn--primary:active { transform: scale(.97); background: var(--blue-dark); }
+  .btn--accent { background: var(--amber); color: #1B1B20; box-shadow: var(--shadow-1); }
+  .btn--accent:active { transform: scale(.97); }
+  .btn--outline { background: transparent; color: var(--blue); border: 1.5px solid var(--blue); }
+  .btn--block { width: 100%; }
+  .btn--sm { height: 36px; padding: 0 14px; font-size: 14px; }
+  .btn--lg { height: 52px; padding: 0 24px; font-size: 16px; }
+
+  .chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: var(--r-pill); font-size: 11.5px; font-weight: 600; }
+  .chip--blue { background: var(--blue-soft); color: var(--blue-dark); }
+  .chip--amber { background: var(--amber-soft); color: var(--amber-dark); }
+  .chip--green { background: #D1FAE5; color: #047857; }
+  .chip--purple { background: #F3EBFF; color: var(--level); }
+  .chip--pink { background: #FCE7F3; color: #BE185D; }
+  .chip--cyan { background: #CFFAFE; color: var(--cat-science); }
+  .chip--neutral { background: var(--bg-alt); color: var(--text-2); }
+
+  .xp-card { background: linear-gradient(135deg, #fff 0%, #FAFAFB 100%); border: 1px solid var(--border); border-radius: var(--r); padding: 16px; margin-bottom: 20px; position: relative; overflow: hidden; }
+  .xp-card::before { content: ''; position: absolute; top: -30px; right: -30px; width: 120px; height: 120px; border-radius: 50%; background: radial-gradient(circle, var(--blue-soft), transparent 70%); }
+  .xp-card__row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text-2); margin-bottom: 8px; position: relative; }
+  .xp-card__level { font-weight: 700; color: var(--text-1); }
+  .xp-card__num { font-weight: 800; color: var(--text-1); }
+  .xp-bar { height: 10px; background: var(--bg-alt); border-radius: var(--r-pill); overflow: hidden; position: relative; }
+  .xp-bar__fill { height: 100%; width: 68%; background: linear-gradient(90deg, var(--xp), var(--success)); border-radius: var(--r-pill); position: relative; }
+  .xp-bar__fill::after { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.4), transparent); animation: shimmer 2s linear infinite; }
+  @keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+  .xp-card__stats { display: flex; gap: 8px; margin-top: 12px; position: relative; }
+  .xp-stat { flex: 1; display: flex; align-items: center; gap: 6px; padding: 6px 8px; background: var(--bg-alt); border-radius: 10px; font-size: 11px; font-weight: 600; color: var(--text-2); }
+  .xp-stat__ico { font-size: 13px; }
+
+  .suggestion-row { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 4px; margin: 0 -20px; padding-left: 20px; padding-right: 20px; scrollbar-width: none; }
+  .suggestion-row::-webkit-scrollbar { display: none; }
+  .suggestion-card { flex: 0 0 140px; padding: 14px; border-radius: var(--r); color: #fff; position: relative; overflow: hidden; min-height: 130px; display: flex; flex-direction: column; justify-content: space-between; }
+  .suggestion-card__icon { width: 32px; height: 32px; border-radius: 10px; background: rgba(255,255,255,.2); display: grid; place-items: center; font-size: 16px; }
+  .suggestion-card__title { font-size: 14px; font-weight: 700; line-height: 1.2; }
+  .suggestion-card__meta { font-size: 11px; opacity: .9; font-weight: 500; }
+  .sc-blue { background: linear-gradient(135deg, var(--blue), var(--blue-light)); }
+  .sc-amber { background: linear-gradient(135deg, var(--amber), var(--amber-dark)); }
+  .sc-purple { background: linear-gradient(135deg, var(--level), #A855F7); }
+  .sc-cyan { background: linear-gradient(135deg, var(--cat-science), #06B6D4); }
+
+  .resume-card { background: #fff; border: 1px solid var(--border); border-radius: var(--r); padding: 14px; display: flex; gap: 12px; align-items: center; }
+  .resume-card__cover { width: 56px; height: 56px; border-radius: 12px; background: linear-gradient(135deg, var(--cat-techno), #A855F7); display: grid; place-items: center; color: #fff; font-size: 24px; flex-shrink: 0; }
+  .resume-card__body { flex: 1; min-width: 0; }
+  .resume-card__title { font-size: 14px; font-weight: 700; margin: 0 0 2px; }
+  .resume-card__meta { font-size: 12px; color: var(--text-3); }
+  .resume-card__progress { margin-top: 6px; height: 5px; background: var(--bg-alt); border-radius: 999px; overflow: hidden; }
+  .resume-card__fill { height: 100%; width: 40%; background: linear-gradient(90deg, var(--blue), var(--blue-light)); border-radius: 999px; }
+
+  .announcement { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border-light); }
+  .announcement:last-child { border-bottom: none; }
+  .announcement__dot { width: 6px; height: 6px; border-radius: 50%; background: var(--amber); margin-top: 8px; flex-shrink: 0; }
+  .announcement__text { font-size: 13px; line-height: 1.5; }
+  .announcement__text strong { color: var(--text-1); font-weight: 600; }
+
+  .mentor-card { background: linear-gradient(135deg, var(--blue-soft) 0%, #fff 100%); border: 1px solid var(--blue-softer); border-radius: var(--r); padding: 16px; position: relative; overflow: hidden; }
+  .mentor-card::before { content: '"'; position: absolute; top: -20px; right: 12px; font-size: 80px; color: var(--blue); opacity: .15; font-family: Georgia, serif; line-height: 1; }
+  .mentor-card__quote { font-size: 14px; line-height: 1.5; color: var(--text-1); margin: 0 0 12px; font-style: italic; }
+  .mentor-card__author { display: flex; align-items: center; gap: 10px; }
+  .mentor-card__name { font-size: 13px; font-weight: 700; }
+  .mentor-card__role { font-size: 11px; color: var(--text-3); }
+
+  .hero-banner { background: linear-gradient(135deg, var(--blue-dark) 0%, var(--blue) 60%, var(--blue-light) 100%); border-radius: var(--r-lg); padding: 20px; color: #fff; position: relative; overflow: hidden; margin-bottom: 20px; }
+  .hero-banner::before { content: ''; position: absolute; top: -40px; right: -40px; width: 160px; height: 160px; border-radius: 50%; background: radial-gradient(circle, rgba(250,161,0,.3), transparent 70%); }
+  .hero-banner h2 { font-size: 20px; font-weight: 800; margin: 0 0 6px; letter-spacing: -.01em; position: relative; }
+  .hero-banner p { font-size: 13px; opacity: .9; margin: 0 0 14px; position: relative; }
+  .hero-banner .btn { position: relative; }
+
+  .filter-chips { display: flex; gap: 8px; overflow-x: auto; margin: 0 -20px 16px; padding: 0 20px 4px; scrollbar-width: none; }
+  .filter-chips::-webkit-scrollbar { display: none; }
+  .filter-chip { flex: 0 0 auto; padding: 6px 14px; border-radius: var(--r-pill); background: #fff; border: 1px solid var(--border); font-size: 12.5px; font-weight: 600; color: var(--text-2); transition: all .15s; }
+  .filter-chip.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+  .test-card { display: flex; gap: 12px; padding: 14px; background: #fff; border: 1px solid var(--border); border-radius: var(--r); align-items: center; }
+  .test-card__icon { width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center; font-size: 22px; flex-shrink: 0; }
+  .test-card__body { flex: 1; min-width: 0; }
+  .test-card__title { font-size: 14px; font-weight: 700; margin: 0 0 2px; }
+  .test-card__meta { font-size: 12px; color: var(--text-3); display: flex; gap: 8px; }
+  .test-card__cta { color: var(--blue); font-size: 13px; font-weight: 600; }
+
+  .opportunity-card { background: #fff; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; margin-bottom: 10px; }
+  .opp-header { padding: 14px; display: flex; gap: 12px; align-items: flex-start; }
+  .opp-logo { width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 16px; flex-shrink: 0; }
+  .opp-body { flex: 1; min-width: 0; }
+  .opp-title { font-size: 14px; font-weight: 700; margin: 0 0 4px; line-height: 1.3; }
+  .opp-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .opp-urgent { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; background: #FEE2E2; color: var(--error); border-radius: var(--r-pill); font-size: 10.5px; font-weight: 700; }
+
+  /* ORIENTATION — catalogue métiers */
+  .career-list-card { display: flex; gap: 12px; padding: 12px; background: #fff; border: 1px solid var(--border); border-radius: var(--r); align-items: center; transition: all .15s; margin-bottom: 8px; cursor: pointer; }
+  .career-list-card:active { transform: scale(.99); background: var(--blue-soft); border-color: var(--blue); }
+  .career-list-card__emoji { width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center; font-size: 24px; flex-shrink: 0; }
+  .career-list-card__body { flex: 1; min-width: 0; }
+  .career-list-card__name { font-size: 14px; font-weight: 700; margin: 0 0 4px; }
+  .career-list-card__meta { display: flex; gap: 6px; align-items: center; font-size: 11.5px; color: var(--text-3); }
+  .career-list-card__match { padding: 3px 8px; border-radius: var(--r-pill); font-size: 10.5px; font-weight: 700; }
+
+  /* CARRIÈRE V2 */
+  .career-hero-compact { padding: 16px; background: linear-gradient(135deg, var(--cat-techno), #A855F7); border-radius: var(--r-lg); color: #fff; margin-bottom: 16px; position: relative; overflow: hidden; display: flex; gap: 14px; align-items: center; }
+  .career-hero-compact::before { content: ''; position: absolute; top: -30px; right: -30px; width: 140px; height: 140px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,.15), transparent 70%); }
+  .career-hero-compact__emoji { font-size: 56px; flex-shrink: 0; position: relative; z-index: 1; filter: drop-shadow(0 4px 8px rgba(0,0,0,.25)); }
+  .career-hero-compact__body { flex: 1; min-width: 0; position: relative; z-index: 1; }
+  .career-hero-compact__cat { display: inline-block; padding: 2px 8px; background: rgba(255,255,255,.2); border-radius: var(--r-pill); font-size: 10.5px; font-weight: 700; margin-bottom: 4px; }
+  .career-hero-compact__name { font-size: 18px; font-weight: 800; margin: 0 0 4px; letter-spacing: -.01em; line-height: 1.15; }
+  .career-hero-compact__match { font-size: 12px; opacity: .9; margin: 0; }
+
+  .career-stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+  .career-stat-compact { padding: 10px; background: #fff; border: 1px solid var(--border); border-radius: var(--r); text-align: center; }
+  .career-stat-compact__val { font-size: 14px; font-weight: 800; color: var(--text-1); line-height: 1.1; }
+  .career-stat-compact__label { font-size: 10.5px; color: var(--text-3); margin-top: 2px; }
+
+  .salary-card { padding: 14px; background: linear-gradient(135deg, #ECFDF5 0%, #fff 100%); border: 1.5px solid #6EE7B7; border-radius: var(--r); margin-bottom: 12px; text-align: center; }
+  .salary-card__label { font-size: 11px; color: #047857; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; margin: 0 0 4px; }
+  .salary-card__range { font-size: 22px; font-weight: 800; color: var(--text-1); margin: 0; letter-spacing: -.01em; }
+  .salary-card__meta { font-size: 11px; color: var(--text-3); margin: 4px 0 0; }
+
+  .career-section { background: #fff; border: 1px solid var(--border); border-radius: var(--r); padding: 14px; margin-bottom: 10px; }
+  .career-section--featured { background: linear-gradient(135deg, #FAFAFB 0%, #fff 100%); border: 1.5px solid var(--blue-softer); }
+  .career-section--amber { background: linear-gradient(135deg, #FFFBEB 0%, #fff 100%); border-color: #FCD34D; }
+  .career-section--green { background: linear-gradient(135deg, #ECFDF5 0%, #fff 100%); border-color: #6EE7B7; }
+  .career-section--purple { background: linear-gradient(135deg, #F5F3FF 0%, #fff 100%); border-color: #C4B5FD; }
+  .career-section__icon { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; font-size: 16px; flex-shrink: 0; }
+  .career-section--featured .career-section__icon { background: var(--blue-soft); color: var(--blue-dark); }
+  .career-section--amber .career-section__icon { background: var(--amber-soft); color: var(--amber-dark); }
+  .career-section--green .career-section__icon { background: #D1FAE5; color: #047857; }
+  .career-section--purple .career-section__icon { background: #F3EBFF; color: var(--level); }
+  .career-section__head { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; }
+  .career-section__head h3 { font-size: 14px; font-weight: 700; margin: 0; }
+
+  .journee-step { display: flex; gap: 12px; padding: 8px 0; }
+  .journee-step__time { width: 48px; flex-shrink: 0; font-size: 11px; font-weight: 700; color: var(--blue-dark); padding-top: 2px; }
+  .journee-step__body { flex: 1; padding-bottom: 8px; border-bottom: 1px dashed var(--border); }
+  .journee-step:last-child .journee-step__body { border: none; }
+  .journee-step__title { font-size: 13px; font-weight: 600; margin: 0 0 2px; }
+  .journee-step__desc { font-size: 12px; color: var(--text-3); margin: 0; line-height: 1.4; }
+
+  .perspective-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
+  .perspective-item__icon { font-size: 18px; flex-shrink: 0; width: 28px; text-align: center; }
+  .perspective-item__body { flex: 1; }
+  .perspective-item__title { font-size: 13px; font-weight: 600; margin: 0; }
+  .perspective-item__meta { font-size: 11px; color: var(--text-3); }
+
+  .career-skill { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background: var(--blue-soft); color: var(--blue-dark); border-radius: var(--r-pill); font-size: 11.5px; font-weight: 600; margin: 0 4px 4px 0; }
+  .career-skill--amber { background: var(--amber-soft); color: var(--amber-dark); }
+  .career-skill--green { background: #D1FAE5; color: #047857; }
+  .career-skill--purple { background: #F3EBFF; color: var(--level); }
+
+  .menu-item { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--border-light); }
+  .menu-item:last-child { border-bottom: none; }
+  .menu-item__icon { width: 32px; height: 32px; border-radius: 8px; background: var(--bg-alt); display: grid; place-items: center; color: var(--text-2); }
+  .menu-item__label { flex: 1; font-size: 14px; font-weight: 500; }
+  .menu-item__arrow { color: var(--text-disabled); }
+
+  .career-cta { display: flex; gap: 8px; margin-top: 16px; }
+  .career-cta .btn { flex: 1; }
+
+  .voisin-scroll { display: flex; gap: 8px; overflow-x: auto; margin: 0 -14px; padding: 0 14px 4px; scrollbar-width: none; }
+  .voisin-scroll::-webkit-scrollbar { display: none; }
+  .voisin-card { flex: 0 0 110px; text-align: center; cursor: pointer; }
+  .voisin-card__emoji { width: 64px; height: 64px; border-radius: 16px; display: grid; place-items: center; font-size: 32px; margin: 0 auto 6px; }
+  .voisin-card__name { font-size: 12px; font-weight: 600; margin: 0; }
+  .voisin-card__pct { font-size: 10px; color: var(--text-3); margin: 2px 0 0; }
+
+  /* RECHERCHE — états */
+  .search-empty-input { display: flex; align-items: center; gap: 8px; padding: 12px 14px; background: #fff; border-radius: var(--r-pill); box-shadow: var(--shadow-1); margin-bottom: 20px; }
+  .search-empty-input input { flex: 1; border: none; outline: none; font-family: inherit; font-size: 14px; color: var(--text-1); }
+  .search-empty-input input::placeholder { color: var(--text-3); }
+  .search-empty-input svg { color: var(--text-3); }
+
+  .recent-search { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: #fff; border: 1px solid var(--border); border-radius: var(--r); margin-bottom: 8px; }
+  .recent-search__icon { width: 36px; height: 36px; border-radius: 50%; background: var(--bg-alt); color: var(--text-3); display: grid; place-items: center; flex-shrink: 0; }
+  .recent-search__body { flex: 1; min-width: 0; }
+  .recent-search__term { font-size: 14px; font-weight: 600; margin: 0; }
+  .recent-search__meta { font-size: 11px; color: var(--text-3); margin: 1px 0 0; }
+  .recent-search__close { color: var(--text-disabled); padding: 4px; }
+
+  .quick-cat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .quick-cat { padding: 14px 8px; background: #fff; border: 1px solid var(--border); border-radius: var(--r); text-align: center; transition: all .15s; cursor: pointer; }
+  .quick-cat:active { transform: scale(.96); }
+  .quick-cat__icon { font-size: 24px; margin-bottom: 4px; }
+  .quick-cat__label { font-size: 11px; font-weight: 600; color: var(--text-2); }
+
+  .search-section { margin-bottom: 20px; }
+  .search-section__title { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; margin: 0 0 10px; }
+  .search-section__count { font-size: 11px; color: var(--text-3); background: var(--bg-alt); padding: 2px 8px; border-radius: var(--r-pill); font-weight: 600; }
+  .search-result { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border-light); align-items: center; }
+  .search-result:last-child { border: none; }
+  .search-result__icon { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; font-size: 18px; flex-shrink: 0; }
+  .search-result__body { flex: 1; min-width: 0; }
+  .search-result__title { font-size: 13.5px; font-weight: 600; margin: 0 0 2px; }
+  .search-result__meta { font-size: 11px; color: var(--text-3); }
+  .search-result__arrow { color: var(--text-disabled); }
+
+  .empty-state { text-align: center; padding: 40px 20px; }
+  .empty-state__illu { width: 120px; height: 120px; margin: 0 auto 20px; background: var(--blue-soft); border-radius: 50%; display: grid; place-items: center; font-size: 56px; }
+  .empty-state__title { font-size: 16px; font-weight: 700; margin: 0 0 6px; }
+  .empty-state__body { font-size: 13px; color: var(--text-2); margin: 0 auto 16px; max-width: 280px; }
+  .empty-state__suggestions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+  .empty-state__suggestion { padding: 6px 12px; background: #fff; border: 1px solid var(--border); border-radius: var(--r-pill); font-size: 12px; color: var(--text-2); cursor: pointer; }
+</style>
+</head>
+<body>
+
+<div class="preview-bar">
+  <div class="preview-bar__title">
+    <span class="preview-bar__title-dot"></span>
+    ActivEducation — Aperçu design frontend (Next.js)
+  </div>
+  <nav class="preview-bar__nav">
+    <a href="#" data-go="accueil" class="active">Accueil</a>
+    <a href="#" data-go="orientation">Orientation</a>
+    <a href="#" data-go="carriere">Carrière V2</a>
+    <a href="#" data-go="recherche">Recherche</a>
+  </nav>
+</div>
+
+<div class="preview-stage">
+  <div class="phone-frame">
+    <div class="phone-screen">
+
+      <!-- ACCUEIL -->
+      <div class="page active" data-page="accueil">
+        <div class="page-header">
+          <div class="page-header__left">
+            <div class="avatar" style="background:linear-gradient(135deg,var(--blue),var(--blue-light))">KM</div>
+            <div>
+              <p class="page-greeting">Bonjour 👋</p>
+              <h1 class="page-name">Kossi Mensah</h1>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="icon-btn" aria-label="Rechercher" onclick="go('recherche')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            </button>
+            <button class="icon-btn" aria-label="Notifications" style="position:relative">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+              <span style="position:absolute;top:8px;right:8px;width:8px;height:8px;background:var(--amber);border-radius:50%;border:2px solid #fff"></span>
+            </button>
+          </div>
+        </div>
+
+        <div class="xp-card">
+          <div class="xp-card__row">
+            <span class="xp-card__level">✦ Niveau 4 — Éclaireur</span>
+            <span class="xp-card__num">340 / 500 XP</span>
+          </div>
+          <div class="xp-bar"><div class="xp-bar__fill"></div></div>
+          <div class="xp-card__stats">
+            <div class="xp-stat"><span class="xp-stat__ico">🔥</span> 12 j</div>
+            <div class="xp-stat"><span class="xp-stat__ico">🏆</span> Top 14%</div>
+            <div class="xp-stat"><span class="xp-stat__ico">🎯</span> 3/12</div>
+          </div>
+        </div>
+
+        <div class="section-title">
+          <h2>Suggestions pour toi</h2>
+          <a href="#">Tout voir →</a>
+        </div>
+        <div class="suggestion-row">
+          <div class="suggestion-card sc-blue">
+            <div class="suggestion-card__icon">🧪</div>
+            <div><div class="suggestion-card__title">Test RIASEC</div><div class="suggestion-card__meta">5 min</div></div>
+          </div>
+          <div class="suggestion-card sc-amber">
+            <div class="suggestion-card__icon">🐍</div>
+            <div><div class="suggestion-card__title">Python</div><div class="suggestion-card__meta">6 leçons</div></div>
+          </div>
+          <div class="suggestion-card sc-purple">
+            <div class="suggestion-card__icon">👩‍💼</div>
+            <div><div class="suggestion-card__title">Aïcha</div><div class="suggestion-card__meta">Mentor</div></div>
+          </div>
+        </div>
+
+        <div class="section-title"><h2>Reprendre où tu t'es arrêté</h2></div>
+        <div class="resume-card">
+          <div class="resume-card__cover">🐍</div>
+          <div class="resume-card__body">
+            <h3 class="resume-card__title">Les variables Python</h3>
+            <p class="resume-card__meta">Cours · Introduction à Python</p>
+            <div class="resume-card__progress"><div class="resume-card__fill"></div></div>
+          </div>
+        </div>
+
+        <div class="section-title"><h2>Annonces</h2></div>
+        <div>
+          <div class="announcement"><span class="announcement__dot"></span><div class="announcement__text"><strong>Bourse Mastercard 2026</strong> — date limite 30/07</div></div>
+          <div class="announcement"><span class="announcement__dot" style="background:var(--blue)"></span><div class="announcement__text"><strong>Nouveau cours</strong> : Design Thinking</div></div>
+          <div class="announcement"><span class="announcement__dot" style="background:var(--success)"></span><div class="announcement__text"><strong>Webinaire</strong> : carrières tech, samedi 14h</div></div>
+        </div>
+
+        <div class="section-title">
+          <h2>Opportunités pour toi</h2>
+          <a href="#">Voir tout →</a>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div class="opportunity-card" style="margin-bottom:0">
+            <div class="opp-header" style="padding:12px">
+              <div class="opp-logo" style="background:linear-gradient(135deg,var(--cat-litterature),#F472B6);width:42px;height:42px;font-size:14px">M</div>
+              <div class="opp-body">
+                <h3 class="opp-title" style="font-size:13.5px">Bourse Mastercard 2026</h3>
+                <div class="opp-tags">
+                  <span class="chip chip--blue" style="font-size:10.5px;padding:3px 8px">Bachelor</span>
+                  <span class="opp-urgent">⏰ 12 jours</span>
+                </div>
+              </div>
+              <span style="color:var(--text-disabled);font-size:18px">›</span>
+            </div>
+          </div>
+          <div class="opportunity-card" style="margin-bottom:0">
+            <div class="opp-header" style="padding:12px">
+              <div class="opp-logo" style="background:linear-gradient(135deg,var(--cat-techno),#A855F7);width:42px;height:42px;font-size:14px">G</div>
+              <div class="opp-body">
+                <h3 class="opp-title" style="font-size:13.5px">Google Developer Scholarship</h3>
+                <div class="opp-tags">
+                  <span class="chip chip--purple" style="font-size:10.5px;padding:3px 8px">Tech</span>
+                  <span class="chip chip--green" style="font-size:10.5px;padding:3px 8px">Gratuit</span>
+                </div>
+              </div>
+              <span style="color:var(--text-disabled);font-size:18px">›</span>
+            </div>
+          </div>
+          <div class="opportunity-card" style="margin-bottom:0">
+            <div class="opp-header" style="padding:12px">
+              <div class="opp-logo" style="background:linear-gradient(135deg,var(--cat-economie),#4ADE80);width:42px;height:42px;font-size:14px">A</div>
+              <div class="opp-body">
+                <h3 class="opp-title" style="font-size:13.5px">Stage Dev Mobile · AfricaTech</h3>
+                <div class="opp-tags">
+                  <span class="chip chip--green" style="font-size:10.5px;padding:3px 8px">Stage</span>
+                  <span class="opp-urgent">⏰ 5 jours</span>
+                </div>
+              </div>
+              <span style="color:var(--text-disabled);font-size:18px">›</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-title"><h2>Mentor de la semaine</h2></div>
+        <div class="mentor-card">
+          <p class="mentor-card__quote">« J'ai trouvé ma voie en osant envoyer des messages aux mentors. Aujourd'hui je suis ingénieure chez Google. »</p>
+          <div class="mentor-card__author">
+            <div class="avatar" style="background:linear-gradient(135deg,var(--cat-litterature),#F472B6);width:32px;height:32px;font-size:12px">AD</div>
+            <div>
+              <div class="mentor-card__name">Aïcha Diallo</div>
+              <div class="mentor-card__role">Ingénieure logicielle · Google</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BOTTOM NAV -->
+        <nav class="bottom-nav">
+          <a class="bottom-nav__item active" data-go="accueil"><span class="bottom-nav__icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>Accueil</a>
+          <a class="bottom-nav__item" data-go="orientation"><span class="bottom-nav__icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg></span>Orientation</a>
+          <a class="bottom-nav__item" data-go="ecoles"><span class="bottom-nav__icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></span>Écoles</a>
+          <a class="bottom-nav__item aida" data-go="aida"><span class="bottom-nav__icon-wrap"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg></span>AÏDA</a>
+          <a class="bottom-nav__item" data-go="cours"><span class="bottom-nav__icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></span>Cours</a>
+          <a class="bottom-nav__item" data-go="mentors"><span class="bottom-nav__icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Mentors</a>
+          <a class="bottom-nav__item" data-go="profil"><span class="bottom-nav__icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>Profil</a>
+        </nav>
+      </div>
+
+      <!-- ORIENTATION (avec catalogue métiers) -->
+      <div class="page" data-page="orientation">
+        <div class="page-header">
+          <div>
+            <p class="page-greeting">Découvre ta voie</p>
+            <h1 class="page-name">Orientation</h1>
+          </div>
+        </div>
+
+        <div class="hero-banner">
+          <h2>Tu ne sais pas encore où aller ?</h2>
+          <p>5 minutes pour identifier les domaines qui te correspondent vraiment.</p>
+          <button class="btn btn--accent btn--sm">Lancer mon test →</button>
+        </div>
+
+        <div class="section-title"><h2>Tests disponibles</h2></div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="test-card">
+            <div class="test-card__icon" style="background:linear-gradient(135deg,var(--cat-science),#06B6D4);color:#fff">🧪</div>
+            <div class="test-card__body">
+              <h3 class="test-card__title">Test RIASEC</h3>
+              <p class="test-card__meta"><span>⏱ 5 min</span><span>•</span><span>24 questions</span></p>
+            </div>
+            <a class="test-card__cta" href="#">Commencer →</a>
+          </div>
+          <div class="test-card">
+            <div class="test-card__icon" style="background:linear-gradient(135deg,var(--cat-litterature),#F472B6);color:#fff">🎨</div>
+            <div class="test-card__body">
+              <h3 class="test-card__title">Intelligences multiples</h3>
+              <p class="test-card__meta"><span>⏱ 8 min</span><span>•</span><span>32 questions</span></p>
+            </div>
+            <a class="test-card__cta" href="#">Commencer →</a>
+          </div>
+        </div>
+
+        <div class="section-title">
+          <h2>Métiers qui matchent avec toi</h2>
+          <a href="#">Voir les 40+ →</a>
+        </div>
+
+        <div class="career-list-card" data-go="carriere">
+          <div class="career-list-card__emoji" style="background:linear-gradient(135deg,var(--cat-techno),#A855F7)">💻</div>
+          <div class="career-list-card__body">
+            <h3 class="career-list-card__name">Développeur·euse Python</h3>
+            <div class="career-list-card__meta">
+              <span>💰 800k-2M FCFA</span><span>•</span><span>📈 +18%/an</span>
+            </div>
+          </div>
+          <span class="career-list-card__match" style="background:#D1FAE5;color:#047857">92%</span>
+        </div>
+
+        <div class="career-list-card" data-go="carriere">
+          <div class="career-list-card__emoji" style="background:linear-gradient(135deg,var(--cat-science),#06B6D4)">📊</div>
+          <div class="career-list-card__body">
+            <h3 class="career-list-card__name">Data Scientist</h3>
+            <div class="career-list-card__meta">
+              <span>💰 1.2M-2.5M FCFA</span><span>•</span><span>📈 +25%/an</span>
+            </div>
+          </div>
+          <span class="career-list-card__match" style="background:#D1FAE5;color:#047857">88%</span>
+        </div>
+
+        <div class="career-list-card" data-go="carriere">
+          <div class="career-list-card__emoji" style="background:linear-gradient(135deg,var(--level),#A855F7)">🤖</div>
+          <div class="career-list-card__body">
+            <h3 class="career-list-card__name">Ingénieur·e en IA</h3>
+            <div class="career-list-card__meta">
+              <span>💰 1.5M-3M FCFA</span><span>•</span><span>📈 +30%/an</span>
+            </div>
+          </div>
+          <span class="career-list-card__match" style="background:#D1FAE5;color:#047857">85%</span>
+        </div>
+
+        <div class="career-list-card" data-go="carriere">
+          <div class="career-list-card__emoji" style="background:linear-gradient(135deg,var(--cat-arts),var(--amber))">🎨</div>
+          <div class="career-list-card__body">
+            <h3 class="career-list-card__name">UX Designer</h3>
+            <div class="career-list-card__meta">
+              <span>💰 700k-1.8M FCFA</span><span>•</span><span>📈 +15%/an</span>
+            </div>
+          </div>
+          <span class="career-list-card__match" style="background:#FEF3C7;color:#A16207">76%</span>
+        </div>
+
+        <nav class="bottom-nav">
+          <a class="bottom-nav__item" data-go="accueil"><span class="bottom-nav__icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>Accueil</a>
+          <a class="bottom-nav__item active" data-go="orientation"><span class="bottom-nav__icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg></span>Orientation</a>
+          <a class="bottom-nav__item" data-go="ecoles"><span class="bottom-nav__icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></span>Écoles</a>
+          <a class="bottom-nav__item aida" data-go="aida"><span class="bottom-nav__icon-wrap"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg></span>AÏDA</a>
+          <a class="bottom-nav__item" data-go="cours"><span class="bottom-nav__icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></span>Cours</a>
+          <a class="bottom-nav__item" data-go="mentors"><span class="bottom-nav__icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Mentors</a>
+          <a class="bottom-nav__item" data-go="profil"><span class="bottom-nav__icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>Profil</a>
+        </nav>
+      </div>
+
+      <!-- CARRIÈRE V2 -->
+      <div class="page" data-page="carriere">
+        <div class="page-header" style="margin-bottom:12px">
+          <button class="icon-btn" onclick="go('orientation')" aria-label="Retour">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <div style="display:flex;gap:8px">
+            <button class="icon-btn" aria-label="Favoris"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/></svg></button>
+            <button class="icon-btn" aria-label="Partager"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+          </div>
+        </div>
+
+        <div class="career-hero-compact">
+          <div class="career-hero-compact__emoji">💻</div>
+          <div class="career-hero-compact__body">
+            <span class="career-hero-compact__cat">Tech · 92% match</span>
+            <h2 class="career-hero-compact__name">Développeur·euse Python</h2>
+            <p class="career-hero-compact__match">✨ Matche avec ton profil Investigateur + Créatif</p>
+          </div>
+        </div>
+
+        <div class="career-stats-row">
+          <div class="career-stat-compact">
+            <div class="career-stat-compact__val">1.4M</div>
+            <div class="career-stat-compact__label">FCFA médian</div>
+          </div>
+          <div class="career-stat-compact">
+            <div class="career-stat-compact__val">+18%</div>
+            <div class="career-stat-compact__label">croissance /an</div>
+          </div>
+          <div class="career-stat-compact">
+            <div class="career-stat-compact__val">Bac+3</div>
+            <div class="career-stat-compact__label">niveau requis</div>
+          </div>
+        </div>
+
+        <div class="salary-card">
+          <p class="salary-card__label">💰 Salaire médian au Togo</p>
+          <p class="salary-card__range">800k - 2M FCFA</p>
+          <p class="salary-card__meta">Junior : 800k · Confirmé : 1.4M · Senior : 2M+</p>
+        </div>
+
+        <div class="career-section">
+          <div class="career-section__head">
+            <div class="career-section__icon" style="background:var(--bg-alt);color:var(--text-1)">💡</div>
+            <h3>Le métier en 2 lignes</h3>
+          </div>
+          <p style="font-size:13px;color:var(--text-2);line-height:1.55;margin:0">Le développeur Python conçoit et maintient des applications logicielles. Il collabore avec designers, data scientists et chefs de projet pour créer des solutions techniques performantes et évolutives.</p>
+        </div>
+
+        <div class="career-section career-section--green">
+          <div class="career-section__head">
+            <div class="career-section__icon">🌅</div>
+            <h3>Une journée type</h3>
+          </div>
+          <div class="journee-step">
+            <div class="journee-step__time">9h00</div>
+            <div class="journee-step__body">
+              <p class="journee-step__title">Stand-up équipe</p>
+              <p class="journee-step__desc">15 min, chacun dit où il en est</p>
+            </div>
+          </div>
+          <div class="journee-step">
+            <div class="journee-step__time">10h00</div>
+            <div class="journee-step__body">
+              <p class="journee-step__title">Code sur le projet en cours</p>
+              <p class="journee-step__desc">Nouvelles fonctionnalités, debug</p>
+            </div>
+          </div>
+          <div class="journee-step">
+            <div class="journee-step__time">14h00</div>
+            <div class="journee-step__body">
+              <p class="journee-step__title">Revue de code avec un·e pair·e</p>
+              <p class="journee-step__desc">Discuter des choix techniques</p>
+            </div>
+          </div>
+          <div class="journee-step">
+            <div class="journee-step__time">16h00</div>
+            <div class="journee-step__body">
+              <p class="journee-step__title">Apprentissage & veille</p>
+              <p class="journee-step__desc">Lire des articles, tester de nouveaux outils</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="career-section career-section--amber">
+          <div class="career-section__head">
+            <div class="career-section__icon">🎯</div>
+            <h3>Compétences clés</h3>
+          </div>
+          <p style="font-size:11px;font-weight:700;color:var(--amber-dark);margin:0 0 6px;text-transform:uppercase;letter-spacing:.04em">Hard skills</p>
+          <div style="margin-bottom:10px">
+            <span class="career-skill">Python</span>
+            <span class="career-skill">Django</span>
+            <span class="career-skill">SQL</span>
+            <span class="career-skill">Git</span>
+            <span class="career-skill">API REST</span>
+          </div>
+          <p style="font-size:11px;font-weight:700;color:var(--amber-dark);margin:0 0 6px;text-transform:uppercase;letter-spacing:.04em">Soft skills</p>
+          <div>
+            <span class="career-skill career-skill--amber">Résolution de problèmes</span>
+            <span class="career-skill career-skill--green">Travail en équipe</span>
+            <span class="career-skill career-skill--purple">Communication</span>
+          </div>
+        </div>
+
+        <div class="career-section career-section--purple">
+          <div class="career-section__head">
+            <div class="career-section__icon">📈</div>
+            <h3>Évolution de carrière</h3>
+          </div>
+          <div class="perspective-item">
+            <div class="perspective-item__icon">👨‍💻</div>
+            <div class="perspective-item__body">
+              <p class="perspective-item__title">Dev Senior (5+ ans)</p>
+              <p class="perspective-item__meta">2M+ FCFA · Lead technique</p>
+            </div>
+            <span style="color:var(--text-disabled)">›</span>
+          </div>
+          <div class="perspective-item">
+            <div class="perspective-item__icon">👩‍💼</div>
+            <div class="perspective-item__body">
+              <p class="perspective-item__title">Tech Lead / Architecte</p>
+              <p class="perspective-item__meta">3M+ FCFA · Décision technique</p>
+            </div>
+            <span style="color:var(--text-disabled)">›</span>
+          </div>
+          <div class="perspective-item">
+            <div class="perspective-item__icon">🚀</div>
+            <div class="perspective-item__body">
+              <p class="perspective-item__title">CTO / Fondateur</p>
+              <p class="perspective-item__meta">Variable · Vision produit</p>
+            </div>
+            <span style="color:var(--text-disabled)">›</span>
+          </div>
+        </div>
+
+        <div class="career-section career-section--featured">
+          <div class="career-section__head">
+            <div class="career-section__icon">📚</div>
+            <h3>Formations recommandées</h3>
+          </div>
+          <div class="menu-item" style="padding:10px 0">
+            <div class="menu-item__icon" style="background:var(--cat-techno);color:#fff">🎓</div>
+            <div class="menu-item__label"><div style="font-weight:700">EPITECH Togo</div><div style="font-size:11px;color:var(--text-3)">Ingénierie · 5 ans</div></div>
+            <span class="menu-item__arrow">›</span>
+          </div>
+          <div class="menu-item" style="padding:10px 0">
+            <div class="menu-item__icon" style="background:var(--cat-science);color:#fff">📖</div>
+            <div class="menu-item__label"><div style="font-weight:700">Université de Lomé</div><div style="font-size:11px;color:var(--text-3)">Licence Informatique · 3 ans</div></div>
+            <span class="menu-item__arrow">›</span>
+          </div>
+          <div class="menu-item" style="padding:10px 0;border-bottom:none">
+            <div class="menu-item__icon" style="background:var(--blue);color:#fff">💻</div>
+            <div class="menu-item__label"><div style="font-weight:700">OpenClassrooms (en ligne)</div><div style="font-size:11px;color:var(--text-3)">Gratuit · 6 mois</div></div>
+            <span class="menu-item__arrow">›</span>
+          </div>
+        </div>
+
+        <div class="career-section">
+          <div class="career-section__head">
+            <div class="career-section__icon" style="background:var(--bg-alt);color:var(--text-1)">🔀</div>
+            <h3>Métiers voisins</h3>
+          </div>
+          <div class="voisin-scroll">
+            <div class="voisin-card">
+              <div class="voisin-card__emoji" style="background:linear-gradient(135deg,var(--cat-science),#06B6D4)">📊</div>
+              <p class="voisin-card__name">Data Scientist</p>
+              <p class="voisin-card__pct">92% proche</p>
+            </div>
+            <div class="voisin-card">
+              <div class="voisin-card__emoji" style="background:linear-gradient(135deg,var(--level),#A855F7)">🤖</div>
+              <p class="voisin-card__name">Ingénieur·e IA</p>
+              <p class="voisin-card__pct">85% proche</p>
+            </div>
+            <div class="voisin-card">
+              <div class="voisin-card__emoji" style="background:linear-gradient(135deg,var(--cat-economie),#4ADE80)">🔧</div>
+              <p class="voisin-card__name">DevOps</p>
+              <p class="voisin-card__pct">80% proche</p>
+            </div>
+            <div class="voisin-card">
+              <div class="voisin-card__emoji" style="background:linear-gradient(135deg,var(--cat-arts),var(--amber))">🎨</div>
+              <p class="voisin-card__name">UX Designer</p>
+              <p class="voisin-card__pct">76% proche</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="career-cta" style="margin-top:20px">
+          <button class="btn btn--outline">Voir les formations</button>
+          <button class="btn btn--accent">Ça me plaît ✨</button>
+        </div>
+
+        <nav class="bottom-nav">
+          <a class="bottom-nav__item" data-go="accueil"><span class="bottom-nav__icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>Accueil</a>
+          <a class="bottom-nav__item active" data-go="orientation"><span class="bottom-nav__icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg></span>Orientation</a>
+          <a class="bottom-nav__item" data-go="ecoles"><span class="bottom-nav__icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></span>Écoles</a>
+          <a class="bottom-nav__item aida" data-go="aida"><span class="bottom-nav__icon-wrap"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg></span>AÏDA</a>
+          <a class="bottom-nav__item" data-go="cours"><span class="bottom-nav__icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></span>Cours</a>
+          <a class="bottom-nav__item" data-go="mentors"><span class="bottom-nav__icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Mentors</a>
+          <a class="bottom-nav__item" data-go="profil"><span class="bottom-nav__icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>Profil</a>
+        </nav>
+      </div>
+
+      <!-- RECHERCHE — 3 ÉTATS -->
+      <div class="page" data-page="recherche">
+        <div class="page-header">
+          <button class="icon-btn" aria-label="Retour" onclick="go('accueil')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <h1 class="page-name">Recherche</h1>
+          <div style="width:40px"></div>
+        </div>
+
+        <div class="search-empty-input">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" placeholder="Métier, école, mentor..." />
+        </div>
+
+        <div class="section-title"><h2>Recherches récentes</h2></div>
+        <div class="recent-search">
+          <div class="recent-search__icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div class="recent-search__body">
+            <p class="recent-search__term">développeur python</p>
+            <p class="recent-search__meta">9 résultats</p>
+          </div>
+          <span class="recent-search__close">×</span>
+        </div>
+        <div class="recent-search">
+          <div class="recent-search__icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div class="recent-search__body">
+            <p class="recent-search__term">EPITECH</p>
+            <p class="recent-search__meta">1 résultat</p>
+          </div>
+          <span class="recent-search__close">×</span>
+        </div>
+        <div class="recent-search">
+          <div class="recent-search__icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div class="recent-search__body">
+            <p class="recent-search__term">bourse mastercard</p>
+            <p class="recent-search__meta">3 résultats</p>
+          </div>
+          <span class="recent-search__close">×</span>
+        </div>
+
+        <div class="section-title"><h2>Explorer par catégorie</h2></div>
+        <div class="quick-cat-grid">
+          <div class="quick-cat"><div class="quick-cat__icon">💻</div><div class="quick-cat__label">Tech</div></div>
+          <div class="quick-cat"><div class="quick-cat__icon">🔬</div><div class="quick-cat__label">Sciences</div></div>
+          <div class="quick-cat"><div class="quick-cat__icon">💼</div><div class="quick-cat__label">Business</div></div>
+          <div class="quick-cat"><div class="quick-cat__icon">🎨</div><div class="quick-cat__label">Arts</div></div>
+          <div class="quick-cat"><div class="quick-cat__icon">🏥</div><div class="quick-cat__label">Santé</div></div>
+          <div class="quick-cat"><div class="quick-cat__icon">📚</div><div class="quick-cat__label">Lettres</div></div>
+        </div>
+
+        <div style="margin-top:20px">
+          <div class="empty-state" style="background:#fff;border:1px dashed var(--border);border-radius:var(--r);padding:32px 16px">
+            <div class="empty-state__illu" style="width:80px;height:80px;font-size:36px">💡</div>
+            <h2 class="empty-state__title">Astuce</h2>
+            <p class="empty-state__body">Tape le nom d'un métier, d'une école ou d'un mentor. Tu peux aussi parcourir par catégorie.</p>
+          </div>
+        </div>
+
+        <div style="margin-top:20px;background:#fff;border:1px dashed var(--border);border-radius:var(--r);padding:20px;text-align:center">
+          <p style="font-size:11px;color:var(--text-3);margin:0 0 4px;font-weight:600;text-transform:uppercase;letter-spacing:.04em">Exemples de recherche</p>
+          <p style="font-size:13px;color:var(--text-1);margin:0;line-height:1.5">
+            Essaie <strong>« data scientist »</strong>, <strong>« université Lomé »</strong> ou <strong>« Aïcha »</strong> pour voir un exemple de résultats.
+          </p>
+        </div>
+
+        <nav class="bottom-nav">
+          <a class="bottom-nav__item" data-go="accueil"><span class="bottom-nav__icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>Accueil</a>
+          <a class="bottom-nav__item" data-go="orientation"><span class="bottom-nav__icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg></span>Orientation</a>
+          <a class="bottom-nav__item" data-go="ecoles"><span class="bottom-nav__icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></span>Écoles</a>
+          <a class="bottom-nav__item aida" data-go="aida"><span class="bottom-nav__icon-wrap"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg></span>AÏDA</a>
+          <a class="bottom-nav__item" data-go="cours"><span class="bottom-nav__icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></span>Cours</a>
+          <a class="bottom-nav__item" data-go="mentors"><span class="bottom-nav__icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Mentors</a>
+          <a class="bottom-nav__item" data-go="profil"><span class="bottom-nav__icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>Profil</a>
+        </nav>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  function go(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const target = document.querySelector(`[data-page="${page}"]`);
+    if (target) {
+      target.classList.add('active');
+      target.scrollTop = 0;
+    }
+    document.querySelectorAll('.preview-bar__nav a').forEach(a => a.classList.remove('active'));
+    const navLink = document.querySelector(`.preview-bar__nav [data-go="${page}"]`);
+    if (navLink) navLink.classList.add('active');
+  }
+  document.addEventListener('click', (e) => {
+    const target = e.target.closest('[data-go]');
+    if (target) { e.preventDefault(); go(target.dataset.go); }
+  });
+</script>
+
+</body>
+</html>
