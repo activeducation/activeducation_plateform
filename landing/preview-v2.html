@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ActivEducation — Découvre ta voie, joue ton avenir</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesque:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<style>
+  /* ============================================================
+     PALETTE (alignée sur docs/PALETTE_COULEURS.md)
+     ============================================================ */
+  :root {
+    --blue: #3133DD;
+    --blue-mid: #2322D3;
+    --blue-dark: #0E00C8;
+    --blue-light: #6062E8;
+    --blue-soft: #E1E0FF;
+    --blue-softer: #C0C1FF;
+
+    --amber: #FAA100;
+    --amber-light: #FFB94D;
+    --amber-dark: #D48700;
+    --amber-soft: #FFF3E0;
+
+    --streak: #FF6B35;
+    --level: #8B5CF6;
+    --xp: #34D399;
+    --success: #10B981;
+    --error: #EF4444;
+    --warning: #F59E0B;
+    --info: #3B82F6;
+
+    --cat-science: #0891B2;
+    --cat-litterature: #DB2777;
+    --cat-economie: #16A34A;
+    --cat-techno: #7C3AED;
+    --cat-arts: #F59E0B;
+    --cat-sante: #EF4444;
+
+    --bg: #FBF8FF;
+    --bg-alt: #F6F2FA;
+    --surface: #FFFFFF;
+    --surface-low: #F0ECF4;
+
+    --text-1: #1B1B20;
+    --text-2: #454556;
+    --text-3: #767587;
+    --text-disabled: #C6C4D8;
+
+    --border: #E4E1E9;
+    --border-light: #F0ECF4;
+
+    /* Ombres bleu-teintées (cf. doc design) */
+    --shadow-1: 0 1px 2px rgba(49,51,221,.04), 0 1px 1px rgba(49,51,221,.06);
+    --shadow-2: 0 4px 8px rgba(49,51,221,.06), 0 2px 4px rgba(49,51,221,.04);
+    --shadow-3: 0 12px 24px rgba(49,51,221,.08), 0 4px 8px rgba(49,51,221,.04);
+    --shadow-hero: 0 24px 60px rgba(49,51,221,.18);
+
+    --r-sm: 10px;
+    --r: 16px;
+    --r-lg: 24px;
+    --r-xl: 32px;
+    --r-pill: 999px;
+
+    --font: 'Hanken Grotesque', system-ui, -apple-system, sans-serif;
+    --spring: cubic-bezier(.22, 1, .36, 1);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: var(--font);
+    color: var(--text-1);
+    background: var(--bg);
+    line-height: 1.625;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  a { color: inherit; text-decoration: none; }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; }
+  img, svg { display: block; max-width: 100%; }
+
+  /* ============================================================
+     LAYOUT
+     ============================================================ */
+  .container { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+  .section { padding: 96px 0; }
+  .section--alt { background: var(--bg-alt); }
+  .section--dark { background: linear-gradient(135deg, #0E00C8, #3133DD 60%, #6062E8); color: #fff; }
+
+  /* ============================================================
+     HEADER
+     ============================================================ */
+  .header {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(251, 248, 255, .85);
+    backdrop-filter: saturate(140%) blur(12px);
+    -webkit-backdrop-filter: saturate(140%) blur(12px);
+    border-bottom: 1px solid var(--border-light);
+  }
+  .header__inner {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 64px;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; letter-spacing: -.01em; }
+  .logo__mark {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--blue), var(--blue-light));
+    display: grid; place-items: center; color: #fff; font-weight: 900;
+    box-shadow: var(--shadow-2);
+  }
+  .nav { display: flex; align-items: center; gap: 32px; }
+  .nav a { color: var(--text-2); font-size: 15px; font-weight: 500; transition: color .15s; }
+  .nav a:hover { color: var(--blue); }
+  .header__actions { display: flex; align-items: center; gap: 12px; }
+
+  /* ============================================================
+     BUTTONS
+     ============================================================ */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    height: 44px; padding: 0 20px;
+    border-radius: var(--r-pill);
+    font-weight: 600; font-size: 15px;
+    transition: all .2s var(--spring);
+    white-space: nowrap;
+  }
+  .btn--primary { background: var(--blue); color: #fff; box-shadow: var(--shadow-1); }
+  .btn--primary:hover { background: var(--blue-mid); transform: translateY(-1px); box-shadow: var(--shadow-2); }
+  .btn--primary:active { transform: scale(.97); background: var(--blue-dark); }
+
+  .btn--accent { background: var(--amber); color: #1B1B20; box-shadow: var(--shadow-1); }
+  .btn--accent:hover { background: var(--amber-dark); transform: translateY(-1px); box-shadow: var(--shadow-2); }
+  .btn--accent:active { transform: scale(.97); }
+
+  .btn--ghost { background: transparent; color: var(--text-1); }
+  .btn--ghost:hover { background: var(--bg-alt); }
+
+  .btn--outline { background: transparent; color: var(--blue); border: 1.5px solid var(--blue); }
+  .btn--outline:hover { background: var(--blue-soft); }
+
+  .btn--sm { height: 36px; padding: 0 14px; font-size: 14px; }
+  .btn--lg { height: 52px; padding: 0 28px; font-size: 16px; }
+
+  /* ============================================================
+     HERO
+     ============================================================ */
+  .hero { padding: 64px 0 96px; position: relative; overflow: hidden; }
+  .hero__bg {
+    position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  }
+  .hero__bg::before, .hero__bg::after {
+    content: ''; position: absolute; border-radius: 50%; filter: blur(80px); opacity: .35;
+  }
+  .hero__bg::before { width: 480px; height: 480px; background: var(--blue-soft); top: -120px; right: -80px; }
+  .hero__bg::after { width: 360px; height: 360px; background: var(--amber-soft); bottom: -120px; left: 10%; }
+
+  .hero__grid {
+    position: relative; z-index: 1;
+    display: grid; grid-template-columns: 1.05fr .95fr; gap: 64px; align-items: center;
+  }
+
+  .hero__badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 14px 6px 6px;
+    background: #fff; border: 1px solid var(--border);
+    border-radius: var(--r-pill);
+    font-size: 13px; font-weight: 500; color: var(--text-2);
+    box-shadow: var(--shadow-1);
+  }
+  .hero__badge-dot { width: 22px; height: 22px; border-radius: 50%; background: var(--blue-soft); color: var(--blue-dark); display: grid; place-items: center; font-size: 12px; }
+  .hero__badge strong { color: var(--text-1); font-weight: 700; }
+
+  .hero__title {
+    margin: 20px 0 16px;
+    font-size: clamp(40px, 5.5vw, 64px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -.025em;
+    color: var(--text-1);
+  }
+  .hero__title-grad {
+    background: linear-gradient(135deg, var(--blue), var(--blue-light) 60%, var(--amber));
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hero__sub {
+    font-size: 19px; color: var(--text-2);
+    max-width: 520px; margin: 0 0 32px;
+  }
+  .hero__ctas { display: flex; gap: 12px; flex-wrap: wrap; }
+  .hero__reassure {
+    display: flex; align-items: center; gap: 24px;
+    margin-top: 32px; padding-top: 24px;
+    border-top: 1px dashed var(--border);
+    font-size: 13px; color: var(--text-3);
+  }
+  .hero__reassure-item { display: flex; align-items: center; gap: 6px; }
+  .hero__reassure-num { font-weight: 800; color: var(--text-1); font-size: 15px; }
+
+  /* MOCKUP APPLE DASHBOARD */
+  .hero__visual { position: relative; }
+  .phone {
+    position: relative; width: 360px; max-width: 100%; aspect-ratio: 9/19;
+    margin: 0 auto;
+    background: #1B1B20; border-radius: 44px; padding: 12px;
+    box-shadow: var(--shadow-hero);
+  }
+  .phone__notch {
+    position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+    width: 110px; height: 26px; background: #1B1B20; border-radius: 0 0 16px 16px; z-index: 2;
+  }
+  .phone__screen {
+    position: relative; width: 100%; height: 100%;
+    background: linear-gradient(180deg, #F4F1FA 0%, #E1E0FF 100%);
+    border-radius: 32px; overflow: hidden;
+  }
+  .phone__screen-inner { padding: 40px 18px 24px; }
+  .phone__greeting { font-size: 13px; color: var(--text-2); margin-bottom: 2px; }
+  .phone__name { font-size: 18px; font-weight: 800; letter-spacing: -.01em; color: var(--text-1); }
+  .phone__xp-card {
+    margin-top: 14px; padding: 12px;
+    background: #fff; border-radius: 16px; box-shadow: var(--shadow-1);
+  }
+  .phone__xp-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-2); margin-bottom: 6px; }
+  .phone__xp-num { font-weight: 800; color: var(--text-1); font-size: 12px; }
+  .phone__xp-bar { height: 8px; background: var(--bg-alt); border-radius: var(--r-pill); overflow: hidden; }
+  .phone__xp-fill { height: 100%; width: 68%; background: linear-gradient(90deg, var(--xp), var(--success)); border-radius: var(--r-pill); }
+  .phone__stats { display: flex; gap: 6px; margin-top: 10px; font-size: 10px; }
+  .phone__stat { flex: 1; display: flex; align-items: center; gap: 4px; padding: 6px 8px; background: var(--bg-alt); border-radius: 10px; color: var(--text-2); font-weight: 600; }
+  .phone__chips { display: flex; gap: 8px; margin-top: 14px; overflow: hidden; }
+  .phone__chip {
+    flex: 0 0 auto; width: 92px; height: 100px; border-radius: 16px; padding: 10px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    color: #fff; font-size: 11px; font-weight: 700;
+  }
+  .phone__chip--1 { background: linear-gradient(135deg, var(--cat-science), #06B6D4); }
+  .phone__chip--2 { background: linear-gradient(135deg, var(--cat-techno), #A855F7); }
+  .phone__chip--3 { background: linear-gradient(135deg, var(--cat-arts), var(--amber)); }
+  .phone__chip-icon { width: 26px; height: 26px; background: rgba(255,255,255,.25); border-radius: 8px; display: grid; place-items: center; }
+  .phone__chip-ico { font-size: 14px; }
+
+  .floating-card {
+    position: absolute; background: #fff; border-radius: 16px; padding: 12px 14px;
+    box-shadow: var(--shadow-3);
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; font-weight: 600;
+  }
+  .floating-card--1 { top: 30px; left: -20px; animation: float 6s ease-in-out infinite; }
+  .floating-card--2 { bottom: 80px; right: -20px; animation: float 7s ease-in-out infinite .5s; }
+  .floating-card--3 { top: 50%; right: -40px; transform: translateY(-50%); animation: float 5.5s ease-in-out infinite 1s; }
+  .floating-card__icon { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; font-size: 18px; }
+  .floating-card__sub { font-size: 11px; font-weight: 500; color: var(--text-3); margin-top: 1px; }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  .floating-card--3 { animation-name: float-3; }
+  @keyframes float-3 {
+    0%, 100% { transform: translateY(calc(-50% + 0px)); }
+    50% { transform: translateY(calc(-50% - 8px)); }
+  }
+
+  /* ============================================================
+     SECTION HEADERS
+     ============================================================ */
+  .section-head { text-align: center; max-width: 680px; margin: 0 auto 56px; }
+  .section-head__eyebrow {
+    display: inline-block; padding: 4px 12px; margin-bottom: 12px;
+    background: var(--blue-soft); color: var(--blue-dark);
+    border-radius: var(--r-pill);
+    font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+  }
+  .section-head__title {
+    font-size: clamp(28px, 3.5vw, 40px);
+    font-weight: 800; line-height: 1.15; letter-spacing: -.02em;
+    margin: 0 0 14px;
+  }
+  .section-head__sub { font-size: 17px; color: var(--text-2); margin: 0; }
+
+  /* ============================================================
+     FEATURES GRID
+     ============================================================ */
+  .features { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+  .feature {
+    background: #fff; border: 1px solid var(--border);
+    border-radius: var(--r-lg); padding: 32px;
+    transition: all .25s var(--spring);
+    position: relative; overflow: hidden;
+  }
+  .feature:hover { transform: translateY(-3px); box-shadow: var(--shadow-2); border-color: var(--blue-softer); }
+  .feature__icon {
+    width: 48px; height: 48px; border-radius: 14px;
+    display: grid; place-items: center; margin-bottom: 20px;
+  }
+  .feature--blue .feature__icon { background: var(--blue-soft); color: var(--blue-dark); }
+  .feature--amber .feature__icon { background: var(--amber-soft); color: var(--amber-dark); }
+  .feature--purple .feature__icon { background: #F3EBFF; color: var(--level); }
+  .feature--pink .feature__icon { background: #FCE7F3; color: #BE185D; }
+  .feature__title { font-size: 19px; font-weight: 700; margin: 0 0 8px; letter-spacing: -.01em; }
+  .feature__body { font-size: 15px; color: var(--text-2); margin: 0 0 16px; }
+  .feature__link { color: var(--blue); font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; gap: 4px; }
+  .feature__link:hover { gap: 6px; }
+
+  /* ============================================================
+     COMMENT ÇA MARCHE
+     ============================================================ */
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; position: relative; }
+  .step {
+    text-align: center; padding: 32px 24px;
+    background: #fff; border-radius: var(--r-lg);
+    border: 1px solid var(--border);
+    position: relative;
+  }
+  .step__num {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--blue), var(--blue-light));
+    color: #fff; display: grid; place-items: center;
+    font-weight: 800; font-size: 16px;
+    margin: 0 auto 20px;
+    box-shadow: 0 4px 12px rgba(49,51,221,.25);
+  }
+  .step__illu {
+    width: 120px; height: 120px; margin: 0 auto 24px;
+    border-radius: 50%;
+    display: grid; place-items: center;
+  }
+  .step--1 .step__illu { background: #E0F2FE; }
+  .step--2 .step__illu { background: #FEF3C7; }
+  .step--3 .step__illu { background: #F3EBFF; }
+  .step__title { font-size: 20px; font-weight: 700; margin: 0 0 8px; }
+  .step__body { font-size: 15px; color: var(--text-2); margin: 0; }
+
+  /* ============================================================
+     TESTIMONIALS
+     ============================================================ */
+  .testimonials { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .testimonial {
+    background: #fff; border-radius: var(--r-lg);
+    padding: 28px; border: 1px solid var(--border);
+    position: relative;
+  }
+  .testimonial__quote {
+    font-size: 36px; line-height: 1; color: var(--blue-soft);
+    font-family: Georgia, serif; margin-bottom: 8px;
+  }
+  .testimonial__body { font-size: 15px; color: var(--text-1); line-height: 1.6; margin: 0 0 24px; }
+  .testimonial__author { display: flex; align-items: center; gap: 12px; }
+  .testimonial__avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    display: grid; place-items: center; color: #fff;
+    font-weight: 700; font-size: 15px;
+    flex-shrink: 0;
+  }
+  .testimonial__name { font-weight: 700; font-size: 14px; }
+  .testimonial__role { font-size: 12px; color: var(--text-3); }
+  .testimonial__stars { display: flex; gap: 2px; color: var(--amber); margin-top: 4px; font-size: 12px; }
+
+  /* ============================================================
+     STATS
+     ============================================================ */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+  .stat { text-align: center; padding: 24px 16px; }
+  .stat__num {
+    font-size: 56px; font-weight: 800; letter-spacing: -.03em; line-height: 1;
+    background: linear-gradient(135deg, #fff, #C0C1FF);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .stat__label { font-size: 14px; color: rgba(255,255,255,.8); margin-top: 8px; font-weight: 500; }
+
+  /* ============================================================
+     CTA FINAL
+     ============================================================ */
+  .cta-card {
+    background: linear-gradient(135deg, var(--blue-dark) 0%, var(--blue) 50%, var(--blue-light) 100%);
+    border-radius: var(--r-xl); padding: 64px 48px;
+    text-align: center; color: #fff; position: relative; overflow: hidden;
+    box-shadow: var(--shadow-hero);
+  }
+  .cta-card::before {
+    content: ''; position: absolute; top: -100px; right: -100px;
+    width: 300px; height: 300px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(250,161,0,.3), transparent 70%);
+  }
+  .cta-card::after {
+    content: ''; position: absolute; bottom: -120px; left: -80px;
+    width: 280px; height: 280px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,.1), transparent 70%);
+  }
+  .cta-card__inner { position: relative; z-index: 1; max-width: 640px; margin: 0 auto; }
+  .cta-card__title { font-size: clamp(28px, 4vw, 42px); font-weight: 800; margin: 0 0 14px; letter-spacing: -.02em; line-height: 1.15; }
+  .cta-card__body { font-size: 18px; opacity: .9; margin: 0 0 32px; }
+  .cta-card__actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .cta-card .btn--accent { box-shadow: 0 8px 20px rgba(250,161,0,.3); }
+
+  /* ============================================================
+     FOOTER
+     ============================================================ */
+  .footer {
+    background: #fff; border-top: 1px solid var(--border);
+    padding: 48px 0 24px;
+  }
+  .footer__grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px; margin-bottom: 32px; }
+  .footer__about p { color: var(--text-2); font-size: 14px; margin: 12px 0 0; max-width: 320px; }
+  .footer__col-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--text-3); margin: 0 0 14px; }
+  .footer__col a { display: block; color: var(--text-2); font-size: 14px; padding: 6px 0; transition: color .15s; }
+  .footer__col a:hover { color: var(--blue); }
+  .footer__bottom {
+    border-top: 1px solid var(--border-light);
+    padding-top: 20px; display: flex; justify-content: space-between; align-items: center;
+    font-size: 13px; color: var(--text-3);
+  }
+  .footer__social { display: flex; gap: 12px; }
+  .footer__social a {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: var(--bg-alt); color: var(--text-2);
+    display: grid; place-items: center; transition: all .15s;
+  }
+  .footer__social a:hover { background: var(--blue); color: #fff; }
+
+  /* ============================================================
+     MASCOTTE SPARKLE (SVG inline via img)
+     ============================================================ */
+  .sparkle-sm { width: 80px; height: 80px; }
+  .sparkle-md { width: 120px; height: 120px; }
+  .sparkle-lg { width: 180px; height: 180px; }
+
+  /* ============================================================
+     RESPONSIVE
+     ============================================================ */
+  @media (max-width: 900px) {
+    .hero__grid { grid-template-columns: 1fr; gap: 40px; }
+    .features, .testimonials { grid-template-columns: 1fr; }
+    .steps, .stats { grid-template-columns: repeat(2, 1fr); }
+    .footer__grid { grid-template-columns: 1fr 1fr; }
+    .nav { display: none; }
+    .section { padding: 64px 0; }
+    .hero { padding: 40px 0 64px; }
+    .cta-card { padding: 40px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- =========================================================
+     HEADER
+     ========================================================= -->
+<header class="header">
+  <div class="container header__inner">
+    <a href="#" class="logo">
+      <span class="logo__mark">A</span>
+      <span>ActivEducation</span>
+    </a>
+    <nav class="nav">
+      <a href="#features">Fonctionnalités</a>
+      <a href="#comment">Comment ça marche</a>
+      <a href="#temoignages">Témoignages</a>
+      <a href="#ecoles">Écoles</a>
+    </nav>
+    <div class="header__actions">
+      <a href="#" class="btn btn--ghost btn--sm">Connexion</a>
+      <a href="#" class="btn btn--primary btn--sm">Commencer gratuitement →</a>
+    </div>
+  </div>
+</header>
+
+<!-- =========================================================
+     HERO
+     ========================================================= -->
+<section class="hero">
+  <div class="hero__bg"></div>
+  <div class="container hero__grid">
+    <div>
+      <span class="hero__badge">
+        <span class="hero__badge-dot">✨</span>
+        Nouveau · <strong>+2 000 élèves</strong> ce mois
+      </span>
+      <h1 class="hero__title">
+        Découvre ta voie,<br/>
+        <span class="hero__title-grad">joue ton avenir.</span>
+      </h1>
+      <p class="hero__sub">
+        La plateforme d'orientation scolaire et professionnelle gamifiée pour l'Afrique de l'Ouest.
+        Tests, métiers, écoles, mentors — le tout dans une seule app, 100% gratuite.
+      </p>
+      <div class="hero__ctas">
+        <a href="#" class="btn btn--accent btn--lg">Commencer gratuitement →</a>
+        <a href="#comment" class="btn btn--outline btn--lg">Voir comment ça marche</a>
+      </div>
+      <div class="hero__reassure">
+        <div class="hero__reassure-item">
+          <span class="hero__reassure-num">12 000+</span> élèves
+        </div>
+        <div class="hero__reassure-item">
+          <span class="hero__reassure-num">40+</span> métiers
+        </div>
+        <div class="hero__reassure-item">
+          <span class="hero__reassure-num">100%</span> gratuit
+        </div>
+      </div>
+    </div>
+
+    <!-- MOCKUP APPLE DASHBOARD -->
+    <div class="hero__visual">
+      <div class="phone">
+        <div class="phone__notch"></div>
+        <div class="phone__screen">
+          <div class="phone__screen-inner">
+            <div class="phone__greeting">Bonjour,</div>
+            <div class="phone__name">Kossi 👋</div>
+
+            <div class="phone__xp-card">
+              <div class="phone__xp-row">
+                <span>Niveau 4 — Éclaireur</span>
+                <span class="phone__xp-num">340 / 500 XP</span>
+              </div>
+              <div class="phone__xp-bar"><div class="phone__xp-fill"></div></div>
+              <div class="phone__stats">
+                <div class="phone__stat">🔥 12 j</div>
+                <div class="phone__stat">🏆 Top 14%</div>
+                <div class="phone__stat">🎯 3/12</div>
+              </div>
+            </div>
+
+            <div class="phone__chips">
+              <div class="phone__chip phone__chip--1">
+                <div class="phone__chip-icon"><span class="phone__chip-ico">🧪</span></div>
+                <div>Test RIASEC<br/><span style="opacity:.85;font-weight:500">5 min</span></div>
+              </div>
+              <div class="phone__chip phone__chip--2">
+                <div class="phone__chip-icon"><span class="phone__chip-ico">🐍</span></div>
+                <div>Python<br/><span style="opacity:.85;font-weight:500">6 leçons</span></div>
+              </div>
+              <div class="phone__chip phone__chip--3">
+                <div class="phone__chip-icon"><span class="phone__chip-ico">💼</span></div>
+                <div>Métiers<br/><span style="opacity:.85;font-weight:500">40+</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Floating cards -->
+      <div class="floating-card floating-card--1">
+        <div class="floating-card__icon" style="background:#FEF3C7">🏆</div>
+        <div>
+          Nouveau badge débloqué
+          <div class="floating-card__sub">Premier test complété</div>
+        </div>
+      </div>
+      <div class="floating-card floating-card--2">
+        <div class="floating-card__icon" style="background:#E1E0FF;color:#0E00C8">🎯</div>
+        <div>
+          3 métiers matchent
+          <div class="floating-card__sub">Ingénieur · Médecin · ...</div>
+        </div>
+      </div>
+      <div class="floating-card floating-card--3">
+        <div class="floating-card__icon" style="background:#FCE7F3;color:#BE185D">💬</div>
+        <div>
+          Aïcha t'a répondu
+          <div class="floating-card__sub">Mentor disponible</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+     FEATURES
+     ========================================================= -->
+<section class="section" id="features">
+  <div class="container">
+    <div class="section-head">
+      <span class="section-head__eyebrow">Tout-en-un</span>
+      <h2 class="section-head__title">Tout ce qu'il te faut pour construire ton avenir</h2>
+      <p class="section-head__sub">Quatre outils pensés ensemble pour te guider, du test d'orientation à ta première embauche.</p>
+    </div>
+    <div class="features">
+      <div class="feature feature--blue">
+        <div class="feature__icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+        </div>
+        <h3 class="feature__title">Tests d'orientation</h3>
+        <p class="feature__body">Découvre ce qui te passionne avec nos tests validés. En 5 minutes, identifie les domaines qui te correspondent vraiment.</p>
+        <a href="#" class="feature__link">Lancer un test →</a>
+      </div>
+
+      <div class="feature feature--amber">
+        <div class="feature__icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+        </div>
+        <h3 class="feature__title">Catalogue de métiers</h3>
+        <p class="feature__body">Plus de 40 métiers détaillés : compétences, salaires, formations, témoignages de pros. Compare et choisis en connaissance de cause.</p>
+        <a href="#" class="feature__link">Explorer les métiers →</a>
+      </div>
+
+      <div class="feature feature--purple">
+        <div class="feature__icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+        </div>
+        <h3 class="feature__title">Annuaire des écoles</h3>
+        <p class="feature__body">Universités, lycées, formations pro au Togo et en Afrique de l'Ouest. Fiches complètes avec admissions, frais et contacts.</p>
+        <a href="#" class="feature__link">Trouver une école →</a>
+      </div>
+
+      <div class="feature feature--pink">
+        <div class="feature__icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <h3 class="feature__title">Mentors bienveillants</h3>
+        <p class="feature__body">Échange avec des professionnels africains qui ont fait le parcours avant toi. Conseils, retours d'expérience, motivation.</p>
+        <a href="#" class="feature__link">Contacter un mentor →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+     COMMENT ÇA MARCHE
+     ========================================================= -->
+<section class="section section--alt" id="comment">
+  <div class="container">
+    <div class="section-head">
+      <span class="section-head__eyebrow">Simple comme 1, 2, 3</span>
+      <h2 class="section-head__title">Comment ça marche</h2>
+      <p class="section-head__sub">Trois étapes pour passer de « je ne sais pas quoi faire » à « j'ai un plan ».</p>
+    </div>
+    <div class="steps">
+      <div class="step step--1">
+        <div class="step__num">1</div>
+        <div class="step__illu">
+          <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+            <rect x="14" y="10" width="36" height="46" rx="4" fill="#fff" stroke="#0891B2" stroke-width="2"/>
+            <line x1="20" y1="20" x2="44" y2="20" stroke="#0891B2" stroke-width="2" stroke-linecap="round"/>
+            <line x1="20" y1="28" x2="38" y2="28" stroke="#0891B2" stroke-width="2" stroke-linecap="round" opacity=".5"/>
+            <line x1="20" y1="34" x2="40" y2="34" stroke="#0891B2" stroke-width="2" stroke-linecap="round" opacity=".5"/>
+            <circle cx="32" cy="44" r="6" fill="#FAA100"/>
+            <path d="M29 44l2 2 4-4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h3 class="step__title">Teste-toi</h3>
+        <p class="step__body">Réponds à des questions simples sur tes intérêts et tes forces. Notre algorithme identifie tes affinités en 5 minutes chrono.</p>
+      </div>
+      <div class="step step--2">
+        <div class="step__num">2</div>
+        <div class="step__illu">
+          <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+            <circle cx="32" cy="32" r="22" fill="#fff" stroke="#D48700" stroke-width="2"/>
+            <path d="M32 18l3.5 7 7.5 1-5.5 5.5 1.5 7.5-7-3.5-7 3.5 1.5-7.5-5.5-5.5 7.5-1z" fill="#FAA100"/>
+            <circle cx="32" cy="32" r="3" fill="#D48700"/>
+          </svg>
+        </div>
+        <h3 class="step__title">Découvre tes voies</h3>
+        <p class="step__body">Explore les métiers et écoles qui matchent avec ton profil. Compare, creuse, projette-toi dans chaque univers professionnel.</p>
+      </div>
+      <div class="step step--3">
+        <div class="step__num">3</div>
+        <div class="step__illu">
+          <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+            <path d="M14 40l8-10 10 8 18-20" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="14" cy="40" r="4" fill="#7C3AED"/>
+            <circle cx="22" cy="30" r="4" fill="#7C3AED"/>
+            <circle cx="32" cy="38" r="4" fill="#7C3AED"/>
+            <circle cx="50" cy="18" r="4" fill="#7C3AED"/>
+            <path d="M50 50l3 3M50 50l-3 3M50 50h-3" stroke="#8B5CF6" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h3 class="step__title">Passe à l'action</h3>
+        <p class="step__body">Contacte des mentors, postule à des bourses, suis des cours pour te préparer. Gagne des XP et grimpe dans le classement.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+     TESTIMONIALS
+     ========================================================= -->
+<section class="section" id="temoignages">
+  <div class="container">
+    <div class="section-head">
+      <span class="section-head__eyebrow">Ils en parlent mieux que nous</span>
+      <h2 class="section-head__title">Des histoires vraies, des parcours inspirants</h2>
+      <p class="section-head__sub">Trois élèves qui ont trouvé leur voie grâce à ActivEducation.</p>
+    </div>
+    <div class="testimonials">
+      <div class="testimonial">
+        <div class="testimonial__quote">"</div>
+        <p class="testimonial__body">« Je ne savais pas quel métier choisir. Le test RIASEC m'a montré que j'étais fait pour la programmation. Aujourd'hui, je suis en stage chez une startup à Lomé. »</p>
+        <div class="testimonial__author">
+          <div class="testimonial__avatar" style="background:linear-gradient(135deg,#3133DD,#6062E8)">KM</div>
+          <div>
+            <div class="testimonial__name">Kossi Mensah</div>
+            <div class="testimonial__role">Étudiant en informatique · Lomé</div>
+            <div class="testimonial__stars">★ ★ ★ ★ ★</div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial">
+        <div class="testimonial__quote">"</div>
+        <p class="testimonial__body">« Grâce à AÏDA et aux mentors, j'ai pu rédiger mon dossier pour la bourse Mastercard. Je pars en septembre étudier la médecine au Sénégal. Merci infiniment. »</p>
+        <div class="testimonial__author">
+          <div class="testimonial__avatar" style="background:linear-gradient(135deg,#DB2777,#F472B6)">AT</div>
+          <div>
+            <div class="testimonial__name">Aïcha Tchedre</div>
+            <div class="testimonial__role">Future étudiante en médecine · Kara</div>
+            <div class="testimonial__stars">★ ★ ★ ★ ★</div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial">
+        <div class="testimonial__quote">"</div>
+        <p class="testimonial__body">« J'ai découvert la plateforme au lycée. Trois ans plus tard, j'ai fondé ma propre agence de design à Accra. Le mentor que j'ai contacté ici est devenu mon associé. »</p>
+        <div class="testimonial__author">
+          <div class="testimonial__avatar" style="background:linear-gradient(135deg,#16A34A,#4ADE80)">YK</div>
+          <div>
+            <div class="testimonial__name">Yao Kouassi</div>
+            <div class="testimonial__role">Designer & entrepreneur · Accra</div>
+            <div class="testimonial__stars">★ ★ ★ ★ ★</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+     STATS (bandeau bleu)
+     ========================================================= -->
+<section class="section--dark" style="padding:80px 0">
+  <div class="container">
+    <div class="section-head" style="margin-bottom:32px">
+      <h2 class="section-head__title" style="color:#fff">Une communauté qui grandit chaque jour</h2>
+    </div>
+    <div class="stats">
+      <div class="stat">
+        <div class="stat__num">12 000+</div>
+        <div class="stat__label">élèves actifs</div>
+      </div>
+      <div class="stat">
+        <div class="stat__num">40+</div>
+        <div class="stat__label">métiers explorés</div>
+      </div>
+      <div class="stat">
+        <div class="stat__num">100%</div>
+        <div class="stat__label">gratuit pour les élèves</div>
+      </div>
+      <div class="stat">
+        <div class="stat__num">5</div>
+        <div class="stat__label">pays couverts</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+     CTA FINAL
+     ========================================================= -->
+<section class="section">
+  <div class="container">
+    <div class="cta-card">
+      <div class="cta-card__inner">
+        <h2 class="cta-card__title">Ton avenir commence aujourd'hui.</h2>
+        <p class="cta-card__body">Rejoins 12 000+ élèves qui ont déjà trouvé leur voie. En 5 minutes, tu sais par où commencer.</p>
+        <div class="cta-card__actions">
+          <a href="#" class="btn btn--accent btn--lg">Créer mon compte gratuit →</a>
+          <a href="#" class="btn btn--outline btn--lg" style="color:#fff;border-color:rgba(255,255,255,.4)">Découvrir la démo</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+     FOOTER
+     ========================================================= -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer__grid">
+      <div class="footer__about">
+        <a href="#" class="logo">
+          <span class="logo__mark">A</span>
+          <span>ActivEducation</span>
+        </a>
+        <p>La plateforme d'orientation scolaire et professionnelle gamifiée pour l'Afrique de l'Ouest. 100% gratuit pour les élèves.</p>
+      </div>
+      <div class="footer__col">
+        <h4 class="footer__col-title">Plateforme</h4>
+        <a href="#">Tests d'orientation</a>
+        <a href="#">Catalogue métiers</a>
+        <a href="#">Annuaire écoles</a>
+        <a href="#">Mentors</a>
+      </div>
+      <div class="footer__col">
+        <h4 class="footer__col-title">À propos</h4>
+        <a href="#">Notre mission</a>
+        <a href="#">L'équipe</a>
+        <a href="#">Partenaires</a>
+        <a href="#">Contact</a>
+      </div>
+      <div class="footer__col">
+        <h4 class="footer__col-title">Légal</h4>
+        <a href="#">Confidentialité</a>
+        <a href="#">Conditions</a>
+        <a href="#">Cookies</a>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <div>© 2026 ActivEducation. Tous droits réservés.</div>
+      <div class="footer__social">
+        <a href="#" aria-label="Facebook">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+        </a>
+        <a href="#" aria-label="Twitter">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/></svg>
+        </a>
+        <a href="#" aria-label="LinkedIn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2zM4 6a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

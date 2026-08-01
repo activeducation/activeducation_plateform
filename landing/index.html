@@ -920,7 +920,7 @@
         cObs.unobserve(el);
       });
     }, { threshold: 0.5 });
-    counters.forEach(c => cObs.observe(c));
+    counters.forEach(c => cObs.observe(c)); 
 
     // Year
     document.getElementById('year').textContent = new Date().getFullYear();
