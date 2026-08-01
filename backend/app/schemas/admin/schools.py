@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class ProgramSummary(BaseModel):
@@ -41,6 +41,11 @@ class SchoolSummary(BaseModel):
     programs_count: int = 0
     created_at: Optional[datetime] = None
 
+    @field_validator("logo_url", mode="before")
+    @classmethod
+    def empty_logo_to_none(cls, v):
+        return v if v else None
+
 
 class SchoolListResponse(BaseModel):
     items: list[SchoolSummary] = []
@@ -75,6 +80,11 @@ class SchoolDetail(BaseModel):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
+    @field_validator("logo_url", "cover_image_url", mode="before")
+    @classmethod
+    def empty_to_none(cls, v):
+        return v if v else None
+
 
 class SchoolCreate(BaseModel):
     name: str = Field(..., min_length=2)
@@ -89,6 +99,11 @@ class SchoolCreate(BaseModel):
     is_public: bool = True
     logo_url: Optional[str] = None
     cover_image_url: Optional[str] = None
+
+    @field_validator("logo_url", "cover_image_url", mode="before")
+    @classmethod
+    def empty_to_none(cls, v):
+        return v if v else None
     tuition_range: Optional[str] = None
     admission_requirements: Optional[str] = None
     accreditations: list[str] = []
@@ -110,6 +125,11 @@ class SchoolUpdate(BaseModel):
     is_active: Optional[bool] = None
     logo_url: Optional[str] = None
     cover_image_url: Optional[str] = None
+
+    @field_validator("logo_url", "cover_image_url", mode="before")
+    @classmethod
+    def empty_to_none(cls, v):
+        return v if v else None
     tuition_range: Optional[str] = None
     admission_requirements: Optional[str] = None
     accreditations: Optional[list[str]] = None

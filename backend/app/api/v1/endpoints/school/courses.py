@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, Depends
 
+from app.core.cache import invalidate_cache
 from app.core.exceptions import NotFoundError
 from app.core.logging import get_logger
 from app.core.security import get_current_school_admin
@@ -35,6 +36,7 @@ async def create_course(
     data = body.model_dump(exclude_none=True)
     course = repo.create_course(admin["school_id"], data)
     logger.info(f"Course created by school admin {admin['user_id']}: {course.get('id')}")
+    invalidate_cache("elearning:courses:*")
     return course
 
 
@@ -65,6 +67,8 @@ async def update_course(
     course = repo.update_course(course_id, admin["school_id"], data)
     if not course:
         raise NotFoundError("Cours", course_id)
+    invalidate_cache("elearning:courses:*")
+    invalidate_cache(f"elearning:course:{course_id}:*")
     return course
 
 
@@ -78,6 +82,8 @@ async def delete_course(
     deleted = repo.delete_course(course_id, admin["school_id"])
     if not deleted:
         raise NotFoundError("Cours", course_id)
+    invalidate_cache("elearning:courses:*")
+    invalidate_cache(f"elearning:course:{course_id}:*")
     return {"success": True, "message": "Cours supprime"}
 
 
@@ -92,5 +98,7 @@ async def toggle_publish(
     course = repo.publish_course(course_id, admin["school_id"], body.is_published)
     if not course:
         raise NotFoundError("Cours", course_id)
+    invalidate_cache("elearning:courses:*")
+    invalidate_cache(f"elearning:course:{course_id}:*")
     status_msg = "publie" if body.is_published else "depublie"
     return {"success": True, "message": f"Cours {status_msg}", "course": course}

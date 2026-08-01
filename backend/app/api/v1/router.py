@@ -20,6 +20,7 @@ from app.api.v1.endpoints.admin import elearning as admin_elearning
 from app.api.v1.endpoints.admin import gamification as admin_gamification
 from app.api.v1.endpoints.admin import knowledge_base as admin_knowledge_base
 from app.api.v1.endpoints.admin import mentor_applications as admin_mentor_applications
+from app.api.v1.endpoints.admin import mentor_contacts as admin_mentor_contacts
 from app.api.v1.endpoints.admin import mentors as admin_mentors
 from app.api.v1.endpoints.admin import opportunities as admin_opportunities
 from app.api.v1.endpoints.admin import orientation as admin_orientation
@@ -101,6 +102,9 @@ api_router.include_router(
 api_router.include_router(admin_partner.router, prefix="/admin", tags=["admin-partner"])
 api_router.include_router(
     admin_mentor_applications.router, prefix="/admin", tags=["admin-mentor-applications"]
+)
+api_router.include_router(
+    admin_mentor_contacts.router, prefix="/admin", tags=["admin-mentor-contacts"]
 )
 
 # =============================================================================

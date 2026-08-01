@@ -10,9 +10,8 @@ class CourseCreate(BaseModel):
 
     title: str = Field(..., min_length=1, max_length=200)
     description: Optional[str] = Field(None, max_length=2000)
-    school_id: Optional[str] = None
     thumbnail_url: Optional[str] = None
-    level: str = "beginner"
+    difficulty: str = "debutant"
 
 
 class CourseUpdate(BaseModel):
@@ -21,7 +20,7 @@ class CourseUpdate(BaseModel):
     title: Optional[str] = Field(None, min_length=1, max_length=200)
     description: Optional[str] = Field(None, max_length=2000)
     thumbnail_url: Optional[str] = None
-    level: Optional[str] = None
+    difficulty: Optional[str] = None
     is_published: Optional[bool] = None
 
 
@@ -45,9 +44,14 @@ class LessonCreate(BaseModel):
     """Schema for creating a lesson."""
 
     title: str = Field(..., min_length=1, max_length=200)
-    lesson_type: Literal["text", "video", "quiz", "pdf"] = "text"
+    lesson_type: Literal["text", "video", "quiz", "pdf", "article", "challenge"] = "text"
     content: Optional[str] = None
     video_url: Optional[str] = None
+    video_provider: Optional[str] = None
+    markdown_body: Optional[str] = None
+    challenge_instructions: Optional[str] = None
+    challenge_starter_code: Optional[str] = None
+    challenge_language: Optional[str] = None
     display_order: int = 0
 
 
@@ -55,7 +59,12 @@ class LessonUpdate(BaseModel):
     """Schema for updating a lesson."""
 
     title: Optional[str] = Field(None, min_length=1, max_length=200)
-    lesson_type: Optional[Literal["text", "video", "quiz", "pdf"]] = None
+    lesson_type: Optional[Literal["text", "video", "quiz", "pdf", "article", "challenge"]] = None
     content: Optional[str] = None
     video_url: Optional[str] = None
+    video_provider: Optional[str] = None
+    markdown_body: Optional[str] = None
+    challenge_instructions: Optional[str] = None
+    challenge_starter_code: Optional[str] = None
+    challenge_language: Optional[str] = None
     display_order: Optional[int] = None

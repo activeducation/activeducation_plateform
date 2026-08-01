@@ -332,9 +332,9 @@ async def get_current_admin(
 
     user = _get_cached_admin_profile(user_id)
     if user is None:
-        from app.db.supabase_client import get_supabase_client
+        from app.db.supabase_client import get_admin_supabase_client
 
-        db = get_supabase_client()
+        db = get_admin_supabase_client()
         user = await asyncio.to_thread(
             db.fetch_one,
             table="user_profiles",
@@ -408,9 +408,9 @@ async def get_current_school_admin(
         logger.error(f"Authentication error: {e}", exc_info=True)
         raise AuthenticationError("Token invalide")
 
-    from app.db.supabase_client import get_supabase_client
+    from app.db.supabase_client import get_admin_supabase_client
 
-    db = get_supabase_client()
+    db = get_admin_supabase_client()
 
     user, admin_profile = await asyncio.gather(
         asyncio.to_thread(

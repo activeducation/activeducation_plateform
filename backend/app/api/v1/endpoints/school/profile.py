@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, Depends, File, UploadFile
 
+from app.core.cache import invalidate_cache
 from app.core.exceptions import NotFoundError
 from app.core.logging import get_logger
 from app.core.security import get_current_school_admin
@@ -36,6 +37,7 @@ async def update_school_profile(
     school = repo.update_school_profile(admin["school_id"], data)
     if not school:
         raise NotFoundError("Ecole", admin["school_id"])
+    invalidate_cache("schools:*")
     return school
 
 
@@ -45,9 +47,9 @@ async def upload_logo(
     admin: dict = Depends(get_current_school_admin),
 ):
     """Upload le logo de l'ecole."""
-    from app.db.supabase_client import get_supabase_client
+    from app.db.supabase_client import get_admin_supabase_client
 
-    db = get_supabase_client()
+    db = get_admin_supabase_client()
     content = await file.read()
     file_path = f"school/{admin['school_id']}/logo/{file.filename}"
 
@@ -72,6 +74,7 @@ async def upload_logo(
     # Mettre a jour le logo_url
     repo = get_school_admin_repository()
     repo.update_school_profile(admin["school_id"], {"logo_url": public_url})
+    invalidate_cache("schools:*")
 
     logger.info(f"Logo uploaded for school {admin['school_id']}")
     return {"success": True, "logo_url": public_url}
