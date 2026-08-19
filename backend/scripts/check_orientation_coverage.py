@@ -47,9 +47,41 @@ os.environ.setdefault("ENVIRONMENT", "development")
 from app.services.orientation_engine import (  # noqa: E402
     DIMENSION_TO_RIASEC,
     EN_TO_FR,
+    MBTI_FR,
     RIASEC_FR,
+    _fold,
     project_to_riasec,
 )
+
+# Le moteur ne projette pas les categories MBTI brutes ("E-I", "S-N"...) :
+# _calculate_personality les convertit d'abord en libelles francais
+# ("Extraversion", "Sensation"...), qui sont eux presents dans la table de
+# projection. Le diagnostic doit modeliser cette conversion, sinon il signale
+# a tort le test MBTI comme incapable de recommander quoi que ce soit.
+MBTI_PAIRS = {
+    "E-I": ("Extraversion", "Introversion"),
+    "S-N": ("Sensing", "Intuition"),
+    "T-F": ("Thinking", "Feeling"),
+    "J-P": ("Judging", "Perceiving"),
+}
+
+
+def expand_dimension(dimension: str) -> list[str]:
+    """Traduit une categorie de question en libelle(s) produit(s) par le moteur."""
+    if dimension in MBTI_PAIRS:
+        return [MBTI_FR.get(side, {}).get("fr", side) for side in MBTI_PAIRS[dimension]]
+    return [EN_TO_FR.get(dimension, dimension)]
+
+
+def is_known(dimension: str) -> bool:
+    """Le moteur sait-il quoi faire de cette dimension ?
+
+    La comparaison est repliee (accents, casse) exactement comme dans
+    project_to_riasec : sinon "Logico-Mathematique" sans accent serait signale
+    comme non projete alors que la projection le reconnait.
+    """
+    folded_known = {_fold(k) for k in DIMENSION_TO_RIASEC} | {_fold(k) for k in RIASEC_FR}
+    return all(_fold(label) in folded_known for label in expand_dimension(dimension))
 
 DEFAULT_API = "https://api.activeducationhub.com"
 
@@ -105,8 +137,9 @@ def main() -> int:
     for test in tests:
         questions = test.get("questions") or []
         dimensions = sorted({q.get("category") for q in questions if q.get("category")})
-        # Le moteur convertit les libelles RIASEC anglais en francais.
-        profile = [EN_TO_FR.get(d, d) for d in dimensions]
+        # Reproduire ce que le moteur produit reellement comme traits dominants
+        # (conversion des libelles anglais et des dichotomies MBTI).
+        profile = [label for d in dimensions for label in expand_dimension(d)]
 
         direct = {p for p in profile if p in vocabulary}
         projected, _ = project_to_riasec(profile, {})
@@ -123,9 +156,8 @@ def main() -> int:
 
         print(f"{name:<44}{len(questions):>4}{len(direct):>8}{len(covered):>9}  {state}")
 
-        for dimension in profile:
-            known = dimension in RIASEC_FR or dimension in DIMENSION_TO_RIASEC
-            if not known:
+        for dimension in dimensions:
+            if not is_known(dimension):
                 unmapped.add(dimension)
 
     print("-" * len(header))
