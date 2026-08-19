@@ -127,60 +127,130 @@ void main() {
   // --------------------------------------------------------------------------
 
   group('SendMessage', () {
-    blocTest<ChatBloc, ChatState>(
-      'émet [ChatReady(loading=true), ChatReady(loading=false)] sur succès',
-      build: () {
-        when(() => mockLocalDataSource.loadMessages(any())).thenReturn([]);
-        when(() => mockLocalDataSource.loadSessionId(any())).thenReturn(null);
-        when(
-          () => mockRepository.sendMessage(
-            message: any(named: 'message'),
-            sessionId: any(named: 'sessionId'),
-            orientationContext: any(named: 'orientationContext'),
-            history: any(named: 'history'),
-          ),
-        ).thenAnswer((_) async => tAssistantMessage);
-        return chatBloc;
-      },
-      seed: () => ChatReady(messages: [tUserMessage]),
-      act: (bloc) => bloc.add(const SendMessage('Mon message')),
-      expect: () => [
-        predicate<ChatState>(
-          (s) => s is ChatReady && s.isLoading,
-          'ChatReady avec isLoading=true',
-        ),
-        predicate<ChatState>(
-          (s) => s is ChatReady && !s.isLoading && s.messages.isNotEmpty,
-          'ChatReady avec réponse ajoutée',
-        ),
-      ],
-    );
+    // Le streaming émet un nombre variable d'états (un par fragment). On pose
+    // l'attente AVANT d'ajouter l'event (le stream du bloc est broadcast : un
+    // abonnement tardif raterait les premiers états), et on matche via
+    // emitsThrough sur l'état final voulu.
 
-    blocTest<ChatBloc, ChatState>(
-      'émet ChatReady avec error sur erreur réseau',
-      build: () {
-        when(() => mockLocalDataSource.loadMessages(any())).thenReturn([]);
-        when(() => mockLocalDataSource.loadSessionId(any())).thenReturn(null);
-        when(
-          () => mockRepository.sendMessage(
-            message: any(named: 'message'),
-            sessionId: any(named: 'sessionId'),
-            orientationContext: any(named: 'orientationContext'),
-            history: any(named: 'history'),
-          ),
-        ).thenThrow(Exception('Réseau indisponible'));
-        return chatBloc;
-      },
-      seed: () => ChatReady(messages: []),
-      act: (bloc) => bloc.add(const SendMessage('Mon message')),
-      expect: () => [
-        predicate<ChatState>((s) => s is ChatReady && s.isLoading, 'loading'),
-        predicate<ChatState>(
-          (s) => s is ChatReady && s.error != null,
-          'ChatReady avec error',
+    test('streaming agrège les fragments en une réponse assistant', () async {
+      when(
+        () => mockRepository.streamMessage(
+          message: any(named: 'message'),
+          sessionId: any(named: 'sessionId'),
+          orientationContext: any(named: 'orientationContext'),
+          history: any(named: 'history'),
         ),
-      ],
-    );
+      ).thenAnswer((_) => Stream<String>.fromIterable(['Bonjour', ' à toi']));
+
+      final expectation = expectLater(
+        chatBloc.stream,
+        emitsThrough(predicate<ChatState>(
+          (s) =>
+              s is ChatReady &&
+              !s.isLoading &&
+              !s.isStreaming &&
+              s.messages.any((m) => m.isAssistant && m.content == 'Bonjour à toi'),
+          'ChatReady final avec la réponse agrégée',
+        )),
+      );
+
+      chatBloc.add(const SendMessage('Salut'));
+      await expectation;
+    });
+
+    test('passe par isStreaming=true pendant la réception des fragments', () async {
+      when(
+        () => mockRepository.streamMessage(
+          message: any(named: 'message'),
+          sessionId: any(named: 'sessionId'),
+          orientationContext: any(named: 'orientationContext'),
+          history: any(named: 'history'),
+        ),
+      ).thenAnswer((_) => Stream<String>.fromIterable(['fragment']));
+
+      final expectation = expectLater(
+        chatBloc.stream,
+        emitsThrough(predicate<ChatState>(
+          (s) => s is ChatReady && s.isStreaming,
+          'ChatReady en cours de streaming',
+        )),
+      );
+
+      chatBloc.add(const SendMessage('Salut'));
+      await expectation;
+    });
+
+    test('repli sur sendMessage si le stream ne renvoie aucun fragment', () async {
+      when(
+        () => mockRepository.sendMessage(
+          message: any(named: 'message'),
+          sessionId: any(named: 'sessionId'),
+          orientationContext: any(named: 'orientationContext'),
+          history: any(named: 'history'),
+        ),
+      ).thenAnswer((_) async => tAssistantMessage);
+      when(
+        () => mockRepository.streamMessage(
+          message: any(named: 'message'),
+          sessionId: any(named: 'sessionId'),
+          orientationContext: any(named: 'orientationContext'),
+          history: any(named: 'history'),
+        ),
+      ).thenAnswer((_) => const Stream<String>.empty());
+
+      final expectation = expectLater(
+        chatBloc.stream,
+        emitsThrough(predicate<ChatState>(
+          (s) =>
+              s is ChatReady &&
+              !s.isLoading &&
+              s.messages.any((m) => m.id == tAssistantMessage.id),
+          'ChatReady avec la réponse du fallback',
+        )),
+      );
+
+      chatBloc.add(const SendMessage('Salut'));
+      await expectation;
+
+      verify(
+        () => mockRepository.sendMessage(
+          message: any(named: 'message'),
+          sessionId: any(named: 'sessionId'),
+          orientationContext: any(named: 'orientationContext'),
+          history: any(named: 'history'),
+        ),
+      ).called(1);
+    });
+
+    test('affiche une erreur si stream et repli échouent', () async {
+      when(
+        () => mockRepository.streamMessage(
+          message: any(named: 'message'),
+          sessionId: any(named: 'sessionId'),
+          orientationContext: any(named: 'orientationContext'),
+          history: any(named: 'history'),
+        ),
+      ).thenAnswer((_) => Stream<String>.error(Exception('SSE bloqué')));
+      when(
+        () => mockRepository.sendMessage(
+          message: any(named: 'message'),
+          sessionId: any(named: 'sessionId'),
+          orientationContext: any(named: 'orientationContext'),
+          history: any(named: 'history'),
+        ),
+      ).thenThrow(Exception('Réseau indisponible'));
+
+      final expectation = expectLater(
+        chatBloc.stream,
+        emitsThrough(predicate<ChatState>(
+          (s) => s is ChatReady && !s.isLoading && s.error != null,
+          'ChatReady avec erreur',
+        )),
+      );
+
+      chatBloc.add(const SendMessage('Salut'));
+      await expectation;
+    });
   });
 
   // --------------------------------------------------------------------------

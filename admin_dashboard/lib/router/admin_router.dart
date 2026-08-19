@@ -14,6 +14,7 @@ import '../features/schools/presentation/school_form_page.dart';
 import '../features/careers/presentation/careers_list_page.dart';
 import '../features/careers/presentation/career_form_page.dart';
 import '../features/careers/presentation/sectors_page.dart';
+import '../features/orientation_data/presentation/orientation_data_page.dart';
 import '../features/orientation_tests/presentation/tests_list_page.dart';
 import '../features/orientation_tests/presentation/test_editor_page.dart';
 import '../features/gamification/presentation/achievements_page.dart';
@@ -104,6 +105,10 @@ GoRouter createAdminRouter() {
           GoRoute(
             path: '/careers/sectors',
             builder: (context, state) => const SectorsPage(),
+          ),
+          GoRoute(
+            path: '/orientation-data',
+            builder: (context, state) => const OrientationDataPage(),
           ),
           GoRoute(
             path: '/careers/new',

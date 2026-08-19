@@ -149,6 +149,12 @@ class _Sidebar extends StatelessWidget {
                   currentPath: currentPath,
                 ),
                 _SidebarItem(
+                  icon: Icons.tune_rounded,
+                  label: 'Donnees orientation',
+                  path: '/orientation-data',
+                  currentPath: currentPath,
+                ),
+                _SidebarItem(
                   icon: Icons.business_center_rounded,
                   label: 'Opportunites',
                   path: '/opportunities',
@@ -491,6 +497,7 @@ class _TopBar extends StatelessWidget {
     if (path.startsWith('/careers/sectors')) return 'Secteurs';
     if (path.startsWith('/careers')) return 'Carrieres';
     if (path.startsWith('/tests')) return 'Tests d\'orientation';
+    if (path.startsWith('/orientation-data')) return 'Donnees d\'orientation';
     if (path.startsWith('/gamification/achievements')) return 'Achievements';
     if (path.startsWith('/gamification/challenges')) return 'Challenges';
     if (path.startsWith('/mentors')) return 'Mentors';

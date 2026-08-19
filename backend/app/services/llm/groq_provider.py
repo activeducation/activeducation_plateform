@@ -1,13 +1,16 @@
-"""
-GroqProvider — Appels à l'API Groq avec streaming et fallback Ollama.
+"""GroqProvider — Appels à l'API Groq avec streaming et fallback Ollama.
 
 Gère :
 - Appels Groq (principal, gratuit, 14 400 req/jour)
 - Appels Ollama (fallback local, auto-hébergé)
 - Streaming SSE via générateurs asynchrones
+
+Conforme au contrat `LLMProvider` (complete + stream). Les paramètres
+(modèle, tokens, timeouts, URLs) proviennent de `Settings` — point de
+vérité unique, configurable par environnement.
 """
 
-import os
+import json
 from typing import AsyncGenerator, Optional
 
 import httpx
@@ -17,15 +20,6 @@ from app.core.logging import get_logger
 logger = get_logger("services.llm.groq")
 
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
-GROQ_MODEL = "llama-3.1-8b-instant"
-GROQ_TIMEOUT = 30.0
-
-OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/")
-OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "llama3.1:8b")
-OLLAMA_TIMEOUT = 90.0
-
-MAX_TOKENS = 800
-TEMPERATURE = 0.7
 
 _UNAVAILABLE_REPLY = (
     "Je suis AÏDA, votre conseillère d'orientation. "
@@ -39,11 +33,24 @@ class GroqProvider:
 
     def __init__(self) -> None:
         from app.core.config import settings
+
         self._groq_api_key = (settings.GROQ_API_KEY or "").strip()
         self._groq_enabled = bool(self._groq_api_key)
         self._ollama_available: Optional[bool] = None
 
-        provider_info = f"Groq ({GROQ_MODEL})" if self._groq_enabled else f"Ollama ({OLLAMA_MODEL})"
+        # Paramètres sourcés depuis Settings (config-as-code)
+        self._model = settings.LLM_MODEL
+        self._max_tokens = settings.LLM_MAX_TOKENS
+        self._temperature = settings.LLM_TEMPERATURE
+        self._groq_timeout = settings.LLM_TIMEOUT_SECONDS
+        self._ollama_base_url = settings.OLLAMA_BASE_URL.rstrip("/")
+        self._ollama_model = settings.OLLAMA_MODEL
+        self._ollama_timeout = settings.OLLAMA_TIMEOUT_SECONDS
+
+        provider_info = (
+            f"Groq ({self._model})" if self._groq_enabled
+            else f"Ollama ({self._ollama_model})"
+        )
         logger.info("GroqProvider initialisé — provider principal: %s", provider_info)
 
     # ------------------------------------------------------------------
@@ -58,6 +65,42 @@ class GroqProvider:
                 return reply
 
         return await self._call_ollama(messages)
+
+    # ------------------------------------------------------------------
+    # API publique — function-calling
+    # ------------------------------------------------------------------
+
+    async def complete_with_tools(self, messages: list[dict], tools: list[dict]) -> dict:
+        """Completion avec outils (Groq). Sur repli Ollama, outils ignorés."""
+        if not self._groq_enabled:
+            content = await self._call_ollama(messages)
+            return {"content": content, "tool_calls": None}
+        try:
+            async with httpx.AsyncClient(timeout=self._groq_timeout) as client:
+                resp = await client.post(
+                    GROQ_API_URL,
+                    headers={
+                        "Authorization": f"Bearer {self._groq_api_key}",
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": self._model,
+                        "messages": messages,
+                        "max_tokens": self._max_tokens,
+                        "temperature": self._temperature,
+                        "tools": tools,
+                        "tool_choice": "auto",
+                    },
+                )
+                resp.raise_for_status()
+            msg = resp.json()["choices"][0]["message"]
+            return {"content": msg.get("content"), "tool_calls": msg.get("tool_calls")}
+        except Exception as exc:
+            logger.warning("Groq tools erreur — completion simple: %s", exc)
+            content = await self._call_groq(messages)
+            if content is None:
+                content = await self._call_ollama(messages)
+            return {"content": content, "tool_calls": None}
 
     # ------------------------------------------------------------------
     # API publique — streaming
@@ -88,7 +131,7 @@ class GroqProvider:
 
     async def _call_groq(self, messages: list[dict]) -> Optional[str]:
         try:
-            async with httpx.AsyncClient(timeout=GROQ_TIMEOUT) as client:
+            async with httpx.AsyncClient(timeout=self._groq_timeout) as client:
                 resp = await client.post(
                     GROQ_API_URL,
                     headers={
@@ -96,10 +139,10 @@ class GroqProvider:
                         "Content-Type": "application/json",
                     },
                     json={
-                        "model": GROQ_MODEL,
+                        "model": self._model,
                         "messages": messages,
-                        "max_tokens": MAX_TOKENS,
-                        "temperature": TEMPERATURE,
+                        "max_tokens": self._max_tokens,
+                        "temperature": self._temperature,
                     },
                 )
                 resp.raise_for_status()
@@ -129,7 +172,7 @@ class GroqProvider:
     async def _stream_groq(self, messages: list[dict]) -> AsyncGenerator[str, None]:
         """Stream la réponse Groq chunk par chunk."""
         try:
-            async with httpx.AsyncClient(timeout=GROQ_TIMEOUT) as client:
+            async with httpx.AsyncClient(timeout=self._groq_timeout) as client:
                 async with client.stream(
                     "POST",
                     GROQ_API_URL,
@@ -138,10 +181,10 @@ class GroqProvider:
                         "Content-Type": "application/json",
                     },
                     json={
-                        "model": GROQ_MODEL,
+                        "model": self._model,
                         "messages": messages,
-                        "max_tokens": MAX_TOKENS,
-                        "temperature": TEMPERATURE,
+                        "max_tokens": self._max_tokens,
+                        "temperature": self._temperature,
                         "stream": True,
                     },
                 ) as resp:
@@ -153,7 +196,6 @@ class GroqProvider:
                         if data_str.strip() == "[DONE]":
                             return
                         try:
-                            import json
                             data = json.loads(data_str)
                             delta = data["choices"][0].get("delta", {})
                             content = delta.get("content")
@@ -183,14 +225,17 @@ class GroqProvider:
             return None
 
         try:
-            async with httpx.AsyncClient(timeout=OLLAMA_TIMEOUT) as client:
+            async with httpx.AsyncClient(timeout=self._ollama_timeout) as client:
                 resp = await client.post(
-                    f"{OLLAMA_BASE_URL}/api/chat",
+                    f"{self._ollama_base_url}/api/chat",
                     json={
-                        "model": OLLAMA_MODEL,
+                        "model": self._ollama_model,
                         "messages": messages,
                         "stream": False,
-                        "options": {"num_predict": MAX_TOKENS, "temperature": TEMPERATURE},
+                        "options": {
+                            "num_predict": self._max_tokens,
+                            "temperature": self._temperature,
+                        },
                     },
                 )
                 resp.raise_for_status()
@@ -203,7 +248,7 @@ class GroqProvider:
             return reply
 
         except (httpx.ConnectError, httpx.TimeoutException):
-            logger.warning("Ollama indisponible (%s)", OLLAMA_BASE_URL)
+            logger.warning("Ollama indisponible (%s)", self._ollama_base_url)
             self._ollama_available = False
             return None
         except Exception as exc:
@@ -213,20 +258,21 @@ class GroqProvider:
     async def _check_ollama(self) -> bool:
         try:
             async with httpx.AsyncClient(timeout=5.0) as client:
-                resp = await client.get(f"{OLLAMA_BASE_URL}/api/tags")
+                resp = await client.get(f"{self._ollama_base_url}/api/tags")
                 resp.raise_for_status()
                 models = [m.get("name", "") for m in resp.json().get("models", [])]
                 found = any(
-                    OLLAMA_MODEL in name or name.startswith(OLLAMA_MODEL.split(":")[0])
+                    self._ollama_model in name
+                    or name.startswith(self._ollama_model.split(":")[0])
                     for name in models
                 )
                 if found:
-                    logger.info("Ollama disponible — modèle '%s' trouvé", OLLAMA_MODEL)
+                    logger.info("Ollama disponible — modèle '%s' trouvé", self._ollama_model)
                 else:
-                    logger.warning("Ollama joignable mais modèle '%s' absent", OLLAMA_MODEL)
+                    logger.warning("Ollama joignable mais modèle '%s' absent", self._ollama_model)
                 return True
         except (httpx.ConnectError, httpx.TimeoutException):
-            logger.info("Ollama non joignable sur %s", OLLAMA_BASE_URL)
+            logger.info("Ollama non joignable sur %s", self._ollama_base_url)
             return False
         except Exception as exc:
             logger.info("Erreur vérification Ollama: %s", exc)

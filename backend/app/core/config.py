@@ -37,8 +37,76 @@ class Settings(BaseSettings):
     # explicitement via le validator ci-dessous.
     REDIS_URL: Optional[str] = None
 
-    # LLM - AÏDA
+    # LLM - AÏDA / TutorAI
     GROQ_API_KEY: Optional[str] = None
+
+    # Provider LLM actif et parametres de generation.
+    # Sortis du code (groq_provider) pour un point de verite unique,
+    # configurable par environnement sans redeploiement de code.
+    LLM_PROVIDER: str = "groq"              # groq | ollama
+    LLM_MODEL: str = "llama-3.1-8b-instant"
+    LLM_MAX_TOKENS: int = 800
+    LLM_TEMPERATURE: float = 0.7
+    LLM_TIMEOUT_SECONDS: float = 30.0
+
+    # Fallback local Ollama (auto-heberge, mode hors-ligne).
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
+    OLLAMA_MODEL: str = "llama3.1:8b"
+    OLLAMA_TIMEOUT_SECONDS: float = 90.0
+
+    # TutorAI — bascules de deploiement progressif (strangler fig).
+    # TUTOR_PERSIST_SESSIONS : quand True, les conversations sont persistees
+    # en base (chat_sessions/chat_messages) au lieu de la memoire process.
+    # Defaut False : le chemin /chat existant reste inchange tant que la
+    # migration 018 n'est pas appliquee et le flag pas active.
+    TUTOR_PERSIST_SESSIONS: bool = False
+    # Nombre de messages d'historique injectes dans le contexte LLM.
+    TUTOR_SESSION_HISTORY_LIMIT: int = 20
+
+    # TutorAI RAG — recherche semantique sur le contenu de cours.
+    # Embeddings via Ollama (nomic-embed-text, 768d) : gratuit, local,
+    # coherent avec le repli offline. Ollama + le modele doivent tourner la
+    # ou le backend calcule les embeddings (ingestion ET requete de chat).
+    # Defaut False : dormant tant que la migration 019 (pgvector) n'est pas
+    # appliquee et le flag pas active.
+    TUTOR_RAG_ENABLED: bool = False
+    EMBEDDING_PROVIDER: str = "ollama"       # ollama (768d)
+    EMBEDDING_MODEL: str = "nomic-embed-text"
+    EMBEDDING_DIM: int = 768                  # doit matcher vector(N) en base
+    EMBEDDING_TIMEOUT_SECONDS: float = 60.0
+    # Recherche : nb de chunks injectes dans le prompt + seuil de similarite.
+    RAG_TOP_K: int = 4
+    RAG_MIN_SIMILARITY: float = 0.3
+    # Decoupage du contenu (approximatif, en caracteres).
+    RAG_CHUNK_SIZE: int = 2000
+    RAG_CHUNK_OVERLAP: int = 200
+
+    # TutorAI Maitrise — suivi par competence via Bayesian Knowledge Tracing.
+    # Dormant tant que la migration 020 n'est pas appliquee et le flag off.
+    TUTOR_MASTERY_ENABLED: bool = False
+    # Parametres BKT (defauts raisonnables, calibrables par matiere plus tard).
+    BKT_P_INIT: float = 0.3      # p(maitrise) initiale
+    BKT_P_TRANSIT: float = 0.15  # p(apprentissage) a chaque opportunite
+    BKT_P_SLIP: float = 0.1      # p(erreur alors que maitrise)
+    BKT_P_GUESS: float = 0.2     # p(bonne reponse par chance sans maitrise)
+    # Seuil au-dela duquel une competence est consideree maitrisee.
+    MASTERY_THRESHOLD: float = 0.6
+
+    # TutorAI Tool-calling — AÏDA appelle elle-meme les outils (quiz,
+    # recommandation) pendant la conversation via le function-calling Groq.
+    # Defaut False : le chat reste une simple completion. Necessite Groq
+    # (llama-3.1-8b) ; sur repli Ollama, les outils sont ignores.
+    TUTOR_TOOLS_ENABLED: bool = False
+    # Nombre max d'aller-retours d'appels d'outils par tour de conversation.
+    TUTOR_TOOLS_MAX_ITERATIONS: int = 3
+
+    # Orientation multi-criteres — poids relatifs des criteres de matching.
+    # Un critere sans donnee est exclu et les poids sont renormalises.
+    ORIENTATION_WEIGHT_RIASEC: float = 35.0     # tests de la plateforme
+    ORIENTATION_WEIGHT_ACADEMIC: float = 25.0   # notes dans les matieres cles
+    ORIENTATION_WEIGHT_INTERESTS: float = 20.0  # interets + matieres preferees
+    ORIENTATION_WEIGHT_PROJECT: float = 10.0    # projet professionnel
+    ORIENTATION_WEIGHT_BUDGET: float = 10.0     # faisabilite financiere
 
     # Email (notifications candidatures mentor, etc.) — tout optionnel.
     # Si SMTP n'est pas configure, l'envoi est ignore silencieusement (best-effort).

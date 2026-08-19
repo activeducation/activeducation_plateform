@@ -81,6 +81,28 @@ class SessionClearedResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+def _resolve_session(raw_session_id: Optional[str], user_id: UUID) -> tuple[UUID, str]:
+    """Derive un UUID de session (persistance) + l'id client-facing (string).
+
+    Compat : l'id renvoye au client garde le format "{user_id}:{uuid}" pour ne
+    pas casser les sessions deja stockees cote Flutter et conserver le controle
+    d'ownership base sur le prefixe. Le UUID sert de cle chat_sessions.id.
+    """
+    if raw_session_id:
+        candidate = raw_session_id.rsplit(":", 1)[-1]
+        try:
+            return UUID(candidate), raw_session_id
+        except ValueError:
+            pass
+    new_uuid = uuid.uuid4()
+    return new_uuid, f"{user_id}:{new_uuid}"
+
+
+# ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
 
@@ -98,7 +120,7 @@ async def send_message(
     request: ChatRequest,
     user_id: UUID = Depends(get_current_user_id),
 ) -> ChatResponse:
-    session_id = request.session_id or f"{user_id}:{uuid.uuid4()}"
+    session_uuid, session_id = _resolve_session(request.session_id, user_id)
 
     context_dict: Optional[dict] = None
     if request.orientation_context:
@@ -111,7 +133,8 @@ async def send_message(
     try:
         result = await llm_service.chat(
             message=request.message,
-            session_id=session_id,
+            session_id=session_uuid,
+            user_id=user_id,
             orientation_context=context_dict,
             client_history=client_history,
         )
@@ -149,7 +172,7 @@ async def send_message_stream(
     request: ChatRequest,
     user_id: UUID = Depends(get_current_user_id),
 ) -> StreamingResponse:
-    session_id = request.session_id or f"{user_id}:{uuid.uuid4()}"
+    session_uuid, session_id = _resolve_session(request.session_id, user_id)
 
     context_dict: Optional[dict] = None
     if request.orientation_context:
@@ -163,7 +186,8 @@ async def send_message_stream(
         try:
             async for chunk in llm_service.chat_stream(
                 message=request.message,
-                session_id=session_id,
+                session_id=session_uuid,
+                user_id=user_id,
                 orientation_context=context_dict,
                 client_history=client_history,
             ):
@@ -201,7 +225,8 @@ async def clear_session(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Vous n'etes pas autorise a effacer cette session.",
             )
-    llm_service.clear_session(session_id)
+    session_uuid, _ = _resolve_session(session_id, user_id)
+    await llm_service.clear_session(session_uuid, user_id)
     return SessionClearedResponse(
         message="Historique de conversation effacé.",
         session_id=session_id,
