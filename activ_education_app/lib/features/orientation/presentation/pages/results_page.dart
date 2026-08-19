@@ -16,29 +16,29 @@ class ResultsPage extends StatelessWidget {
   // =========================================================================
   static const Map<String, String> _sectorMapping = {
     // Réaliste
-    'Génie Civil & BTP': 'Ingénierie & BTP',
-    'Mécanique & Électrotechnique': 'Ingénierie & BTP',
+    'Génie Civil & BTP': 'Ingenierie & Construction',
+    'Mécanique & Électrotechnique': 'Ingenierie & Construction',
     'Agriculture & Agroalimentaire': 'Agriculture & Environnement',
-    'Topographie & Géomatique': 'Ingénierie & BTP',
+    'Topographie & Géomatique': 'Ingenierie & Construction',
     'Maintenance & Logistique Industrielle': 'Commerce & Entrepreneuriat',
     // Investigateur
     'Informatique & Cybersécurité': 'Technologie & Informatique',
-    'Biologie & Pharmacie': 'Santé',
+    'Biologie & Pharmacie': 'Sante',
     'Mathématiques & Data Science': 'Technologie & Informatique',
-    'Physique & Énergies Renouvelables': 'Ingénierie & BTP',
-    'Médecine & Recherche Clinique': 'Santé',
+    'Physique & Énergies Renouvelables': 'Ingenierie & Construction',
+    'Médecine & Recherche Clinique': 'Sante',
     // Artistique
-    'Design Graphique & Communication Visuelle': 'Création & Médias',
-    "Architecture & Décoration d'Intérieur": 'Ingénierie & BTP',
-    'Journalisme & Médias Numériques': 'Création & Médias',
-    'Cinéma, Arts & Culture': 'Création & Médias',
-    'Marketing Créatif & UX Design': 'Création & Médias',
+    'Design Graphique & Communication Visuelle': 'Arts & Media',
+    "Architecture & Décoration d'Intérieur": 'Ingenierie & Construction',
+    'Journalisme & Médias Numériques': 'Arts & Media',
+    'Cinéma, Arts & Culture': 'Arts & Media',
+    'Marketing Créatif & UX Design': 'Arts & Media',
     // Social
-    'Sciences Infirmières & Santé Communautaire': 'Santé',
-    "Enseignement & Sciences de l'Éducation": 'Éducation',
+    'Sciences Infirmières & Santé Communautaire': 'Sante',
+    "Enseignement & Sciences de l'Éducation": 'Education',
     'Psychologie & Travail Social': 'Droit & Administration',
     'Ressources Humaines & Coaching': 'Droit & Administration',
-    'Développement Communautaire & ONG': 'Éducation',
+    'Développement Communautaire & ONG': 'Education',
     // Entrepreneur
     "Commerce & Gestion d'Entreprise": 'Commerce & Entrepreneuriat',
     'Finance & Banque': 'Finance & Banque',
@@ -51,23 +51,71 @@ class ResultsPage extends StatelessWidget {
     "Gestion des Systèmes d'Information": 'Technologie & Informatique',
     'Statistiques & Actuariat': 'Finance & Banque',
     'Secrétariat & Office Management': 'Commerce & Entrepreneuriat',
+    // ---------------------------------------------------------------------
+    // Alias de secteurs REELLEMENT presents en base. Le catalogue contient
+    // plusieurs orthographes pour un meme secteur ("Arts & Media" et
+    // "Creation & Medias", "Ingenierie & Construction" et "Ingenierie & BTP",
+    // "Technologie & Informatique" et "Technologie & IT"). Sans ces alias, les
+    // metiers saisis sous la variante minoritaire n'apparaissent sous aucune
+    // filiere. A terme, le bon correctif est d'unifier les secteurs depuis le
+    // back-office.
+    // ---------------------------------------------------------------------
+    'Creation & Medias': 'Arts & Media',
+    'Ingenierie & BTP': 'Ingenierie & Construction',
+    'Technologie & IT': 'Technologie & Informatique',
   };
 
+  /// Mots outils ignores lors du rapprochement de noms de secteurs.
+  static const Set<String> _sectorStopwords = {'gestion', 'sciences', 'science'};
+
+  /// Replie une chaine pour comparaison : minuscules et sans accents.
+  ///
+  /// Indispensable : la base stocke "Sante" et "Ingenierie & Construction"
+  /// tandis que le moteur produit "Santé" et "Ingénierie & BTP".
+  static String _foldSector(String value) {
+    const accented = 'àâäáãçèéêëìíîïñòóôöõùúûüýÿ';
+    const plain = 'aaaaaceeeeiiiinooooouuuuyy';
+    final buffer = StringBuffer();
+    for (final rune in value.toLowerCase().runes) {
+      final char = String.fromCharCode(rune);
+      final index = accented.indexOf(char);
+      buffer.write(index >= 0 ? plain[index] : char);
+    }
+    return buffer.toString();
+  }
+
+  /// Mots significatifs d'un nom de secteur (>= 4 lettres, hors mots outils).
+  static Set<String> _sectorTokens(String value) => _foldSector(value)
+      .split(RegExp(r'[^a-z0-9]+'))
+      .where((t) => t.length >= 4 && !_sectorStopwords.contains(t))
+      .toSet();
+
   List<Career> _getCareersForSector(String sectorName) {
-    // Les metiers viennent desormais du backend (result.recommendations,
-    // alimente par career_matcher cote API). On filtre par secteur, avec un
-    // repli souple via le mapping de noms de secteurs.
-    final localSector = _sectorMapping[sectorName] ?? sectorName;
-    final matches = result.recommendations.where((c) {
-      final cs = c.sector;
-      return cs == sectorName ||
-          cs == localSector ||
-          (_sectorMapping[cs] ?? cs) == localSector;
-    }).toList();
-    if (matches.isNotEmpty) return matches.take(5).toList();
-    // Repli ultime : si rien ne matche le secteur, montrer les meilleures
-    // recommandations globales (evite une carte vide).
-    return result.recommendations.take(5).toList();
+    // Les metiers viennent du backend (result.recommendations, alimente par
+    // career_matcher). Le titre affiche est un libelle editorial du moteur
+    // ("Informatique & Cybersécurité") alors que les metiers portent le
+    // secteur stocke en base ("Technologie & Informatique") : on rapproche les
+    // deux par mapping explicite, repliement des accents, puis recouvrement de
+    // mots significatifs.
+    final target = _sectorMapping[sectorName] ?? sectorName;
+    final foldedTarget = _foldSector(target);
+    final foldedSector = _foldSector(sectorName);
+    final targetTokens = _sectorTokens(sectorName)..addAll(_sectorTokens(target));
+
+    return result.recommendations.where((c) {
+      final careerSector = c.sector;
+      final folded = _foldSector(careerSector);
+      if (folded == foldedTarget || folded == foldedSector) return true;
+      if (_foldSector(_sectorMapping[careerSector] ?? careerSector) == foldedTarget) {
+        return true;
+      }
+      return _sectorTokens(careerSector).intersection(targetTokens).isNotEmpty;
+    }).take(5).toList();
+    // AUCUN repli global ici. Auparavant, faute de correspondance, on affichait
+    // les 6 meilleures recommandations sous CHAQUE secteur : on retrouvait donc
+    // Pharmacie ou Conseiller en orientation sous "Informatique &
+    // Cybersécurité". Une carte sans metier est deja geree proprement
+    // (ni sous-titre, ni chevron, non cliquable) et reste honnete.
   }
 
   @override
