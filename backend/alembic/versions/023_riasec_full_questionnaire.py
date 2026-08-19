@@ -157,6 +157,21 @@ DIMENSION_ORDER = [
 
 def upgrade() -> None:
     # ------------------------------------------------------------------
+    # 0. Colonnes requises par cette migration
+    # ------------------------------------------------------------------
+    # La base de production diverge de ce que declare la migration 001 :
+    # plusieurs colonnes y ont ete ajoutees a la main, d'autres jamais creees.
+    # order_index est absente en production alors que 001 la declare. On ne
+    # suppose donc rien et on s'assure de la presence de ce qu'on utilise.
+    # ADD COLUMN IF NOT EXISTS est sans effet si la colonne est deja la.
+    op.execute("ALTER TABLE test_questions ADD COLUMN IF NOT EXISTS order_index INTEGER DEFAULT 0")
+    op.execute("ALTER TABLE test_questions ADD COLUMN IF NOT EXISTS section_title TEXT")
+    op.execute("ALTER TABLE test_questions ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()")
+    op.execute("ALTER TABLE question_options ADD COLUMN IF NOT EXISTS order_index INTEGER DEFAULT 0")
+    # Utilisee par la sous-requete qui resout le test RIASEC.
+    op.execute("ALTER TABLE orientation_tests ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()")
+
+    # ------------------------------------------------------------------
     # 1. Orthographe des items existants et du titre du test
     # ------------------------------------------------------------------
     for old, new in ACCENT_FIXES:
@@ -217,7 +232,7 @@ WHERE tq.test_id = {TEST_ID}
 WITH ranked AS (
     SELECT
         id,
-        ROW_NUMBER() OVER (PARTITION BY category ORDER BY created_at, id) AS position_in_dimension,
+        ROW_NUMBER() OVER (PARTITION BY category ORDER BY created_at NULLS LAST, id) AS position_in_dimension,
         CASE category {rank_cases} ELSE 99 END AS dimension_rank
     FROM test_questions
     WHERE test_id = {TEST_ID}
