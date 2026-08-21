@@ -76,10 +76,24 @@ class _BecomeMentorPageState extends State<BecomeMentorPage> {
   /// candidat voit tout de suite si le fichier est refuse (format, taille),
   /// au lieu de perdre son formulaire sur une erreur finale.
   Future<void> _pickPhoto() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.image,
-      withData: true, // indispensable sur le web : pas de chemin de fichier
-    );
+    FilePickerResult? result;
+    try {
+      result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        withData: true, // indispensable sur le web : pas de chemin de fichier
+      );
+    } catch (e) {
+      // Sans ce garde-fou, un echec d'ouverture du selecteur partait en
+      // exception non geree : le bouton semblait simplement inerte.
+      if (mounted) {
+        AppSnackbar.error(
+          context,
+          "Impossible d'ouvrir le sélecteur de fichiers : $e",
+        );
+      }
+      return;
+    }
+
     final file = result?.files.firstOrNull;
     if (file == null || file.bytes == null) return;
 
