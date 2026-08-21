@@ -25,6 +25,9 @@ class MentorApplicationCreate(BaseModel):
     expertise_areas: Optional[list[str]] = None
     linkedin_url: Optional[str] = Field(None, max_length=300)
     motivation: Optional[str] = Field(None, max_length=2000)
+    # URL renvoyee par POST /mentors/apply/photo. Reprise dans
+    # mentors.avatar_url lors de l'approbation.
+    photo_url: Optional[str] = Field(None, max_length=500)
 
     @field_validator("full_name", "specialty")
     @classmethod

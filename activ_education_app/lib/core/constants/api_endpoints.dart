@@ -86,6 +86,10 @@ class ApiEndpoints {
   static String mentorReviews(String id) => '$mentors/$id/reviews';
   static String requestMentor(String id) => '$mentors/$id/request';
   static const String mentorApply = '$mentors/apply';
+  /// Depot de la photo de profil d'un candidat mentor.
+  /// Renvoie {url, path, bucket} ; l'URL est ensuite envoyee dans
+  /// le champ photo_url de la candidature.
+  static const String mentorApplyPhoto = '$mentors/apply/photo';
   static const String mentorRelationships = '$apiV1/mentor-relationships';
   static String relationshipById(String id) => '$mentorRelationships/$id';
   static const String mentorList = '$apiV1/mentors';

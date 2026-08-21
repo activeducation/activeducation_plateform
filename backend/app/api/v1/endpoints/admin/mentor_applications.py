@@ -43,6 +43,8 @@ def build_mentor_data(app: dict) -> dict:
         "specialty": specialty,
         "profession": specialty or "Mentor",
         "bio": app.get("bio") or app.get("motivation") or "",
+        # La photo jointe a la candidature devient l'avatar du mentor.
+        "avatar_url": app.get("photo_url"),
         "email": app.get("email"),
         "phone": app.get("phone"),
         "years_experience": app.get("years_experience"),

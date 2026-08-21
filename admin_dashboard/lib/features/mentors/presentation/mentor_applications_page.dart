@@ -200,13 +200,24 @@ class _AppCard extends StatelessWidget {
         children: [
           Row(
             children: [
+              // Photo jointe par le candidat, sinon son initiale.
               CircleAvatar(
+                radius: 22,
                 backgroundColor: AppColors.primary.withValues(alpha: 0.12),
-                child: Text(
-                  (app['full_name'] as String? ?? '?').characters.first.toUpperCase(),
-                  style: AppTypography.body.copyWith(
-                      color: AppColors.primary, fontWeight: FontWeight.bold),
-                ),
+                backgroundImage: (app['photo_url'] as String?)?.isNotEmpty == true
+                    ? NetworkImage(app['photo_url'] as String)
+                    : null,
+                child: (app['photo_url'] as String?)?.isNotEmpty == true
+                    ? null
+                    : Text(
+                        (app['full_name'] as String? ?? '?')
+                            .characters
+                            .first
+                            .toUpperCase(),
+                        style: AppTypography.body.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold),
+                      ),
               ),
               const SizedBox(width: 12),
               Expanded(
