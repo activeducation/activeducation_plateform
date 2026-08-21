@@ -61,13 +61,25 @@ OPPORTUNITY_COLUMNS = (
     "updated_at",
 )
 
-# Colonnes servies par GET /mentors/{id}/reviews. `user_id` est necessaire a
-# PostgREST pour resoudre la jointure vers user_profiles (dont seuls
-# display_name et avatar_url sont affiches).
-REVIEW_COLUMNS = ("id", "mentor_id", "user_id", "rating", "comment", "created_at")
+# Colonnes servies par GET /mentors/{id}/reviews.
+REVIEW_COLUMNS = (
+    "id", "mentor_id", "rating", "comment", "created_at",
+    # Colonne d'auteur : le nom varie selon les bases et n'est pas garanti.
+    # L'intersection avec information_schema ne gardera que celle qui existe ;
+    # PostgREST en a besoin pour resoudre la jointure vers user_profiles.
+    "user_id", "student_id", "author_id", "profile_id",
+)
 
 
 def _policy(table: str, name: str, using: str, columns: tuple[str, ...] | None = None) -> None:
+    """Pose une politique de lecture et, si demande, restreint les colonnes.
+
+    Les colonnes sont INTERSECTEES avec celles reellement presentes : la base
+    de production diverge des migrations (elle vient d'un schema.sql
+    historique), et une liste codee en dur echoue des qu'une colonne supposee
+    n'existe pas — c'est ce qui est arrive avec mentor_reviews.user_id. On
+    interroge donc le catalogue plutot que de supposer.
+    """
     op.execute(f"ALTER TABLE {table} ENABLE ROW LEVEL SECURITY")
     op.execute(f"DROP POLICY IF EXISTS {name} ON {table}")
     op.execute(f"""
@@ -76,11 +88,30 @@ def _policy(table: str, name: str, using: str, columns: tuple[str, ...] | None =
             TO anon, authenticated
             USING ({using});
     """)
-    if columns:
-        op.execute(f"REVOKE SELECT ON TABLE {table} FROM anon, authenticated")
-        op.execute(
-            f"GRANT SELECT ({', '.join(columns)}) ON TABLE {table} TO anon, authenticated"
-        )
+
+    if not columns:
+        return
+
+    wanted = ", ".join(f"'{c}'" for c in columns)
+    op.execute(f"""
+DO $$
+DECLARE
+    existing_columns text;
+BEGIN
+    SELECT string_agg(quote_ident(column_name), ', ')
+      INTO existing_columns
+      FROM information_schema.columns
+     WHERE table_schema = 'public'
+       AND table_name = '{table}'
+       AND column_name IN ({wanted});
+
+    IF existing_columns IS NOT NULL THEN
+        EXECUTE 'REVOKE SELECT ON TABLE {table} FROM anon, authenticated';
+        EXECUTE 'GRANT SELECT (' || existing_columns
+                || ') ON TABLE {table} TO anon, authenticated';
+    END IF;
+END $$;
+""")
 
 
 def upgrade() -> None:
