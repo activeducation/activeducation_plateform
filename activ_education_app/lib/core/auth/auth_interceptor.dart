@@ -51,6 +51,13 @@ class AuthInterceptor extends Interceptor {
     '/mentors',
     '/opportunities',
     '/schools',
+    // Soumission d'un test d'orientation : le backend calcule TOUJOURS le
+    // resultat (get_current_user_id_optional) et ne reserve a l'utilisateur
+    // connecte que la sauvegarde de la session et l'attribution d'XP.
+    // Bloquer la requete ici faisait perdre a l'eleve les 60 reponses qu'il
+    // venait de saisir, alors que le serveur pouvait parfaitement lui rendre
+    // son profil. Mieux vaut un resultat non sauvegarde qu'aucun resultat.
+    '/orientation/sessions',
   ];
 
   AuthInterceptor(this._tokenStorage, @Named('refreshClient') this._refreshDio);
@@ -117,6 +124,20 @@ class AuthInterceptor extends Interceptor {
           return handler.resolve(response);
         } catch (retryError) {
           if (kDebugMode) debugPrint('[AuthInterceptor] Retry failed: $retryError');
+        }
+      } else if (_isOptionalAuthRoute(err.requestOptions.path)) {
+        // Le rafraichissement a echoue, mais cette route est servie avec ou
+        // sans authentification : on retente SANS jeton plutot que de rendre
+        // une erreur. Sans cela, un eleve dont la session expire perd les
+        // reponses qu'il vient de saisir alors que le serveur peut lui rendre
+        // son resultat.
+        try {
+          final response = await _retryRequestWithoutAuth(err.requestOptions);
+          return handler.resolve(response);
+        } catch (anonError) {
+          if (kDebugMode) {
+            debugPrint('[AuthInterceptor] Retry sans jeton echoue: $anonError');
+          }
         }
       }
     }
@@ -209,6 +230,22 @@ class AuthInterceptor extends Interceptor {
     }
 
     return false;
+  }
+
+  /// Retente une requete SANS jeton, pour les routes a authentification
+  /// optionnelle dont le rafraichissement a echoue.
+  Future<Response<dynamic>> _retryRequestWithoutAuth(
+    RequestOptions requestOptions,
+  ) {
+    final headers = Map<String, dynamic>.from(requestOptions.headers)
+      ..remove('Authorization');
+
+    return _refreshDio.request<dynamic>(
+      requestOptions.path,
+      data: requestOptions.data,
+      queryParameters: requestOptions.queryParameters,
+      options: Options(method: requestOptions.method, headers: headers),
+    );
   }
 
   /// Retente une requete avec le nouveau token.
