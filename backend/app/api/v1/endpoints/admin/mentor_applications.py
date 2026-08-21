@@ -3,7 +3,7 @@
 from uuid import UUID
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.core.logging import get_logger
 from app.core.security import get_current_admin
@@ -58,9 +58,15 @@ async def approve_application(
         return app  # idempotent
 
     # Creer le mentor a partir de la candidature
+    # `profession` est NOT NULL sur mentors (heritage du schema.sql historique,
+    # non declare par les migrations). La candidature ne connait que
+    # `specialty`, qui designe la meme chose : on alimente les deux.
+    specialty = app.get("specialty")
+
     mentor_data = {
         "full_name": app.get("full_name"),
-        "specialty": app.get("specialty"),
+        "specialty": specialty,
+        "profession": specialty or "Mentor",
         "bio": app.get("bio"),
         "email": app.get("email"),
         "phone": app.get("phone"),
@@ -76,7 +82,18 @@ async def approve_application(
         mentor_data["id"] = app["user_id"]
     mentor_data = {k: v for k, v in mentor_data.items() if v is not None}
 
-    mentor = repo.create_mentor(mentor_data)
+    try:
+        mentor = repo.create_mentor(mentor_data)
+    except Exception as exc:
+        # La table mentors vient d'un schema.sql historique non suivi par
+        # Alembic : elle peut porter des contraintes que le code ignore. Sans
+        # ce garde-fou, l'erreur remonte en 500 opaque et il faut lire les logs
+        # du serveur pour savoir quelle colonne pose probleme.
+        logger.error("Creation du mentor echouee: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=422,
+            detail=f"Impossible de créer le mentor : {exc}",
+        ) from exc
 
     updated = repo.update_application(app_id, {
         "status": "approved",
