@@ -269,7 +269,12 @@ class _BecomeMentorPageState extends State<BecomeMentorPage> {
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
+          // behavior: opaque est indispensable. Par defaut GestureDetector
+          // utilise deferToChild : seule la zone de l'ENFANT est cliquable,
+          // soit l'icone de 26 px au centre d'un cercle de 84 px — et plus
+          // rien du tout une fois la photo choisie, l'enfant devenant null.
           GestureDetector(
+            behavior: HitTestBehavior.opaque,
             onTap: _uploadingPhoto ? null : _pickPhoto,
             child: Container(
               width: 84,
@@ -314,12 +319,27 @@ class _BecomeMentorPageState extends State<BecomeMentorPage> {
                 const SizedBox(height: 2),
                 Text(
                   _photoUrl != null
-                      ? 'Photo ajoutée. Touchez pour la remplacer.'
+                      ? 'Photo ajoutée.'
                       : 'Facultatif — JPG, PNG ou WEBP, 5 Mo maximum.',
                   style: AppTypography.bodySmall.copyWith(
                     color: _photoUrl != null
                         ? AppColors.success
                         : AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                // Bouton explicite : le cercle seul est une cible peu evidente
+                // et trop petite sur mobile.
+                OutlinedButton.icon(
+                  onPressed: _uploadingPhoto ? null : _pickPhoto,
+                  icon: const Icon(Iconsax.gallery, size: 16),
+                  label: Text(
+                    _photoUrl != null ? 'Remplacer' : 'Choisir une photo',
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 8),
                   ),
                 ),
               ],
