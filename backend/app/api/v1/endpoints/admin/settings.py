@@ -7,7 +7,11 @@ from fastapi import APIRouter, Depends, Query, Request
 
 from app.core.logging import get_logger
 from app.core.security import get_current_admin, get_current_super_admin
-from app.db.supabase_client import get_supabase_client
+# NOTE : ces endpoints sont reserves aux administrateurs (get_current_admin)
+# et doivent utiliser la clef service_role. Avec la clef anon, le RLS ferme sur
+# achievements / challenges / app_settings leur renvoyait des listes vides et
+# faisait echouer les creations, silencieusement.
+from app.db.supabase_client import get_admin_supabase_client
 from app.core.exceptions import NotFoundError
 
 
@@ -18,7 +22,7 @@ router = APIRouter()
 
 def _log_audit(admin, action, entity_type, entity_id, changes=None):
     try:
-        db = get_supabase_client()
+        db = get_admin_supabase_client()
         db.insert(table="admin_audit_log", data={
             "admin_id": str(admin["user_id"]),
             "action": action,
@@ -42,7 +46,7 @@ async def list_settings(
     admin: dict = Depends(get_current_super_admin),
 ):
     """Liste des parametres (super_admin)."""
-    db = get_supabase_client()
+    db = get_admin_supabase_client()
     return db.fetch_all(table="app_settings", order_by="key.asc")
 
 
@@ -55,7 +59,7 @@ async def update_setting(
     admin: dict = Depends(get_current_super_admin),
 ):
     """Modifier un parametre (super_admin)."""
-    db = get_supabase_client()
+    db = get_admin_supabase_client()
     import json
 
     existing = db.client.table("app_settings").select("*").eq("key", key).limit(1).execute()
@@ -92,7 +96,7 @@ async def list_announcements(
     admin: dict = Depends(get_current_admin),
 ):
     """Liste paginee des annonces."""
-    db = get_supabase_client()
+    db = get_admin_supabase_client()
     offset = (page - 1) * per_page
 
     query = db.client.table("announcements").select("*", count="exact")
@@ -117,7 +121,7 @@ async def create_announcement(
     admin: dict = Depends(get_current_admin),
 ):
     """Creer une annonce."""
-    db = get_supabase_client()
+    db = get_admin_supabase_client()
     body["created_by"] = str(admin["user_id"])
     result = db.insert(table="announcements", data=body)
     _log_audit(admin, "create", "announcement", result[0].get("id") if result else None, body)
@@ -133,7 +137,7 @@ async def update_announcement(
     admin: dict = Depends(get_current_admin),
 ):
     """Modifier une annonce."""
-    db = get_supabase_client()
+    db = get_admin_supabase_client()
     result = db.update(
         table="announcements", id_column="id",
         id_value=str(announcement_id), data=body,
@@ -152,7 +156,7 @@ async def delete_announcement(
     admin: dict = Depends(get_current_admin),
 ):
     """Supprimer une annonce."""
-    db = get_supabase_client()
+    db = get_admin_supabase_client()
     db.delete(table="announcements", id_column="id", id_value=str(announcement_id))
     _log_audit(admin, "delete", "announcement", announcement_id)
     return {"success": True, "message": "Annonce supprimee"}
@@ -172,7 +176,7 @@ async def list_audit_log(
     admin: dict = Depends(get_current_super_admin),
 ):
     """Journal d'audit (super_admin uniquement)."""
-    db = get_supabase_client()
+    db = get_admin_supabase_client()
     offset = (page - 1) * per_page
 
     query = db.client.table("admin_audit_log").select(
