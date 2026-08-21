@@ -18,6 +18,46 @@ logger = get_logger("api.admin.mentor_applications")
 router = APIRouter()
 
 
+# Colonnes NOT NULL et sans valeur par defaut de la table `mentors`.
+# La table vient d'un schema.sql historique que les migrations ne declarent
+# pas : ces contraintes ne sont visibles qu'en interrogeant la base.
+MENTOR_REQUIRED_FIELDS = ("profession", "bio")
+
+
+def build_mentor_data(app: dict) -> dict:
+    """Construit la ligne `mentors` a partir d'une candidature approuvee.
+
+    Deux pieges, chacun ayant deja casse l'approbation en production :
+
+    - `profession` et `bio` sont NOT NULL sans defaut, alors que la
+      candidature ne connait que `specialty` et une bio facultative. Le filtre
+      final retirant les valeurs nulles, une bio absente disparaissait du
+      payload et l'insertion echouait ;
+    - l'identifiant du compte doit aller dans `user_id`, la colonne prevue
+      pour ce lien, et non dans `id` qui est la cle primaire.
+    """
+    specialty = app.get("specialty")
+
+    data = {
+        "full_name": app.get("full_name"),
+        "specialty": specialty,
+        "profession": specialty or "Mentor",
+        "bio": app.get("bio") or app.get("motivation") or "",
+        "email": app.get("email"),
+        "phone": app.get("phone"),
+        "years_experience": app.get("years_experience"),
+        "expertise_areas": app.get("expertise_areas"),
+        "linkedin_url": app.get("linkedin_url"),
+        "is_verified": True,
+        "is_active": True,
+        "source": "application",
+    }
+    if app.get("user_id"):
+        data["user_id"] = app["user_id"]
+
+    return {k: v for k, v in data.items() if v is not None}
+
+
 def _log_audit(admin, action, entity_id, changes=None):
     try:
         db = get_supabase_client()
@@ -57,30 +97,7 @@ async def approve_application(
     if app.get("status") == "approved":
         return app  # idempotent
 
-    # Creer le mentor a partir de la candidature
-    # `profession` est NOT NULL sur mentors (heritage du schema.sql historique,
-    # non declare par les migrations). La candidature ne connait que
-    # `specialty`, qui designe la meme chose : on alimente les deux.
-    specialty = app.get("specialty")
-
-    mentor_data = {
-        "full_name": app.get("full_name"),
-        "specialty": specialty,
-        "profession": specialty or "Mentor",
-        "bio": app.get("bio"),
-        "email": app.get("email"),
-        "phone": app.get("phone"),
-        "years_experience": app.get("years_experience"),
-        "expertise_areas": app.get("expertise_areas"),
-        "linkedin_url": app.get("linkedin_url"),
-        "is_verified": True,
-        "is_active": True,
-        "source": "application",
-    }
-    # Si le candidat a un compte, lier le mentor a son profil
-    if app.get("user_id"):
-        mentor_data["id"] = app["user_id"]
-    mentor_data = {k: v for k, v in mentor_data.items() if v is not None}
+    mentor_data = build_mentor_data(app)
 
     try:
         mentor = repo.create_mentor(mentor_data)
