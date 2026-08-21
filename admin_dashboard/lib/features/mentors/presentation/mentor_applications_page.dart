@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
@@ -61,8 +62,33 @@ class _MentorApplicationsPageState extends State<MentorApplicationsPage> {
       }
       _load();
     } catch (e) {
-      if (mounted) AdminSnackbar.error(context, 'Action impossible');
+      if (mounted) AdminSnackbar.error(context, _errorMessage(e));
     }
+  }
+
+  /// Remonte la raison renvoyee par l'API plutot qu'un message generique.
+  ///
+  /// Un simple "Action impossible" masquait la cause reelle : il a fallu lire
+  /// le code du backend pour decouvrir que l'insertion echouait sur des
+  /// colonnes absentes. Afficher le message du serveur rend le probleme
+  /// diagnosticable depuis le back-office.
+  String _errorMessage(Object error) {
+    if (error is DioException) {
+      if (error.type == DioExceptionType.connectionError ||
+          error.type == DioExceptionType.connectionTimeout) {
+        return 'Serveur injoignable. Vérifiez votre connexion.';
+      }
+      final data = error.response?.data;
+      if (data is Map) {
+        final reason = data['message'] ?? data['detail'] ?? data['error'];
+        if (reason is String && reason.trim().isNotEmpty) {
+          return reason;
+        }
+      }
+      final code = error.response?.statusCode;
+      if (code != null) return 'Action impossible (erreur $code).';
+    }
+    return 'Action impossible.';
   }
 
   @override
