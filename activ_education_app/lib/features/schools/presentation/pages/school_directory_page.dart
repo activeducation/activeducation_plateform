@@ -41,6 +41,15 @@ class _SchoolDirectoryPageState extends State<SchoolDirectoryPage> {
   String? _selectedType;
   int _selectedFilterIndex = 0;
 
+  // Pagination : l'API renvoie 20 ecoles par page. Sans defilement infini,
+  // l'annuaire n'affichait que la premiere page, soit 20 ecoles sur ~118.
+  static const _pageSize = 20;
+  final ScrollController _scrollController = ScrollController();
+  int _page = 1;
+  bool _hasMore = true;
+  bool _isLoadingMore = false;
+  int _total = 0;
+
   final List<FilterChipItem> _filters = const [
     FilterChipItem(label: 'Toutes'),
     FilterChipItem(label: 'Universite'),
@@ -72,29 +81,88 @@ class _SchoolDirectoryPageState extends State<SchoolDirectoryPage> {
       ),
     );
     _repository = SchoolRepository(dio);
+    _scrollController.addListener(_onScroll);
     _loadSchools();
   }
 
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  /// Charge la page suivante quand on approche du bas de la liste.
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final position = _scrollController.position;
+    if (position.pixels >= position.maxScrollExtent - 300) {
+      _loadMore();
+    }
+  }
+
+  /// (Re)charge la premiere page : recherche, changement de filtre, pull-to-refresh.
   Future<void> _loadSchools() async {
     setState(() {
       _isLoading = true;
       _error = null;
+      _page = 1;
+      _hasMore = true;
     });
     try {
       final response = await _repository.getSchools(
         search: _searchQuery.isNotEmpty ? _searchQuery : null,
         city: _selectedCity,
         type: _selectedType,
+        page: 1,
+        perPage: _pageSize,
       );
+      if (!mounted) return;
       setState(() {
         _schools = response.items;
+        _total = response.total;
+        _hasMore = _schools.length < response.total;
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = 'Impossible de charger les ecoles. Verifiez votre connexion.';
         _isLoading = false;
       });
+    }
+  }
+
+  /// Ajoute la page suivante a la liste deja affichee.
+  Future<void> _loadMore() async {
+    // Un seul chargement a la fois, et rien tant que la 1re page n'est pas la.
+    if (_isLoadingMore || !_hasMore || _isLoading) return;
+    setState(() => _isLoadingMore = true);
+
+    final nextPage = _page + 1;
+    try {
+      final response = await _repository.getSchools(
+        search: _searchQuery.isNotEmpty ? _searchQuery : null,
+        city: _selectedCity,
+        type: _selectedType,
+        page: nextPage,
+        perPage: _pageSize,
+      );
+      if (!mounted) return;
+      setState(() {
+        _page = nextPage;
+        _schools = [..._schools, ...response.items];
+        _total = response.total;
+        // Une page vide arrete la pagination meme si le total est incoherent :
+        // sans cela, une liste qui retrecit pendant la navigation bouclerait.
+        _hasMore = response.items.isNotEmpty && _schools.length < response.total;
+        _isLoadingMore = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      // Echec d'une page suivante : on garde ce qui est affiche et on
+      // laisse la possibilite de reessayer en refaisant defiler.
+      setState(() => _isLoadingMore = false);
     }
   }
 
@@ -244,11 +312,16 @@ class _SchoolDirectoryPageState extends State<SchoolDirectoryPage> {
       color: AppColors.primary,
       onRefresh: _loadSchools,
       child: ListView.builder(
+        controller: _scrollController,
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.pagePaddingHorizontal,
         ),
-        itemCount: _schools.length,
+        // +1 pour le pied de liste (chargement ou compteur de fin).
+        itemCount: _schools.length + 1,
         itemBuilder: (context, index) {
+          if (index == _schools.length) {
+            return _buildListFooter();
+          }
           return SchoolCard(
             school: _schools[index],
             onTap: () {
@@ -267,6 +340,40 @@ class _SchoolDirectoryPageState extends State<SchoolDirectoryPage> {
         },
       ),
     );
+  }
+
+  /// Pied de liste : indicateur pendant le chargement de la page suivante,
+  /// compteur une fois toutes les ecoles affichees.
+  Widget _buildListFooter() {
+    if (_isLoadingMore) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+        child: Center(
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: AppColors.primary,
+            ),
+          ),
+        ),
+      );
+    }
+    if (!_hasMore && _total > 0) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+        child: Center(
+          child: Text(
+            _total == 1 ? '1 ecole' : '$_total ecoles',
+            style: AppTypography.bodySmall.copyWith(
+              color: AppColors.textTertiary,
+            ),
+          ),
+        ),
+      );
+    }
+    return const SizedBox(height: AppSpacing.lg);
   }
 }
 
