@@ -8,6 +8,7 @@ from fastapi import APIRouter, Query
 from app.repositories.schools_repository import get_schools_public_repository
 from app.schemas.schools import SchoolListPublicResponse, SchoolPublicDetail
 from app.core.cache import get_cache, TTL_LISTS, TTL_DETAIL
+from app.core.config import get_settings
 
 router = APIRouter()
 
@@ -17,6 +18,14 @@ async def list_schools(
     search: Optional[str] = Query(None, description="Recherche par nom, ville ou description"),
     city: Optional[str] = Query(None, description="Filtrer par ville"),
     type: Optional[str] = Query(None, alias="type", description="Filtrer par type"),
+    accredited_only: Optional[bool] = Query(
+        None,
+        description=(
+            "Restreindre aux etablissements agreees par l'Etat. "
+            "Non renseigne : valeur par defaut de la configuration "
+            "(SCHOOLS_ACCREDITED_ONLY). false : renvoie aussi les non agreees."
+        ),
+    ),
     page: int = Query(1, ge=1, description="Numero de page"),
     per_page: int = Query(20, ge=1, le=100, description="Resultats par page"),
 ):
@@ -26,7 +35,17 @@ async def list_schools(
     if not search:
         city_part = city or "all"
         type_part = type or "all"
-        cache_key = f"schools:list:p{page}:pp{per_page}:c{city_part}:t{type_part}"
+        # Valeur effective (et non "default") : si la configuration bascule,
+        # la cle change aussitot au lieu de servir des resultats perimes.
+        effective_accredited = (
+            get_settings().SCHOOLS_ACCREDITED_ONLY
+            if accredited_only is None
+            else accredited_only
+        )
+        acc_part = str(effective_accredited).lower()
+        cache_key = (
+            f"schools:list:p{page}:pp{per_page}:c{city_part}:t{type_part}:a{acc_part}"
+        )
 
         cached = get_cache().get(cache_key)
         if cached is not None:
@@ -39,6 +58,7 @@ async def list_schools(
         search=search,
         city=city,
         school_type=type,
+        accredited_only=accredited_only,
     )
 
     if cache_key:

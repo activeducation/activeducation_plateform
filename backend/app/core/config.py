@@ -116,6 +116,17 @@ class Settings(BaseSettings):
     ORIENTATION_WEIGHT_PROJECT: float = 10.0    # projet professionnel
     ORIENTATION_WEIGHT_BUDGET: float = 10.0     # faisabilite financiere
 
+    # Ecoles — agrement MESR.
+    # SCHOOLS_ACCREDITATION_LABEL : millesime ecrit dans schools.accreditations
+    # par scripts/tag_accreditation_mesr.py. A bumper a chaque rentree, en
+    # meme temps que la reference docs/reference_mesr_<annee>.csv.
+    # SCHOOLS_ACCREDITED_ONLY : quand True, l'annuaire public et la recherche
+    # ne renvoient que les etablissements portant ce millesime. Les fiches non
+    # agreees restent en base et accessibles par leur detail (deep link) ; le
+    # parametre ?accredited_only=false leve la restriction.
+    SCHOOLS_ACCREDITATION_LABEL: str = "MESR 2026-2027"
+    SCHOOLS_ACCREDITED_ONLY: bool = True
+
     # Email (notifications candidatures mentor, etc.) — tout optionnel.
     # Si SMTP n'est pas configure, l'envoi est ignore silencieusement (best-effort).
     # L'adresse destinataire des notifications est aussi configurable a chaud via

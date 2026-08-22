@@ -81,7 +81,7 @@ def test_endpoint_caches_a_serialisable_payload(monkeypatch):
     monkeypatch.setattr(endpoint, "get_schools_public_repository", lambda: _Repo())
 
     asyncio.run(endpoint.list_schools(
-        search=None, city=None, type=None, page=1, per_page=20
+        search=None, city=None, type=None, accredited_only=None, page=1, per_page=20
     ))
 
     assert stored, "l'endpoint doit avoir alimente le cache"
