@@ -44,8 +44,16 @@ class Settings(BaseSettings):
     # Sortis du code (groq_provider) pour un point de verite unique,
     # configurable par environnement sans redeploiement de code.
     LLM_PROVIDER: str = "groq"              # groq | ollama
-    LLM_MODEL: str = "llama-3.1-8b-instant"
-    LLM_MAX_TOKENS: int = 800
+    # ATTENTION : Groq retire regulierement des modeles. "llama-3.1-8b-instant"
+    # a ete supprime et renvoyait un 404 sur /chat/completions, ce qui rendait
+    # AIDA muette. Avant de changer cette valeur, LISTER les modeles reellement
+    # disponibles plutot que de supposer :
+    #   GET https://api.groq.com/openai/v1/models  (Authorization: Bearer <cle>)
+    # Surchargeable par LLM_MODEL dans .env.production.
+    LLM_MODEL: str = "openai/gpt-oss-120b"
+    # Les modeles gpt-oss consomment une partie de ce budget en raisonnement
+    # interne avant de rediger : un plafond trop bas renvoie une reponse vide.
+    LLM_MAX_TOKENS: int = 1200
     LLM_TEMPERATURE: float = 0.7
     LLM_TIMEOUT_SECONDS: float = 30.0
 

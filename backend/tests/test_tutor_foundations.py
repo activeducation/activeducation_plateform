@@ -230,11 +230,36 @@ def test_unknown_provider_falls_back_to_groq():
 # ---------------------------------------------------------------------------
 
 
+# Modeles retires par Groq. Les figer ici evite d'y revenir par megarde : le
+# service renvoie alors un 404 sur /chat/completions et AIDA devient muette,
+# sans erreur visible cote application.
+GROQ_RETIRED_MODELS = {
+    "llama-3.1-8b-instant",
+    "llama-3.1-70b-versatile",
+    "mixtral-8x7b-32768",
+}
+
+
 def test_llm_config_present_with_expected_defaults():
+    """Verifie l'intention de la configuration, pas un instantane de valeurs.
+
+    Figer le nom exact du modele rendait ce test faux des que Groq en retirait
+    un — ce qui est arrive. On controle donc ce qui compte reellement.
+    """
     settings = get_settings()
     assert settings.LLM_PROVIDER == "groq"
-    assert settings.LLM_MODEL == "llama-3.1-8b-instant"
-    assert settings.LLM_MAX_TOKENS == 800
+
+    assert settings.LLM_MODEL, "un modele doit etre configure"
+    assert settings.LLM_MODEL not in GROQ_RETIRED_MODELS, (
+        f"{settings.LLM_MODEL} a ete retire par Groq. Lister les modeles "
+        "disponibles via GET https://api.groq.com/openai/v1/models"
+    )
+
+    # Les modeles a raisonnement consomment une partie du budget avant de
+    # rediger : trop bas, la reponse revient vide.
+    assert settings.LLM_MAX_TOKENS >= 1000
+
+    # Les fonctionnalites tuteur restent desactivees par defaut.
     assert settings.TUTOR_PERSIST_SESSIONS is False
 
 
