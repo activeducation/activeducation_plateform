@@ -42,7 +42,11 @@ async def list_schools(
     )
 
     if cache_key:
-        get_cache().set(cache_key, result, ttl=TTL_LISTS)
+        # model_dump(mode="json") et non le modele : CacheClient.set fait
+        # json.dumps(..., default=str), qui transformerait silencieusement le
+        # modele en sa repr. Au rechargement, json.loads rendrait une chaine
+        # et la validation du response_model echouerait en 500.
+        get_cache().set(cache_key, result.model_dump(mode="json"), ttl=TTL_LISTS)
 
     return result
 
@@ -58,5 +62,6 @@ async def get_school_detail(school_id: UUID):
     repo = get_schools_public_repository()
     result = await repo.get_school_detail(school_id)
 
-    get_cache().set(cache_key, result, ttl=TTL_DETAIL)
+    # Idem liste : serialiser avant de cacher (voir commentaire ci-dessus).
+    get_cache().set(cache_key, result.model_dump(mode="json"), ttl=TTL_DETAIL)
     return result
