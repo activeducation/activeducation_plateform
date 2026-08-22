@@ -1,0 +1,112 @@
+﻿secteur;num;nom_mesr;acronyme;ville
+public;1;Université de Lomé (UL);UL;Lomé
+public;2;Université de Kara (UK);UK;Kara
+public;3;Centre International de Recherche et d'Etude de Langues - Village du Bénin (CIREL-VB);CIREL-VB;Lomé
+public;4;Ecole Normale Supérieure d'Atakpamé (ENS-Atakpamé);ENS-Atakpamé;Atakpamé
+public;5;Institut Africain d'Informatique (IAI-Togo);IAI-Togo;Lomé
+public;6;École Nationale des Auxiliaires Médicaux (ENAM);ENAM;Lomé
+public;7;Centre Régional de Formation pour l'Entretien Routier (CERFER);CERFER;Lomé
+public;8;Institut National de Formation Agricole de Tové (INFA-Tové);INFA-Tové;Tové
+public;9;Institut Régional d'Enseignement Supérieur et de Recherche en Développement Culturel (IRES-RDEC);IRES-RDEC;Lomé
+public;10;Ecole Africaine des Métiers de l'Architecture et de l'Urbanisme (EAMAU);EAMAU;Lomé
+public;11;Institut de Formation Fiscale et Douanière (IFFD-OTR);IFFD-OTR;Lomé
+public;12;Centre de Formation aux Métiers de l'Industrie (CFMI);CFMI;Lomé
+public;13;Ecole Nationale Polytechnique (ENP);ENP;Lomé
+prive;1;Centre de Formation Bancaire du Togo (CFBT);CFBT;Lomé
+prive;2;Carrefour Informatique et Bureautique - Institut des Nouvelles Technologies Appliquées (CIB-INTA Lomé et Kara);CIB-INTA Lomé et Kara;Lomé (et Kara)
+prive;3;Centre de Perfectionnement aux Techniques Economiques et Commerciales (CPTEC);CPTEC;Lomé
+prive;4;Centre Informatique de Formation et d'Orientation Professionnelle (CIFOP-Lomé);CIFOP-Lomé;Lomé
+prive;5;Centre Omnithérapeutique Africain (COA);COA;Lomé
+prive;6;Ecole de Finance;;Lomé
+prive;7;Ecole des Cadres;;Lomé
+prive;8;Hautes Etudes de Sciences et Technologies (HEST);HEST;Lomé
+prive;9;Ecole Maritime du Togo (EMARITO);EMARITO;Lomé
+prive;10;Ecole Supérieure des Arts et Sciences du Numérique (ESASN);ESASN;Lomé
+prive;11;Ecole Supérieure d'Administration et de Gestion Notre Dame de l'Eglise (ESAG-NDE);ESAG-NDE;Lomé
+prive;12;Ecole Supérieure d'Audit et de Management (ESAM);ESAM;Lomé
+prive;13;Ecole Supérieure d'Informatique et de Gestion GLOBAL SUCCESS (ESIG GLOBAL SUCCESS);ESIG GLOBAL SUCCESS;Lomé
+prive;14;Ecole Supérieure d'Informatique, de Business et d'Administration (ESIBA);ESIBA;Lomé
+prive;15;Ecole Supérieure de Commerce et de l'Economie Numérique (ESCEN);ESCEN;Lomé
+prive;16;Ecole supérieure de formation professionnelle FIMAC (ESFP-FIMAC);ESFP-FIMAC;Lomé
+prive;17;Ecole Supérieure de Gestion, d'Informatique et des Sciences (ESGIS);ESGIS;Lomé
+prive;18;Ecole Supérieure de Management (ESMA);ESMA;Lomé
+prive;19;Ecole Supérieure de Technologie, du Cinéma et de l'Audiovisuelle (ESTECA);ESTECA;Lomé
+prive;20;Ecole Supérieure des Affaires (ESA-Lomé et Kara);ESA-Lomé et Kara;Lomé (et Kara)
+prive;21;Ecole Supérieure des Etudes Cinématographiques (ESEC);ESEC;Lomé
+prive;22;Ecole Supérieure des Ponts et Chaussées (ESPC-Lomé et Kara);ESPC-Lomé et Kara;Lomé (et Kara)
+prive;23;Ecole Supérieure des Sciences Economiques, de Gestion et de la Statistique Dr DJOKA;;Lomé
+prive;24;Ecole Supérieure des Techniques et Arts de la Communication (ESTAC);ESTAC;Lomé
+prive;25;Ecole Supérieure du Tourisme et d'Hôtellerie Stella Matutina (ESTH-SM);ESTH-SM;Lomé
+prive;26;Ecole supérieure de formation professionnelle FIMAC (ESFP-FIMAC) [doublon liste officielle];ESFP-FIMAC;Lomé
+prive;27;Faculté de Théologie des Assemblées de Dieu (FATAD);FATAD;Lomé
+prive;28;FORMATEC;;Lomé
+prive;29;Haute Technologie d'Informatique et Bureautique Atlantis (HTIB-ATLANTIS);HTIB-ATLANTIS;Lomé
+prive;30;HOTEL ECOLE AVENIDA;;Lomé
+prive;31;Institut Africain d'Administration et d'Etudes Commerciales (IAEC);IAEC;Lomé
+prive;32;Institut Africain de Développement Sanitaire et Social (IADSS);IADSS;Lomé
+prive;33;Institut Africain des Sciences, des Technologies et des Métiers (IASTM);IASTM;Lomé
+prive;34;Institut Africain Le Leadership;;Lomé
+prive;35;Institut de Formation et de Recherche pour le Développement Durable (IFORDD);IFORDD;Lomé
+prive;36;Institut de Formation Technique Supérieure (IFTS);IFTS;Lomé
+prive;37;Institut de Mathématique, des Sciences et Technologies (IMaST);IMaST;Lomé
+prive;38;Institut de Recherche et de Formation en Développement local (IRFODEL-CENTRE-Lomé);IRFODEL-CENTRE-Lomé;Lomé
+prive;39;Institut de technologie IPNET IT;;Lomé
+prive;40;Institut du Génie Biomédical (IGEB-Lomé);IGEB-Lomé;Lomé
+prive;41;Institut Polytechnique des Bâtiments et des Travaux Publics (IPBTP);IPBTP;Lomé
+prive;42;Institut supérieur LA MAITRISE;;Lomé
+prive;43;Institut supérieur LE TECHNOCRATE;;Lomé
+prive;44;Institut supérieur Agata Carelli (ISAC);ISAC;Lomé
+prive;45;Institut supérieur d'Administration, des Sciences Economiques et de Gestion (ISAGES);ISAGES;Lomé
+prive;46;Institut supérieur de Droit et d'Interprétariat (ISDI);ISDI;Lomé
+prive;47;Institut supérieur de Management Adonaï (ISM ADONAI-Lomé-Atakpamé-Kara);ISM ADONAI-Lomé-Atakpamé-Kara;Lomé (et Kara, Atakpamé)
+prive;48;Institut supérieur de Management et de Développement (ISMAD);ISMAD;Lomé
+prive;49;Haute Ecole de Technologies et de Management des Lacs (HETML);HETML;Lomé
+prive;50;Institut Supérieur de Technologies et de Management (ISTM);ISTM;Lomé
+prive;51;Institut Supérieur des Langues et des Affaires (ISLA);ISLA;Lomé
+prive;52;Institut Supérieur des Sciences Economiques et Commerciales (ISSEC-KOUVAHEY);ISSEC-KOUVAHEY;Lomé
+prive;53;Institut supérieur Don Bosco;;Lomé
+prive;54;Institut supérieur privé de management (IPM);IPM;Lomé
+prive;55;Institut Universitaire LUCAS University College;;Lomé
+prive;56;Institut Universitaire Global Wealth;;Lomé
+prive;57;Ascencia Keyce (ex Institut Collège de Paris Supérieur);ex Institut Collège de Paris Supérieur;Lomé
+prive;58;Institut des Technologies Avancées (JUMAU ITA);JUMAU ITA;Lomé
+prive;59;Institut supérieur de Bâtiment Ayin'a (ISBA);ISBA;Lomé
+prive;60;Lomé Business School (LBS);LBS;Lomé
+prive;61;Social and Inclusive Business Institute of Togo (SIBI-Togo);SIBI-Togo;Lomé
+prive;62;Institut des Hautes Etudes des Relations Internationales et Stratégiques (IHERIS);IHERIS;Lomé
+prive;63;Ecole Supérieure des Arts de la Mode et des Arts Plastiques (ESAMOD);ESAMOD;Lomé
+prive;64;Université Catholique de l'Afrique de l'Ouest-Unité universitaire du Togo (UCAO-UUT);UCAO-UUT;Lomé
+prive;65;American Institute of Commonwealth-Togo (AIC-Togo);AIC-Togo;Lomé
+prive;66;Centre de Formation Supérieure Tarso (CFST);CFST;Lomé
+prive;67;Institut Universitaire Nobel (IUN);IUN;Lomé
+prive;68;Ecole Supérieure d'Esthétique Appliquée Pharm-A-Peau (ESEA-Q'LS);ESEA-Q'LS;Lomé
+prive;69;Ecole Supérieure de l'Aéronautique et des Technologies-Togo (ESAT-Togo);ESAT-Togo;Lomé
+prive;70;Ecole des Micro-Entrepreneurs du Centre (EMC-Sokodé);EMC-Sokodé;Sokodé
+prive;71;Ecole supérieure de Communication et de Gestion (ESCG-Tsévié);ESCG-Tsévié;Tsévié
+prive;72;Institut des Sciences Economiques, de Gestion, de Technologies et de la Sécurité Sociale (Institut IFOMESS-Kara);Institut IFOMESS-Kara;Kara
+prive;73;Institut de Formation aux Normes et Technologies de l'Informatique (IFNTI-Sokodé);IFNTI-Sokodé;Sokodé
+prive;74;Institut des Sciences Technologies et Arts (ISTA-Kara);ISTA-Kara;Kara
+prive;75;Institut des Sciences et de Management Mgr BAKPESSI (ISMB-Lomé-Kara);ISMB-Lomé-Kara;Lomé (et Kara)
+prive;76;Knowbridge University Institute (Sokodé);Sokodé;Sokodé
+prive;77;Institut Consortium Saint John Révélation;;Lomé
+prive;78;Institute of Strategy and Leadership (ISL);ISL;Lomé
+prive;79;Ecole supérieure d'ingénieurs d'Aneho (ESIA);ESIA;Lomé
+prive;80;Hôtel Ecole Concordia;;Lomé
+prive;81;Ecole Supérieure le Miel de Kpové-Zion;;Kpové
+prive;82;Univers du Leadership International de XOESE (Univers XOESE);Univers XOESE;Lomé
+prive;83;International School of Technology and Business (ISTB);ISTB;Lomé
+prive;84;Centre de Formation Supérieure SartenMode (CFS-SartenMode);CFS-SartenMode;Lomé
+prive;85;Ecole Supérieure de Relations Internationales et de Diplomatie (ESRID);ESRID;Lomé
+prive;86;Global University School of Science and Technology (GUST);GUST;Lomé
+prive;87;Institut Supérieur Bilingue d'Informatique et de Calcul Auguste Le Grand (ISBIC-ALG);ISBIC-ALG;Lomé
+prive;88;Ecole Supérieure des Sciences de l'Ingénieur et de Gestion (ESSIG);ESSIG;Lomé
+prive;89;Adaptation Finance Academy (AFA);AFA;Lomé
+prive;90;Ecole de Droit de Lomé;;Lomé
+prive;91;Ecole Supérieure d'Ingénierie Sainte Marie-Stella-Togo (ESIMS-TOGO);ESIMS-TOGO;Lomé
+prive;92;Institut de Formation et de Recherche Interdisciplinaires en Sciences de Santé et d'Education (IFRISSE);IFRISSE;Lomé
+prive;93;Institut Polytechnique Jameson (IPJ);IPJ;Lomé
+prive;94;Institut Supérieur Agro-pastoral de Biotechnologie et de l'Environnement (ISAPAB-Togo);ISAPAB-Togo;Lomé
+prive;95;Institut Supérieur de Management industriel et Environnemental (ISMIE);ISMIE;Lomé
+prive;96;Ecole d'Ingénieurs en Topographie et en Equipement SUP-TOPO;;Lomé
+prive;97;SIGMA (école préparatoire);école préparatoire;Lomé
+prive;98;Ecole supérieure des techniques appliquées aux bâtiments (ESTABAT);ESTABAT;Lomé

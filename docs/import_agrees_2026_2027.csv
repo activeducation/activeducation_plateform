@@ -1,0 +1,18 @@
+﻿decision;statut;name;city;type;region;website;description;correspondance_base;similarite;num_mesr;source_ville
+importer;nouveau;Institut Régional d'Enseignement Supérieur et de Recherche en Développement Culturel (IRES-RDEC);Lomé;institut;Maritime;;;;;public n°9;Liste MESR 2026-2027 du 24/07/2026
+importer;nouveau;Institut de Formation Fiscale et Douanière (IFFD-OTR);Lomé;institut;Maritime;;;;;public n°11;Liste MESR 2026-2027 du 24/07/2026
+importer;nouveau;Centre de Formation aux Métiers de l'Industrie (CFMI);Lomé;institut;Maritime;;;;;public n°12;Liste MESR 2026-2027 du 24/07/2026
+importer;nouveau;Ecole supérieure de formation professionnelle FIMAC (ESFP-FIMAC) [doublon liste officielle];Lomé;grande_ecole;Maritime;;;;;prive n°26;Liste MESR 2026-2027 du 24/07/2026
+importer;nouveau;Centre de Formation Supérieure Tarso (CFST);Lomé;institut;Maritime;;;;;prive n°66;Liste MESR 2026-2027 du 24/07/2026
+importer;nouveau;Institut Consortium Saint John Révélation;Lomé;institut;Maritime;;;;;prive n°77;Liste MESR 2026-2027 du 24/07/2026
+importer;nouveau;Institut Supérieur Bilingue d'Informatique et de Calcul Auguste Le Grand (ISBIC-ALG);Lomé;institut;Maritime;;;;;prive n°87;Liste MESR 2026-2027 du 24/07/2026
+importer;nouveau;Ecole Supérieure des Sciences de l'Ingénieur et de Gestion (ESSIG);Lomé;grande_ecole;Maritime;;;;;prive n°88;Liste MESR 2026-2027 du 24/07/2026
+importer;nouveau;Adaptation Finance Academy (AFA);Lomé;institut;Maritime;;;;;prive n°89;Liste MESR 2026-2027 du 24/07/2026
+importer;nouveau;Ecole de Droit de Lomé;Lomé;grande_ecole;Maritime;;;;;prive n°90;Liste MESR 2026-2027 du 24/07/2026
+importer;nouveau;Ecole Supérieure d'Ingénierie Sainte Marie-Stella-Togo (ESIMS-TOGO);Lomé;grande_ecole;Maritime;;;;;prive n°91;Liste MESR 2026-2027 du 24/07/2026
+importer;nouveau;Institut de Formation et de Recherche Interdisciplinaires en Sciences de Santé et d'Education (IFRISSE);Lomé;institut;Maritime;;;;;prive n°92;Liste MESR 2026-2027 du 24/07/2026
+importer;nouveau;Institut Polytechnique Jameson (IPJ);Lomé;institut;Maritime;;;;;prive n°93;Liste MESR 2026-2027 du 24/07/2026
+importer;nouveau;Institut Supérieur Agro-pastoral de Biotechnologie et de l'Environnement (ISAPAB-Togo);Lomé;institut;Maritime;;;;;prive n°94;Liste MESR 2026-2027 du 24/07/2026
+importer;nouveau;Institut Supérieur de Management industriel et Environnemental (ISMIE);Lomé;institut;Maritime;;;;;prive n°95;Liste MESR 2026-2027 du 24/07/2026
+importer;nouveau;Ecole d'Ingénieurs en Topographie et en Equipement SUP-TOPO;Lomé;grande_ecole;Maritime;;;;;prive n°96;Liste MESR 2026-2027 du 24/07/2026
+importer;nouveau;SIGMA (école préparatoire);Lomé;institut;Maritime;;;;;prive n°97;Liste MESR 2026-2027 du 24/07/2026
