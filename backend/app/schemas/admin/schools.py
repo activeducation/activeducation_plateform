@@ -29,7 +29,7 @@ class SchoolSummary(BaseModel):
     name: str
     type: str
     city: str
-    is_public: bool = True
+    is_public: Optional[bool] = None
     is_verified: bool = False
     is_active: bool = True
     logo_url: Optional[str] = None
@@ -60,7 +60,7 @@ class SchoolDetail(BaseModel):
     website: Optional[str] = None
     description: Optional[str] = None
     programs_offered: list[str] = []
-    is_public: bool = True
+    is_public: Optional[bool] = None
     is_verified: bool = False
     is_active: bool = True
     logo_url: Optional[str] = None
@@ -86,7 +86,7 @@ class SchoolCreate(BaseModel):
     website: Optional[str] = None
     description: Optional[str] = None
     programs_offered: list[str] = []
-    is_public: bool = True
+    is_public: Optional[bool] = None
     logo_url: Optional[str] = None
     cover_image_url: Optional[str] = None
     tuition_range: Optional[str] = None

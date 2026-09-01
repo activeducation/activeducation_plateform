@@ -22,11 +22,24 @@ Usage :
     python scripts/tag_accreditation_mesr.py --dry-run
     python scripts/tag_accreditation_mesr.py
     python scripts/tag_accreditation_mesr.py --publier     # is_verified=true si agreee
+    python scripts/tag_accreditation_mesr.py --secteur     # ecrit is_public
     python scripts/tag_accreditation_mesr.py --retirer     # enleve le marqueur
 
 Options :
     --millesime  libelle ecrit dans accreditations (defaut "MESR 2026-2027")
     --reference  CSV de reference (defaut docs/reference_mesr_2026_2027.csv)
+    --secteur    reporte la colonne `secteur` du CSV dans `schools.is_public`
+
+`--secteur` restitue une donnee qui n'a jamais existe : la colonne is_public
+etait un DEFAULT TRUE jamais renseigne, si bien que l'application affichait
+"Publique" sur les 133 fiches, privees comprises (voir migration 029, qui les
+remet a NULL). Le CSV du ministere distingue 13 `public` et 98 `prive`.
+
+L'ecriture n'est faite QUE pour les rapprochements surs — alias, acronyme ou
+nom exact. Un rapprochement par inclusion ou similarite laisse le statut a
+NULL : se tromper ici reviendrait a annoncer a une famille qu'une ecole privee
+est publique, c'est-a-dire exactement le defaut que l'on corrige. Mieux vaut
+une fiche sans badge qu'une fiche qui ment.
 """
 
 from __future__ import annotations
@@ -40,6 +53,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from import_etablissements_xlsx import normalize, acronyms, get_client, fetch_schools  # noqa: E402
+
+# Voies de rapprochement assez sures pour en deduire le secteur (voir en-tete).
+# `inclusion` et `similarite` en sont volontairement exclues.
+MATCHES_SURS = ("alias", "acronyme", "nom")
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_REF = ROOT / "docs" / "reference_mesr_2026_2027.csv"
@@ -100,6 +117,8 @@ def main() -> int:
     parser.add_argument("--retirer", action="store_true", help="retire le marqueur au lieu de l'ajouter")
     parser.add_argument("--publier", action="store_true",
                         help="passe is_verified=true sur les fiches agreees (visibilite RLS)")
+    parser.add_argument("--secteur", action="store_true",
+                        help="ecrit is_public d'apres la colonne `secteur` du CSV")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
@@ -111,9 +130,10 @@ def main() -> int:
     alias = load_alias()
     client = get_client()
     schools = (client.table("schools")
-               .select("id, name, accreditations, is_verified").execute().data or [])
+               .select("id, name, accreditations, is_verified, is_public")
+               .execute().data or [])
 
-    a_ecrire, non_agrees = [], []
+    a_ecrire, non_agrees, secteur_incertain = [], [], []
     for s in schools:
         ref, how = match(s["name"], by_name, by_acro, alias)
         current = list(s.get("accreditations") or [])
@@ -129,6 +149,15 @@ def main() -> int:
             patch["accreditations"] = current + [args.millesime]
         if args.publier and not s.get("is_verified"):
             patch["is_verified"] = True
+        if args.secteur:
+            if how in MATCHES_SURS:
+                public = ref["secteur"].strip().lower() == "public"
+                if s.get("is_public") != public:
+                    patch["is_public"] = public
+            else:
+                # Rapprochement trop lache pour en deduire le statut : on laisse
+                # la fiche sans badge plutot que de risquer l'inverse du vrai.
+                secteur_incertain.append((s, how))
         if patch:
             a_ecrire.append((s, patch, how))
 
@@ -137,6 +166,15 @@ def main() -> int:
     if args.publier:
         n_pub = sum(1 for _s, p, _h in a_ecrire if "is_verified" in p)
         print(f"   dont passage is_verified=true : {n_pub}")
+    if args.secteur:
+        pub = sum(1 for _s, p, _h in a_ecrire if p.get("is_public") is True)
+        pri = sum(1 for _s, p, _h in a_ecrire if p.get("is_public") is False)
+        print(f"   secteur ecrit : {pub} publique(s), {pri} privee(s)")
+        if secteur_incertain:
+            print(f"   statut laisse inconnu (rapprochement trop lache) : "
+                  f"{len(secteur_incertain)}")
+            for sc, how in secteur_incertain:
+                print(f"      - {sc['name'][:60]} (via {how})")
     if not args.retirer:
         print(f"non agreees (laissees intactes) : {len(non_agrees)}")
         for s in non_agrees:

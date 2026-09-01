@@ -767,6 +767,10 @@ Secrets requis : `DATABASE_URL` (migrations CI), `DOCKERHUB_*`,
 **Documentation associée**
 - `docs/ARCHITECTURE.md`, `docs/OPERATIONS.md`, `docs/SECURITY.md`,
   `docs/RLS_AUDIT.md`, `docs/scalability-roadmap.md`.
+- `docs/ORIENTATION.md` — moteur d'orientation : modèle, pipeline, pièges.
+- `docs/MENTORAT.md` — espace mentorat : demande, lien signé, séances.
+- `docs/AUDIT_IMPORT_ETABLISSEMENTS.md` — données écoles : agrément MESR,
+  statut public/privé, filtre de l'annuaire.
 - `CAHIER_DES_CHARGES_GAMIFICATION.md` — spec détaillée de la gamification.
 - `CONTRIBUTING.md`, `DEPLOYMENT.md`, `README.md`.
 

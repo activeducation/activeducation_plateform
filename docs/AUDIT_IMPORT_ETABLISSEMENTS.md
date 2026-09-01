@@ -208,6 +208,61 @@ l'élève de voir le millésime.
 Côté Flutter, `SchoolRepository.getSchools(accreditedOnly: …)` expose le
 paramètre ; laissé à `null`, le backend tranche.
 
+### Les 15 établissements que le filtre masque
+
+Relevés en production le 31 août 2026, par différence entre
+`accredited_only=false` (133) et le défaut (118).
+
+| Établissement | Ville | `accreditations` en base |
+|---|---|---|
+| École Nationale d'Administration | Lomé | — |
+| École Nationale de Formation Sociale | Lomé | — |
+| École Nationale de Sages-Femmes de Lomé | Lomé | — |
+| École Nationale des Aides Sanitaires de Sokodé | Sokodé | — |
+| Institut National de la Jeunesse et des Sports | Lomé | — |
+| Institut National des Sciences de l'Éducation | Lomé | `Oui` |
+| Institut Universitaire de Technologie de Gestion | Lomé | `Oui` |
+| École Supérieure d'Agronomie | Lomé | `Oui` |
+| École Sup. des Techniques Biologiques et Alimentaires | Lomé | `Oui` |
+| Haute École de Commerce et de Management | Lomé | — |
+| Institut des Sciences de l'Information et de la Communication | Lomé | — |
+| Institut Polytechnique DEFITECH | Lomé | — |
+| Université des Sciences et Technologies du Togo | Lomé | — |
+| École Supérieure Baptiste de Théologie de l'Afrique | Lomé | — |
+| École Supérieure des Arts du Spectacle | Lomé | — |
+
+Deux problèmes distincts s'y superposent.
+
+**La majorité sont des établissements publics d'État.** L'agrément EPES
+concerne par nature les établissements **privés** — les écoles publiques sont
+créées par décret, pas agréées. La liste MESR contient 13 publics pour 98
+privés. Filtrer sur le millésime écarte donc mécaniquement des écoles d'État
+légitimes, parmi les plus prestigieuses du pays : ENA, École de Sages-Femmes,
+INJS, INSE.
+
+**Quatre portent la valeur `Oui`** dans `accreditations` : une case à cocher mal
+transcrite dans un champ qui attend des libellés. À nettoyer indépendamment.
+
+Le rapprochement de ces 15 noms avec la liste MESR n'est pas automatisable de
+façon sûre : un appariement souple les associe à des établissements réellement
+distincts (« École Nationale d'Administration » ↔ « École Nationale des
+Auxiliaires Médicaux »). 5 sont clairement absents de la liste — INJS, Institut
+Polytechnique DEFITECH, Université des Sciences et Technologies du Togo, École
+Nationale de Sages-Femmes, École Supérieure d'Agronomie — les 10 autres
+demandent une vérification humaine.
+
+**Trois issues possibles**, par ordre de justesse :
+
+1. ne filtrer sur l'agrément que les établissements **privés**, une fois le
+   statut public/privé réellement renseigné (voir la section suivante) ;
+2. étiqueter les publics manquants avec le millésime via
+   `tag_accreditation_mesr.py` — plus rapide, mais assimile décret et agrément ;
+3. basculer `SCHOOLS_ACCREDITED_ONLY=false` — l'annuaire redevient complet
+   immédiatement, une variable d'environnement suffit.
+
+Masquer l'ENA à un élève est un préjudice plus grand qu'afficher quelques
+établissements privés non agréés.
+
 ### Verrou RLS à connaître
 
 La policy `schools_public_read` (migration 007) expose
@@ -230,6 +285,78 @@ L'un d'eux, « Institut de Formation aux Métiers de l'Industrie (IFMI) »,
 correspond vraisemblablement au **Centre de Formation aux Métiers de
 l'Industrie (CFMI)**, n° 12 des établissements publics. Les 13 autres restent
 absents des listes 2025-2026 et 2026-2027.
+
+## Statut public / privé : une donnée qui n'existait pas
+
+En production, **133 fiches sur 133 portaient `is_public = true`**. Aucune
+n'était marquée privée, y compris celles que le MESR classe en `prive` —
+ESIBA Business School, Institut Polytechnique Jameson, Adaptation Finance
+Academy, et 14 autres retrouvées par acronyme.
+
+L'application affichait ce champ en badge sur chaque carte
+(`SchoolSummary.statusLabel`, rendu dans `school_card.dart` et
+`school_directory_page.dart`). Elle annonçait donc à l'élève que des écoles
+privées étaient publiques. Pour une famille togolaise, public ou privé est
+l'attribut le plus déterminant après la filière, puisqu'il commande le coût.
+
+### Trois couches qui inventaient la même valeur
+
+| Couche | Code d'origine | Effet |
+|---|---|---|
+| Base | `is_public BOOLEAN DEFAULT TRUE` (`schema.sql`) | l'import n'a jamais renseigné la colonne |
+| Backend | `s.get("is_public", True)` (`schools_repository.py`) | un `NULL` redevenait `true` |
+| Flutter | `json['is_public'] as bool? ?? true` (`school_model.dart`) | et une absence aussi |
+| Admin | interrupteur binaire par défaut sur ON | **chaque enregistrement réécrivait `true`** |
+
+Personne ne savait si l'école était publique, et les quatre couches répondaient
+« publique » quand même.
+
+### Correctif appliqué
+
+**Code** — `is_public` devient `Optional[bool] = None` dans les schémas publics
+et admin, les `.get(..., True)` perdent leur défaut, `SchoolSummary.isPublic`
+passe en `bool?`, `statusLabel` retourne `null` quand c'est inconnu et les deux
+badges disparaissent alors. Le formulaire admin offre trois états :
+Publique / Privée / Non renseigné.
+
+**Migration 029** — supprime le `DEFAULT TRUE` et remet les valeurs existantes à
+`NULL`. Indispensable : sans elle le code corrigé afficherait toujours
+« Publique », puisque la base contient des `true`. Aucune information n'est
+perdue — la remise à `NULL` efface des défauts, pas des observations.
+
+**Repeuplement** — `tag_accreditation_mesr.py --secteur` reporte la colonne
+`secteur` du CSV MESR (13 `public` / 98 `prive`) dans `schools.is_public`.
+L'écriture n'est faite **que pour les rapprochements sûrs** — alias, acronyme
+ou nom exact. Inclusion et similarité laissent `NULL` : se tromper ici revient
+à annoncer à une famille qu'une école privée est publique, c'est-à-dire
+exactement le défaut corrigé.
+
+### Résultat mesuré
+
+| | Écoles |
+|---|---|
+| Marquées **privées** | 80 |
+| Marquées **publiques** | 10 |
+| Inconnu — rapprochement trop lâche | 28 |
+| Inconnu — absentes du CSV MESR | 17 |
+
+Les 10 publiques : Université de Lomé, Université de Kara, École Polytechnique
+de Lomé, ENS d'Atakpamé, EAMAU, INFA de Tové, IRES-RDEC, CFMI, CIREL-VB,
+IFFD-OTR. Que des établissements d'État réels.
+
+### Ordre d'exécution — piège
+
+```bash
+cd backend && alembic upgrade head
+python scripts/tag_accreditation_mesr.py --secteur --dry-run   # puis sans --dry-run
+```
+
+Lancé **avant** la migration, le script annonce `0 publique`. Ces 10 écoles
+portent déjà `true` — par accident, pas par donnée — donc le script ne voit
+rien à changer. Il faut migrer d'abord.
+
+Les tests `backend/tests/test_schools_is_public.py` figent la règle : une
+valeur absente reste inconnue.
 
 ## Sources
 

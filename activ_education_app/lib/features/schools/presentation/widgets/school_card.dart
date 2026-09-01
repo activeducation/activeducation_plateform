@@ -71,31 +71,32 @@ class SchoolCard extends StatelessWidget {
                         ),
                 ),
               ),
-              // Badge type
-              Positioned(
-                top: 10,
-                left: 10,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: school.isPublic
-                        ? AppColors.primary
-                        : AppColors.secondary,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    school.statusLabel,
-                    style: AppTypography.labelSmall.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 9,
+              // Badge Publique / Privee : masque tant que le statut est inconnu.
+              if (school.statusLabel != null)
+                Positioned(
+                  top: 10,
+                  left: 10,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: school.isPublic!
+                          ? AppColors.primary
+                          : AppColors.secondary,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      school.statusLabel!,
+                      style: AppTypography.labelSmall.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 9,
+                      ),
                     ),
                   ),
                 ),
-              ),
               // Badge type etablissement
               Positioned(
                 top: 10,

@@ -666,14 +666,16 @@ class _SchoolDetailPageState extends State<SchoolDetailPage>
                         runSpacing: 6,
                         alignment: WrapAlignment.center,
                         children: [
-                          SchoolBadge(
-                            label: school.isPublic
-                                ? 'Etablissement Public'
-                                : 'Etablissement Prive',
-                            color: school.isPublic
-                                ? AppColors.primary
-                                : AppColors.secondary,
-                          ),
+                          // Masque tant que le statut public/prive est inconnu.
+                          if (school.isPublic != null)
+                            SchoolBadge(
+                              label: school.isPublic!
+                                  ? 'Etablissement Public'
+                                  : 'Etablissement Prive',
+                              color: school.isPublic!
+                                  ? AppColors.primary
+                                  : AppColors.secondary,
+                            ),
                           ...school.accreditations.map(
                             (acc) => SchoolBadge(
                               label: acc,

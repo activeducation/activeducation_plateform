@@ -79,7 +79,7 @@ class SchoolsAdminRepository:
                 name=s["name"],
                 type=s["type"],
                 city=s["city"],
-                is_public=s.get("is_public", True),
+                is_public=s.get("is_public"),
                 is_verified=s.get("is_verified", False),
                 is_active=s.get("is_active", True),
                 logo_url=s.get("logo_url"),

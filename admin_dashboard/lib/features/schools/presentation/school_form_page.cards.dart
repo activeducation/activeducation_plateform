@@ -196,14 +196,27 @@ extension _SchoolFormCards on _SchoolFormPageState {
           children: [
             Text('Options', style: AppTypography.heading3),
             const SizedBox(height: 12),
-            SwitchListTile(
-              title: const Text('Etablissement public'),
-              subtitle: Text(
-                _isPublic ? 'Publique' : 'Privee',
-                style: AppTypography.bodySmall,
+            // Trois etats, car "inconnu" est un cas reel : la colonne
+            // is_public n'a jamais ete renseignee par l'import. Un interrupteur
+            // binaire ne pouvait qu'affirmer, et affirmait "publique".
+            DropdownButtonFormField<String>(
+              initialValue: _isPublic == null
+                  ? 'inconnu'
+                  : (_isPublic! ? 'public' : 'prive'),
+              decoration: const InputDecoration(
+                labelText: "Statut de l'etablissement",
               ),
-              value: _isPublic,
-              onChanged: (v) => refresh(() => _isPublic = v),
+              items: const [
+                DropdownMenuItem(value: 'public', child: Text('Publique')),
+                DropdownMenuItem(value: 'prive', child: Text('Privee')),
+                DropdownMenuItem(
+                  value: 'inconnu',
+                  child: Text('Non renseigne'),
+                ),
+              ],
+              onChanged: (v) => refresh(
+                () => _isPublic = v == 'inconnu' ? null : v == 'public',
+              ),
             ),
             if (_isEditing)
               SwitchListTile(
