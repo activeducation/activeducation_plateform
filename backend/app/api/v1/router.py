@@ -2,6 +2,7 @@ from fastapi import APIRouter
 from app.api.v1.endpoints import orientation, auth, schools, chat, elearning, gamification, tutor
 from app.api.v1.endpoints import orientation_profile
 from app.api.v1.endpoints import mentors, opportunities, announcements, settings, search
+from app.api.v1.endpoints import mentorship
 from app.api.v1.endpoints.partner import organizations as partner_organizations
 from app.api.v1.endpoints.admin import (
     auth as admin_auth,
@@ -61,6 +62,11 @@ api_router.include_router(gamification.router, prefix="/gamification", tags=["ga
 
 # Mentors — liste et detail des mentors
 api_router.include_router(mentors.router, prefix="/mentors", tags=["mentors"])
+
+# Espace mentorat — demande, relation, seances. Prefixe vide : les chemins
+# couvrent /mentors/{id}/request, /mentor-relationships et /mentorship/*, que
+# le front declare deja dans api_endpoints.dart.
+api_router.include_router(mentorship.router, prefix="", tags=["mentorship"])
 
 # Opportunities — stages, jobs, bourses
 api_router.include_router(opportunities.router, prefix="/opportunities", tags=["opportunities"])

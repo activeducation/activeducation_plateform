@@ -100,6 +100,15 @@ class _MentorsPageState extends State<MentorsPage> {
           'Mentors',
           style: AppTypography.titleLarge.copyWith(fontWeight: FontWeight.bold),
         ),
+        actions: [
+          // Acces a l'espace mentorat : sans point d'entree ici, un eleve qui a
+          // envoye une demande n'avait aucun endroit ou en suivre la reponse.
+          IconButton(
+            tooltip: 'Mon espace mentorat',
+            icon: const Icon(Iconsax.people, color: AppColors.primary),
+            onPressed: () => context.push('/mentorship'),
+          ),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60),
           child: Padding(

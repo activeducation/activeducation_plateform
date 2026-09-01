@@ -92,6 +92,13 @@ class ApiEndpoints {
   static const String mentorApplyPhoto = '$mentors/apply/photo';
   static const String mentorRelationships = '$apiV1/mentor-relationships';
   static String relationshipById(String id) => '$mentorRelationships/$id';
+  /// Seances d'une relation : POST pour proposer, PATCH pour confirmer.
+  static String relationshipSessions(String id) =>
+      '${relationshipById(id)}/sessions';
+  static String relationshipSessionById(String relId, String sessionId) =>
+      '${relationshipSessions(relId)}/$sessionId';
+  /// Mentors classes selon le profil d'orientation de l'eleve.
+  static const String mentorSuggestions = '$apiV1/mentorship/suggestions';
   static const String mentorList = '$apiV1/mentors';
 
   // ============================================
