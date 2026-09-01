@@ -13,7 +13,7 @@ void main() {
 
   setUp(() => ds = MockDataSource());
 
-  const _result = RecommendationsResult(
+  const result = RecommendationsResult(
     recommendations: [
       CareerRecommendation(careerName: 'Développeur', score: 80),
     ],
@@ -25,7 +25,7 @@ void main() {
     'load succès → [Loading, Loaded]',
     build: () {
       when(() => ds.getRecommendations(limit: any(named: 'limit')))
-          .thenAnswer((_) async => _result);
+          .thenAnswer((_) async => result);
       return RecommendationsCubit(ds);
     },
     act: (cubit) => cubit.load(),
