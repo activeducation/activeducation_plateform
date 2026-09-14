@@ -2,6 +2,8 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
+import '../../data/datasources/elearning_remote_datasource.dart'
+    show ElearningApiException;
 import '../../domain/entities/course.dart';
 import '../../domain/usecases/complete_lesson_usecase.dart';
 import '../../domain/usecases/get_lesson_usecase.dart';
@@ -79,6 +81,10 @@ class LessonCompleted extends LessonState {
   List<Object?> get props => [pointsEarned, courseProgressPct];
 }
 
+/// 401 : non connecte ou session expiree -> la page invite a se connecter.
+class LessonAuthRequired extends LessonState {}
+
+/// [message] est destine a l'eleve (jamais le toString() technique).
 class LessonError extends LessonState {
   final String message;
 
@@ -111,7 +117,11 @@ class LessonBloc extends Bloc<LessonEvent, LessonState> {
 
     final result = await _getLessonUsecase(event.id);
     result.fold(
-      (error) => emit(LessonError(error.toString())),
+      (error) => emit(_stateForError(
+        error,
+        fallback:
+            'Impossible de charger la leçon. Vérifiez votre connexion et réessayez.',
+      )),
       (lesson) => emit(LessonLoaded(lesson)),
     );
   }
@@ -131,7 +141,10 @@ class LessonBloc extends Bloc<LessonEvent, LessonState> {
       );
 
       result.fold(
-        (error) => emit(LessonError(error.toString())),
+        (error) => emit(_stateForError(
+          error,
+          fallback: 'Impossible d\'enregistrer votre progression. Réessayez.',
+        )),
         (data) {
           final pointsEarned = (data['points_earned'] as num?)?.toInt() ??
               currentState.lesson.pointsReward;
@@ -145,5 +158,24 @@ class LessonBloc extends Bloc<LessonEvent, LessonState> {
         },
       );
     }
+  }
+
+  /// Codes renvoyes par GET/POST /elearning/lessons/{id} : 401 sans token,
+  /// 403 si la lecon n'est pas gratuite et que l'eleve n'est pas inscrit,
+  /// 404 si la lecon n'existe pas.
+  LessonState _stateForError(Exception error, {required String fallback}) {
+    if (error is ElearningApiException) {
+      switch (error.statusCode) {
+        case 401:
+          return LessonAuthRequired();
+        case 403:
+          return const LessonError(
+            'Inscrivez-vous au cours pour accéder à cette leçon.',
+          );
+        case 404:
+          return const LessonError('Cette leçon est introuvable.');
+      }
+    }
+    return LessonError(fallback);
   }
 }

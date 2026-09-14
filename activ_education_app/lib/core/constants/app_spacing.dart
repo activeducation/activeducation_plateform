@@ -17,45 +17,46 @@ class AppSpacing {
   static const double xxl = 64;
   static const double xxxl = 96;
 
-  static const double gutter = 24;
+  static const double gutter = 32; // Desktop
   static const double marginMobile = 16;
-  static const double marginDesktop = 64;
+  static const double marginDesktop = 32;
 
   // ============================================
   // PADDING PAGE
   // ============================================
-  static const double pagePaddingHorizontal = 20;
+  static const double pagePaddingHorizontal = 16;
   static const double pagePaddingVertical = 24;
   static const double pagePaddingTop = 16;
   static const double pagePaddingBottom = 32;
 
   // ============================================
-  // CARDS
+  // CARDS (Radius 16px selon DA)
   // ============================================
   static const double cardPadding = 16;
   static const double cardPaddingLarge = 24;
   static const double cardMargin = 12;
   static const double cardRadius = 16;
   static const double cardRadiusLarge = 24;
-  static const double cardRadiusSmall = 8;
+  static const double cardRadiusSmall = 12;
 
   // ============================================
-  // BOUTONS
+  // BOUTONS (Radius 12px selon DA)
   // ============================================
-  static const double buttonHeight = 56;
-  static const double buttonHeightSmall = 44;
-  static const double buttonHeightLarge = 64;
-  static const double buttonRadius = 8;
+  static const double buttonHeight = 52; // Tailles fixes DA (36, 44, 52)
+  static const double buttonHeightSmall = 36;
+  static const double buttonHeightLarge = 52;
+  static const double buttonHeightMedium = 44;
+  static const double buttonRadius = 12;
   static const double buttonRadiusFull = 9999;
   static const double buttonPaddingHorizontal = 24;
   static const double buttonScalePress = 0.98;
 
   // ============================================
-  // INPUTS
+  // INPUTS (Radius 8px selon DA)
   // ============================================
-  static const double inputHeight = 56;
+  static const double inputHeight = 44;
   static const double inputRadius = 8;
-  static const double inputPadding = 16;
+  static const double inputPadding = 12;
 
   // ============================================
   // ICONS
@@ -104,17 +105,18 @@ class AppSpacing {
   // ============================================
   static const double roundedSm = 4;
   static const double roundedDefault = 8;
-  static const double roundedMd = 12;
-  static const double roundedLg = 16;
-  static const double roundedXl = 24;
-  static const double roundedBadge = 24;
+  static const double roundedMd = 12; // Boutons
+  static const double roundedLg = 16; // Cards
+  static const double roundedXl = 24; // Modales
+  static const double roundedBadge = 8; // Badges
   static const double roundedFull = 9999;
 
   // ============================================
   // ANIMATIONS
   // ============================================
   static const Duration animationFast = Duration(milliseconds: 150);
-  static const Duration animationNormal = Duration(milliseconds: 300);
+  static const Duration animationNormal = Duration(milliseconds: 250);
   static const Duration animationSlow = Duration(milliseconds: 500);
   static const Duration animationVerySlow = Duration(milliseconds: 800);
 }
+

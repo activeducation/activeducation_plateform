@@ -1,19 +1,27 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:iconsax/iconsax.dart';
 
 import '../../core/auth/token_storage.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_typography.dart';
 import '../../core/di/injection_container.dart';
+import '../../core/theme/theme_cubit.dart';
 
-/// Shell de navigation principal partagé par toutes les routes authentifiées.
-///
-/// Affiche une sidebar verticale sur desktop (>= 768px) et une bottom bar +
-/// FAB AÏDA sur mobile. Le contenu de la route active est injecté via [child]
-/// par le `ShellRoute` de [AppRouter].
-///
-/// Extrait de app_router.dart (refacto 2026-05) pour séparer la config de
-/// routing (qui doit rester centralisée et lisible) de l'UI du shell.
+/// Pages de detail plein ecran : le dock est masque pour ne pas recouvrir
+/// leurs actions fixes en bas (inscription, completion de lecon, examen).
+const List<String> _dockHiddenRoutePrefixes = [
+  '/elearning/course/',
+  '/elearning/lesson/',
+];
+
+/// En dessous de cette largeur, le dock passe en mode compact : cellules de
+/// largeur egale qui tiennent dans l'ecran (sinon ~515 px deborde sur mobile).
+const double _compactDockBreakpoint = 600;
+const double _compactDockSideMargin = 16;
+
+/// Shell de navigation principal (Refonte Bento & Dock)
 class MainShellWrapper extends StatefulWidget {
   final Widget child;
   const MainShellWrapper({super.key, required this.child});
@@ -26,50 +34,51 @@ class _MainShellWrapperState extends State<MainShellWrapper> {
   int _currentIndex = 0;
   late List<_NavItemData> _navItems;
 
-  static const double _desktopBreakpoint = 768;
-
   static const _defaultNavItems = [
     _NavItemData(
-      icon: Icons.home_outlined,
-      activeIcon: Icons.home_rounded,
+      icon: Iconsax.home_2,
+      activeIcon: Iconsax.home_25,
       label: 'Accueil',
       route: '/home',
     ),
     _NavItemData(
-      icon: Icons.school_outlined,
-      activeIcon: Icons.school_rounded,
+      icon: Iconsax.map_1,
+      activeIcon: Iconsax.map5,
       label: 'Orientation',
       route: '/orientation',
     ),
+    // video_play5 (0x641) et teacher5 (0x604) ont des codepoints dans le bloc
+    // Unicode arabe : le rendu web les affiche vides. On garde l'icone contour,
+    // l'etat actif reste signale par la couleur, le fond et le point.
     _NavItemData(
-      icon: Icons.play_lesson_outlined,
-      activeIcon: Icons.play_lesson_rounded,
+      icon: Iconsax.video_play,
+      activeIcon: Iconsax.video_play,
       label: 'Cours',
       route: '/elearning',
     ),
     _NavItemData(
-      icon: Icons.people_outline,
-      activeIcon: Icons.people_rounded,
+      icon: Iconsax.teacher,
+      activeIcon: Iconsax.teacher,
       label: 'Mentors',
       route: '/mentors',
     ),
     _NavItemData(
-      icon: Icons.business_outlined,
-      activeIcon: Icons.business_rounded,
+      icon: Iconsax.buildings,
+      activeIcon: Iconsax.buildings5,
       label: 'Écoles',
       route: '/schools',
     ),
     _NavItemData(
-      icon: Icons.person_outline,
-      activeIcon: Icons.person_rounded,
+      icon: Iconsax.profile_circle,
+      activeIcon: Iconsax.profile_circle5,
       label: 'Profil',
       route: '/profile',
     ),
   ];
 
   static const _partnerNavItem = _NavItemData(
-    icon: Icons.groups_outlined,
-    activeIcon: Icons.groups_rounded,
+    icon: Iconsax.people,
+    activeIcon: Iconsax.people5,
     label: 'Partenaire',
     route: '/partner/organization/create',
   );
@@ -100,472 +109,235 @@ class _MainShellWrapperState extends State<MainShellWrapper> {
       }
     }
 
-    final isDesktop = MediaQuery.sizeOf(context).width >= _desktopBreakpoint;
+    final hideDock =
+        _dockHiddenRoutePrefixes.any((prefix) => location.startsWith(prefix));
+    final isDarkMode = context.watch<ThemeCubit>().state == ThemeMode.dark;
 
-    if (isDesktop) {
-      return Scaffold(
-        backgroundColor: AppColors.background,
-        body: Row(
-          children: [
-            _DarkSidebar(
-              currentIndex: _currentIndex,
-              navItems: _navItems,
-              onTap: (index, route) {
-                setState(() => _currentIndex = index);
-                context.go(route);
-              },
-              onAida: () => context.push('/chat'),
-            ),
-            Expanded(
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 960),
-                  child: widget.child,
+    return Scaffold(
+      extendBody: true, // Très important pour que le dock flotte sur le contenu
+      body: Stack(
+        children: [
+          // Le contenu principal
+          Positioned.fill(
+            child: widget.child,
+          ),
+
+          // Le Dock Flottant
+          if (!hideDock)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 24, // Flottant au-dessus du bas
+              child: SafeArea(
+                child: Center(
+                  child: _FloatingDock(
+                    currentIndex: _currentIndex,
+                    navItems: _navItems,
+                    isDarkMode: isDarkMode,
+                    onTap: (index, route) {
+                      setState(() => _currentIndex = index);
+                      context.go(route);
+                    },
+                    onToggleTheme: () => context.read<ThemeCubit>().toggleTheme(),
+                    onAida: () => context.push('/chat'),
+                  ),
                 ),
               ),
             ),
-          ],
-        ),
-        floatingActionButton: _AidaFab(onTap: () => context.push('/chat')),
-      );
-    }
-
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: widget.child,
-      bottomNavigationBar: _BottomNav(
-        currentIndex: _currentIndex,
-        navItems: _navItems,
-        onTap: (index, route) {
-          setState(() => _currentIndex = index);
-          context.go(route);
-        },
+        ],
       ),
-      floatingActionButton: _AidaFab(onTap: () => context.push('/chat')),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 }
 
-// ─── Dark Sidebar (Desktop) ─────────────────────────────────────────────────
+// ─── Floating Dock (Style VisionOS / iPad) ──────────────────────────────────
 
-class _DarkSidebar extends StatelessWidget {
+class _FloatingDock extends StatelessWidget {
   final int currentIndex;
   final List<_NavItemData> navItems;
+  final bool isDarkMode;
   final void Function(int index, String route) onTap;
+  final VoidCallback onToggleTheme;
   final VoidCallback onAida;
 
-  const _DarkSidebar({
+  const _FloatingDock({
     required this.currentIndex,
     required this.navItems,
+    required this.isDarkMode,
     required this.onTap,
+    required this.onToggleTheme,
     required this.onAida,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 252,
-      decoration: BoxDecoration(
-        color: AppColors.darkBg,
-        boxShadow: AppColors.darkNavShadow,
-      ),
-      child: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Brand ──
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
-              child: Row(
-                children: [
-                  Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(11),
-                      color: Colors.white,
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Image.asset(
-                      'assets/images/logo.jpeg',
-                      width: 38,
-                      height: 38,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  const SizedBox(width: 11),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Activ Education',
-                        style: AppTypography.titleMedium.copyWith(
-                          color: AppColors.darkTextPrimary,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15,
-                        ),
-                      ),
-                      Text(
-                        'Orientation · E-Learning',
-                        style: AppTypography.labelSmall.copyWith(
-                          color: AppColors.darkTextMuted,
-                          fontSize: 10,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final compact = screenWidth < _compactDockBreakpoint;
+
+    // En compact, chaque action occupe une cellule de largeur egale ;
+    // FittedBox reduit l'icone sur les ecrans tres etroits (< 360 px).
+    Widget cell(Widget child) => compact
+        ? Expanded(
+            child: Center(
+              child: FittedBox(fit: BoxFit.scaleDown, child: child),
+            ),
+          )
+        : child;
+
+    final dock = ClipRRect(
+      borderRadius: BorderRadius.circular(32),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+        child: Container(
+          padding: compact
+              ? const EdgeInsets.symmetric(horizontal: 6, vertical: 8)
+              : const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: isDarkMode
+                ? Colors.black.withOpacity(0.5)
+                : Colors.white.withOpacity(0.7),
+            borderRadius: BorderRadius.circular(32),
+            border: Border.all(
+              color: isDarkMode
+                  ? Colors.white.withOpacity(0.1)
+                  : Colors.white.withOpacity(0.8),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(isDarkMode ? 0.4 : 0.1),
+                blurRadius: 32,
+                offset: const Offset(0, 8),
               ),
-            ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: compact ? MainAxisSize.max : MainAxisSize.min,
+            children: [
+              // Logo simple ou icône de menu (optionnel)
 
-            // ── Section principale ──
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Text(
-                'MENU',
-                style: AppTypography.overline.copyWith(
-                  color: AppColors.darkTextMuted,
-                  fontSize: 10,
-                ),
+              // Les items de navigation
+              ...navItems.asMap().entries.map((entry) {
+                final i = entry.key;
+                final item = entry.value;
+                return cell(_DockIcon(
+                  item: item,
+                  isActive: currentIndex == i,
+                  isDarkMode: isDarkMode,
+                  compact: compact,
+                  onTap: () => onTap(i, item.route),
+                ));
+              }),
+
+              // Séparateur vertical
+              Container(
+                width: 1.5,
+                height: compact ? 24 : 32,
+                margin: EdgeInsets.symmetric(horizontal: compact ? 4 : 8),
+                color: isDarkMode
+                    ? Colors.white.withOpacity(0.15)
+                    : Colors.black.withOpacity(0.1),
               ),
-            ),
-            const SizedBox(height: 8),
 
-            // ── Nav items (sans Profil) ──
-            ...navItems.take(navItems.length - 1).toList().asMap().entries.map((entry) {
-              final i = entry.key;
-              final item = entry.value;
-              return _SidebarItem(
-                item: item,
-                isActive: currentIndex == i,
-                onTap: () => onTap(i, item.route),
-              );
-            }),
+              // AÏDA bouton spécial (Glow)
+              cell(_DockIconAida(
+                isDarkMode: isDarkMode,
+                compact: compact,
+                onTap: onAida,
+              )),
 
-            const Spacer(),
+              if (!compact) const SizedBox(width: 8),
 
-            // ── AÏDA CTA ──
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: _AidaSidebarButton(onTap: onAida),
-            ),
-
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Container(
-                height: 1,
-                color: AppColors.darkBorder,
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            // ── Profil ──
-            _SidebarItem(
-              item: navItems.last,
-              isActive: currentIndex == navItems.length - 1,
-              onTap: () => onTap(navItems.length - 1, navItems.last.route),
-            ),
-            const SizedBox(height: 16),
-          ],
+              // Thème Toggle
+              cell(_DockIconButton(
+                icon: isDarkMode ? Iconsax.sun_1 : Iconsax.moon,
+                isDarkMode: isDarkMode,
+                compact: compact,
+                onTap: onToggleTheme,
+              )),
+            ],
+          ),
         ),
       ),
     );
+
+    return compact
+        ? SizedBox(
+            width: screenWidth - 2 * _compactDockSideMargin,
+            child: dock,
+          )
+        : dock;
   }
 }
 
-class _SidebarItem extends StatefulWidget {
+class _DockIcon extends StatefulWidget {
   final _NavItemData item;
   final bool isActive;
+  final bool isDarkMode;
+  final bool compact;
   final VoidCallback onTap;
 
-  const _SidebarItem({
+  const _DockIcon({
     required this.item,
     required this.isActive,
+    required this.isDarkMode,
+    required this.compact,
     required this.onTap,
   });
 
   @override
-  State<_SidebarItem> createState() => _SidebarItemState();
+  State<_DockIcon> createState() => _DockIconState();
 }
 
-class _SidebarItemState extends State<_SidebarItem> {
+class _DockIconState extends State<_DockIcon> {
   bool _hovered = false;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _hovered = true),
-        onExit: (_) => setState(() => _hovered = false),
+    final colorActive = widget.isDarkMode ? AppColors.primaryLight : AppColors.primary;
+    final colorInactive = widget.isDarkMode ? Colors.white70 : AppColors.textSecondary;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutBack,
+          margin: widget.compact
+              ? EdgeInsets.zero
+              : const EdgeInsets.symmetric(horizontal: 4),
+          padding: EdgeInsets.all(widget.compact ? 8 : 12),
+          transform: Matrix4.translationValues(0, _hovered ? -4 : 0, 0),
           decoration: BoxDecoration(
             color: widget.isActive
-                ? AppColors.darkSurface2
-                : _hovered
-                    ? AppColors.darkSurface
-                    : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
+                ? (widget.isDarkMode ? colorActive.withOpacity(0.2) : colorActive.withOpacity(0.1))
+                : (_hovered
+                    ? (widget.isDarkMode ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05))
+                    : Colors.transparent),
+            borderRadius: BorderRadius.circular(20),
           ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: widget.onTap,
-              borderRadius: BorderRadius.circular(12),
-              splashColor: AppColors.darkBorder2.withValues(alpha: 0.5),
-              highlightColor: Colors.transparent,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 11,
-                ),
-                child: Row(
-                  children: [
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 180),
-                      padding: const EdgeInsets.all(7),
-                      decoration: BoxDecoration(
-                        color: widget.isActive
-                            ? AppColors.secondary.withValues(alpha: 0.22)
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(9),
-                      ),
-                      child: Icon(
-                        widget.isActive
-                            ? widget.item.activeIcon
-                            : widget.item.icon,
-                        color: widget.isActive
-                            ? AppColors.secondary
-                            : AppColors.darkTextSecondary,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        widget.item.label,
-                        style: AppTypography.navLabel.copyWith(
-                          color: widget.isActive
-                              ? AppColors.darkTextPrimary
-                              : AppColors.darkTextSecondary,
-                          fontWeight: widget.isActive
-                              ? FontWeight.w600
-                              : FontWeight.w400,
-                          fontSize: 13.5,
-                        ),
-                      ),
-                    ),
-                    if (widget.isActive)
-                      Container(
-                        width: 3,
-                        height: 20,
-                        decoration: BoxDecoration(
-                          color: AppColors.secondary,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _AidaSidebarButton extends StatelessWidget {
-  final VoidCallback onTap;
-  const _AidaSidebarButton({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.white.withValues(alpha: 0.16),
-                Colors.white.withValues(alpha: 0.06),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.22),
-            ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(7),
-                decoration: BoxDecoration(
-                  color: AppColors.secondary.withValues(alpha: 0.30),
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                child: const Icon(
-                  Icons.smart_toy_rounded,
-                  color: Colors.white,
-                  size: 18,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'AÏDA',
-                      style: AppTypography.titleSmall.copyWith(
-                        color: AppColors.darkTextPrimary,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                      ),
-                    ),
-                    Text(
-                      'Conseillère IA',
-                      style: AppTypography.labelSmall.copyWith(
-                        color: AppColors.darkAccentBlue,
-                        fontSize: 10,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: AppColors.xpBar,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Bottom Navigation (Mobile) ─────────────────────────────────────────────
-
-class _BottomNav extends StatelessWidget {
-  final int currentIndex;
-  final List<_NavItemData> navItems;
-  final void Function(int index, String route) onTap;
-
-  const _BottomNav({
-    required this.currentIndex,
-    required this.navItems,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        border: const Border(
-          top: BorderSide(color: AppColors.border, width: 1),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 16,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: navItems.asMap().entries.map((entry) {
-              final i = entry.key;
-              final item = entry.value;
-              return _MobileNavItem(
-                item: item,
-                isActive: currentIndex == i,
-                onTap: () => onTap(i, item.route),
-              );
-            }).toList(),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _MobileNavItem extends StatelessWidget {
-  final _NavItemData item;
-  final bool isActive;
-  final VoidCallback onTap;
-
-  const _MobileNavItem({
-    required this.item,
-    required this.isActive,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeOut,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 7,
-                ),
-                decoration: BoxDecoration(
-                  color: isActive
-                      ? AppColors.primarySurface
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: Icon(
-                  isActive ? item.activeIcon : item.icon,
-                  color: isActive
-                      ? AppColors.primaryDark
-                      : AppColors.textTertiary,
-                  size: 22,
-                ),
+              Icon(
+                widget.isActive ? widget.item.activeIcon : widget.item.icon,
+                color: widget.isActive ? colorActive : colorInactive,
+                size: widget.compact
+                    ? 22
+                    : (widget.isActive || _hovered ? 28 : 24),
               ),
-              const SizedBox(height: 3),
-              Text(
-                item.label,
-                style: AppTypography.navLabel.copyWith(
-                  color: isActive
-                      ? AppColors.primaryDark
-                      : AppColors.textTertiary,
-                  fontWeight:
-                      isActive ? FontWeight.w600 : FontWeight.w400,
-                  fontSize: 10.5,
+              if (widget.isActive)
+                Container(
+                  margin: const EdgeInsets.only(top: 4),
+                  width: 4,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: colorActive,
+                    shape: BoxShape.circle,
+                  ),
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
             ],
           ),
         ),
@@ -574,37 +346,101 @@ class _MobileNavItem extends StatelessWidget {
   }
 }
 
-// ─── AÏDA FAB ───────────────────────────────────────────────────────────────
-
-class _AidaFab extends StatelessWidget {
+class _DockIconAida extends StatefulWidget {
+  final bool isDarkMode;
+  final bool compact;
   final VoidCallback onTap;
-  const _AidaFab({required this.onTap});
+
+  const _DockIconAida({
+    required this.isDarkMode,
+    required this.compact,
+    required this.onTap,
+  });
+
+  @override
+  State<_DockIconAida> createState() => _DockIconAidaState();
+}
+
+class _DockIconAidaState extends State<_DockIconAida> {
+  bool _hovered = false;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.35),
-            blurRadius: 20,
-            offset: const Offset(0, 6),
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutBack,
+          margin: widget.compact
+              ? EdgeInsets.zero
+              : const EdgeInsets.symmetric(horizontal: 4),
+          padding: EdgeInsets.all(widget.compact ? 8 : 12),
+          transform: Matrix4.translationValues(0, _hovered ? -4 : 0, 0),
+          decoration: BoxDecoration(
+            gradient: AppColors.heroGradient,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: _hovered ? AppColors.glowShadow : AppColors.primaryShadow,
           ),
-        ],
-      ),
-      child: FloatingActionButton(
-        heroTag: 'aida_fab',
-        onPressed: onTap,
-        backgroundColor: AppColors.primary,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
+          child: Icon(
+            Icons.smart_toy_rounded,
+            color: Colors.white,
+            size: widget.compact ? 22 : 26,
+          ),
         ),
-        child: const Icon(
-          Icons.smart_toy_rounded,
-          color: Colors.white,
-          size: 26,
+      ),
+    );
+  }
+}
+
+class _DockIconButton extends StatefulWidget {
+  final IconData icon;
+  final bool isDarkMode;
+  final bool compact;
+  final VoidCallback onTap;
+
+  const _DockIconButton({
+    required this.icon,
+    required this.isDarkMode,
+    required this.compact,
+    required this.onTap,
+  });
+
+  @override
+  State<_DockIconButton> createState() => _DockIconButtonState();
+}
+
+class _DockIconButtonState extends State<_DockIconButton> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = widget.isDarkMode ? Colors.white70 : AppColors.textSecondary;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          margin: widget.compact
+              ? EdgeInsets.zero
+              : const EdgeInsets.symmetric(horizontal: 4),
+          padding: EdgeInsets.all(widget.compact ? 8 : 12),
+          decoration: BoxDecoration(
+            color: _hovered
+                ? (widget.isDarkMode ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05))
+                : Colors.transparent,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            widget.icon,
+            color: color,
+            size: widget.compact ? 22 : 24,
+          ),
         ),
       ),
     );

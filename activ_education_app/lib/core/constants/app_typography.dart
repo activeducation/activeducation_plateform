@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
+import 'dart:ui';
 
 class AppTypography {
   AppTypography._();
@@ -49,12 +50,12 @@ class AppTypography {
   static TextStyle get heroSubtitle => TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 14, fontWeight: FontWeight.w400, letterSpacing: 0, color: AppColors.darkTextSecondary, height: 1.5);
 
   // ============================================
-  // GAMIFICATION — Chiffres et stats
+  // GAMIFICATION — Chiffres et stats (Tabular figures)
   // ============================================
-  static TextStyle get statValue => TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 28, fontWeight: FontWeight.w800, letterSpacing: -0.5, color: AppColors.darkTextPrimary, height: 1.0);
-  static TextStyle get statValueMedium => TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 20, fontWeight: FontWeight.w700, letterSpacing: -0.3, color: AppColors.darkTextPrimary, height: 1.1);
-  static TextStyle get statValueSmall => TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 15, fontWeight: FontWeight.w700, letterSpacing: -0.2, color: AppColors.darkTextPrimary, height: 1.2);
-  static TextStyle get statLabel => TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 10, fontWeight: FontWeight.w500, letterSpacing: 0.8, color: AppColors.darkTextSecondary, height: 1.3);
+  static TextStyle get statValue => TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 28, fontWeight: FontWeight.w800, letterSpacing: -0.5, color: AppColors.darkTextPrimary, height: 1.0, fontFeatures: const [FontFeature.tabularFigures()]);
+  static TextStyle get statValueMedium => TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 20, fontWeight: FontWeight.w700, letterSpacing: -0.3, color: AppColors.darkTextPrimary, height: 1.1, fontFeatures: const [FontFeature.tabularFigures()]);
+  static TextStyle get statValueSmall => TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 15, fontWeight: FontWeight.w700, letterSpacing: -0.2, color: AppColors.darkTextPrimary, height: 1.2, fontFeatures: const [FontFeature.tabularFigures()]);
+  static TextStyle get statLabel => TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 12, fontWeight: FontWeight.w500, letterSpacing: 0.8, color: AppColors.darkTextSecondary, height: 1.3);
 
   // ============================================
   // STYLES SPÉCIAUX
@@ -62,6 +63,7 @@ class AppTypography {
   static TextStyle get buttonText => TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 15, fontWeight: FontWeight.w600, letterSpacing: 0.3, color: AppColors.textOnPrimary, height: 1.25);
   static TextStyle get chipText => TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.1, color: AppColors.textPrimary, height: 1.33);
   static TextStyle get navLabel => TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.1, height: 1.2);
-  static TextStyle get badgeText => TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.5, height: 1.2);
-  static TextStyle get overline => TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1.2, color: AppColors.textTertiary, height: 1.4);
+  static TextStyle get badgeText => TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 0.5, height: 1.2);
+  static TextStyle get overline => TextStyle(fontFamily: 'Hanken Grotesque', fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 1.2, color: AppColors.textTertiary, height: 1.4);
 }
+

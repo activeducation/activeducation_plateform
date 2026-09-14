@@ -5,227 +5,72 @@
 // Cartes de modules et lignes de lecons.
 part of '../course_detail_page.dart';
 
-// ─── Module Card ──────────────────────────────────────────────────────────────
+// ─── Gamified Roadmap Nodes ───────────────────────────────────────────────────
 
-class _ModuleCard extends StatefulWidget {
+class _RoadmapModuleNode extends StatelessWidget {
   final CourseModule module;
-  final int moduleIndex;
-  final int totalModules;
+  final int index;
   final Color color;
-  final void Function(LessonSummary lesson) onLessonTap;
 
-  const _ModuleCard({
+  const _RoadmapModuleNode({
     required this.module,
-    required this.moduleIndex,
-    required this.totalModules,
+    required this.index,
     required this.color,
-    required this.onLessonTap,
   });
 
   @override
-  State<_ModuleCard> createState() => _ModuleCardState();
-}
-
-class _ModuleCardState extends State<_ModuleCard>
-    with SingleTickerProviderStateMixin {
-  late bool _expanded;
-  late AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _expanded = !widget.module.isLocked;
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 220),
-      vsync: this,
-      value: _expanded ? 1.0 : 0.0,
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _toggle() {
-    setState(() {
-      _expanded = !_expanded;
-      _expanded ? _controller.forward() : _controller.reverse();
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final isLocked = widget.module.isLocked;
-    final completedCount = widget.module.lessons
-        .where((l) => l.status == LessonStatus.completed)
-        .length;
-    final totalLessons = widget.module.lessons.length;
-    final isComplete = completedCount == totalLessons && totalLessons > 0;
-    final moduleColor = isLocked ? AppColors.textTertiary : widget.color;
-
+    final isLocked = module.isLocked;
+    
     return Container(
-      margin: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isLocked ? AppColors.surface : AppColors.card,
-        borderRadius: BorderRadius.circular(16),
+        color: isLocked ? AppColors.surface : color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isComplete
-              ? AppColors.success.withValues(alpha: 0.3)
-              : isLocked
-                  ? AppColors.borderLight
-                  : AppColors.border,
+          color: isLocked ? AppColors.border : color.withValues(alpha: 0.3),
+          width: 2,
         ),
-        boxShadow: isLocked
-            ? null
-            : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ],
       ),
-      child: Column(
+      child: Row(
         children: [
-          // Module header
-          InkWell(
-            onTap: _toggle,
-            borderRadius: BorderRadius.circular(16),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(14, 13, 14, 13),
-              child: Row(
-                children: [
-                  // Module number indicator
-                  Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: isComplete
-                          ? AppColors.success.withValues(alpha: 0.12)
-                          : isLocked
-                              ? AppColors.textTertiary.withValues(alpha: 0.08)
-                              : moduleColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(11),
-                      border: Border.all(
-                        color: isComplete
-                            ? AppColors.success.withValues(alpha: 0.3)
-                            : isLocked
-                                ? AppColors.border
-                                : moduleColor.withValues(alpha: 0.2),
-                        width: 1.5,
-                      ),
-                    ),
-                    child: Center(
-                      child: isLocked
-                          ? Icon(Iconsax.lock,
-                              size: 16, color: AppColors.textTertiary)
-                          : isComplete
-                              ? Icon(Icons.check_rounded,
-                                  size: 18, color: AppColors.success)
-                              : Text(
-                                  '${widget.moduleIndex + 1}',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w800,
-                                    color: moduleColor,
-                                  ),
-                                ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.module.title,
-                          style: AppTypography.titleSmall.copyWith(
-                            color: isLocked
-                                ? AppColors.textTertiary
-                                : AppColors.textPrimary,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.1,
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Row(
-                          children: [
-                            Text(
-                              isLocked
-                                  ? '$totalLessons leçons'
-                                  : '$completedCount/$totalLessons complétées',
-                              style: AppTypography.labelSmall.copyWith(
-                                color: isComplete
-                                    ? AppColors.success
-                                    : AppColors.textTertiary,
-                                fontWeight: isComplete
-                                    ? FontWeight.w600
-                                    : FontWeight.w500,
-                              ),
-                            ),
-                            if (!isLocked && !isComplete && totalLessons > 0) ...[
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(2),
-                                  child: LinearProgressIndicator(
-                                    value: completedCount / totalLessons,
-                                    minHeight: 3,
-                                    backgroundColor:
-                                        moduleColor.withValues(alpha: 0.1),
-                                    valueColor:
-                                        AlwaysStoppedAnimation<Color>(moduleColor),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  RotationTransition(
-                    turns: Tween(begin: 0.0, end: 0.5).animate(_controller),
-                    child: Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      size: 22,
-                      color: AppColors.textTertiary,
-                    ),
-                  ),
-                ],
-              ),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isLocked ? AppColors.borderLight : color,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              isLocked ? Iconsax.lock : Iconsax.star1,
+              color: isLocked ? AppColors.textTertiary : Colors.white,
+              size: 24,
             ),
           ),
-
-          // Lessons
-          AnimatedCrossFade(
-            firstChild: const SizedBox(width: double.infinity),
-            secondChild: Column(
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  height: 1,
-                  color: AppColors.border,
-                  margin: const EdgeInsets.symmetric(horizontal: 14),
+                Text(
+                  'Étape ${index + 1}',
+                  style: TextStyle(
+                    color: isLocked ? AppColors.textTertiary : color,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12,
+                    letterSpacing: 1.1,
+                  ),
                 ),
-                ...widget.module.lessons.asMap().entries.map(
-                      (entry) => _LessonRow(
-                        lesson: entry.value,
-                        lessonIndex: entry.key,
-                        isModuleLocked: isLocked,
-                        color: widget.color,
-                        isLast:
-                            entry.key == widget.module.lessons.length - 1,
-                        onTap: () => widget.onLessonTap(entry.value),
-                      ),
-                    ),
+                const SizedBox(height: 4),
+                Text(
+                  module.title,
+                  style: AppTypography.titleMedium.copyWith(
+                    color: isLocked ? AppColors.textTertiary : AppColors.textPrimary,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
               ],
             ),
-            crossFadeState:
-                _expanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
-            duration: const Duration(milliseconds: 220),
           ),
         ],
       ),
@@ -233,23 +78,21 @@ class _ModuleCardState extends State<_ModuleCard>
   }
 }
 
-// ─── Lesson Row ───────────────────────────────────────────────────────────────
-
-class _LessonRow extends StatelessWidget {
+class _RoadmapLessonNode extends StatelessWidget {
   final LessonSummary lesson;
-  final int lessonIndex;
+  final int index;
   final bool isModuleLocked;
   final Color color;
-  final bool isLast;
   final VoidCallback onTap;
+  final bool isLast;
 
-  const _LessonRow({
+  const _RoadmapLessonNode({
     required this.lesson,
-    required this.lessonIndex,
+    required this.index,
     required this.isModuleLocked,
     required this.color,
-    required this.isLast,
     required this.onTap,
+    this.isLast = false,
   });
 
   @override
@@ -257,132 +100,133 @@ class _LessonRow extends StatelessWidget {
     final isAccessible = !isModuleLocked || lesson.isFree;
     final isCompleted = lesson.status == LessonStatus.completed;
     final isInProgress = lesson.status == LessonStatus.in_progress;
-
-    final statusColor = isCompleted
-        ? AppColors.success
-        : isInProgress
-            ? color
-            : AppColors.border;
-
-    return InkWell(
-      onTap: isAccessible ? onTap : null,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          0,
-          lessonIndex == 0 ? 6 : 2,
-          14,
-          isLast ? 10 : 2,
-        ),
-        child: Row(
-          children: [
-            // Left status bar
-            Container(
-              width: 3,
-              height: 44,
-              margin: const EdgeInsets.only(left: 14, right: 12),
-              decoration: BoxDecoration(
-                color: statusColor,
-                borderRadius: BorderRadius.circular(2),
-              ),
+    
+    final nodeColor = isCompleted ? AppColors.success : (isInProgress ? color : AppColors.border);
+    
+    // Zig-zag pattern
+    final isLeft = index % 2 == 0;
+    
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // Connecting Path (CustomPainter could draw a real bezier, here we use simple vertical lines for now)
+        if (!isLast)
+          Positioned(
+            top: 50,
+            bottom: -50,
+            left: isLeft ? MediaQuery.of(context).size.width * 0.35 : null,
+            right: isLeft ? null : MediaQuery.of(context).size.width * 0.35,
+            child: Container(
+              width: 4,
+              color: nodeColor.withValues(alpha: 0.3),
             ),
-
-            // Status icon
-            Container(
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(
-                color: isCompleted
-                    ? AppColors.success.withValues(alpha: 0.1)
-                    : isInProgress
-                        ? color.withValues(alpha: 0.1)
-                        : AppColors.surface,
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Icon(
-                  isCompleted
-                      ? Icons.check_rounded
-                      : isInProgress
-                          ? Icons.play_arrow_rounded
-                          : Icons.circle,
-                  size: isCompleted || isInProgress ? 15 : 6,
-                  color: isCompleted
-                      ? AppColors.success
-                      : isInProgress
-                          ? color
-                          : AppColors.textTertiary,
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-
-            // Info
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    lesson.title,
-                    style: AppTypography.labelLarge.copyWith(
-                      color: isAccessible
-                          ? AppColors.textPrimary
-                          : AppColors.textTertiary,
-                      fontWeight:
-                          isInProgress ? FontWeight.w700 : FontWeight.w500,
+          ),
+          
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Row(
+            mainAxisAlignment: isLeft ? MainAxisAlignment.start : MainAxisAlignment.end,
+            children: [
+              if (!isLeft) const Spacer(flex: 3),
+              
+              // Node content
+              Expanded(
+                flex: 7,
+                child: GestureDetector(
+                  onTap: isAccessible ? onTap : null,
+                  child: Container(
+                    padding: EdgeInsets.only(
+                      left: isLeft ? 40 : 0,
+                      right: isLeft ? 0 : 40,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 3),
-                  Row(
-                    children: [
-                      LessonTypeBadge(
-                        lessonType: lesson.lessonType,
-                        compact: false,
-                      ),
-                      const SizedBox(width: 8),
-                      Icon(Iconsax.clock,
-                          size: 11, color: AppColors.textTertiary),
-                      const SizedBox(width: 3),
-                      Text(
-                        '${lesson.durationMinutes} min',
-                        style: AppTypography.labelSmall.copyWith(
-                          color: AppColors.textTertiary,
-                        ),
-                      ),
-                      if (lesson.isFree && isModuleLocked) ...[
-                        const Spacer(),
+                    child: Row(
+                      mainAxisAlignment: isLeft ? MainAxisAlignment.start : MainAxisAlignment.end,
+                      children: [
+                        if (!isLeft) _buildInfo(isLeft),
+                        if (!isLeft) const SizedBox(width: 16),
+                        
+                        // Node Circle
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
+                          width: 64,
+                          height: 64,
                           decoration: BoxDecoration(
-                            color: AppColors.successLight,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: const Text(
-                            'Gratuit',
-                            style: TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.success,
+                            shape: BoxShape.circle,
+                            color: isAccessible ? nodeColor : AppColors.surface,
+                            boxShadow: isAccessible ? [
+                              BoxShadow(
+                                color: nodeColor.withValues(alpha: 0.4),
+                                blurRadius: 16,
+                                spreadRadius: 2,
+                              ),
+                            ] : null,
+                            border: Border.all(
+                              color: isAccessible ? Colors.white : AppColors.border,
+                              width: 3,
                             ),
                           ),
+                          child: Icon(
+                            _getIcon(),
+                            color: isAccessible ? Colors.white : AppColors.textTertiary,
+                            size: 28,
+                          ),
                         ),
+                        
+                        if (isLeft) const SizedBox(width: 16),
+                        if (isLeft) _buildInfo(isLeft),
                       ],
-                    ],
+                    ),
                   ),
-                ],
+                ),
               ),
-            ),
-
-            const SizedBox(width: 6),
-            Icon(
-              isAccessible ? Icons.chevron_right_rounded : Iconsax.lock,
-              size: 18,
-              color: isAccessible ? AppColors.textTertiary : AppColors.border,
-            ),
-          ],
+              
+              if (isLeft) const Spacer(flex: 3),
+            ],
+          ),
         ),
+      ],
+    );
+  }
+  
+  IconData _getIcon() {
+    if (!isModuleLocked && lesson.status == LessonStatus.completed) return Icons.check_rounded;
+    if (!isModuleLocked && lesson.status == LessonStatus.in_progress) return Icons.play_arrow_rounded;
+    
+    switch (lesson.lessonType) {
+      case LessonType.video: return Iconsax.video;
+      case LessonType.article: return Iconsax.document_text;
+      case LessonType.quiz: return Iconsax.task_square;
+      default: return Iconsax.document;
+    }
+  }
+
+  Widget _buildInfo(bool isLeft) {
+    final isAccessible = !isModuleLocked || lesson.isFree;
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: isLeft ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+        children: [
+          Text(
+            lesson.title,
+            style: AppTypography.titleSmall.copyWith(
+              fontWeight: FontWeight.w700,
+              color: isAccessible ? AppColors.textPrimary : AppColors.textTertiary,
+            ),
+            textAlign: isLeft ? TextAlign.left : TextAlign.right,
+          ),
+          const SizedBox(height: 4),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Text(
+              '${lesson.durationMinutes} min',
+              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+            ),
+          ),
+        ],
       ),
     );
   }

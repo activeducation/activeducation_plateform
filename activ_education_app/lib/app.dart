@@ -7,49 +7,58 @@ import 'core/widgets/maintenance_overlay.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/partner/presentation/bloc/partner_bloc.dart';
 import 'router/app_router.dart';
+import 'core/theme/theme_cubit.dart';
 
 class ActivEducationApp extends StatelessWidget {
   const ActivEducationApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'ActivEducation',
-      debugShowCheckedModeBanner: false,
+    return BlocProvider(
+      create: (_) => ThemeCubit(),
+      child: BlocBuilder<ThemeCubit, ThemeMode>(
+        builder: (context, themeMode) {
+          return MaterialApp.router(
+            title: 'ActivEducation',
+            debugShowCheckedModeBanner: false,
 
-      theme: AppTheme.lightTheme,
-      themeMode: ThemeMode.light,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeMode,
 
-      routerConfig: AppRouter.router,
+            routerConfig: AppRouter.router,
 
-      builder: (context, child) {
-        return MaintenanceOverlay(
-          child: MultiBlocProvider(
-            providers: [
-              BlocProvider<AuthBloc>(
-                lazy: false,
-                create: (_) =>
-                    getIt<AuthBloc>()..add(const AuthCheckRequested()),
-              ),
-              BlocProvider<PartnerBloc>(
-                lazy: true,
-                create: (_) => getIt<PartnerBloc>(),
-              ),
+            builder: (context, child) {
+              return MaintenanceOverlay(
+                child: MultiBlocProvider(
+                  providers: [
+                    BlocProvider<AuthBloc>(
+                      lazy: false,
+                      create: (_) =>
+                          getIt<AuthBloc>()..add(const AuthCheckRequested()),
+                    ),
+                    BlocProvider<PartnerBloc>(
+                      lazy: true,
+                      create: (_) => getIt<PartnerBloc>(),
+                    ),
+                  ],
+                  child: child ?? const SizedBox.shrink(),
+                ),
+              );
+            },
+
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
             ],
-            child: child ?? const SizedBox.shrink(),
-          ),
-        );
-      },
-
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [
-        Locale('fr', 'FR'),
-        Locale('en', 'US'),
-      ],
+            supportedLocales: const [
+              Locale('fr', 'FR'),
+              Locale('en', 'US'),
+            ],
+          );
+        },
+      ),
     );
   }
 }

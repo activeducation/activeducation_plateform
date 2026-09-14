@@ -37,7 +37,9 @@ class ElearningRepositoryImpl implements ElearningRepository {
       final lesson = await _remoteDataSource.getLesson(id);
       return Right(lesson);
     } catch (e) {
-      return Left(Exception(e.toString()));
+      // Preserve ElearningApiException (statusCode) : le bloc distingue
+      // 401 (connexion requise) / 403 / 404 au lieu d'un message brut.
+      return Left(e is Exception ? e : Exception(e.toString()));
     }
   }
 
@@ -78,7 +80,8 @@ class ElearningRepositoryImpl implements ElearningRepository {
       );
       return Right(result);
     } catch (e) {
-      return Left(Exception(e.toString()));
+      // Preserve ElearningApiException (statusCode), cf. getLesson.
+      return Left(e is Exception ? e : Exception(e.toString()));
     }
   }
 }

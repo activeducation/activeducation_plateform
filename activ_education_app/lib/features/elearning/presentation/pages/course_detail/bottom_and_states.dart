@@ -7,6 +7,13 @@ part of '../course_detail_page.dart';
 
 // ─── Bottom Action ────────────────────────────────────────────────────────────
 
+/// Marge sous la carte d'action fixe (le dock est masque sur cette page).
+const double _kBottomActionMargin = 16;
+
+/// Hauteur reservee en fin de liste pour que la carte fixe ne masque pas la
+/// derniere etape : carte (~106 px si non inscrit) + marge + respiration.
+const double _kBottomActionReservedHeight = 140;
+
 class _BottomAction extends StatelessWidget {
   final CourseDetail course;
   final bool isEnrolling;
@@ -22,20 +29,31 @@ class _BottomAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        border: Border(top: BorderSide(color: AppColors.border)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.07),
-            blurRadius: 16,
-            offset: const Offset(0, -4),
+    return Padding(
+      padding: const EdgeInsets.only(
+          left: 20, right: 20, bottom: _kBottomActionMargin),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 16.0, sigmaY: 16.0),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: color.withValues(alpha: 0.2), width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: SafeArea(top: false, child: _buildButton(context)),
           ),
-        ],
+        ),
       ),
-      child: SafeArea(top: false, child: _buildButton(context)),
     );
   }
 

@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -116,125 +117,165 @@ class _CourseBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = colorForCategory(course.category);
 
-    return Stack(
-      children: [
-        CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            // ── Immersive Hero App Bar ──
-            _HeroAppBar(course: course, color: color),
+    // Flatten modules into nodes for roadmap
+    final nodes = <dynamic>[];
+    for (int i = 0; i < course.modules.length; i++) {
+      nodes.add({'type': 'module', 'module': course.modules[i], 'index': i});
+      for (int j = 0; j < course.modules[i].lessons.length; j++) {
+        nodes.add({
+          'type': 'lesson', 
+          'lesson': course.modules[i].lessons[j], 
+          'index': j, 
+          'isLocked': course.modules[i].isLocked
+        });
+      }
+    }
 
-            // ── Content ──
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Stats strip
-                    _StatsStrip(course: course, color: color),
-                    const SizedBox(height: 20),
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 800),
+        child: Stack(
+          children: [
+            CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                // ── Immersive Hero App Bar ──
+                _HeroAppBar(course: course, color: color),
 
-                    // Title
-                    Text(
-                      course.title,
-                      style: AppTypography.headlineSmall.copyWith(
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.4,
-                        height: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-
-                    // Description
-                    _DescriptionSection(description: course.description),
-
-                    // Progression si inscrit
-                    if (course.isEnrolled && course.progressPct != null) ...[
-                      const SizedBox(height: 16),
-                      _ProgressBanner(
-                        progressPct: course.progressPct!,
-                        color: color,
-                      ),
-                    ],
-
-                    const SizedBox(height: 28),
-
-                    // Programme header
-                    Row(
+                // ── Content ──
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Stats strip
+                        _StatsStrip(course: course, color: color),
+                        const SizedBox(height: 20),
+
+                        // Title
                         Text(
-                          'Programme',
-                          style: AppTypography.titleLarge.copyWith(
+                          course.title,
+                          style: AppTypography.headlineSmall.copyWith(
                             fontWeight: FontWeight.w800,
-                            letterSpacing: -0.3,
+                            letterSpacing: -0.4,
+                            height: 1.2,
                           ),
                         ),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 9, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: color.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(6),
+                        const SizedBox(height: 18),
+
+                        // Description
+                        _DescriptionSection(description: course.description),
+
+                        // Progression si inscrit
+                        if (course.isEnrolled && course.progressPct != null) ...[
+                          const SizedBox(height: 16),
+                          _ProgressBanner(
+                            progressPct: course.progressPct!,
+                            color: color,
                           ),
-                          child: Text(
-                            '${course.modules.length} modules',
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w700,
-                              color: color,
+                        ],
+
+                        const SizedBox(height: 28),
+
+                        // Programme header
+                        Row(
+                          children: [
+                            Text(
+                              'Feuille de route',
+                              style: AppTypography.titleLarge.copyWith(
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.3,
+                              ),
                             ),
-                          ),
+                            const Spacer(),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 9, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: color.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                '${course.modules.length} étapes',
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: color,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
+                        const SizedBox(height: 14),
                       ],
                     ),
-                    const SizedBox(height: 14),
-                  ],
+                  ),
                 ),
-              ),
-            ),
 
-            // ── Modules ──
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final module = course.modules[index];
-                  return _ModuleCard(
-                    module: module,
-                    moduleIndex: index,
-                    totalModules: course.modules.length,
-                    color: color,
-                    onLessonTap: (lesson) {
-                      if (!module.isLocked || lesson.isFree) {
-                        context.push('/elearning/lesson/${lesson.id}');
+                // ── Gamified Roadmap ──
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final node = nodes[index];
+                      if (node['type'] == 'module') {
+                        return _RoadmapModuleNode(
+                          module: node['module'] as CourseModule,
+                          index: node['index'] as int,
+                          color: color,
+                        );
+                      } else {
+                        final lesson = node['lesson'] as LessonSummary;
+                        final isModuleLocked = node['isLocked'] as bool;
+                        final isLast = index == nodes.length - 1 || nodes[index + 1]['type'] == 'module';
+                        
+                        return _RoadmapLessonNode(
+                          lesson: lesson,
+                          index: node['index'] as int,
+                          isModuleLocked: isModuleLocked,
+                          color: color,
+                          isLast: isLast,
+                          onTap: () async {
+                            if (!isModuleLocked || lesson.isFree) {
+                              await context.push('/elearning/lesson/${lesson.id}');
+                              if (context.mounted) {
+                                context.read<CourseBloc>().add(LoadCourse(course.id));
+                              }
+                            }
+                          },
+                        );
                       }
                     },
-                  );
-                },
-                childCount: course.modules.length,
-              ),
+                    childCount: nodes.length,
+                  ),
+                ),
+
+                // Space for fixed bottom button (+ inset bas, cf. SafeArea de la carte)
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: _kBottomActionReservedHeight +
+                        MediaQuery.paddingOf(context).bottom,
+                  ),
+                ),
+              ],
             ),
 
-            // Space for fixed bottom button
-            const SliverToBoxAdapter(child: SizedBox(height: 108)),
+            // ── Fixed bottom action ──
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: _BottomAction(
+                course: course,
+                isEnrolling: isEnrolling,
+                color: color,
+                onEnroll: () =>
+                    context.read<CourseBloc>().add(EnrollCourse(course.id)),
+              ),
+            ),
           ],
         ),
-
-        // ── Fixed bottom action ──
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: 0,
-          child: _BottomAction(
-            course: course,
-            isEnrolling: isEnrolling,
-            color: color,
-            onEnroll: () =>
-                context.read<CourseBloc>().add(EnrollCourse(course.id)),
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
