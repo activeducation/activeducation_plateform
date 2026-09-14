@@ -40,8 +40,9 @@ def get_notification_email() -> Optional[str]:
     """
     # 1. app_settings (configurable a chaud depuis le back-office)
     try:
-        from app.db.supabase_client import get_supabase_client
-        db = get_supabase_client()
+        # app_settings : RLS ON sans policy publique (migration 007) -> service_role.
+        from app.db.supabase_client import get_admin_supabase_client
+        db = get_admin_supabase_client()
         row = db.fetch_one(
             table="app_settings", id_column="key", id_value="notification_email"
         )

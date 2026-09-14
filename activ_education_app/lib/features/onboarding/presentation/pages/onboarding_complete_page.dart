@@ -11,18 +11,26 @@ class OnboardingCompletePage extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            children: [
-              const Spacer(),
-              _buildSuccessAnimation(),
-              const SizedBox(height: 40),
-              _buildSuccessContent(),
-              const Spacer(),
-              _buildCTA(context),
-              const SizedBox(height: 32),
-            ],
+        // Meme schema que OnboardingIntroPage : defile si l'ecran est trop bas.
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: Column(
+                  children: [
+                    const Spacer(),
+                    _buildSuccessAnimation(),
+                    const SizedBox(height: 40),
+                    _buildSuccessContent(),
+                    const Spacer(),
+                    _buildCTA(context),
+                    const SizedBox(height: 32),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       ),

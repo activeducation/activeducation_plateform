@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, Query, Request
 
 from app.core.logging import get_logger
 from app.core.security import get_current_admin, get_current_super_admin
-from app.db.supabase_client import get_supabase_client
+from app.db.supabase_client import get_admin_supabase_client, get_supabase_client
 from app.core.exceptions import NotFoundError
 
 
@@ -42,7 +42,8 @@ async def list_settings(
     admin: dict = Depends(get_current_super_admin),
 ):
     """Liste des parametres (super_admin)."""
-    db = get_supabase_client()
+    # app_settings : RLS ON sans policy publique (migration 007) -> service_role.
+    db = get_admin_supabase_client()
     return db.fetch_all(table="app_settings", order_by="key.asc")
 
 
@@ -55,7 +56,7 @@ async def update_setting(
     admin: dict = Depends(get_current_super_admin),
 ):
     """Modifier un parametre (super_admin)."""
-    db = get_supabase_client()
+    db = get_admin_supabase_client()
     import json
 
     existing = db.client.table("app_settings").select("*").eq("key", key).limit(1).execute()

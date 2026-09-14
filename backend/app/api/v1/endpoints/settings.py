@@ -3,7 +3,7 @@
 from fastapi import APIRouter
 
 from app.core.logging import get_logger
-from app.db.supabase_client import get_supabase_client
+from app.db.supabase_client import get_admin_supabase_client
 
 logger = get_logger("api.settings")
 
@@ -16,7 +16,9 @@ PUBLIC_SETTINGS_KEYS = {"maintenance_mode", "default_language", "welcome_message
 @router.get("/public")
 async def list_public_settings():
     """Retourne les parametres publics (maintenance_mode, etc.)."""
-    db = get_supabase_client()
+    # app_settings est RLS ON sans policy publique (migration 007) : lecture
+    # via service_role, le filtrage PUBLIC_SETTINGS_KEYS limite l'exposition.
+    db = get_admin_supabase_client()
     all_settings = db.fetch_all(table="app_settings", order_by="key.asc")
 
     result = {}

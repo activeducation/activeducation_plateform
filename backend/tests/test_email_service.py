@@ -24,7 +24,7 @@ def test_notification_email_from_app_settings_priority():
     fake_db = MagicMock()
     fake_db.fetch_one.return_value = {"key": "notification_email", "value": '"ops@activ.com"'}
 
-    with patch("app.db.supabase_client.get_supabase_client", return_value=fake_db), \
+    with patch("app.db.supabase_client.get_admin_supabase_client", return_value=fake_db), \
          patch.object(email_service.settings, "NOTIFICATION_EMAIL", "env@fallback.com"):
         assert email_service.get_notification_email() == "ops@activ.com"
 
@@ -34,7 +34,7 @@ def test_notification_email_falls_back_to_env():
     fake_db = MagicMock()
     fake_db.fetch_one.return_value = None
 
-    with patch("app.db.supabase_client.get_supabase_client", return_value=fake_db), \
+    with patch("app.db.supabase_client.get_admin_supabase_client", return_value=fake_db), \
          patch.object(email_service.settings, "NOTIFICATION_EMAIL", "env@fallback.com"):
         assert email_service.get_notification_email() == "env@fallback.com"
 
@@ -42,6 +42,6 @@ def test_notification_email_falls_back_to_env():
 def test_notification_email_none_when_nothing_configured():
     fake_db = MagicMock()
     fake_db.fetch_one.return_value = None
-    with patch("app.db.supabase_client.get_supabase_client", return_value=fake_db), \
+    with patch("app.db.supabase_client.get_admin_supabase_client", return_value=fake_db), \
          patch.object(email_service.settings, "NOTIFICATION_EMAIL", None):
         assert email_service.get_notification_email() is None

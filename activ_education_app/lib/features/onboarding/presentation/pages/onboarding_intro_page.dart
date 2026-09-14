@@ -11,19 +11,28 @@ class OnboardingIntroPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 40),
-              _buildHeader(),
-              const SizedBox(height: 48),
-              _buildIllustration(),
-              const Spacer(),
-              _buildCTA(context),
-              const SizedBox(height: 32),
-            ],
+        // Defilement si l'ecran est trop bas ; sinon minHeight + IntrinsicHeight
+        // conservent le Spacer qui colle le CTA en bas.
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 40),
+                    _buildHeader(),
+                    const SizedBox(height: 48),
+                    _buildIllustration(),
+                    const Spacer(),
+                    _buildCTA(context),
+                    const SizedBox(height: 32),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       ),
