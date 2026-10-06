@@ -1,0 +1,14 @@
+{
+  "pre_commit": [
+    {
+      "command": "npm run lint",
+      "description": "Vérifie les erreurs de linting avant le commit",
+      "working_directory": "web"
+    },
+    {
+      "command": "npx prettier --write .",
+      "description": "Formate automatiquement le code",
+      "working_directory": "web"
+    }
+  ]
+}
