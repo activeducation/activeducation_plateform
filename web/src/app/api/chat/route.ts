@@ -32,7 +32,7 @@ Tu utilises toujours un ton professionnel mais amical, et tutoyes l'étudiant. S
       system: systemPrompt,
     });
 
-    return result.toDataStreamResponse();
+    return result.toTextStreamResponse();
   } catch (error) {
     console.error(error);
     return new Response(JSON.stringify({ error: "Erreur de connexion à l'IA." }), { status: 500, headers: { 'Content-Type': 'application/json' } });

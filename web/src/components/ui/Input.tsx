@@ -1,7 +1,7 @@
 import React from 'react';
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  label: string;
+  label?: string;
   error?: string;
 }
 
@@ -12,9 +12,11 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     
     return (
       <div className="flex flex-col gap-[8px] w-full">
-        <label className="text-[13px] font-semibold text-text-primary">
-          {label}
-        </label>
+        {label && (
+          <label className="text-[13px] font-semibold text-text-primary">
+            {label}
+          </label>
+        )}
         <input
           ref={ref}
           className={`

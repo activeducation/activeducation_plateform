@@ -1,6 +1,6 @@
 import React from 'react';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'gamification';
+export type ButtonVariant = 'primary' | 'secondary' | 'gamification' | 'outline' | 'ghost';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -26,7 +26,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const variants = {
       primary: 'bg-primary text-white hover:bg-primary-hover hover:shadow-hover hover:-translate-y-[1px]',
       secondary: 'bg-transparent border border-border-soft text-text-primary hover:border-primary/50 hover:bg-canvas',
-      gamification: 'bg-gold text-white hover:brightness-110 hover:shadow-hover hover:-translate-y-[1px]',
+      gamification: 'bg-gold text-white hover:brightness-110 hover:shadow-hover hover:-translate-y-[1px]', outline: 'bg-transparent border border-border-strong text-text-primary hover:bg-surface-alt hover:text-text-primary', ghost: 'bg-transparent text-text-secondary hover:bg-surface-alt hover:text-text-primary',
     };
 
     return (

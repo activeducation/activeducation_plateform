@@ -1,9 +1,12 @@
+import { requireAdmin } from '@/utils/auth';
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { opportunities } from '@/db/schema';
 import { desc } from 'drizzle-orm';
 
 export async function GET(request: Request) {
+  const { errorResponse } = await requireAdmin();
+  if (errorResponse) return errorResponse;
   try {
     const data = await db.select().from(opportunities).orderBy(desc(opportunities.createdAt));
     return NextResponse.json(data);
@@ -14,6 +17,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const { errorResponse } = await requireAdmin();
+  if (errorResponse) return errorResponse;
   try {
     const body = await request.json();
     

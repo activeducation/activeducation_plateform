@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, integer, timestamp, jsonb, text, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, integer, timestamp, jsonb, text, boolean, index } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
 // Table des utilisateurs
@@ -37,14 +37,20 @@ export const lessons = pgTable('lessons', {
   content: jsonb('content'), // Les différentes étapes (théorie, quiz, etc)
   orderIndex: integer('order_index').default(0).notNull(),
   rewardXp: integer('reward_xp').default(50).notNull(),
-});
+}, (table) => ({
+  courseIdIdx: index('lessons_course_id_idx').on(table.courseId),
+}));
 
 export const courseProgress = pgTable('course_progress', {
   userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
   courseId: uuid('course_id').references(() => courses.id, { onDelete: 'cascade' }).notNull(),
   status: varchar('status', { length: 50 }).default('IN_PROGRESS'), // NOT_STARTED, IN_PROGRESS, COMPLETED
+  completedLessons: jsonb('completed_lessons').default([]), // UUIDs of completed lessons
   completedAt: timestamp('completed_at'),
-});
+}, (table) => ({
+  userIdIdx: index('progress_user_id_idx').on(table.userId),
+  courseIdIdx: index('progress_course_id_idx').on(table.courseId),
+}));
 
 // ==========================================
 // OPPORTUNITÉS (Bourses, Stages, Événements)
@@ -86,3 +92,81 @@ export const orientationResults = pgTable('orientation_results', {
   results: jsonb('results').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
+
+
+// ==========================================
+// EXPLORATEUR D'ORIENTATION
+// ==========================================
+
+export const explorerDomains = pgTable('explorer_domains', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  slug: varchar('slug', { length: 255 }).notNull().unique(), // ex: tech-numerique
+  title: varchar('title', { length: 255 }).notNull(),
+  bannerImage: varchar('banner_image', { length: 500 }),
+  description: text('description'),
+  growth: varchar('growth', { length: 100 }), // ex: +15% / an
+  employability: varchar('employability', { length: 100 }), // ex: Très forte
+  salary: varchar('salary', { length: 100 }), // ex: Élevé
+  why: text('why'), // Pourquoi choisir ce domaine
+  isPublished: boolean('is_published').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const explorerSchools = pgTable('explorer_schools', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  slug: varchar('slug', { length: 255 }).notNull().unique(), // ex: ul
+  name: varchar('name', { length: 255 }).notNull(),
+  type: varchar('type', { length: 100 }).default('Public'), // Public, Privé
+  city: varchar('city', { length: 255 }),
+  bannerImage: varchar('banner_image', { length: 500 }),
+  description: text('description'),
+  insertionRate: varchar('insertion_rate', { length: 50 }),
+  rating: varchar('rating', { length: 10 }),
+  reviewsCount: integer('reviews_count').default(0),
+  facilities: jsonb('facilities').default([]), // ["Bibliothèque", "Campus"]
+  isPublished: boolean('is_published').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const explorerPrograms = pgTable('explorer_programs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  slug: varchar('slug', { length: 255 }).notNull().unique(), // ex: ul-cyber
+  title: varchar('title', { length: 255 }).notNull(),
+  schoolId: uuid('school_id').references(() => explorerSchools.id, { onDelete: 'cascade' }).notNull(),
+  domainId: uuid('domain_id').references(() => explorerDomains.id, { onDelete: 'cascade' }).notNull(),
+  bannerImage: varchar('banner_image', { length: 500 }),
+  description: text('description'),
+  level: varchar('level', { length: 100 }), // ex: Licence (Bac+3)
+  duration: varchar('duration', { length: 100 }), // ex: 3 ans
+  admission: text('admission'),
+  status: varchar('status', { length: 255 }), // ex: Reconnu CAMES
+  programCourses: jsonb('program_courses').default([]), // ["Algorithmique", "Réseaux"]
+  isPublished: boolean('is_published').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  schoolIdIdx: index('programs_school_id_idx').on(table.schoolId),
+  domainIdIdx: index('programs_domain_id_idx').on(table.domainId),
+}));
+
+export const explorerCareers = pgTable('explorer_careers', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  slug: varchar('slug', { length: 255 }).notNull().unique(), // ex: cybersecurite
+  title: varchar('title', { length: 255 }).notNull(),
+  domainId: uuid('domain_id').references(() => explorerDomains.id, { onDelete: 'cascade' }).notNull(),
+  bannerImage: varchar('banner_image', { length: 500 }),
+  description: text('description'),
+  skills: jsonb('skills').default([]), // ["Cryptographie", "Réseaux"]
+  opportunities: jsonb('opportunities').default([]), // ["Analyste SOC", "Consultant Cyber"]
+  isPublished: boolean('is_published').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  domainIdIdx: index('careers_domain_id_idx').on(table.domainId),
+}));
+
+export const explorerCareerPrograms = pgTable('explorer_career_programs', {
+  careerId: uuid('career_id').references(() => explorerCareers.id, { onDelete: 'cascade' }).notNull(),
+  programId: uuid('program_id').references(() => explorerPrograms.id, { onDelete: 'cascade' }).notNull(),
+}, (table) => ({
+  careerIdIdx: index('cp_career_id_idx').on(table.careerId),
+  programIdIdx: index('cp_program_id_idx').on(table.programId),
+}));

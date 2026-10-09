@@ -1,66 +1,35 @@
-"use client";
-
 import React from "react";
 import { ArrowLeft, Briefcase, GraduationCap, TrendingUp, Lightbulb, Target } from "lucide-react";
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { AidaAssistant } from "@/components/student/AidaAssistant";
+import { db } from "@/db";
+import { explorerDomains, explorerCareers, explorerPrograms } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { createClient } from "@/utils/supabase/server";
+import { notFound, redirect } from "next/navigation";
 
-export default function DomainePage({ params }: { params: Promise<{ id: string }> }) {
-  const unwrappedParams = React.use(params);
+export default async function DomainePage({ params }: { params: Promise<{ id: string }> }) {
+  const unwrappedParams = await params;
   
-  // Mock data mapping for Domains
-  const domainesDb: Record<string, any> = {
-    "tech-numerique": {
-      title: "Tech & Numérique",
-      bannerImage: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80",
-      description: "Le secteur du numérique est le moteur de la transformation au Togo et en Afrique. De la création d'applications à la protection des données, en passant par l'intelligence artificielle, c're secteur offre des opportunités de carrière exceptionnelles, d'innovation et d'entrepreneuriat.",
-      stats: {
-        growth: "+15% / an",
-        employability: "Très forte",
-        salary: "Élevé"
-      },
-      why: "Le gouvernement togolais a pour ambition de faire du pays un hub technologique sous-régional. Le déploiement de la fibre optique et la digitalisation des services publics créent un besoin massif en talents qualifiés.",
-      metiers: [
-        { id: "cybersecurite", title: "Ingénieur Cybersécurité" },
-        { id: "data-analyst", title: "Data Analyst" },
-        { id: "dev-mobile", title: "Développeur Mobile" }
-      ],
-      formations: [
-        { id: "ul-cyber", title: "Licence Pro Sécurité Informatique", level: "Bac+3" },
-        { id: "iai-genie", title: "Génie Logiciel", level: "Bac+3 / Bac+5" }
-      ]
-    },
-    "agro-industrie": {
-      title: "Agro-industrie",
-      bannerImage: "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?auto=format&fit=crop&w=1200&q=80",
-      description: "L'agriculture est le pilier de l'économie africaine. L'agro-industrie moderne va au-delà du champ : elle intègre la transformation, la qualité, la logistique et l'innovation technologique pour nourrir le continent.",
-      stats: {
-        growth: "+8% / an",
-        employability: "Forte",
-        salary: "Moyen à Élevé"
-      },
-      why: "Avec d'immenses terres arables et une population croissante, le Togo investit massivement (agropoles) pour transformer localement ses produits (soja, coton, ananas). Les techniciens et ingénieurs agronomes sont vitaux.",
-      metiers: [
-        { id: "agronome", title: "Ingénieur Agronome" },
-        { id: "qualiticien", title: "Responsable Qualité" }
-      ],
-      formations: [
-        { id: "infa-agro", title: "BTS Agriculture", level: "Bac+2" },
-        { id: "ul-agro", title: "Master Sciences Agronomiques", level: "Bac+5" }
-      ]
-    }
-  };
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  const domaine = domainesDb[unwrappedParams.id] || {
-    title: "Domaine Inconnu",
-    bannerImage: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80",
-    description: "La description de ce domaine d'activité n'est pas encore disponible.",
-    stats: { growth: "N/A", employability: "N/A", salary: "N/A" },
-    why: "Information non disponible.",
-    metiers: [],
-    formations: []
-  };
+  if (!user) {
+    redirect("/auth/login");
+  }
+
+  const { id } = unwrappedParams; // 'id' in URL maps to 'slug' in db
+
+  const domainQuery = await db.select().from(explorerDomains).where(eq(explorerDomains.slug, id)).limit(1);
+  const domaine = domainQuery[0];
+
+  if (!domaine) {
+    notFound();
+  }
+
+  const metiers = await db.select().from(explorerCareers).where(eq(explorerCareers.domainId, domaine.id));
+  const formations = await db.select().from(explorerPrograms).where(eq(explorerPrograms.domainId, domaine.id));
 
   return (
     <div className="flex flex-col gap-6 -mt-4 md:-mt-8 -mx-4 md:-mx-8">
@@ -68,7 +37,7 @@ export default function DomainePage({ params }: { params: Promise<{ id: string }
       {/* FULL WIDTH BANNER */}
       <div className="relative w-full h-[35dvh] md:h-[45dvh] bg-black overflow-hidden">
         <img 
-          src={domaine.bannerImage} 
+          src={domaine.bannerImage || "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80"} 
           alt={domaine.title} 
           className="w-full h-full object-cover opacity-50" 
         />
@@ -100,7 +69,7 @@ export default function DomainePage({ params }: { params: Promise<{ id: string }
               Vue d'ensemble
             </h2>
             <p className="text-text-secondary leading-relaxed text-lg">
-              {domaine.description}
+              {domaine.description || "La description de ce domaine n'est pas encore disponible."}
             </p>
           </section>
 
@@ -109,26 +78,28 @@ export default function DomainePage({ params }: { params: Promise<{ id: string }
             <Card variant="standard" className="p-4 flex flex-col items-center justify-center text-center gap-1 bg-surface-alt border-primary/20">
               <TrendingUp className="w-5 h-5 text-primary mb-1" />
               <span className="text-[10px] uppercase font-bold text-text-secondary">Croissance (Togo)</span>
-              <span className="text-sm font-bold text-text-primary">{domaine.stats.growth}</span>
+              <span className="text-sm font-bold text-text-primary">{domaine.growth || "N/A"}</span>
             </Card>
             <Card variant="standard" className="p-4 flex flex-col items-center justify-center text-center gap-1 bg-surface-alt border-primary/20">
               <Target className="w-5 h-5 text-primary mb-1" />
               <span className="text-[10px] uppercase font-bold text-text-secondary">Employabilité</span>
-              <span className="text-sm font-bold text-text-primary">{domaine.stats.employability}</span>
+              <span className="text-sm font-bold text-text-primary">{domaine.employability || "N/A"}</span>
             </Card>
             <Card variant="standard" className="p-4 flex flex-col items-center justify-center text-center gap-1 bg-surface-alt border-primary/20">
               <Briefcase className="w-5 h-5 text-primary mb-1" />
               <span className="text-[10px] uppercase font-bold text-text-secondary">Rémunération</span>
-              <span className="text-sm font-bold text-text-primary">{domaine.stats.salary}</span>
+              <span className="text-sm font-bold text-text-primary">{domaine.salary || "N/A"}</span>
             </Card>
           </section>
 
-          <section className="p-6 bg-primary/5 rounded-2xl border border-primary/10">
-            <h3 className="font-bold text-primary mb-2">Pourquoi ce secteur est stratégique ?</h3>
-            <p className="text-text-secondary text-sm leading-relaxed">
-              {domaine.why}
-            </p>
-          </section>
+          {domaine.why && (
+            <section className="p-6 bg-primary/5 rounded-2xl border border-primary/10">
+              <h3 className="font-bold text-primary mb-2">Pourquoi ce secteur est stratégique ?</h3>
+              <p className="text-text-secondary text-sm leading-relaxed">
+                {domaine.why}
+              </p>
+            </section>
+          )}
 
           <section>
             <h2 className="text-xl font-bold text-text-primary mb-4 flex items-center gap-2">
@@ -136,8 +107,8 @@ export default function DomainePage({ params }: { params: Promise<{ id: string }
               Métiers phares de ce domaine
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {domaine.metiers.length > 0 ? domaine.metiers.map((metier: any, i: number) => (
-                <Link href={`/student/explorer/metier/${metier.id}`} key={i}>
+              {metiers.length > 0 ? metiers.map((metier) => (
+                <Link href={`/student/explorer/metier/${metier.slug}`} key={metier.id}>
                   <Card variant="standard" className="p-4 hover:border-primary/30 cursor-pointer group flex items-center justify-between">
                     <span className="font-bold text-sm text-text-primary group-hover:text-primary transition-colors">{metier.title}</span>
                     <ArrowLeft className="w-4 h-4 text-text-tertiary group-hover:text-primary rotate-180 transition-colors" />
@@ -157,12 +128,12 @@ export default function DomainePage({ params }: { params: Promise<{ id: string }
               Formations pour y accéder
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {domaine.formations.length > 0 ? domaine.formations.map((form: any, i: number) => (
-                <Link href={`/student/explorer/formation/${form.id}`} key={i}>
+              {formations.length > 0 ? formations.map((form) => (
+                <Link href={`/student/explorer/formation/${form.slug}`} key={form.id}>
                   <Card variant="standard" className="p-4 hover:border-primary/30 cursor-pointer group flex flex-col h-full">
                     <h3 className="font-bold text-sm text-text-primary group-hover:text-primary transition-colors">{form.title}</h3>
                     <div className="mt-auto pt-4 flex justify-between items-center text-xs">
-                      <span className="text-text-secondary bg-surface-alt px-2 py-1 rounded-sm">{form.level}</span>
+                      <span className="text-text-secondary bg-surface-alt px-2 py-1 rounded-sm">{form.level || "Non précisé"}</span>
                       <span className="text-primary font-bold group-hover:underline">Voir détails</span>
                     </div>
                   </Card>

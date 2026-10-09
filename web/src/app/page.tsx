@@ -27,7 +27,7 @@ const GALLERY_IMAGES = [
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.33, 1, 0.68, 1] } }
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" as any } }
 };
 
 const staggerContainer = {
@@ -43,11 +43,25 @@ const staggerContainer = {
 export default function HomePage() {
   const [currentSlide, setCurrentSlide] = useState(0);
 
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % GALLERY_IMAGES.length);
     }, 4000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    import("@/utils/supabase/client").then(({ createClient }) => {
+      const supabase = createClient();
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setIsLoggedIn(!!session);
+      });
+      supabase.auth.onAuthStateChange((_event, session) => {
+        setIsLoggedIn(!!session);
+      });
+    });
   }, []);
 
   return (
@@ -88,7 +102,7 @@ export default function HomePage() {
                     className="absolute -bottom-2 left-0 w-full h-[6px] bg-primary/20 rounded-full"
                     initial={{ scaleX: 0, transformOrigin: "left" }}
                     animate={{ scaleX: 1 }}
-                    transition={{ delay: 0.5, duration: 0.8, ease: "circOut" }}
+                    transition={{ delay: 0.5, duration: 0.8, ease: "circOut" as any }}
                   />
                 </span>
               </motion.h1>
@@ -100,18 +114,30 @@ export default function HomePage() {
 
               {/* Actions */}
               <motion.div variants={fadeUp} className="mt-10 flex flex-wrap items-center gap-4">
-                <a href="/auth/register">
-                  <Button variant="primary" size="lg" className="flex items-center gap-2 shadow-sm group text-[15px]">
-                    <Target className="w-4 h-4 transition-transform group-hover:scale-110" />
-                    <span>Créer un compte</span>
-                  </Button>
-                </a>
-                <a href="/auth/login">
-                  <Button variant="secondary" size="lg" className="flex items-center gap-2 text-[15px]">
-                    <span>Se connecter</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
-                </a>
+                {!isLoggedIn ? (
+                  <>
+                    <a href="/auth/register">
+                      <Button variant="primary" size="lg" className="flex items-center gap-2 shadow-sm group text-[15px]">
+                        <Target className="w-4 h-4 transition-transform group-hover:scale-110" />
+                        <span>Créer un compte</span>
+                      </Button>
+                    </a>
+                    <a href="/auth/login">
+                      <Button variant="secondary" size="lg" className="flex items-center gap-2 text-[15px]">
+                        <span>Se connecter</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </Button>
+                    </a>
+                  </>
+                ) : (
+                  <a href="/student/cours">
+                    <Button variant="primary" size="lg" className="flex items-center gap-2 shadow-sm group text-[15px]">
+                      <GraduationCap className="w-4 h-4 transition-transform group-hover:scale-110" />
+                      <span>Accéder à mon espace</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  </a>
+                )}
               </motion.div>
 
               {/* Trust Indicators */}
@@ -136,7 +162,7 @@ export default function HomePage() {
               className="lg:col-span-5 relative flex flex-col w-full h-[450px] lg:h-[550px] rounded-2xl overflow-hidden shadow-2xl"
               initial={{ opacity: 0, x: 40 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.3, ease: [0.33, 1, 0.68, 1] }}
+              transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" as any }}
             >
               <AnimatePresence mode="wait">
                 <motion.div
@@ -144,7 +170,7 @@ export default function HomePage() {
                   initial={{ opacity: 0, scale: 1.05 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0 }}
-                  transition={{ duration: 0.8, ease: "easeInOut" }}
+                  transition={{ duration: 0.8, ease: "easeInOut" as any }}
                   className="absolute inset-0 w-full h-full"
                 >
                   <img 
@@ -309,12 +335,21 @@ export default function HomePage() {
           </p>
           
           <div className="mt-4 relative z-10">
-            <a href="/auth/register">
-              <Button variant="primary" size="lg" className="flex items-center justify-center gap-2.5 shadow-sm hover:-translate-y-1 transition-transform">
-                <span>Créer mon Espace Étudiant</span>
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-            </a>
+            {!isLoggedIn ? (
+              <a href="/auth/register">
+                <Button variant="primary" size="lg" className="flex items-center justify-center gap-2.5 shadow-sm hover:-translate-y-1 transition-transform">
+                  <span>Créer mon Espace Étudiant</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </a>
+            ) : (
+              <a href="/student/cours">
+                <Button variant="primary" size="lg" className="flex items-center justify-center gap-2.5 shadow-sm hover:-translate-y-1 transition-transform">
+                  <span>Accéder à mon Espace</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </a>
+            )}
           </div>
         </motion.section>
 

@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/utils/auth';
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { opportunities } from '@/db/schema';
@@ -7,6 +8,8 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { errorResponse } = await requireAdmin();
+  if (errorResponse) return errorResponse;
   try {
     const { id } = await params;
     await db.delete(opportunities).where(eq(opportunities.id, id));
@@ -22,6 +25,8 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { errorResponse } = await requireAdmin();
+  if (errorResponse) return errorResponse;
   try {
     const { id } = await params;
     const data = await db.select().from(opportunities).where(eq(opportunities.id, id));
@@ -41,6 +46,8 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { errorResponse } = await requireAdmin();
+  if (errorResponse) return errorResponse;
   try {
     const { id } = await params;
     const body = await request.json();

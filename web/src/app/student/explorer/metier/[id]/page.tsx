@@ -1,99 +1,56 @@
-"use client";
-
 import React from "react";
-import { ArrowLeft, CheckCircle2, Building2, MapPin, Sparkles, GraduationCap } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Building2, MapPin, GraduationCap } from "lucide-react";
 import Link from "next/link";
 import { AidaAssistant } from "@/components/student/AidaAssistant";
 import { Card } from "@/components/ui/Card";
+import { db } from "@/db";
+import { explorerCareers, explorerDomains, explorerCareerPrograms, explorerPrograms, explorerSchools } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { createClient } from "@/utils/supabase/server";
+import { notFound, redirect } from "next/navigation";
 
-export default function MetierPage({ params }: { params: Promise<{ id: string }> }) {
-  const unwrappedParams = React.use(params);
+export default async function MetierPage({ params }: { params: Promise<{ id: string }> }) {
+  const unwrappedParams = await params;
   
-  // Mock data mapping
-  const metiersDb: Record<string, any> = {
-    "cybersecurite": {
-      title: "Ingénieur Cybersécurité",
-      domain: "Tech & Numérique",
-      bannerImage: "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?auto=format&fit=crop&w=1200&q=80",
-      description: "L'ingénieur en cybersécurité est le bouclier numérique d'une entreprise. Il analyse les failles de sécurité, met en place des protections robustes, et intervient en cas d'attaque informatique pour protéger les données sensibles. Avec la digitalisation croissante des banques et institutions au Togo et dans la sous-région, c'est un métier d'avenir incontournable.",
-      skills: ["Analyse de risques", "Réseaux informatiques", "Cryptographie", "Résolution de problèmes", "Veille technologique"],
-      formations: [
-        { name: "Licence Pro Sécurité Informatique", school: "Université de Lomé", duration: "3 ans" },
-        { name: "Master Cybersécurité", school: "Institut Africain d'Informatique (IAI)", duration: "2 ans post-licence" }
-      ],
-      opportunities: ["Analyste SOC", "Auditeur de sécurité", "Consultant Cyber"]
-    },
-    "agronome": {
-      title: "Ingénieur Agronome",
-      domain: "Agro-industrie",
-      bannerImage: "https://images.unsplash.com/photo-1592982537447-7440770cbfc9?auto=format&fit=crop&w=1200&q=80",
-      description: "Spécialiste des sciences de la vie et de la terre, l'ingénieur agronome optimise la production agricole tout en préservant l'environnement. Le secteur agricole représentant une part majeure de l'économie togolaise, cet ingénieur est vital pour assurer la sécurité alimentaire et l'innovation agro-industrielle.",
-      skills: ["Sciences du vivant", "Gestion de projet", "Conscience écologique", "Analyse de sols", "Techniques d'irrigation"],
-      formations: [
-        { name: "Diplôme d'Ingénieur Agronome", school: "École Supérieure d'Agronomie (ESA) de l'UL", duration: "5 ans" },
-        { name: "Licence en Sciences Agronomiques", school: "Université de Kara", duration: "3 ans" }
-      ],
-      opportunities: ["Chef d'exploitation", "Conseiller agricole", "Directeur de coopérative"]
-    },
-    "data-analyst": {
-      title: "Data Analyst",
-      domain: "Tech & Numérique",
-      bannerImage: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1200&q=80",
-      description: "Le Data Analyst traduit des chiffres en décisions stratégiques. Il recueille, nettoie et étudie de vastes ensembles de données pour aider les entreprises (startups, banques, télécoms) à mieux comprendre leurs clients et optimiser leurs opérations.",
-      skills: ["Statistiques", "SQL / Python", "Data Visualisation (PowerBI, Tableau)", "Esprit de synthèse", "Sens business"],
-      formations: [
-        { name: "Licence en Statistique et Informatique Décisionnelle", school: "Université de Lomé", duration: "3 ans" },
-        { name: "Formation intensive Data", school: "Centres de formation spécialisés", duration: "6 à 12 mois" }
-      ],
-      opportunities: ["Analyste de Données", "Business Analyst", "Data Consultant"]
-    },
-    "energies-renouvelables": {
-      title: "Technicien Énergies Renouvelables",
-      domain: "Énergie",
-      bannerImage: "https://images.unsplash.com/photo-1509391366360-2e959784a276?auto=format&fit=crop&w=1200&q=80",
-      description: "Face aux défis climatiques et énergétiques, ce technicien conçoit, installe et maintient des systèmes d'énergie verte (panneaux solaires, éoliennes, biomasse). C'est un marché en pleine explosion en Afrique de l'Ouest pour électrifier les zones rurales et urbaines.",
-      skills: ["Électrotechnique", "Énergies solaires", "Maintenance industrielle", "Habilitations électriques", "Sens du terrain"],
-      formations: [
-        { name: "BTS Énergies Renouvelables", school: "Lycées Techniques / INFA de Tové", duration: "2 ans" },
-        { name: "Licence Pro Énergies Renouvelables", school: "Université de Lomé", duration: "3 ans" }
-      ],
-      opportunities: ["Installateur Solaire", "Chef de chantier EnR", "Technicien de Maintenance"]
-    },
-    "logistique": {
-      title: "Responsable Logistique",
-      domain: "Transport",
-      bannerImage: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1200&q=80",
-      description: "Le chef d'orchestre des marchandises. Il gère l'ensemble des flux (stockage, transport, livraison) depuis le fournisseur jusqu'au client. Avec le Port Autonome de Lomé qui est un hub majeur de la sous-région, ce métier est essentiel et extrêmement recherché.",
-      skills: ["Supply Chain", "Gestion des stocks", "Management d'équipe", "Réglementation douanière", "Logiciels ERP"],
-      formations: [
-        { name: "Licence Transport et Logistique", school: "Écoles de Commerce (Lomé)", duration: "3 ans" },
-        { name: "Master Supply Chain Management", school: "Instituts Supérieurs Privés", duration: "2 ans post-licence" }
-      ],
-      opportunities: ["Supply Chain Manager", "Responsable d'Entrepôt", "Déclarant en douane"]
-    },
-    "esante": {
-      title: "Spécialiste E-Santé",
-      domain: "Santé",
-      bannerImage: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1200&q=80",
-      description: "Ce professionnel évolue à la croisée du domaine médical et du numérique. Il conçoit, déploie ou gère des solutions de télémédecine, des applications de suivi de santé ou des bases de données médicales informatisées, facilitant l'accès aux soins pour tous.",
-      skills: ["Connaissances médicales", "Gestion de projet IT", "Réglementation des données de santé", "Empathie", "Innovation"],
-      formations: [
-        { name: "Double compétence : Santé publique + Master Informatique", school: "FSS & FDS - Université de Lomé", duration: "Varie" },
-        { name: "Formations certifiantes en Informatique Médicale", school: "Partenariats Internationaux", duration: "1 an" }
-      ],
-      opportunities: ["Chef de projet Télémédecine", "Consultant e-Santé", "Responsable SI Hospitalier"]
-    }
-  };
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  const metier = metiersDb[unwrappedParams.id] || {
-    title: "Titre du Métier",
-    domain: "Domaine",
-    bannerImage: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80",
-    description: "Une description détaillée de ce métier et de ses enjeux, particulièrement dans le contexte togolais et africain. Ce professionnel joue un rôle clé dans son secteur.",
-    skills: ["Compétence 1", "Compétence 2", "Compétence 3"],
-    formations: [{ name: "Formation Type", school: "Établissement", duration: "3 ans" }],
-    opportunities: ["Débouché 1", "Débouché 2"]
-  };
+  if (!user) {
+    redirect("/auth/login");
+  }
+
+  const { id } = unwrappedParams;
+
+  // 1. Fetch Career + Domain
+  const metierQuery = await db.select({
+    career: explorerCareers,
+    domain: explorerDomains
+  })
+  .from(explorerCareers)
+  .leftJoin(explorerDomains, eq(explorerCareers.domainId, explorerDomains.id))
+  .where(eq(explorerCareers.slug, id))
+  .limit(1);
+
+  if (metierQuery.length === 0) {
+    notFound();
+  }
+
+  const metier = metierQuery[0].career;
+  const domain = metierQuery[0].domain;
+
+  // 2. Fetch Formations via intersection table
+  const formationsData = await db.select({
+    program: explorerPrograms,
+    school: explorerSchools
+  })
+  .from(explorerCareerPrograms)
+  .innerJoin(explorerPrograms, eq(explorerCareerPrograms.programId, explorerPrograms.id))
+  .leftJoin(explorerSchools, eq(explorerPrograms.schoolId, explorerSchools.id))
+  .where(eq(explorerCareerPrograms.careerId, metier.id));
+
+  // Parse JSONB arrays with safe fallbacks
+  const skills = Array.isArray(metier.skills) ? metier.skills : [];
+  const opportunities = Array.isArray(metier.opportunities) ? metier.opportunities : [];
 
   return (
     <div className="flex flex-col gap-6 -mt-4 md:-mt-8 -mx-4 md:-mx-8">
@@ -101,7 +58,7 @@ export default function MetierPage({ params }: { params: Promise<{ id: string }>
       {/* FULL WIDTH BANNER */}
       <div className="relative w-full h-[40dvh] md:h-[50dvh] bg-black overflow-hidden">
         <img 
-          src={metier.bannerImage} 
+          src={metier.bannerImage || "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?auto=format&fit=crop&w=1200&q=80"} 
           alt={metier.title} 
           className="w-full h-full object-cover opacity-60" 
         />
@@ -114,9 +71,9 @@ export default function MetierPage({ params }: { params: Promise<{ id: string }>
 
         <div className="absolute bottom-0 left-0 w-full p-6 md:p-10 bg-gradient-to-t from-canvas via-canvas/80 to-transparent">
           <span className="text-[10px] md:text-xs uppercase font-bold text-primary bg-primary/10 backdrop-blur-md px-3 py-1.5 rounded-sm mb-3 inline-block">
-            {metier.domain}
+            {domain?.title || "Secteur"}
           </span>
-          <h1 className="font-display font-bold text-3xl md:text-5xl text-text-primary mb-2">
+          <h1 className="font-display font-bold text-3xl md:text-5xl text-text-primary mb-2 drop-shadow-sm">
             {metier.title}
           </h1>
         </div>
@@ -130,31 +87,35 @@ export default function MetierPage({ params }: { params: Promise<{ id: string }>
           <section>
             <h2 className="text-xl font-bold text-text-primary mb-4">Description du métier</h2>
             <p className="text-text-secondary leading-relaxed">
-              {metier.description}
+              {metier.description || "Aucune description détaillée n'est disponible pour ce métier."}
             </p>
           </section>
 
-          <section>
-            <h2 className="text-xl font-bold text-text-primary mb-4">Compétences nécessaires</h2>
-            <div className="flex flex-wrap gap-2">
-              {metier.skills.map((skill: string, i: number) => (
-                <span key={i} className="px-3 py-1.5 bg-surface border border-border-soft rounded-md text-sm font-medium text-text-secondary flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-primary" /> {skill}
-                </span>
-              ))}
-            </div>
-          </section>
+          {skills.length > 0 && (
+            <section>
+              <h2 className="text-xl font-bold text-text-primary mb-4">Compétences nécessaires</h2>
+              <div className="flex flex-wrap gap-2">
+                {skills.map((skill: string, i: number) => (
+                  <span key={i} className="px-3 py-1.5 bg-surface border border-border-soft rounded-md text-sm font-medium text-text-secondary flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-primary" /> {skill}
+                  </span>
+                ))}
+              </div>
+            </section>
+          )}
 
-          <section>
-            <h2 className="text-xl font-bold text-text-primary mb-4">Débouchés & Opportunités</h2>
-            <div className="flex flex-wrap gap-2">
-              {metier.opportunities.map((opp: string, i: number) => (
-                <span key={i} className="px-3 py-1.5 bg-gold/10 border border-gold/20 rounded-md text-sm font-bold text-gold-dark">
-                  {opp}
-                </span>
-              ))}
-            </div>
-          </section>
+          {opportunities.length > 0 && (
+            <section>
+              <h2 className="text-xl font-bold text-text-primary mb-4">Débouchés & Opportunités</h2>
+              <div className="flex flex-wrap gap-2">
+                {opportunities.map((opp: string, i: number) => (
+                  <span key={i} className="px-3 py-1.5 bg-gold/10 border border-gold/20 rounded-md text-sm font-bold text-gold-dark">
+                    {opp}
+                  </span>
+                ))}
+              </div>
+            </section>
+          )}
 
         </div>
 
@@ -163,7 +124,7 @@ export default function MetierPage({ params }: { params: Promise<{ id: string }>
           
           <AidaAssistant 
             title="Pourquoi AÏDA vous le recommande"
-            message={`Cette suggestion s'appuie notamment sur vos intérêts pour la technologie (RIASEC : Investigateur) et votre préférence pour les activités d'analyse et de résolution de problèmes.`}
+            message={`Cette suggestion s'appuie notamment sur vos intérêts et les données actuelles du marché pour le secteur ${domain?.title || ""}.`}
             variant="floating"
           />
 
@@ -174,24 +135,27 @@ export default function MetierPage({ params }: { params: Promise<{ id: string }>
             </h2>
             
             <div className="flex flex-col gap-4">
-              {metier.formations.map((form: any, i: number) => (
-                <div key={i} className="flex flex-col gap-1 pb-4 border-b border-border-soft last:border-0 last:pb-0">
-                  <h3 className="font-bold text-sm text-text-primary">{form.name}</h3>
-                  <div className="flex flex-col gap-1 mt-1">
-                    <span className="text-xs text-text-secondary flex items-center gap-1">
-                      <Building2 className="w-3 h-3" /> {form.school}
-                    </span>
-                    <span className="text-xs text-text-secondary flex items-center gap-1">
-                      <MapPin className="w-3 h-3" /> Lomé, Togo ({form.duration})
-                    </span>
+              {formationsData.length > 0 ? formationsData.map((f, i) => (
+                <Link href={`/student/explorer/formation/${f.program.slug}`} key={i} className="group block outline-none">
+                  <div className="flex flex-col gap-1 pb-4 border-b border-border-soft last:border-0 last:pb-0">
+                    <h3 className="font-bold text-sm text-text-primary group-hover:text-primary transition-colors">{f.program.title}</h3>
+                    <div className="flex flex-col gap-1 mt-1">
+                      <span className="text-xs text-text-secondary flex items-center gap-1">
+                        <Building2 className="w-3 h-3" /> {f.school?.name || "Non précisé"}
+                      </span>
+                      <span className="text-xs text-text-secondary flex items-center gap-1">
+                        <MapPin className="w-3 h-3" /> {f.school?.city || "Localisation non précisée"} ({f.program.duration || "Durée inconnue"})
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                </Link>
+              )) : (
+                <div className="text-sm text-text-secondary">Aucune formation rattachée à ce métier.</div>
+              )}
             </div>
           </Card>
 
         </div>
-
       </div>
     </div>
   );

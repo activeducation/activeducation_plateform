@@ -69,7 +69,7 @@ export default function OrientationPage() {
   return (
     <div className="flex flex-col min-h-[100dvh] bg-canvas text-text-primary">
       {/* NAVBAR */}
-      <Navbar currentStreak={7} currentLevel={3} />
+      <Navbar />
 
       {/* CONTENU PRINCIPAL */}
       <main className="flex-1 flex flex-col py-10 px-[clamp(1.5rem,5vw,3.5rem)] max-w-[1400px] w-full mx-auto">
