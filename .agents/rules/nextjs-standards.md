@@ -19,3 +19,9 @@ trigger: always_on
 - **Pas de "vibes codeurs" brouillonnes** : Nommez les variables de manière claire, en anglais ou français cohérent.
 - Gérez systématiquement les erreurs (try/catch sur les API, vérification que les tableaux ne sont pas `null` ou `undefined`).
 - Conservez les fichiers propres et supprimez le code commenté mort avant de commit.
+
+
+## Intégration de Données
+- **Zéro Mocks Cachés (No Hidden Mocks)** : Aucun sous-composant UI (ex: modales, tiroirs, formulaires) ne doit conserver de données factices (`const mockData = [...]`) pour son fonctionnement si la fonctionnalité est censée être connectée au back-end. Le Server Component parent (ex: `page.tsx`) DOIT récupérer les vraies données depuis la BDD et les injecter complètement de haut en bas (Top-Down Data Flow) via les props, jusqu'aux composants de présentation.
+- Assurez-vous d'utiliser les noms de propriétés correspondants à la structure de la base (ex: `correctOptionIndex` pour un quiz, plutôt que l'ancien format statique `correctAnswer`).
+- Vérifiez la cohérence des types (TypeScript) : si la BDD retourne un UUID (string), ne stockez pas l'état local dans un nombre (`useState<number>`).
