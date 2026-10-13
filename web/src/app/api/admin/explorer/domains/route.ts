@@ -1,9 +1,9 @@
+import { apiError, readJson } from '@/lib/api';
 import { requireAdmin } from '@/utils/auth';
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { explorerDomains, users } from '@/db/schema';
+import { explorerDomains } from '@/db/schema';
 import { desc, eq } from 'drizzle-orm';
-import { createClient } from '@/utils/supabase/server';
 import { z } from 'zod';
 
 const domainSchema = z.object({
@@ -29,35 +29,22 @@ function slugify(text: string) {
 }
 
 export async function GET() {
-  const { errorResponse } = await requireAdmin();
-  if (errorResponse) return errorResponse;
   try {
+    const { errorResponse } = await requireAdmin();
+    if (errorResponse) return errorResponse;
     const data = await db.select().from(explorerDomains).orderBy(desc(explorerDomains.createdAt));
     return NextResponse.json(data);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Fetch domains error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return apiError(error);
   }
 }
 
 export async function POST(req: Request) {
-  const { errorResponse } = await requireAdmin();
-  if (errorResponse) return errorResponse;
   try {
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
-    }
-
-    // Role verification
-    const userDb = await db.select().from(users).where(eq(users.id, user.id)).limit(1);
-    if (!userDb.length || userDb[0].role !== 'admin') {
-      return NextResponse.json({ error: 'Accès refusé. Privilèges administrateur requis.' }, { status: 403 });
-    }
-
-    const body = await req.json();
+    const { errorResponse } = await requireAdmin();
+    if (errorResponse) return errorResponse;
+    const body = await readJson(req);
     const validatedData = domainSchema.parse(body);
 
     const slug = validatedData.slug || slugify(validatedData.title);
@@ -68,13 +55,13 @@ export async function POST(req: Request) {
     }).returning();
 
     return NextResponse.json(newDomain[0], { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Create domain error:", error);
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "Données invalides", details: error.issues }, { status: 400 });
     }
     // Handle unique constraint error on slug
-    if (error.code === '23505') {
+    if (typeof error === 'object' && error !== null && 'code' in error && error.code === '23505') {
       return NextResponse.json({ error: "Ce slug ou titre existe déjà." }, { status: 409 });
     }
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });

@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/Card";
 import { AidaAssistant } from "@/components/student/AidaAssistant";
 import { db } from "@/db";
 import { explorerDomains, explorerCareers, explorerPrograms } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { createClient } from "@/utils/supabase/server";
 import { notFound, redirect } from "next/navigation";
 
@@ -21,15 +21,15 @@ export default async function DomainePage({ params }: { params: Promise<{ id: st
 
   const { id } = unwrappedParams; // 'id' in URL maps to 'slug' in db
 
-  const domainQuery = await db.select().from(explorerDomains).where(eq(explorerDomains.slug, id)).limit(1);
+  const domainQuery = await db.select().from(explorerDomains).where(and(eq(explorerDomains.slug, id), eq(explorerDomains.isPublished, true))).limit(1);
   const domaine = domainQuery[0];
 
   if (!domaine) {
     notFound();
   }
 
-  const metiers = await db.select().from(explorerCareers).where(eq(explorerCareers.domainId, domaine.id));
-  const formations = await db.select().from(explorerPrograms).where(eq(explorerPrograms.domainId, domaine.id));
+  const metiers = await db.select().from(explorerCareers).where(and(eq(explorerCareers.domainId, domaine.id), eq(explorerCareers.isPublished, true)));
+  const formations = await db.select().from(explorerPrograms).where(and(eq(explorerPrograms.domainId, domaine.id), eq(explorerPrograms.isPublished, true)));
 
   return (
     <div className="flex flex-col gap-6 -mt-4 md:-mt-8 -mx-4 md:-mx-8">

@@ -28,7 +28,6 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
-import { generateDeterministicOrientationM3 } from "@/lib/orientation";
 
 // Options des 4 questions
 const INTEREST_OPTIONS = [
@@ -175,6 +174,7 @@ const ANALYSIS_STEPS = [
 
 export default function StudentOrientationPage() {
   const router = useRouter();
+  const [generationError, setGenerationError] = useState('');
 
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
@@ -204,7 +204,6 @@ export default function StudentOrientationPage() {
           const data = await res.json();
           if (data.result) {
             // Un résultat existe, on sauvegarde dans localStorage (pour persistance locale)
-            localStorage.setItem("activ_orientation_results", JSON.stringify(data.result));
             router.replace("/student/orientation/resultats");
             return;
           }
@@ -259,7 +258,7 @@ export default function StudentOrientationPage() {
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
-    const startTime = Date.now();
+    setGenerationError('');
 
     const trimmedOther = otherSubject.trim();
     const effectiveStrongSubjects =
@@ -280,45 +279,18 @@ export default function StudentOrientationPage() {
       },
     };
 
-    let resultData = null;
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
-
     try {
-      const response = await fetch("/api/orientation/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-        signal: controller.signal,
+      const response = await fetch('/api/orientation/generate', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(40_000),
       });
-
-      if (response.ok) {
-        resultData = await response.json();
-      }
-    } catch {
-      // Échec réseau ou timeout 5000ms : le repli déterministe prend le relais
-    } finally {
-      clearTimeout(timeoutId);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'La génération a échoué.');
+      router.push('/student/orientation/resultats');
+    } catch (error) {
+      setIsSubmitting(false);
+      setGenerationError(error instanceof Error ? error.message : 'Réessayez plus tard.');
     }
-
-    // Repli de secours déterministe si l'API est indisponible ou a échoué
-    if (!resultData || !resultData.psychologicalProfile) {
-      resultData = generateDeterministicOrientationM3(payload.answers);
-    }
-
-    try {
-      localStorage.setItem("activ_orientation_results", JSON.stringify(resultData));
-    } catch {
-      // Ignorer si stockage restreint
-    }
-
-    // Synchronisation fluide avec l'animation d'analyse (2400ms min, ou transition rapide après délai réseau)
-    const elapsed = Date.now() - startTime;
-    const remainingDelay = Math.max(300, 2400 - elapsed);
-
-    setTimeout(() => {
-      router.push("/student/orientation/resultats");
-    }, remainingDelay);
   };
 
   const isCurrentStepValid = () => {
@@ -438,7 +410,8 @@ export default function StudentOrientationPage() {
     );
   }
 
-  return (
+  return (<>
+    {generationError && <p role="alert" className="p-4 text-error">{generationError}</p>}
     <div className="min-h-[80vh] flex flex-col justify-between max-w-4xl mx-auto py-4">
       {/* En-tête et Barre de Progression */}
       <div className="mb-8">
@@ -772,5 +745,6 @@ export default function StudentOrientationPage() {
         </Button>
       </div>
     </div>
-  );
+  </>);
+
 }

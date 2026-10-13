@@ -1,9 +1,9 @@
+import { apiError, readJson } from '@/lib/api';
 import { requireAdmin } from '@/utils/auth';
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { explorerCareers, users, explorerCareerPrograms } from '@/db/schema';
+import { explorerCareers, explorerCareerPrograms } from '@/db/schema';
 import { desc, eq } from 'drizzle-orm';
-import { createClient } from '@/utils/supabase/server';
 import { z } from 'zod';
 
 const careerSchema = z.object({
@@ -29,34 +29,22 @@ function slugify(text: string) {
 }
 
 export async function GET() {
-  const { errorResponse } = await requireAdmin();
-  if (errorResponse) return errorResponse;
   try {
+    const { errorResponse } = await requireAdmin();
+    if (errorResponse) return errorResponse;
     const data = await db.select().from(explorerCareers).orderBy(desc(explorerCareers.createdAt));
     return NextResponse.json(data);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Fetch careers error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return apiError(error);
   }
 }
 
 export async function POST(req: Request) {
-  const { errorResponse } = await requireAdmin();
-  if (errorResponse) return errorResponse;
   try {
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
-    }
-
-    const userDb = await db.select().from(users).where(eq(users.id, user.id)).limit(1);
-    if (!userDb.length || userDb[0].role !== 'admin') {
-      return NextResponse.json({ error: 'Accès refusé. Privilèges administrateur requis.' }, { status: 403 });
-    }
-
-    const body = await req.json();
+    const { errorResponse } = await requireAdmin();
+    if (errorResponse) return errorResponse;
+    const body = await readJson(req);
     const validatedData = careerSchema.parse(body);
 
     const { programIds, ...careerData } = validatedData;
@@ -83,12 +71,12 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json(result, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Create career error:", error);
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "Données invalides", details: error.issues }, { status: 400 });
     }
-    if (error.code === '23505') {
+    if (typeof error === 'object' && error !== null && 'code' in error && error.code === '23505') {
       return NextResponse.json({ error: "Ce slug ou titre existe déjà." }, { status: 409 });
     }
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });

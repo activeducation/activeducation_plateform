@@ -1,5 +1,4 @@
-import { pgTable, uuid, varchar, integer, timestamp, jsonb, text, boolean, index } from 'drizzle-orm/pg-core';
-import { sql } from 'drizzle-orm';
+import { pgTable, uuid, varchar, integer, timestamp, jsonb, text, boolean, index, unique } from 'drizzle-orm/pg-core';
 
 // Table des utilisateurs
 export const users = pgTable('users', {
@@ -11,6 +10,12 @@ export const users = pgTable('users', {
   xpPoints: integer('xp_points').default(0),
   level: integer('level').default(1),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const apiRateLimits = pgTable('api_rate_limits', {
+  key: varchar('key', { length: 150 }).primaryKey(),
+  count: integer('count').notNull(),
+  resetAt: timestamp('reset_at', { withTimezone: true }).notNull(),
 });
 
 // ==========================================
@@ -45,10 +50,11 @@ export const courseProgress = pgTable('course_progress', {
   userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
   courseId: uuid('course_id').references(() => courses.id, { onDelete: 'cascade' }).notNull(),
   status: varchar('status', { length: 50 }).default('IN_PROGRESS'), // NOT_STARTED, IN_PROGRESS, COMPLETED
-  completedLessons: jsonb('completed_lessons').default([]), // UUIDs of completed lessons
+  completedLessons: jsonb('completed_lessons').$type<string[]>().default([]),
   completedAt: timestamp('completed_at'),
 }, (table) => ({
   userIdIdx: index('progress_user_id_idx').on(table.userId),
+  userCourseUnique: unique('course_progress_user_course_unique').on(table.userId, table.courseId),
   courseIdIdx: index('progress_course_id_idx').on(table.courseId),
 }));
 
@@ -168,5 +174,6 @@ export const explorerCareerPrograms = pgTable('explorer_career_programs', {
   programId: uuid('program_id').references(() => explorerPrograms.id, { onDelete: 'cascade' }).notNull(),
 }, (table) => ({
   careerIdIdx: index('cp_career_id_idx').on(table.careerId),
+  careerProgramUnique: unique('career_program_unique').on(table.careerId, table.programId),
   programIdIdx: index('cp_program_id_idx').on(table.programId),
 }));

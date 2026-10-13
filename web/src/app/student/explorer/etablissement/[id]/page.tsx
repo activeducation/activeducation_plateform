@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { db } from "@/db";
 import { explorerSchools, explorerPrograms } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { createClient } from "@/utils/supabase/server";
 import { notFound, redirect } from "next/navigation";
 
@@ -20,7 +20,7 @@ export default async function EtablissementPage({ params }: { params: Promise<{ 
 
   const { id } = unwrappedParams;
 
-  const schoolQuery = await db.select().from(explorerSchools).where(eq(explorerSchools.slug, id)).limit(1);
+  const schoolQuery = await db.select().from(explorerSchools).where(and(eq(explorerSchools.slug, id), eq(explorerSchools.isPublished, true))).limit(1);
 
   if (schoolQuery.length === 0) {
     notFound();
@@ -28,7 +28,7 @@ export default async function EtablissementPage({ params }: { params: Promise<{ 
 
   const school = schoolQuery[0];
 
-  const formations = await db.select().from(explorerPrograms).where(eq(explorerPrograms.schoolId, school.id));
+  const formations = await db.select().from(explorerPrograms).where(and(eq(explorerPrograms.schoolId, school.id), eq(explorerPrograms.isPublished, true)));
 
   const facilities = Array.isArray(school.facilities) ? school.facilities : [];
 

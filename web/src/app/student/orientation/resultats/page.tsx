@@ -26,169 +26,29 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { OrientationResultM3 } from "@/lib/orientation";
 
-// Modèle de référence togolais authentique (MESR / CAMES) en cas d'accès direct
-const DEFAULT_MODEL_RESULT: OrientationResultM3 = {
-  psychologicalProfile: {
-    dominantTraits: ["Analytique", "Innovateur", "Méthodique", "Pragmatique"],
-    strengths: [
-      "Raisonnement logique rigoureux et forte capacité d'abstraction",
-      "Aptitude naturelle à résoudre des défis technologiques et organisationnels",
-      "Persévérance et rigueur dans l'exécution de projets structurés"
-    ],
-    weaknesses: [
-      "Tendance à privilégier l'analyse théorique avant la concertation d'équipe",
-      "Veiller à concilier exigence de qualité et respect des délais opérationnels",
-      "Bien canaliser sa curiosité intellectuelle pour éviter la dispersion"
-    ],
-    summary: "Votre profil démontre une excellente synergie entre rigueur mathématique et créativité technique, des qualités hautement recherchées sur le marché de l'emploi au Togo. Vos compétences vous orientent naturellement vers des filières d'avenir à forte valeur ajoutée. Les universités et instituts togolais présentés ci-dessous vous permettront d'accélérer votre insertion professionnelle."
-  },
-  recommendedCareers: [
-    {
-      title: "Développeur Web & Mobile / Ingénieur Cloud",
-      matchPercentage: 95,
-      description: "Conception et déploiement d'applications robustes, API sécurisées et solutions cloud adaptées à la transition numérique des entreprises togolaises.",
-      salaryRangeCFA: "250 000 - 850 000 FCFA / mois",
-      demandInTogo: "Forte"
-    },
-    {
-      title: "Data Analyst & Spécialiste IA",
-      matchPercentage: 89,
-      description: "Exploitation et modélisation prédictive des flux de données stratégiques pour les banques, opérateurs télécoms et acteurs logistiques de Lomé.",
-      salaryRangeCFA: "300 000 - 900 000 FCFA / mois",
-      demandInTogo: "Forte"
-    },
-    {
-      title: "Ingénieur BTP & Génie Civil",
-      matchPercentage: 83,
-      description: "Supervision technique des infrastructures, ouvrages d'art et aménagements urbains durables en forte expansion sur tout le territoire togolais.",
-      salaryRangeCFA: "250 000 - 750 000 FCFA / mois",
-      demandInTogo: "Forte"
-    }
-  ],
-  recommendedSchools: [
-    {
-      name: "Université de Lomé (UL)",
-      program: "École Nationale Supérieure d'Ingénieurs (ENSI) & FDS",
-      estimatedAnnualCostCFA: "Public / 25 000 - 50 000 FCFA",
-      whyThisSchool: "Pôle national de référence offrant des cursus universitaires d'élite accrédités CAMES à des frais publics modérés."
-    },
-    {
-      name: "Institut Africain d'Informatique (IAI-Togo)",
-      program: "Licence Professionnelle & Cycle Ingénieur en Génie Logiciel",
-      estimatedAnnualCostCFA: "500 000 FCFA / an",
-      whyThisSchool: "Institution intergouvernementale réputée assurant une formation orientée pratique et un réseau d'insertion solide."
-    },
-    {
-      name: "École Supérieure de Gestion, d'Informatique et des Sciences (ESGIS)",
-      program: "Systèmes d'Information, Réseaux & Management Numérique",
-      estimatedAnnualCostCFA: "450 000 - 650 000 FCFA / an",
-      whyThisSchool: "Établissement privé agréé MESR Togo réputé pour ses partenariats industriels et ses doubles diplômes reconnus."
-    }
-  ]
-};
-
 export default function StudentOrientationResultsPage() {
   const router = useRouter();
 
   const [results, setResults] = useState<OrientationResultM3 | null>(null);
-  const [isDefaultModel, setIsDefaultModel] = useState<boolean>(false);
-  const [emailInput, setEmailInput] = useState<string>("");
-  const [emailSent, setEmailSent] = useState<boolean>(false);
-
-  // Lecture sécurisée du localStorage
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState('');
   useEffect(() => {
-    const fetchResults = async () => {
-      try {
-        const stored = localStorage.getItem("activ_orientation_results");
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (
-            parsed &&
-            parsed.psychologicalProfile &&
-            Array.isArray(parsed.recommendedCareers) &&
-            Array.isArray(parsed.recommendedSchools)
-          ) {
-            setResults(parsed);
-            return;
-          }
-        }
-      } catch {
-        // Ignorer l'erreur de parsing
-      }
-
-      // Si pas dans le localStorage, on tente de récupérer depuis la base de données
-      try {
-        const res = await fetch("/api/orientation/result");
-        if (res.ok) {
-          const data = await res.json();
-          if (data.result) {
-            setResults(data.result);
-            localStorage.setItem("activ_orientation_results", JSON.stringify(data.result));
-            return;
-          }
-        }
-      } catch (e) {
-        console.error("Erreur fetch DB", e);
-      }
-
-      // Si toujours pas de données, charger le profil modèle officiel
-      setResults(DEFAULT_MODEL_RESULT);
-      setIsDefaultModel(true);
-    };
-
-    fetchResults();
+    let cancelled = false;
+    fetch('/api/orientation/result', { cache: 'no-store' }).then(async response => {
+      if (!response.ok) throw new Error('Impossible de charger votre bilan. Réessayez.');
+      const data = await response.json();
+      if (!cancelled) setResults(data.result);
+    }).catch(error => { if (!cancelled) setError(error.message); })
+      .finally(() => { if (!cancelled) setLoaded(true); });
+    return () => { cancelled = true; };
   }, []);
-
-  const handleSendEmail = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (emailInput.trim().includes("@")) {
-      setEmailSent(true);
-      setTimeout(() => setEmailSent(false), 4000);
-    }
-  };
-
-  if (!results) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-          <span className="text-text-secondary text-sm">Chargement de votre bilan AÏDA...</span>
-        </div>
-      </div>
-    );
-  }
+  if (!loaded) return <p role="status">Chargement du bilan…</p>;
+  if (!results) return <Card className="p-6"><p role={error ? 'alert' : undefined}>{error || 'Vous n’avez pas encore de bilan enregistré.'}</p><Button onClick={() => router.push('/student/orientation')}>Passer le test</Button></Card>;
 
   const { psychologicalProfile, recommendedCareers, recommendedSchools } = results;
 
   return (
     <div className="flex flex-col gap-8 pb-12 max-w-5xl mx-auto">
-      {/* Bannière en cas d'accès direct sans test préalable */}
-      {isDefaultModel && (
-        <Card variant="standard" className="p-4 bg-primary/5 border-primary/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-md bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
-              <Info className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <h4 className="font-bold text-text-primary text-sm">
-                Exemple de Bilan d'Orientation AÏDA
-              </h4>
-              <p className="text-xs text-text-secondary">
-                Vous visualisez actuellement un profil type. Passez votre test personnalisé pour obtenir un diagnostic sur-mesure.
-              </p>
-            </div>
-          </div>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => router.push("/student/orientation")}
-            className="whitespace-nowrap"
-          >
-            Faire mon test personnalisé
-          </Button>
-        </Card>
-      )}
-
       {/* En-tête de la Page de Résultats */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border-soft pb-6">
         <div>
@@ -463,35 +323,7 @@ export default function StudentOrientationResultsPage() {
               </p>
             </div>
 
-            <form onSubmit={handleSendEmail} className="flex flex-col sm:flex-row items-end gap-3 w-full">
-              <div className="flex-1 w-full">
-                <Input
-                  label="Recevoir mon bilan complet par email"
-                  placeholder="exemple.etudiant@gmail.com"
-                  type="email"
-                  value={emailInput}
-                  onChange={(e) => setEmailInput(e.target.value)}
-                  required
-                />
-              </div>
-              <Button
-                variant="primary"
-                type="submit"
-                className="w-full sm:w-auto flex items-center justify-center gap-2 flex-shrink-0"
-              >
-                {emailSent ? (
-                  <>
-                    <Check className="w-4 h-4" />
-                    Envoyé avec succès
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-4 h-4" />
-                    Envoyer
-                  </>
-                )}
-              </Button>
-            </form>
+            <p>L’envoi par email n’est pas encore disponible. Vous pouvez imprimer cette page depuis votre navigateur.</p>
           </div>
         </Card>
       </section>

@@ -1,3 +1,5 @@
+import { redirect } from 'next/navigation';
+import { requireAdmin } from '@/utils/auth';
 import React from "react";
 import { Card } from "@/components/ui/Card";
 import { BookOpen, Briefcase, Users, TrendingUp } from "lucide-react";
@@ -8,6 +10,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 
 export default async function AdminDashboardPage() {
+  const access = await requireAdmin();
+  if (access.errorResponse) redirect('/student');
   // Execute all queries in parallel using Promise.all to drastically reduce page load time
   const [
     studentsResult,

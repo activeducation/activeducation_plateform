@@ -5,7 +5,7 @@ import { AidaAssistant } from "@/components/student/AidaAssistant";
 import { Card } from "@/components/ui/Card";
 import { db } from "@/db";
 import { explorerPrograms, explorerDomains, explorerSchools, explorerCareers, explorerCareerPrograms } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { createClient } from "@/utils/supabase/server";
 import { notFound, redirect } from "next/navigation";
 
@@ -30,7 +30,7 @@ export default async function FormationPage({ params }: { params: Promise<{ id: 
   .from(explorerPrograms)
   .innerJoin(explorerSchools, eq(explorerPrograms.schoolId, explorerSchools.id))
   .innerJoin(explorerDomains, eq(explorerPrograms.domainId, explorerDomains.id))
-  .where(eq(explorerPrograms.slug, id))
+  .where(and(eq(explorerPrograms.slug, id), eq(explorerPrograms.isPublished, true), eq(explorerSchools.isPublished, true), eq(explorerDomains.isPublished, true)))
   .limit(1);
 
   if (programQuery.length === 0) {
@@ -45,7 +45,7 @@ export default async function FormationPage({ params }: { params: Promise<{ id: 
   })
   .from(explorerCareerPrograms)
   .innerJoin(explorerCareers, eq(explorerCareerPrograms.careerId, explorerCareers.id))
-  .where(eq(explorerCareerPrograms.programId, program.id));
+  .where(and(eq(explorerCareerPrograms.programId, program.id), eq(explorerCareers.isPublished, true)));
 
   const courses = Array.isArray(program.programCourses) ? program.programCourses : [];
 

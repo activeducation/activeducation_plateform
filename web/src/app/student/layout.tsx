@@ -20,22 +20,6 @@ export default function StudentLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const [avatarImage, setAvatarImage] = React.useState("https://api.dicebear.com/7.x/avataaars/svg?seed=Kossi");
-
-  React.useEffect(() => {
-    const updateAvatar = () => {
-      const saved = localStorage.getItem('activ_avatar');
-      if (saved) setAvatarImage(saved);
-    };
-    
-    // Initial load
-    updateAvatar();
-    
-    // Listen for custom event from Profile page
-    window.addEventListener('avatarUpdated', updateAvatar);
-    return () => window.removeEventListener('avatarUpdated', updateAvatar);
-  }, []);
-
   const getDesktopLinkClass = (path: string) => {
     // If the path is exact (for /student) or starts with the path (for sub-routes like /student/explorer/...)
     const isActive = path === "/student" ? pathname === "/student" : pathname.startsWith(path);
@@ -57,7 +41,7 @@ export default function StudentLayout({
       {/* FLOATING TOP RIGHT AVATAR */}
       <div className="fixed top-4 right-4 md:top-6 md:right-8 z-50">
         <Link href="/student/profil" className="block w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-white shadow-md overflow-hidden hover:scale-105 transition-transform bg-surface">
-          <img src={avatarImage} alt="Mon Profil" className="w-full h-full object-cover" />
+          <User aria-label="Mon profil" className="w-full h-full p-2" />
         </Link>
       </div>
 

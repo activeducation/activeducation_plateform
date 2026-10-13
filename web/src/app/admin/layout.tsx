@@ -7,7 +7,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   
   if (errorResponse) {
     // Si ce n'est pas un admin, on le redirige
-    redirect('/auth/login');
+    redirect(errorResponse.status === 401 ? '/auth/login' : '/student');
   }
 
   return <AdminLayoutClient>{children}</AdminLayoutClient>;

@@ -1,12 +1,15 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/utils/supabase/server';
+import { requireAuth } from '@/utils/auth';
+import { apiError, ApiError, readJson } from '@/lib/api';
+import { saveOrientation } from '@/lib/learning-service';
+import { consumeQuota } from '@/lib/rate-limit';
 import { db } from '@/db';
-import { orientationResults, users } from '@/db/schema';
+import { explorerCareers, explorerSchools } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { generateObject } from 'ai';
 import { createGroq } from '@ai-sdk/groq';
 import { z } from 'zod';
-import { generateDeterministicOrientationM3, sanitizeObject } from '@/lib/orientation';
+import { sanitizeObject } from '@/lib/orientation';
 
 // Définition de la structure stricte que l'IA doit respecter (Schema Zod)
 const OrientationResultSchema = z.object({
@@ -37,25 +40,21 @@ const OrientationResultSchema = z.object({
 
 export async function POST(req: Request) {
   try {
-    let user = null;
-    try {
-      const supabase = await createClient();
-      const { data, error } = await supabase.auth.getUser();
-      if (!error && data?.user) {
-        user = data.user;
-      }
-    } catch {
-      // Mode démo ou exécution sans session active : continuer gracieusement
-      user = null;
-    }
-
-    const body = await req.json().catch(() => ({}));
-    const answers = body.answers || body;
-
-    if (!answers || (typeof answers === 'object' && Object.keys(answers).length === 0)) {
-      return NextResponse.json({ error: 'Données manquantes' }, { status: 400 });
-    }
-
+    const { user, errorResponse } = await requireAuth();
+    if (errorResponse) return errorResponse;
+    const body = z.object({ answers: z.object({
+      interests: z.array(z.string().trim().min(1).max(200)).min(1).max(30),
+      strongSubjects: z.array(z.string().max(200)).max(30),
+      otherSubject: z.string().max(500).optional(), budget: z.string().max(100),
+      mobility: z.string().max(200), currentCity: z.string().max(200),
+    }) }).parse(await readJson(req, 16_000));
+    const answers = body.answers;
+    await consumeQuota(user.id, 'orientation-day', 10, 86400);
+    const [careerCatalog, schoolCatalog] = await Promise.all([
+      db.select({ title: explorerCareers.title, description: explorerCareers.description }).from(explorerCareers).where(eq(explorerCareers.isPublished, true)).limit(100),
+      db.select({ name: explorerSchools.name, city: explorerSchools.city }).from(explorerSchools).where(eq(explorerSchools.isPublished, true)).limit(100),
+    ]);
+    if (!careerCatalog.length || !schoolCatalog.length) throw new ApiError(503, 'Le catalogue d’orientation est en cours de préparation.');
     let orientationResult = null;
 
     // Tentative d'appel Groq IA si la clé d'API est configurée
@@ -84,9 +83,12 @@ ${JSON.stringify(answers, null, 2)}
 Analyse ce profil et génère le rapport d'orientation au format JSON demandé.`;
 
         const { object } = await generateObject({
-          model: groq('llama-3.1-70b-versatile'),
+          model: groq(process.env.GROQ_ORIENTATION_MODEL || 'llama-3.3-70b-versatile'),
+          maxOutputTokens: 2500,
+          abortSignal: AbortSignal.timeout(30_000),
+          maxRetries: 0,
           schema: OrientationResultSchema,
-          system: systemPrompt,
+          system: systemPrompt + '\nUtilise exclusivement les métiers et établissements de ce catalogue. Ne prétends pas disposer de tarifs ou salaires vérifiés : indique « À vérifier auprès de l’établissement » ou « Non renseigné » quand ces informations manquent. Catalogue : ' + JSON.stringify({ careerCatalog, schoolCatalog }),
           prompt: userPrompt,
         });
 
@@ -96,50 +98,14 @@ Analyse ce profil et génère le rapport d'orientation au format JSON demandé.`
       }
     }
 
-    // Bascule déterministe résiliente si Groq n'est pas disponible ou a échoué
-    if (!orientationResult) {
-      orientationResult = generateDeterministicOrientationM3(answers);
+    if (!orientationResult) throw new ApiError(503, 'Le service d’orientation est momentanément indisponible. Réessayez.');
+    if (orientationResult.recommendedCareers.some(item => !careerCatalog.some(c => c.title === item.title)) ||
+        orientationResult.recommendedSchools.some(item => !schoolCatalog.some(s => s.name === item.name))) {
+      throw new ApiError(503, 'Les recommandations nécessitent une nouvelle génération.');
     }
-
-    // Assainissement strict pour garantir ZÉRO EMOJI
     const sanitizedResult = sanitizeObject(orientationResult);
-
-    // Enregistrement non-bloquant en base de données si l'utilisateur est authentifié
-    if (user && user.id) {
-      try {
-        const existing = await db.select().from(orientationResults).where(eq(orientationResults.userId, user.id)).limit(1);
-        const isFirstTime = existing.length === 0;
-
-        await db.insert(orientationResults).values({
-          userId: user.id,
-          inputs: answers,
-          results: sanitizedResult,
-        });
-
-        if (isFirstTime) {
-          const userProfile = await db.select().from(users).where(eq(users.id, user.id)).limit(1);
-          if (userProfile.length > 0) {
-            const currentXp = userProfile[0].xpPoints || 0;
-            const newXp = currentXp + 200;
-            const currentLevel = userProfile[0].level || 1;
-            const newLevel = Math.max(currentLevel, Math.floor(newXp / 1000) + 1);
-            
-            await db.update(users)
-              .set({ xpPoints: newXp, level: newLevel })
-              .where(eq(users.id, user.id));
-          }
-        }
-      } catch (dbError) {
-        console.warn('Database save warning in /api/orientation/generate (non-blocking):', dbError);
-      }
-    }
+    await saveOrientation(user.id, answers, sanitizedResult);
 
     return NextResponse.json(sanitizedResult);
-  } catch (error) {
-    console.error("Erreur lors de la génération de l'orientation", error);
-    // Dernier filet de sécurité : ne jamais bloquer l'expérience utilisateur
-    const safeFallback = generateDeterministicOrientationM3({});
-    return NextResponse.json(sanitizeObject(safeFallback));
-  }
+  } catch (error) { return apiError(error); }
 }
-

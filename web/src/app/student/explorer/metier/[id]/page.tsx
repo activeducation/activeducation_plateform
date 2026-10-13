@@ -5,7 +5,7 @@ import { AidaAssistant } from "@/components/student/AidaAssistant";
 import { Card } from "@/components/ui/Card";
 import { db } from "@/db";
 import { explorerCareers, explorerDomains, explorerCareerPrograms, explorerPrograms, explorerSchools } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { createClient } from "@/utils/supabase/server";
 import { notFound, redirect } from "next/navigation";
 
@@ -28,7 +28,7 @@ export default async function MetierPage({ params }: { params: Promise<{ id: str
   })
   .from(explorerCareers)
   .leftJoin(explorerDomains, eq(explorerCareers.domainId, explorerDomains.id))
-  .where(eq(explorerCareers.slug, id))
+  .where(and(eq(explorerCareers.slug, id), eq(explorerCareers.isPublished, true), eq(explorerDomains.isPublished, true)))
   .limit(1);
 
   if (metierQuery.length === 0) {
@@ -46,7 +46,7 @@ export default async function MetierPage({ params }: { params: Promise<{ id: str
   .from(explorerCareerPrograms)
   .innerJoin(explorerPrograms, eq(explorerCareerPrograms.programId, explorerPrograms.id))
   .leftJoin(explorerSchools, eq(explorerPrograms.schoolId, explorerSchools.id))
-  .where(eq(explorerCareerPrograms.careerId, metier.id));
+  .where(and(eq(explorerCareerPrograms.careerId, metier.id), eq(explorerPrograms.isPublished, true), eq(explorerSchools.isPublished, true)));
 
   // Parse JSONB arrays with safe fallbacks
   const skills = Array.isArray(metier.skills) ? metier.skills : [];

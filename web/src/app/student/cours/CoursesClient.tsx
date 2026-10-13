@@ -149,82 +149,40 @@ export default function CoursesClient({ initialMyCourses, initialCatalogCourses 
 
 
 
-  const completeActiveLesson = async () => {
-    if (activeLesson !== null) {
-      // Identifier la leçon actuelle
-      const course = courses.find(c => c.id === selectedCourseId);
-      const lesson = course?.levels.find((l: any) => l.id === activeLesson);
-      
-      if (!lesson) return;
-      const alreadyDone = lesson.status === "done";
-      const xpGained = lesson.rewardXp || 50;
-
-      playSound('celebration');
-      setCourses(prevCourses => {
-        const newCourses = [...prevCourses];
-        const courseIndex = newCourses.findIndex(c => c.id === selectedCourseId);
-        
-        if (courseIndex !== -1) {
-          const levels = [...newCourses[courseIndex].levels];
-          const lessonIndex = levels.findIndex(l => l.id === activeLesson);
-          
-          if (lessonIndex !== -1) {
-            levels[lessonIndex].status = "done";
-            levels[lessonIndex].stars = 3;
-            
-            // Débloquer la leçon suivante si elle était verrouillée
-            if (lessonIndex + 1 < levels.length && levels[lessonIndex + 1].status === "locked") {
-              levels[lessonIndex + 1].status = "current";
-            }
-            
-            // Mettre à jour la progression %
-            const doneCount = levels.filter(l => l.status === "done").length;
-            newCourses[courseIndex].progress = Math.round((doneCount / levels.length) * 100);
-            newCourses[courseIndex].levels = levels;
-          }
-        }
-        return newCourses;
+  const [completionError, setCompletionError] = React.useState('');
+  const [isCompleting, setIsCompleting] = React.useState(false);
+  const completing = React.useRef(false);
+  const completeActiveLesson = async (answers: Record<string, number>) => {
+    if (!activeLesson || !selectedCourseId || completing.current) return;
+    completing.current = true;
+    setIsCompleting(true);
+    setCompletionError('');
+    try {
+      const response = await fetch('/api/student/courses/complete-lesson', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courseId: selectedCourseId, lessonId: activeLesson, answers }),
       });
-      
-      // Mettre à jour la base de données uniquement si c'est la première fois qu'on la termine
-      if (!alreadyDone) {
-        // Ajouter l'XP
-        try {
-          const res = await fetch('/api/user/xp', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ xpToAdd: xpGained })
-          });
-          if (res.ok) {
-            const data = await res.json();
-            setCrystals(data.xpPoints);
-            setStreak(data.level);
-          } else {
-            setCrystals(c => c + xpGained);
-          }
-        } catch (err) {
-          setCrystals(c => c + xpGained);
-        }
-
-        // Sauvegarder la progression de la leçon
-        try {
-          await fetch('/api/student/courses/complete-lesson', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ courseId: selectedCourseId, lessonId: activeLesson })
-          });
-        } catch (err) {
-          console.error(err);
-        }
-      }
-
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'La progression n’a pas pu être sauvegardée.');
+      setCrystals(data.newXp);
+      setStreak(data.newLevel);
+      setCourses(previous => previous.map(course => {
+        if (course.id !== selectedCourseId) return course;
+        const completed = new Set<string>(data.completedLessons);
+        const levels = course.levels.map((lesson: { id: string }, index: number) => ({
+          ...lesson,
+          status: completed.has(lesson.id) ? 'done' : course.levels.slice(0, index).every((prior: { id: string }) => completed.has(prior.id)) ? 'current' : 'locked',
+          stars: completed.has(lesson.id) ? 3 : 0,
+        }));
+        return { ...course, levels, progress: levels.length ? Math.round(levels.filter((lesson: { status: string }) => lesson.status === 'done').length / levels.length * 100) : 0 };
+      }));
       setActiveLesson(null);
+      playSound('celebration');
       setShowCelebration(true);
-      
-      setTimeout(() => {
-        setShowCelebration(false);
-      }, 4000);
-    }
+      setTimeout(() => setShowCelebration(false), 2500);
+    } catch (error) {
+      setCompletionError(error instanceof Error ? error.message : 'Impossible de sauvegarder. Réessayez.');
+    } finally { completing.current = false; setIsCompleting(false); }
   };
 
   return (
@@ -233,7 +191,7 @@ export default function CoursesClient({ initialMyCourses, initialCatalogCourses 
       {/* OFFLINE INDICATOR */}
       {isOffline && (
         <div className="w-full bg-surface-alt border-b border-border-strong px-4 py-2 flex items-center justify-center gap-2 text-sm font-bold text-text-secondary animate-fade-in">
-          <WifiOff className="w-4 h-4" /> Mode hors-ligne activé. Vos cours téléchargés restent accessibles.
+          <WifiOff className="w-4 h-4" /> Connexion interrompue. La validation des leçons nécessite une connexion.
         </div>
       )}
 
@@ -531,7 +489,7 @@ export default function CoursesClient({ initialMyCourses, initialCatalogCourses 
             playSound('pop');
             setActiveLesson(null);
           }} 
-          onComplete={completeActiveLesson} 
+          key={activeLesson} error={completionError} isCompleting={isCompleting} onComplete={completeActiveLesson} 
           playSound={playSound} lessonData={courses.find(c => c.id === selectedCourseId)?.levels.find((l: any) => l.id === activeLesson)?.content || []}
         />
       )}
@@ -551,7 +509,8 @@ export default function CoursesClient({ initialMyCourses, initialCatalogCourses 
 }
 
 // Composant interne pour l'interface de micro-apprentissage
-function LessonViewer({ onClose, onComplete, playSound, lessonData }: { onClose: () => void, onComplete: () => void, playSound: (t: any) => void, lessonData: any[] }) {
+function LessonViewer({ onClose, onComplete, playSound, lessonData, error, isCompleting }: { onClose: () => void, onComplete: (answers: Record<string, number>) => Promise<void>, playSound: ReturnType<typeof useSound>, lessonData: import("@/lib/learning").LessonStep[], error: string, isCompleting: boolean }) {
+  const [answers, setAnswers] = React.useState<Record<string, number>>({});
   const [currentStep, setCurrentStep] = React.useState(0);
   const [selectedAnswer, setSelectedAnswer] = React.useState<number | null>(null);
   const [showFeedback, setShowFeedback] = React.useState(false);
@@ -575,19 +534,21 @@ function LessonViewer({ onClose, onComplete, playSound, lessonData }: { onClose:
   const progress = ((currentStep + 1) / lessonData.length) * 100;
 
   const handleNext = () => {
+    if (isCompleting) return;
     playSound('pop');
     if (currentStep < lessonData.length - 1) {
       setCurrentStep(c => c + 1);
       setSelectedAnswer(null);
       setShowFeedback(false);
     } else {
-      onComplete();
+      void onComplete(answers);
     }
   };
 
   const handleAnswerSubmit = (index: number) => {
     if (showFeedback) return;
     setSelectedAnswer(index);
+    setAnswers(previous => ({ ...previous, [currentStep]: index }));
     setShowFeedback(true);
     
     if (index === step.correctOptionIndex) {
@@ -599,6 +560,8 @@ function LessonViewer({ onClose, onComplete, playSound, lessonData }: { onClose:
 
   return (
     <div className="fixed inset-0 z-50 bg-surface-alt flex flex-col">
+      {error && <p role="alert" className="p-4 text-error">{error}</p>}
+      {isCompleting && <p role="status" className="p-4">Sauvegarde en cours…</p>}
       {/* HEADER PROGRESS */}
       <div className="p-4 flex items-center justify-between border-b border-border-soft bg-canvas">
         <button onClick={onClose} className="p-2 text-text-tertiary hover:text-text-primary">
@@ -621,7 +584,7 @@ function LessonViewer({ onClose, onComplete, playSound, lessonData }: { onClose:
         {step.type === "theory" && (
           <div className="bg-canvas p-8 rounded-3xl shadow-xl w-full flex flex-col items-center text-center animate-fade-in border border-border-soft overflow-y-auto max-h-[80vh]">
             <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mb-6 shrink-0">
-              {step.type === 'theory' ? <BookOpen className="w-16 h-16 text-primary" /> : step.type === 'quiz' ? <Brain className="w-16 h-16 text-primary" /> : <Hexagon className="w-16 h-16 text-primary" />}
+              <BookOpen className="w-16 h-16 text-primary" />
             </div>
             <h2 className="text-2xl font-display font-bold text-text-primary mb-4">{step.title}</h2>
             <p className="text-lg text-text-secondary leading-relaxed mb-8">{step.content}</p>
@@ -737,12 +700,12 @@ function LessonViewer({ onClose, onComplete, playSound, lessonData }: { onClose:
         {step.type === "reward" && (
           <div className="bg-gradient-to-br from-gold/20 to-gold-dark/20 p-8 rounded-3xl shadow-xl border border-gold/30 w-full flex flex-col items-center text-center animate-bounce-soft">
             <div className="mb-6 drop-shadow-xl">
-              {step.type === 'theory' ? <BookOpen className="w-16 h-16 text-primary" /> : step.type === 'quiz' ? <Brain className="w-16 h-16 text-primary" /> : <Hexagon className="w-16 h-16 text-primary" />}
+              <Hexagon className="w-16 h-16 text-primary" />
             </div>
             <h2 className="text-3xl font-display font-bold text-gold-dark mb-4">{step.title}</h2>
             <p className="text-lg text-text-secondary leading-relaxed mb-8">{step.content}</p>
             <Button size="lg" className="w-full text-lg bg-gold-dark hover:bg-yellow-600 shadow-gold/30 shadow-lg text-white" onClick={handleNext}>
-              Récupérer mes points (+50)
+              Terminer la leçon
             </Button>
           </div>
         )}

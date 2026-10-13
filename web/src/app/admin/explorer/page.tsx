@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/utils/auth';
 import { db } from "@/db";
 import { explorerDomains, explorerSchools, explorerPrograms, explorerCareers } from "@/db/schema";
 import { desc } from "drizzle-orm";
@@ -6,6 +7,8 @@ import { redirect } from "next/navigation";
 import AdminExplorerClient from "./AdminExplorerClient";
 
 export default async function AdminExplorerPage() {
+  const access = await requireAdmin();
+  if (access.errorResponse) redirect('/student');
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 

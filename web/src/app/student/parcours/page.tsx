@@ -31,10 +31,10 @@ export default function ParcoursPage() {
     const fetchUserData = async () => {
       try {
         // Fetch XP
-        const xpRes = await fetch("/api/user/xp");
+        const xpRes = await fetch("/api/user");
         if (xpRes.ok) {
           const xpData = await xpRes.json();
-          if (xpData.xp !== undefined) setCurrentXp(xpData.xp);
+          if (xpData.xpPoints !== undefined) setCurrentXp(xpData.xpPoints);
           if (xpData.level !== undefined) setLevel(xpData.level);
           if (xpData.rankTitle !== undefined) setRankTitle(xpData.rankTitle);
         }
@@ -47,9 +47,7 @@ export default function ParcoursPage() {
             setHasOrientation(true);
           }
         } else {
-          // Fallback to local storage if API fails
-          const stored = localStorage.getItem("activ_orientation_results");
-          if (stored) setHasOrientation(true);
+          setHasOrientation(false);
         }
       } catch (e) {
         console.error(e);
