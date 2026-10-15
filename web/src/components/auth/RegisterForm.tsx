@@ -14,8 +14,10 @@ import {
   ArrowLeft,
   CheckCircle2,
   MapPin,
-  Loader2
+  Loader2,
+  AlertCircle
 } from "lucide-react";
+import { createClient } from "@/utils/supabase/client";
 
 type RoleType = "eleve" | "etudiant" | "parent" | "ecole" | "cdej" | null;
 
@@ -32,13 +34,36 @@ export function RegisterForm() {
   const [selectedRole, setSelectedRole] = useState<RoleType>(null);
   const [schoolType, setSchoolType] = useState<"secondaire" | "superieur">("secondaire");
   
+  // Auth state
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [authError, setAuthError] = useState("");
+  
   // Geolocation state
   const [gpsCoords, setGpsCoords] = useState("");
   const [isLocating, setIsLocating] = useState(false);
   const [locationError, setLocationError] = useState("");
 
-  const nextStep = () => setStep((s) => s + 1);
-  const prevStep = () => setStep((s) => s - 1);
+  const nextStep = () => {
+    if (step === 2) {
+      if (!email.trim() || !password.trim()) {
+        setAuthError("Veuillez renseigner votre email et un mot de passe.");
+        return;
+      }
+      if (password.length < 6) {
+        setAuthError("Le mot de passe doit comporter au moins 6 caractères.");
+        return;
+      }
+      setAuthError("");
+    }
+    setStep((s) => s + 1);
+  };
+  const prevStep = () => {
+    setAuthError("");
+    setStep((s) => s - 1);
+  };
 
   const handleGetLocation = () => {
     setIsLocating(true);
@@ -148,13 +173,34 @@ export function RegisterForm() {
               <p className="text-text-secondary text-sm">Créez vos identifiants sécurisés.</p>
             </div>
 
+            {authError && (
+              <div className="flex items-center gap-2 p-3 rounded-md bg-error/10 text-error text-xs border border-error/20">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <p>{authError}</p>
+              </div>
+            )}
+
             <div className="space-y-4">
               <Input 
                 label={["ecole", "cdej"].includes(selectedRole as string) ? "Nom de l'établissement / Raison sociale" : "Nom complet"} 
                 placeholder={["ecole", "cdej"].includes(selectedRole as string) ? "Ex: Université de Lomé" : "Ex: Jean Dupont"} 
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
               />
-              <Input label="Adresse Email" type="email" placeholder={["ecole", "cdej"].includes(selectedRole as string) ? "contact@etablissement.tg" : "jean@exemple.com"} />
-              <Input label="Mot de passe" type="password" placeholder="••••••••" />
+              <Input 
+                label="Adresse Email" 
+                type="email" 
+                placeholder={["ecole", "cdej"].includes(selectedRole as string) ? "contact@etablissement.tg" : "jean@exemple.com"} 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              <Input 
+                label="Mot de passe" 
+                type="password" 
+                placeholder="••••••••" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
             </div>
 
             <div className="mt-4 flex justify-between items-center">
@@ -335,21 +381,64 @@ export function RegisterForm() {
 
             </div>
 
+            {authError && (
+              <div className="flex items-center gap-2 p-3 rounded-md bg-error/10 text-error text-xs border border-error/20">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <p>{authError}</p>
+              </div>
+            )}
+
             <div className="mt-6 flex justify-between items-center">
-              <Button variant="secondary" onClick={prevStep} className="gap-2">
+              <Button variant="secondary" onClick={prevStep} disabled={isSubmitting} className="gap-2">
                 <ArrowLeft className="w-4 h-4" /> Retour
               </Button>
               <Button 
                 variant="primary" 
-                onClick={() => {
-                  if (selectedRole) {
-                    localStorage.setItem("userRole", selectedRole);
+                disabled={isSubmitting}
+                onClick={async () => {
+                  setIsSubmitting(true);
+                  setAuthError("");
+                  try {
+                    const supabase = createClient();
+                    const { data, error } = await supabase.auth.signUp({
+                      email: email.trim(),
+                      password,
+                      options: {
+                        data: {
+                          full_name: fullName.trim() || "Étudiant ActivEducation",
+                          role: selectedRole === "parent" ? "PARENT" : "STUDENT",
+                        },
+                      },
+                    });
+
+                    if (error) throw error;
+
+                    if (selectedRole) {
+                      localStorage.setItem("userRole", selectedRole);
+                    }
+                    localStorage.setItem("activeducation_session", "true");
+
+                    const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+                    const redirectUrl = searchParams?.get("redirect") || "/student";
+                    window.location.href = redirectUrl;
+                  } catch (err: unknown) {
+                    console.error("Erreur inscription:", err);
+                    setAuthError(err instanceof Error ? err.message : "Erreur lors de la création du compte.");
+                  } finally {
+                    setIsSubmitting(false);
                   }
-                  window.location.href = "/student";
                 }}
                 className="gap-2 bg-gold hover:bg-gold-dark text-white border-none"
               >
-                <CheckCircle2 className="w-4 h-4" /> Terminer l'inscription
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Inscription en cours...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4" /> Terminer l'inscription
+                  </>
+                )}
               </Button>
             </div>
           </motion.div>

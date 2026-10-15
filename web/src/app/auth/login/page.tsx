@@ -32,9 +32,10 @@ export default function LoginPage() {
     }
 
     // Connexion réussie, le cookie de session est posé.
-    // On met aussi notre marqueur pour la UI (ou on pourrait juste lire les cookies)
     localStorage.setItem("activeducation_session", "true");
-    window.location.href = "/student/cours";
+    const searchParams = new URLSearchParams(window.location.search);
+    const redirectUrl = searchParams.get("redirect") || "/student/cours";
+    window.location.href = redirectUrl;
   };
 
   return (
