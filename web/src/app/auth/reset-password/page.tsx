@@ -18,6 +18,16 @@ export default function ResetPasswordPage() {
   const supabase = createClient();
 
   useEffect(() => {
+    // Si un code PKCE est présent dans l'URL
+    const code = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("code") : null;
+    if (code) {
+      supabase.auth.exchangeCodeForSession(code).then(({ data, error }) => {
+        if (!error && data.session) {
+          setIsSessionReady(true);
+        }
+      });
+    }
+
     // Écouter l'événement de récupération de session Supabase
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === "PASSWORD_RECOVERY" || session) {

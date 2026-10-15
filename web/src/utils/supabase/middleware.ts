@@ -45,8 +45,12 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Redirection des utilisateurs connectés qui essaient d'aller sur les pages d'auth
-  if (user && request.nextUrl.pathname.startsWith('/auth')) {
+  // Redirection des utilisateurs déjà connectés qui essaient d'aller sur les pages de connexion ou d'inscription
+  // ATTENTION : On autorise explicitement /auth/reset-password pour permettre la saisie du nouveau mot de passe
+  if (
+    user &&
+    (request.nextUrl.pathname === '/auth/login' || request.nextUrl.pathname === '/auth/register')
+  ) {
     const url = request.nextUrl.clone()
     url.pathname = '/student/cours'
     return NextResponse.redirect(url)
