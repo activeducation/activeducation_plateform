@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -33,6 +36,12 @@ class _BecomeMentorPageState extends State<BecomeMentorPage> {
   final _motivation = TextEditingController();
 
   bool _submitting = false;
+
+  // Photo de profil : octets choisis (pour l'apercu) et URL renvoyee par
+  // POST /mentors/apply/photo une fois le fichier depose.
+  Uint8List? _photoBytes;
+  String? _photoUrl;
+  bool _uploadingPhoto = false;
   bool _success = false;
 
   @override
@@ -61,6 +70,61 @@ class _BecomeMentorPageState extends State<BecomeMentorPage> {
     super.dispose();
   }
 
+  /// Choisit une image et la depose immediatement.
+  ///
+  /// L'envoi est fait des la selection plutot qu'a la soumission : le
+  /// candidat voit tout de suite si le fichier est refuse (format, taille),
+  /// au lieu de perdre son formulaire sur une erreur finale.
+  Future<void> _pickPhoto() async {
+    FilePickerResult? result;
+    try {
+      result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        withData: true, // indispensable sur le web : pas de chemin de fichier
+      );
+    } catch (e) {
+      // Sans ce garde-fou, un echec d'ouverture du selecteur partait en
+      // exception non geree : le bouton semblait simplement inerte.
+      if (mounted) {
+        AppSnackbar.error(
+          context,
+          "Impossible d'ouvrir le sélecteur de fichiers : $e",
+        );
+      }
+      return;
+    }
+
+    final file = result?.files.firstOrNull;
+    if (file == null || file.bytes == null) return;
+
+    setState(() {
+      _photoBytes = file.bytes;
+      _uploadingPhoto = true;
+    });
+
+    try {
+      final dio = getIt<Dio>(instanceName: 'apiClient');
+      final form = FormData.fromMap({
+        'file': MultipartFile.fromBytes(file.bytes!, filename: file.name),
+      });
+      final res = await dio.post(ApiEndpoints.mentorApplyPhoto, data: form);
+      if (mounted) setState(() => _photoUrl = res.data['url'] as String?);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _photoBytes = null;
+          _photoUrl = null;
+        });
+        AppSnackbar.error(
+          context,
+          "Photo refusée. Formats acceptés : JPG, PNG ou WEBP, 5 Mo maximum.",
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _uploadingPhoto = false);
+    }
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _submitting = true);
@@ -77,6 +141,7 @@ class _BecomeMentorPageState extends State<BecomeMentorPage> {
         if (_bio.text.trim().isNotEmpty) 'bio': _bio.text.trim(),
         if (_linkedin.text.trim().isNotEmpty) 'linkedin_url': _linkedin.text.trim(),
         if (_motivation.text.trim().isNotEmpty) 'motivation': _motivation.text.trim(),
+        if (_photoUrl != null) 'photo_url': _photoUrl,
       });
       if (mounted) setState(() => _success = true);
     } catch (e) {
@@ -182,6 +247,8 @@ class _BecomeMentorPageState extends State<BecomeMentorPage> {
             ),
             const SizedBox(height: 20),
 
+            _buildPhotoPicker(),
+            const SizedBox(height: 4),
             _field(_fullName, 'Nom complet *', Iconsax.user, required: true),
             _field(_email, 'Email *', Iconsax.sms,
                 required: true, keyboard: TextInputType.emailAddress),
@@ -207,6 +274,92 @@ class _BecomeMentorPageState extends State<BecomeMentorPage> {
             const SizedBox(height: 32),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildPhotoPicker() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          // behavior: opaque est indispensable. Par defaut GestureDetector
+          // utilise deferToChild : seule la zone de l'ENFANT est cliquable,
+          // soit l'icone de 26 px au centre d'un cercle de 84 px — et plus
+          // rien du tout une fois la photo choisie, l'enfant devenant null.
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: _uploadingPhoto ? null : _pickPhoto,
+            child: Container(
+              width: 84,
+              height: 84,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceContainer,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: _photoUrl != null
+                      ? AppColors.success
+                      : AppColors.border,
+                  width: 2,
+                ),
+                image: _photoBytes != null
+                    ? DecorationImage(
+                        image: MemoryImage(_photoBytes!),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+              ),
+              child: _uploadingPhoto
+                  ? const Center(
+                      child: SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    )
+                  : _photoBytes == null
+                      ? const Icon(Iconsax.camera,
+                          color: AppColors.textTertiary, size: 26)
+                      : null,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Photo de profil',
+                    style: AppTypography.titleSmall),
+                const SizedBox(height: 2),
+                Text(
+                  _photoUrl != null
+                      ? 'Photo ajoutée.'
+                      : 'Facultatif — JPG, PNG ou WEBP, 5 Mo maximum.',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: _photoUrl != null
+                        ? AppColors.success
+                        : AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                // Bouton explicite : le cercle seul est une cible peu evidente
+                // et trop petite sur mobile.
+                OutlinedButton.icon(
+                  onPressed: _uploadingPhoto ? null : _pickPhoto,
+                  icon: const Icon(Iconsax.gallery, size: 16),
+                  label: Text(
+                    _photoUrl != null ? 'Remplacer' : 'Choisir une photo',
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 8),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

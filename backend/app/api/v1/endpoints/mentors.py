@@ -5,7 +5,15 @@ Endpoints API publics pour les mentors.
 from uuid import UUID
 from typing import Optional
 
-from fastapi import APIRouter, Query, Depends
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    HTTPException,
+    Query,
+    Request,
+    UploadFile,
+)
 
 from functools import lru_cache
 
@@ -16,6 +24,8 @@ from app.core.security import get_current_user_id_optional
 from app.core import email as email_service
 from app.schemas.mentor import MentorApplicationCreate, MentorApplicationResponse
 from app.repositories.mentor_repository import get_mentor_repository
+from app.core import image_upload
+from app.middleware.rate_limiter import strict_limit
 
 logger = get_logger("api.mentors")
 
@@ -26,6 +36,37 @@ router = APIRouter()
 def _cache() -> CacheClient:
     """Retourne l'instance (unique) du cache."""
     return get_cache()
+
+
+# Bucket Supabase des photos de profil, deja declare cote admin.
+APPLICATION_PHOTO_BUCKET = "avatars"
+
+
+@router.post("/apply/photo", status_code=201)
+@strict_limit("5/minute")
+async def upload_application_photo(
+    request: Request,
+    file: UploadFile = File(...),
+):
+    """Depose la photo de profil d'un candidat mentor.
+
+    Public, comme la candidature elle-meme : un candidat n'a pas
+    necessairement de compte. Le debit est donc limite, et le fichier valide
+    par ses octets magiques et non par le type declare.
+
+    Retourne l'URL a renvoyer dans le champ `photo_url` de la candidature.
+    """
+    content, ext = await image_upload.read_and_validate(file)
+    try:
+        return image_upload.store(
+            APPLICATION_PHOTO_BUCKET, content, ext, file.content_type
+        )
+    except Exception as exc:
+        logger.error("Upload photo de candidature echoue: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=502,
+            detail="Le depot de la photo a echoue. Reessayez.",
+        ) from exc
 
 
 @router.post("/apply", response_model=MentorApplicationResponse, status_code=201)

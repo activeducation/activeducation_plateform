@@ -12,6 +12,7 @@ from functools import lru_cache
 
 from app.core.logging import get_logger
 from app.core.cache import get_cache, CacheClient
+from app.core.config import get_settings
 from app.db.supabase_client import get_supabase_client
 
 logger = get_logger("api.search")
@@ -41,7 +42,8 @@ async def unified_search(
     if not term:
         return {"query": q, "schools": [], "careers": [], "courses": [], "total": 0}
 
-    cache_key = f"search:{term.lower()}:l{limit}"
+    acc = "1" if get_settings().SCHOOLS_ACCREDITED_ONLY else "0"
+    cache_key = f"search:{term.lower()}:l{limit}:a{acc}"
     cached = _cache().get(cache_key)
     if cached is not None:
         return cached
@@ -53,9 +55,20 @@ async def unified_search(
 
     # --- Ecoles ---
     try:
-        res = (
+        settings = get_settings()
+        schools_query = (
             db.client.table("schools")
             .select("id, name, city, logo_url, cover_image_url, type")
+            .eq("is_active", True)
+        )
+        # Meme perimetre que l'annuaire : la recherche ne doit pas remonter
+        # des etablissements que la liste masque.
+        if settings.SCHOOLS_ACCREDITED_ONLY:
+            schools_query = schools_query.contains(
+                "accreditations", [settings.SCHOOLS_ACCREDITATION_LABEL]
+            )
+        res = (
+            schools_query
             .or_(f"name.ilike.%{term}%,city.ilike.%{term}%,description.ilike.%{term}%")
             .order("name")
             .limit(limit)

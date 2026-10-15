@@ -11,65 +11,6 @@ class ResultsPage extends StatelessWidget {
 
   const ResultsPage({super.key, required this.result});
 
-  // =========================================================================
-  // Mapping : noms de secteurs backend → noms locaux CareersDatabase
-  // =========================================================================
-  static const Map<String, String> _sectorMapping = {
-    // Réaliste
-    'Génie Civil & BTP': 'Ingénierie & BTP',
-    'Mécanique & Électrotechnique': 'Ingénierie & BTP',
-    'Agriculture & Agroalimentaire': 'Agriculture & Environnement',
-    'Topographie & Géomatique': 'Ingénierie & BTP',
-    'Maintenance & Logistique Industrielle': 'Commerce & Entrepreneuriat',
-    // Investigateur
-    'Informatique & Cybersécurité': 'Technologie & Informatique',
-    'Biologie & Pharmacie': 'Santé',
-    'Mathématiques & Data Science': 'Technologie & Informatique',
-    'Physique & Énergies Renouvelables': 'Ingénierie & BTP',
-    'Médecine & Recherche Clinique': 'Santé',
-    // Artistique
-    'Design Graphique & Communication Visuelle': 'Création & Médias',
-    "Architecture & Décoration d'Intérieur": 'Ingénierie & BTP',
-    'Journalisme & Médias Numériques': 'Création & Médias',
-    'Cinéma, Arts & Culture': 'Création & Médias',
-    'Marketing Créatif & UX Design': 'Création & Médias',
-    // Social
-    'Sciences Infirmières & Santé Communautaire': 'Santé',
-    "Enseignement & Sciences de l'Éducation": 'Éducation',
-    'Psychologie & Travail Social': 'Droit & Administration',
-    'Ressources Humaines & Coaching': 'Droit & Administration',
-    'Développement Communautaire & ONG': 'Éducation',
-    // Entrepreneur
-    "Commerce & Gestion d'Entreprise": 'Commerce & Entrepreneuriat',
-    'Finance & Banque': 'Finance & Banque',
-    'Marketing & Vente': 'Commerce & Entrepreneuriat',
-    "Droit des Affaires & Entrepreneuriat": 'Droit & Administration',
-    'Management & Direction de Projets': 'Commerce & Entrepreneuriat',
-    // Conventionnel
-    'Comptabilité, Audit & Contrôle de Gestion': 'Finance & Banque',
-    'Administration Publique & Fiscalité': 'Droit & Administration',
-    "Gestion des Systèmes d'Information": 'Technologie & Informatique',
-    'Statistiques & Actuariat': 'Finance & Banque',
-    'Secrétariat & Office Management': 'Commerce & Entrepreneuriat',
-  };
-
-  List<Career> _getCareersForSector(String sectorName) {
-    // Les metiers viennent desormais du backend (result.recommendations,
-    // alimente par career_matcher cote API). On filtre par secteur, avec un
-    // repli souple via le mapping de noms de secteurs.
-    final localSector = _sectorMapping[sectorName] ?? sectorName;
-    final matches = result.recommendations.where((c) {
-      final cs = c.sector;
-      return cs == sectorName ||
-          cs == localSector ||
-          (_sectorMapping[cs] ?? cs) == localSector;
-    }).toList();
-    if (matches.isNotEmpty) return matches.take(5).toList();
-    // Repli ultime : si rien ne matche le secteur, montrer les meilleures
-    // recommandations globales (evite une carte vide).
-    return result.recommendations.take(5).toList();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -108,7 +49,11 @@ class ResultsPage extends StatelessWidget {
                       const SizedBox(height: AppSpacing.lg),
                     ],
 
-                    // 3. Filières recommandées (section principale)
+                    // 3. Métiers recommandés, classés par correspondance
+                    _buildCareersSection(context),
+                    const SizedBox(height: AppSpacing.xl),
+
+                    // 4. Domaines de formation correspondants
                     _buildFilieresSection(context),
                     const SizedBox(height: AppSpacing.xl),
 
@@ -278,249 +223,64 @@ class ResultsPage extends StatelessWidget {
   }
 
   // =========================================================================
-  // 3. FILIÈRES RECOMMANDÉES
+  // 3. MÉTIERS RECOMMANDÉS
   // =========================================================================
 
-  Widget _buildFilieresSection(BuildContext context) {
-    final sectors = result.interpretation?.recommendedSectors ?? [];
+  Widget _buildCareersSection(BuildContext context) {
+    // Les métiers arrivent déjà classés par score de correspondance depuis
+    // l'API (career_matcher). On les affiche tels quels.
+    //
+    // Ils étaient auparavant regroupés par filière, ce qui produisait des
+    // rapprochements faux : l'API renvoie une liste globale de 6 métiers, pas
+    // 6 métiers PAR filière. Découper ces 6 métiers entre 6 cartes obligeait à
+    // inventer des correspondances, d'où « Médecin » sous « Commerce & Gestion
+    // d'Entreprise ». Un classement unique par score est à la fois plus exact
+    // et plus lisible pour l'élève.
+    final careers = [...result.recommendations]
+      ..sort((a, b) => b.matchScore.compareTo(a.matchScore));
 
-    // Fallback : si pas de secteurs depuis l'API, déduire depuis les recommendations
-    List<String> filieres;
-    if (sectors.isNotEmpty) {
-      filieres = sectors.take(5).toList();
-    } else {
-      // Grouper les carrières recommandées par secteur
-      final sectorsSeen = <String>{};
-      filieres = result.recommendations
-          .map((c) => c.sector)
-          .where((s) => sectorsSeen.add(s))
-          .take(5)
-          .toList();
-    }
+    if (careers.isEmpty) return const SizedBox.shrink();
 
-    if (filieres.isEmpty) return const SizedBox.shrink();
+    // Un score à 0 partout signale une suggestion de découverte (repli côté
+    // API) et non une vraie correspondance : on ne montre pas de pourcentage
+    // trompeur dans ce cas.
+    final hasScores = careers.any((c) => c.matchScore > 0);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            const Icon(Icons.school, color: AppColors.info),
+            const Icon(Icons.work_outline, color: AppColors.primary),
             const SizedBox(width: AppSpacing.sm),
-            Text('Filières recommandées', style: AppTypography.titleLarge),
+            Text('Métiers recommandés', style: AppTypography.titleLarge),
           ],
         ),
         const SizedBox(height: AppSpacing.xs),
         Text(
-          'Touchez une filière pour découvrir les métiers associés',
+          hasScores
+              ? 'Classés par correspondance avec ton profil'
+              : 'Des métiers porteurs à découvrir',
           style: AppTypography.bodySmall.copyWith(
             color: AppColors.textSecondary,
           ),
         ),
         const SizedBox(height: AppSpacing.md),
-        ...filieres.asMap().entries.map(
-          (e) => _buildFiliereCard(context, e.value, e.key),
+        ...careers.map(
+          (c) => Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+            child: _buildCareerListItem(context, c, showScore: hasScores),
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildFiliereCard(BuildContext context, String sector, int index) {
-    final careers = _getCareersForSector(sector);
-    final count = careers.length;
-    final isFirst = index == 0;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-      decoration: BoxDecoration(
-        color: isFirst
-            ? AppColors.primary.withValues(alpha: 0.08)
-            : AppColors.card,
-        borderRadius: BorderRadius.circular(AppSpacing.cardRadiusSmall),
-        border: Border.all(
-          color: isFirst
-              ? AppColors.primary.withValues(alpha: 0.4)
-              : AppColors.glassBorder,
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: count > 0
-              ? () => _showCareersBottomSheet(context, sector, careers)
-              : null,
-          borderRadius: BorderRadius.circular(AppSpacing.cardRadiusSmall),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-              vertical: 14,
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: isFirst
-                        ? AppColors.primary.withValues(alpha: 0.15)
-                        : AppColors.surfaceLight,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    _getIconForSector(sector),
-                    color: isFirst
-                        ? AppColors.primary
-                        : AppColors.textSecondary,
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        sector,
-                        style: AppTypography.bodyLarge.copyWith(
-                          fontWeight: isFirst
-                              ? FontWeight.w700
-                              : FontWeight.w600,
-                          color: isFirst
-                              ? AppColors.primary
-                              : AppColors.textPrimary,
-                        ),
-                      ),
-                      if (count > 0) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          '$count métier${count > 1 ? 's' : ''} disponible${count > 1 ? 's' : ''}',
-                          style: AppTypography.bodySmall.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                if (count > 0)
-                  Icon(
-                    Icons.chevron_right,
-                    color: isFirst ? AppColors.primary : AppColors.textTertiary,
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // =========================================================================
-  // BOTTOM SHEET : MÉTIERS D'UNE FILIÈRE
-  // =========================================================================
-
-  void _showCareersBottomSheet(
+  Widget _buildCareerListItem(
     BuildContext context,
-    String sector,
-    List<Career> careers,
-  ) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.65,
-        minChildSize: 0.4,
-        maxChildSize: 0.92,
-        expand: false,
-        builder: (_, scrollController) => Container(
-          decoration: BoxDecoration(
-            color: AppColors.background,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-            border: Border.all(color: AppColors.glassBorder),
-          ),
-          child: Column(
-            children: [
-              // Handle
-              const SizedBox(height: 10),
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.textTertiary.withValues(alpha: 0.35),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              // Header
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.md,
-                  AppSpacing.md,
-                  AppSpacing.xs,
-                  AppSpacing.sm,
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        _getIconForSector(sector),
-                        color: AppColors.primary,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            sector,
-                            style: AppTypography.titleMedium,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            '${careers.length} métier${careers.length > 1 ? 's' : ''} associé${careers.length > 1 ? 's' : ''}',
-                            style: AppTypography.bodySmall.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close, size: 20),
-                      onPressed: () => Navigator.pop(ctx),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1),
-
-              // Liste des métiers
-              Expanded(
-                child: ListView.separated(
-                  controller: scrollController,
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  itemCount: careers.length,
-                  separatorBuilder: (_, _) =>
-                      const SizedBox(height: AppSpacing.sm),
-                  itemBuilder: (_, i) =>
-                      _buildCareerListItem(context, careers[i]),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCareerListItem(BuildContext context, Career career) {
+    Career career, {
+    bool showScore = false,
+  }) {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.card,
@@ -530,10 +290,7 @@ class ResultsPage extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {
-            Navigator.pop(context);
-            context.push('/orientation/career', extra: career);
-          },
+          onTap: () => context.push('/orientation/career', extra: career),
           borderRadius: BorderRadius.circular(AppSpacing.cardRadiusSmall),
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.md),
@@ -543,11 +300,21 @@ class ResultsPage extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        career.name,
-                        style: AppTypography.bodyLarge.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              career.name,
+                              style: AppTypography.bodyLarge.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          if (showScore) ...[
+                            const SizedBox(width: AppSpacing.sm),
+                            _buildScoreBadge(career.matchScore),
+                          ],
+                        ],
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -561,22 +328,27 @@ class ResultsPage extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: AppSpacing.xs),
-                      Row(
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
                         children: [
-                          if (career.salaryInfo.averageMonthlyFCFA > 0) ...[
+                          if (career.sector.isNotEmpty)
+                            _buildMiniTag(
+                              career.sector,
+                              Icons.category_outlined,
+                              AppColors.primary,
+                            ),
+                          if (career.salaryInfo.averageMonthlyFCFA > 0)
                             _buildMiniTag(
                               career.salaryInfo.formattedAverage,
                               Icons.payments_outlined,
                               AppColors.success,
                             ),
-                            const SizedBox(width: 6),
-                          ],
                           _buildMiniTag(
                             career.educationPath.minimumLevel,
                             Icons.school_outlined,
                             AppColors.info,
                           ),
-                          const SizedBox(width: 6),
                           _buildMiniTag(
                             career.outlook.demandLabel,
                             Icons.trending_up,
@@ -601,6 +373,134 @@ class ResultsPage extends StatelessWidget {
     );
   }
 
+  /// Pastille du score de correspondance (0-100).
+  Widget _buildScoreBadge(double score) {
+    final value = score.clamp(0, 100).round();
+    final color = value >= 70
+        ? AppColors.success
+        : value >= 40
+            ? AppColors.info
+            : AppColors.textTertiary;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+      ),
+      child: Text(
+        '$value%',
+        style: AppTypography.labelSmall.copyWith(
+          color: color,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
+  // =========================================================================
+  // 4. DOMAINES DE FORMATION
+  // =========================================================================
+
+  Widget _buildFilieresSection(BuildContext context) {
+    final sectors = result.interpretation?.recommendedSectors ?? [];
+
+    // Repli : si l'API ne renvoie pas de domaines, les deduire des secteurs
+    // des metiers recommandes.
+    List<String> filieres;
+    if (sectors.isNotEmpty) {
+      filieres = sectors.take(6).toList();
+    } else {
+      final seen = <String>{};
+      filieres = result.recommendations
+          .map((c) => c.sector)
+          .where((s) => s.isNotEmpty && seen.add(s))
+          .take(6)
+          .toList();
+    }
+
+    if (filieres.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.school, color: AppColors.info),
+            const SizedBox(width: AppSpacing.sm),
+            Text('Domaines de formation', style: AppTypography.titleLarge),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          'Les filières d\'études qui correspondent à ton profil',
+          style: AppTypography.bodySmall.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        ...filieres.asMap().entries.map(
+              (e) => _buildFiliereCard(context, e.value, e.key),
+            ),
+      ],
+    );
+  }
+
+  Widget _buildFiliereCard(BuildContext context, String sector, int index) {
+    // Carte purement informative : les metiers ne sont plus rattaches a une
+    // filiere (voir _buildCareersSection), il n'y a donc rien a ouvrir.
+    final isFirst = index == 0;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: 14,
+      ),
+      decoration: BoxDecoration(
+        color: isFirst
+            ? AppColors.primary.withValues(alpha: 0.08)
+            : AppColors.card,
+        borderRadius: BorderRadius.circular(AppSpacing.cardRadiusSmall),
+        border: Border.all(
+          color: isFirst
+              ? AppColors.primary.withValues(alpha: 0.4)
+              : AppColors.glassBorder,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: isFirst
+                  ? AppColors.primary.withValues(alpha: 0.15)
+                  : AppColors.surfaceLight,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              _getIconForSector(sector),
+              color: isFirst ? AppColors.primary : AppColors.textSecondary,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Text(
+              sector,
+              style: AppTypography.bodyLarge.copyWith(
+                fontWeight: isFirst ? FontWeight.w700 : FontWeight.w600,
+                color: isFirst ? AppColors.primary : AppColors.textPrimary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // =========================================================================
   // 4. ACTIONS
   // =========================================================================
@@ -608,6 +508,9 @@ class ResultsPage extends StatelessWidget {
   Widget _buildActions(BuildContext context) {
     return Column(
       children: [
+        // Affiner avec les autres critères (notes, budget, projet…)
+        _buildRefineCard(context),
+        const SizedBox(height: AppSpacing.md),
         // Bouton principal : discuter avec AÏDA
         GradientButton(
           text: 'Discuter avec AÏDA',
@@ -647,6 +550,74 @@ class ResultsPage extends StatelessWidget {
           ],
         ),
       ],
+    );
+  }
+
+  /// Invite à compléter le profil pour croiser ce test avec les notes, le
+  /// budget et le projet professionnel (moteur d'orientation multi-critères).
+  Widget _buildRefineCard(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => context.push('/orientation/profile'),
+        borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.secondarySurface,
+            borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+            border: Border.all(
+              color: AppColors.secondary.withValues(alpha: 0.35),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(9),
+                decoration: BoxDecoration(
+                  color: AppColors.secondary.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: const Icon(
+                  Icons.tune_rounded,
+                  color: AppColors.secondaryDark,
+                  size: 19,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Affine tes résultats',
+                      style: AppTypography.labelLarge.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Ajoute tes notes, ton budget et ton projet pour des '
+                      'recommandations sur mesure.',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              const Icon(
+                Icons.arrow_forward_rounded,
+                color: AppColors.secondaryDark,
+                size: 18,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

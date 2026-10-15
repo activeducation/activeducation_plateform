@@ -3,7 +3,7 @@
 from uuid import UUID
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.core.logging import get_logger
 from app.core.security import get_current_admin
@@ -16,6 +16,48 @@ from app.repositories.mentor_repository import get_mentor_repository
 logger = get_logger("api.admin.mentor_applications")
 
 router = APIRouter()
+
+
+# Colonnes NOT NULL et sans valeur par defaut de la table `mentors`.
+# La table vient d'un schema.sql historique que les migrations ne declarent
+# pas : ces contraintes ne sont visibles qu'en interrogeant la base.
+MENTOR_REQUIRED_FIELDS = ("profession", "bio")
+
+
+def build_mentor_data(app: dict) -> dict:
+    """Construit la ligne `mentors` a partir d'une candidature approuvee.
+
+    Deux pieges, chacun ayant deja casse l'approbation en production :
+
+    - `profession` et `bio` sont NOT NULL sans defaut, alors que la
+      candidature ne connait que `specialty` et une bio facultative. Le filtre
+      final retirant les valeurs nulles, une bio absente disparaissait du
+      payload et l'insertion echouait ;
+    - l'identifiant du compte doit aller dans `user_id`, la colonne prevue
+      pour ce lien, et non dans `id` qui est la cle primaire.
+    """
+    specialty = app.get("specialty")
+
+    data = {
+        "full_name": app.get("full_name"),
+        "specialty": specialty,
+        "profession": specialty or "Mentor",
+        "bio": app.get("bio") or app.get("motivation") or "",
+        # La photo jointe a la candidature devient l'avatar du mentor.
+        "avatar_url": app.get("photo_url"),
+        "email": app.get("email"),
+        "phone": app.get("phone"),
+        "years_experience": app.get("years_experience"),
+        "expertise_areas": app.get("expertise_areas"),
+        "linkedin_url": app.get("linkedin_url"),
+        "is_verified": True,
+        "is_active": True,
+        "source": "application",
+    }
+    if app.get("user_id"):
+        data["user_id"] = app["user_id"]
+
+    return {k: v for k, v in data.items() if v is not None}
 
 
 def _log_audit(admin, action, entity_id, changes=None):
@@ -57,26 +99,20 @@ async def approve_application(
     if app.get("status") == "approved":
         return app  # idempotent
 
-    # Creer le mentor a partir de la candidature
-    mentor_data = {
-        "full_name": app.get("full_name"),
-        "specialty": app.get("specialty"),
-        "bio": app.get("bio"),
-        "email": app.get("email"),
-        "phone": app.get("phone"),
-        "years_experience": app.get("years_experience"),
-        "expertise_areas": app.get("expertise_areas"),
-        "linkedin_url": app.get("linkedin_url"),
-        "is_verified": True,
-        "is_active": True,
-        "source": "application",
-    }
-    # Si le candidat a un compte, lier le mentor a son profil
-    if app.get("user_id"):
-        mentor_data["id"] = app["user_id"]
-    mentor_data = {k: v for k, v in mentor_data.items() if v is not None}
+    mentor_data = build_mentor_data(app)
 
-    mentor = repo.create_mentor(mentor_data)
+    try:
+        mentor = repo.create_mentor(mentor_data)
+    except Exception as exc:
+        # La table mentors vient d'un schema.sql historique non suivi par
+        # Alembic : elle peut porter des contraintes que le code ignore. Sans
+        # ce garde-fou, l'erreur remonte en 500 opaque et il faut lire les logs
+        # du serveur pour savoir quelle colonne pose probleme.
+        logger.error("Creation du mentor echouee: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=422,
+            detail=f"Impossible de créer le mentor : {exc}",
+        ) from exc
 
     updated = repo.update_application(app_id, {
         "status": "approved",

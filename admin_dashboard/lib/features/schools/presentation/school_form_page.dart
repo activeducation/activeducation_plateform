@@ -35,7 +35,9 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
   final _websiteCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
   String _type = 'university';
-  bool _isPublic = true;
+  // null = statut inconnu. Un booleen par defaut a `true` reecrivait
+  // "publique" sur chaque ecole enregistree.
+  bool? _isPublic;
   bool _isActive = true;
 
   // Champs enrichis
@@ -104,7 +106,7 @@ class _SchoolFormPageState extends State<SchoolFormPage> {
       _studentCountCtrl.text = data['student_count']?.toString() ?? '';
 
       _type = data['type'] ?? 'university';
-      _isPublic = data['is_public'] ?? true;
+      _isPublic = data['is_public'] as bool?;
       _isActive = data['is_active'] ?? true;
       _logoUrl = data['logo_url'];
       _coverImageUrl = data['cover_image_url'];

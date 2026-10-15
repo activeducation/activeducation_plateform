@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, File, UploadFile, HTTPException
 from app.core.logging import get_logger
 from app.core.security import get_current_admin
 from app.core.exceptions import ValidationError
+from app.core import image_upload
 from app.db.supabase_client import get_supabase_client
 
 
@@ -15,32 +16,11 @@ logger = get_logger("api.admin.upload")
 
 router = APIRouter()
 
-ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp"}
-MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+# Buckets autorises. La validation des images (types, taille, octets
+# magiques) vit dans app.core.image_upload, partagee avec l'upload public des
+# photos de candidature mentor : deux definitions de "image valide" finiraient
+# par diverger.
 VALID_BUCKETS = {"schools", "careers", "tests", "announcements", "avatars", "elearning"}
-
-# Magic bytes for allowed image formats
-MAGIC_BYTES = {
-    b"\xff\xd8\xff": "image/jpeg",
-    b"\x89PNG\r\n\x1a\n": "image/png",
-    b"RIFF": "image/webp",  # WebP starts with RIFF....WEBP
-}
-
-
-def _validate_magic_bytes(content: bytes) -> str:
-    """Validate file magic bytes and return the detected MIME type."""
-    for magic, mime in MAGIC_BYTES.items():
-        if content.startswith(magic):
-            return mime
-    raise ValidationError("Le contenu du fichier ne correspond pas a un format image valide.")
-
-
-def _sanitize_extension(ext: str) -> str:
-    """Sanitize file extension: only alphanumeric, max 10 chars."""
-    ext = ext.lower().strip()
-    if not re.fullmatch(r"[a-z0-9]{1,10}", ext):
-        raise ValidationError(f"Extension de fichier invalide: {ext}")
-    return ext
 
 
 @router.post("/{bucket}")
@@ -53,36 +33,15 @@ async def upload_image(
     if bucket not in VALID_BUCKETS:
         raise ValidationError(f"Bucket invalide. Valides: {', '.join(VALID_BUCKETS)}")
 
-    if file.content_type not in ALLOWED_TYPES:
-        raise ValidationError("Format invalide. Acceptes: jpg, png, webp")
-
-    content = await file.read()
-    if len(content) > MAX_FILE_SIZE:
-        raise ValidationError("Fichier trop volumineux. Max: 5MB")
-
-    detected_type = _validate_magic_bytes(content)
-    if detected_type not in ALLOWED_TYPES:
-        raise ValidationError(f"Contenu image non autorise. Detecte: {detected_type}")
-
-    raw_ext = file.filename.rsplit(".", 1)[-1] if file.filename and "." in file.filename else "jpg"
-    ext = _sanitize_extension(raw_ext)
-    filename = f"{uuid.uuid4()}.{ext}"
-    path = f"{bucket}/{filename}"
+    content, ext = await image_upload.read_and_validate(file)
 
     try:
-        db = get_supabase_client()
-        db.client.storage.from_(bucket).upload(
-            path=filename,
-            file=content,
-            file_options={"content-type": file.content_type},
+        stored = image_upload.store(bucket, content, ext, file.content_type)
+        _log_audit(
+            admin["user_id"], "upload", "image", f"{bucket}/{stored['path']}",
+            {"bucket": bucket, "filename": stored["path"]},
         )
-
-        public_url = db.client.storage.from_(bucket).get_public_url(filename)
-
-        # Log audit
-        _log_audit(admin["user_id"], "upload", "image", path, {"bucket": bucket, "filename": filename})
-
-        return {"url": public_url, "path": filename, "bucket": bucket}
+        return stored
 
     except Exception as e:
         logger.error(f"Upload error: {e}", exc_info=True)

@@ -1,0 +1,57 @@
+@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesque:ital,wght@0,100..900;1,100..900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #2947E9;
+  --color-primary-hover: #1E37B8;
+  
+  --color-gold: #FBA700;
+  
+  --color-canvas: #F7F8FB;
+  --color-surface: #FFFFFF;
+  
+  --color-border-soft: #E3E5EC;
+  --color-error: #D23A3A;
+
+  --color-text-primary: #111827;
+  --color-text-secondary: #4B5563;
+  --color-text-tertiary: #9CA3AF;
+
+  --font-sans: "Hanken Grotesque", system-ui, sans-serif;
+
+  --radius-sm: 8px;   /* Inputs, Badges */
+  --radius-md: 12px;  /* Buttons */
+  --radius-lg: 16px;  /* Cards */
+  --radius-xl: 24px;  /* Modals */
+
+  --shadow-hover: 0 4px 12px rgba(0,0,0,0.05);
+  
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-10: 40px;
+  --spacing-12: 48px;
+  --spacing-16: 64px;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-text-primary);
+    font-family: var(--font-sans);
+    min-height: 100dvh;
+    font-size: 14px;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    text-wrap: balance;
+    font-weight: 700;
+  }
+  
+  p {
+    text-wrap: pretty;
+  }
+}

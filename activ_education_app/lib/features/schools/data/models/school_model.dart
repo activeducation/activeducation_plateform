@@ -74,7 +74,7 @@ class SchoolSummary {
   final String name;
   final String type;
   final String city;
-  final bool isPublic;
+  final bool? isPublic;
   final String? logoUrl;
   final String? description;
   final List<String> programsOffered;
@@ -89,7 +89,7 @@ class SchoolSummary {
     required this.name,
     required this.type,
     required this.city,
-    this.isPublic = true,
+    this.isPublic,
     this.logoUrl,
     this.description,
     this.programsOffered = const [],
@@ -106,7 +106,7 @@ class SchoolSummary {
       name: json['name'] as String,
       type: json['type'] as String,
       city: json['city'] as String,
-      isPublic: json['is_public'] as bool? ?? true,
+      isPublic: json['is_public'] as bool?,
       logoUrl: json['logo_url'] as String?,
       description: json['description'] as String?,
       programsOffered: (json['programs_offered'] as List<dynamic>?)
@@ -140,8 +140,13 @@ class SchoolSummary {
     }
   }
 
-  /// Badge Publique / Privee
-  String get statusLabel => isPublic ? 'Publique' : 'Privee';
+  /// Badge Publique / Privee, ou `null` quand le statut est inconnu.
+  ///
+  /// La colonne `is_public` n'a jamais ete renseignee par l'import : la
+  /// remplacer par `true` faisait passer des ecoles privees pour publiques.
+  /// Sans information, on n'affiche pas de badge.
+  String? get statusLabel =>
+      isPublic == null ? null : (isPublic! ? 'Publique' : 'Privee');
 }
 
 /// Modele detail complet d'une ecole
@@ -156,7 +161,7 @@ class SchoolDetail {
   final String? website;
   final String? description;
   final List<String> programsOffered;
-  final bool isPublic;
+  final bool? isPublic;
   final String? logoUrl;
   final String? coverImageUrl;
   final String? tuitionRange;
@@ -178,7 +183,7 @@ class SchoolDetail {
     this.website,
     this.description,
     this.programsOffered = const [],
-    this.isPublic = true,
+    this.isPublic,
     this.logoUrl,
     this.coverImageUrl,
     this.tuitionRange,
@@ -205,7 +210,7 @@ class SchoolDetail {
               ?.map((e) => e as String)
               .toList() ??
           [],
-      isPublic: json['is_public'] as bool? ?? true,
+      isPublic: json['is_public'] as bool?,
       logoUrl: json['logo_url'] as String?,
       coverImageUrl: json['cover_image_url'] as String?,
       tuitionRange: json['tuition_range'] as String?,
@@ -243,5 +248,7 @@ class SchoolDetail {
     }
   }
 
-  String get statusLabel => isPublic ? 'Publique' : 'Privee';
+  /// Voir [SchoolSummary.statusLabel] : `null` quand le statut est inconnu.
+  String? get statusLabel =>
+      isPublic == null ? null : (isPublic! ? 'Publique' : 'Privee');
 }

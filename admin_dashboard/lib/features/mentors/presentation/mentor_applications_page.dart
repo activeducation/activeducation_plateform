@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
@@ -61,8 +62,33 @@ class _MentorApplicationsPageState extends State<MentorApplicationsPage> {
       }
       _load();
     } catch (e) {
-      if (mounted) AdminSnackbar.error(context, 'Action impossible');
+      if (mounted) AdminSnackbar.error(context, _errorMessage(e));
     }
+  }
+
+  /// Remonte la raison renvoyee par l'API plutot qu'un message generique.
+  ///
+  /// Un simple "Action impossible" masquait la cause reelle : il a fallu lire
+  /// le code du backend pour decouvrir que l'insertion echouait sur des
+  /// colonnes absentes. Afficher le message du serveur rend le probleme
+  /// diagnosticable depuis le back-office.
+  String _errorMessage(Object error) {
+    if (error is DioException) {
+      if (error.type == DioExceptionType.connectionError ||
+          error.type == DioExceptionType.connectionTimeout) {
+        return 'Serveur injoignable. Vérifiez votre connexion.';
+      }
+      final data = error.response?.data;
+      if (data is Map) {
+        final reason = data['message'] ?? data['detail'] ?? data['error'];
+        if (reason is String && reason.trim().isNotEmpty) {
+          return reason;
+        }
+      }
+      final code = error.response?.statusCode;
+      if (code != null) return 'Action impossible (erreur $code).';
+    }
+    return 'Action impossible.';
   }
 
   @override
@@ -174,13 +200,24 @@ class _AppCard extends StatelessWidget {
         children: [
           Row(
             children: [
+              // Photo jointe par le candidat, sinon son initiale.
               CircleAvatar(
+                radius: 22,
                 backgroundColor: AppColors.primary.withValues(alpha: 0.12),
-                child: Text(
-                  (app['full_name'] as String? ?? '?').characters.first.toUpperCase(),
-                  style: AppTypography.body.copyWith(
-                      color: AppColors.primary, fontWeight: FontWeight.bold),
-                ),
+                backgroundImage: (app['photo_url'] as String?)?.isNotEmpty == true
+                    ? NetworkImage(app['photo_url'] as String)
+                    : null,
+                child: (app['photo_url'] as String?)?.isNotEmpty == true
+                    ? null
+                    : Text(
+                        (app['full_name'] as String? ?? '?')
+                            .characters
+                            .first
+                            .toUpperCase(),
+                        style: AppTypography.body.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold),
+                      ),
               ),
               const SizedBox(width: 12),
               Expanded(

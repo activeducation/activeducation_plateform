@@ -8,11 +8,17 @@ class SchoolRepository {
 
   SchoolRepository(this._dio);
 
-  /// Liste paginee des ecoles avec filtres optionnels
+  /// Liste paginee des ecoles avec filtres optionnels.
+  ///
+  /// [accreditedOnly] restreint aux etablissements agreees par l'Etat.
+  /// Laisse a null, le backend applique son reglage par defaut
+  /// (SCHOOLS_ACCREDITED_ONLY, actuellement actif) ; passer `false` pour
+  /// obtenir aussi les etablissements hors liste ministerielle.
   Future<SchoolListResponse> getSchools({
     String? search,
     String? city,
     String? type,
+    bool? accreditedOnly,
     int page = 1,
     int perPage = 20,
   }) async {
@@ -23,6 +29,7 @@ class SchoolRepository {
     if (search != null && search.isNotEmpty) queryParams['search'] = search;
     if (city != null && city.isNotEmpty) queryParams['city'] = city;
     if (type != null && type.isNotEmpty) queryParams['type'] = type;
+    if (accreditedOnly != null) queryParams['accredited_only'] = accreditedOnly;
 
     final response = await _dio.get(
       ApiEndpoints.schools,

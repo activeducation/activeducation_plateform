@@ -49,29 +49,36 @@ class ChatInitial extends ChatState {}
 class ChatReady extends ChatState {
   final List<ChatMessage> messages;
   final bool isLoading;
+
+  /// True pendant qu'une réponse arrive en flux (SSE) : la dernière bulle
+  /// assistant grandit en direct et l'indicateur de frappe est masqué.
+  final bool isStreaming;
   final String? error;
 
   const ChatReady({
     this.messages = const [],
     this.isLoading = false,
+    this.isStreaming = false,
     this.error,
   });
 
   ChatReady copyWith({
     List<ChatMessage>? messages,
     bool? isLoading,
+    bool? isStreaming,
     String? error,
     bool clearError = false,
   }) {
     return ChatReady(
       messages: messages ?? this.messages,
       isLoading: isLoading ?? this.isLoading,
+      isStreaming: isStreaming ?? this.isStreaming,
       error: clearError ? null : (error ?? this.error),
     );
   }
 
   @override
-  List<Object?> get props => [messages, isLoading, error];
+  List<Object?> get props => [messages, isLoading, isStreaming, error];
 }
 
 // ===========================================================================
@@ -86,7 +93,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   /// Nombre max de messages envoyés au backend pour le seeding.
   static const int _maxBackendHistory = 8;
 
-  late String _sessionId;
+  // Valeur par défaut pour éviter tout LateInitializationError si un message
+  // est envoyé avant LoadChatHistory ; écrasée dès le chargement de l'historique.
+  String _sessionId = const Uuid().v4();
   String? _userId;
 
   ChatBloc(this._repository, this._localStorage, {this.orientationContext})
@@ -144,51 +153,117 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     // Ajouter le message utilisateur immédiatement
     final userMsg = ChatMessageModel.fromUser(event.message);
     final messagesWithUser = [...current.messages, userMsg];
+    final history = _buildBackendHistory(messagesWithUser);
 
     emit(
       current.copyWith(
         messages: messagesWithUser,
         isLoading: true,
+        isStreaming: false,
         clearError: true,
       ),
     );
 
+    // Chemin principal : streaming SSE (premier token < 500 ms).
+    final assistantId = const Uuid().v4();
+    final buffer = StringBuffer();
+
+    try {
+      await for (final chunk in _repository.streamMessage(
+        message: event.message,
+        sessionId: _sessionId,
+        orientationContext: orientationContext,
+        history: history,
+      )) {
+        buffer.write(chunk);
+        final streamingMsg = ChatMessageModel(
+          id: assistantId,
+          content: buffer.toString(),
+          role: MessageRole.assistant,
+          timestamp: DateTime.now(),
+        );
+        emit(
+          ChatReady(
+            messages: [...messagesWithUser, streamingMsg],
+            isLoading: true,
+            isStreaming: true,
+          ),
+        );
+      }
+
+      if (buffer.isEmpty) {
+        // Aucun fragment reçu (SSE bufferisé par un proxy, non supporté web…)
+        await _sendViaFallback(event, messagesWithUser, history, emit);
+        return;
+      }
+
+      await _finalizeAssistant(assistantId, buffer.toString(), messagesWithUser, emit);
+    } catch (e) {
+      if (buffer.isNotEmpty) {
+        // On garde le texte déjà streamé plutôt que de tout perdre.
+        await _finalizeAssistant(assistantId, buffer.toString(), messagesWithUser, emit);
+        return;
+      }
+      // Rien reçu → repli sur le mode JSON non-streaming.
+      await _sendViaFallback(event, messagesWithUser, history, emit);
+    }
+  }
+
+  /// Finalise la bulle assistant (fin du stream) et persiste l'échange.
+  Future<void> _finalizeAssistant(
+    String assistantId,
+    String content,
+    List<ChatMessage> messagesWithUser,
+    Emitter<ChatState> emit,
+  ) async {
+    final finalMessages = [
+      ...messagesWithUser,
+      ChatMessageModel(
+        id: assistantId,
+        content: content,
+        role: MessageRole.assistant,
+        timestamp: DateTime.now(),
+      ),
+    ];
+    emit(ChatReady(messages: finalMessages, isLoading: false, isStreaming: false));
+    await _persist(finalMessages);
+  }
+
+  /// Repli non-streaming (POST /message) si le SSE échoue avant tout fragment.
+  Future<void> _sendViaFallback(
+    SendMessage event,
+    List<ChatMessage> messagesWithUser,
+    List<Map<String, String>>? history,
+    Emitter<ChatState> emit,
+  ) async {
     try {
       final reply = await _repository.sendMessage(
         message: event.message,
         sessionId: _sessionId,
         orientationContext: orientationContext,
-        history: _buildBackendHistory(messagesWithUser),
+        history: history,
       );
-
-      final updated = state is ChatReady
-          ? state as ChatReady
-          : const ChatReady();
-      final allMessages = [...updated.messages, reply];
-
-      emit(updated.copyWith(messages: allMessages, isLoading: false));
-
-      // Persister après chaque échange
-      if (_userId != null) {
-        final models = allMessages.whereType<ChatMessageModel>().toList();
-        await _localStorage.saveMessages(_userId!, models);
-      }
-    } catch (e) {
-      final updated = state is ChatReady
-          ? state as ChatReady
-          : const ChatReady();
+      final allMessages = [...messagesWithUser, reply];
+      emit(ChatReady(messages: allMessages, isLoading: false, isStreaming: false));
+      await _persist(allMessages);
+    } catch (_) {
       emit(
-        updated.copyWith(
+        ChatReady(
+          messages: messagesWithUser,
           isLoading: false,
+          isStreaming: false,
           error: 'Impossible de contacter AÏDA. Vérifiez votre connexion.',
         ),
       );
+      await _persist(messagesWithUser);
+    }
+  }
 
-      // Sauvegarder quand même le message utilisateur
-      if (_userId != null) {
-        final models = messagesWithUser.whereType<ChatMessageModel>().toList();
-        await _localStorage.saveMessages(_userId!, models);
-      }
+  /// Persiste les messages en local (après chaque échange).
+  Future<void> _persist(List<ChatMessage> messages) async {
+    if (_userId != null) {
+      final models = messages.whereType<ChatMessageModel>().toList();
+      await _localStorage.saveMessages(_userId!, models);
     }
   }
 

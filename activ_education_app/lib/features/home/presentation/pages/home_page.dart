@@ -15,6 +15,7 @@ import '../widgets/hero_header.dart';
 import '../widgets/announcements_section.dart';
 import '../widgets/orientation_cta.dart';
 import '../widgets/aida_card.dart';
+import '../widgets/smart_actions_row.dart';
 import '../widgets/tests_section.dart';
 import '../widgets/elearning_section.dart';
 import '../widgets/schools_section.dart';
@@ -128,6 +129,23 @@ class _HomePageState extends State<HomePage> {
               ),
               child: AidaCard(
                 onTap: () => context.push('/chat', extra: const ChatPageArgs()),
+              ),
+            ),
+          ),
+
+          // ── Accès rapides : recommandations & tuteur ──
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.pagePaddingHorizontal,
+                16,
+                AppSpacing.pagePaddingHorizontal,
+                0,
+              ),
+              child: SmartActionsRow(
+                onRecommendations: () =>
+                    context.push('/orientation/recommendations'),
+                onTutor: () => context.push('/tutor'),
               ),
             ),
           ),

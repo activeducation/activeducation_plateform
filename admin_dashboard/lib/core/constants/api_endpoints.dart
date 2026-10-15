@@ -124,4 +124,12 @@ class ApiEndpoints {
 
   // Partner
   static String adminApproveOrg(String id) => '/admin/partner/organizations/$id/approve';
+
+  // Donnees d'orientation (moteur multi-criteres)
+  static const String adminOrientationCareers = '/admin/orientation-data/careers';
+  static const String adminOrientationPrograms = '/admin/orientation-data/programs';
+  static String adminOrientationCareer(String id) =>
+      '/admin/orientation-data/careers/$id';
+  static String adminOrientationProgram(String id) =>
+      '/admin/orientation-data/programs/$id';
 }

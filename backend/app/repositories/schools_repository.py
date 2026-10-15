@@ -6,6 +6,7 @@ from uuid import UUID
 from functools import lru_cache
 
 from app.db.supabase_client import get_supabase_client, SupabaseClient
+from app.core.config import get_settings
 from app.core.logging import get_logger
 from app.core.exceptions import NotFoundError
 from app.schemas.schools import (
@@ -30,6 +31,7 @@ class SchoolsPublicRepository:
         search: Optional[str] = None,
         city: Optional[str] = None,
         school_type: Optional[str] = None,
+        accredited_only: Optional[bool] = None,
     ) -> SchoolListPublicResponse:
         offset = (page - 1) * per_page
 
@@ -37,6 +39,16 @@ class SchoolsPublicRepository:
 
         # Filtre : uniquement les ecoles actives
         query = query.eq("is_active", True)
+
+        # Agrement MESR. None => defaut de configuration ; False => aucune
+        # restriction (on renvoie agreees et non agreees).
+        settings = get_settings()
+        if accredited_only is None:
+            accredited_only = settings.SCHOOLS_ACCREDITED_ONLY
+        if accredited_only:
+            query = query.contains(
+                "accreditations", [settings.SCHOOLS_ACCREDITATION_LABEL]
+            )
 
         if city:
             query = query.eq("city", city)
@@ -76,7 +88,7 @@ class SchoolsPublicRepository:
                 name=s["name"],
                 type=s["type"],
                 city=s["city"],
-                is_public=s.get("is_public", True),
+                is_public=s.get("is_public"),
                 logo_url=s.get("logo_url"),
                 description=s.get("description"),
                 programs_offered=s.get("programs_offered", []),
@@ -132,7 +144,7 @@ class SchoolsPublicRepository:
             website=school.get("website"),
             description=school.get("description"),
             programs_offered=school.get("programs_offered", []),
-            is_public=school.get("is_public", True),
+            is_public=school.get("is_public"),
             logo_url=school.get("logo_url"),
             cover_image_url=school.get("cover_image_url"),
             tuition_range=school.get("tuition_range"),

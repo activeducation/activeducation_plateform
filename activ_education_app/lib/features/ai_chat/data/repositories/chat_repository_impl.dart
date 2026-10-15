@@ -23,6 +23,21 @@ class ChatRepositoryImpl implements ChatRepository {
   }
 
   @override
+  Stream<String> streamMessage({
+    required String message,
+    required String sessionId,
+    Map<String, dynamic>? orientationContext,
+    List<Map<String, String>>? history,
+  }) {
+    return _datasource.streamMessage(
+      message: message,
+      sessionId: sessionId,
+      orientationContext: orientationContext,
+      history: history,
+    );
+  }
+
+  @override
   Future<void> clearSession(String sessionId) async {
     return _datasource.clearSession(sessionId);
   }

@@ -25,7 +25,10 @@ class SchoolPublicSummary(BaseModel):
     name: str
     type: str
     city: str
-    is_public: bool = True
+    # None = statut inconnu. La colonne n'a jamais ete renseignee par
+    # l'import : y repondre `true` par defaut affichait "Publique" sur des
+    # etablissements prives. Mieux vaut ne rien affirmer.
+    is_public: Optional[bool] = None
     logo_url: Optional[str] = None
     description: Optional[str] = None
     programs_offered: list[str] = []
@@ -47,7 +50,10 @@ class SchoolPublicDetail(BaseModel):
     website: Optional[str] = None
     description: Optional[str] = None
     programs_offered: list[str] = []
-    is_public: bool = True
+    # None = statut inconnu. La colonne n'a jamais ete renseignee par
+    # l'import : y repondre `true` par defaut affichait "Publique" sur des
+    # etablissements prives. Mieux vaut ne rien affirmer.
+    is_public: Optional[bool] = None
     logo_url: Optional[str] = None
     cover_image_url: Optional[str] = None
     tuition_range: Optional[str] = None

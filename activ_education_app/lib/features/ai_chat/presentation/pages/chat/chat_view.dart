@@ -184,11 +184,15 @@ class _ChatViewState extends State<_ChatView> {
     final showSuggestions =
         state.messages.length == 1 && !state.isLoading;
 
+    // L'indicateur de frappe n'est montré qu'avant le premier fragment
+    // streamé ; une fois le flux démarré, la bulle assistant grandit seule.
+    final showTyping = state.isLoading && !state.isStreaming;
+
     return ListView.builder(
       controller: _scrollController,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       itemCount: state.messages.length +
-          (state.isLoading ? 1 : 0) +
+          (showTyping ? 1 : 0) +
           (showSuggestions ? 1 : 0),
       itemBuilder: (context, index) {
         // Suggestions rapides sous le premier message AÏDA
@@ -198,14 +202,17 @@ class _ChatViewState extends State<_ChatView> {
 
         final msgIndex = showSuggestions && index > 1 ? index - 1 : index;
 
-        if (state.isLoading && msgIndex == state.messages.length) {
+        if (showTyping && msgIndex == state.messages.length) {
           return _TypingIndicator();
         }
 
         if (msgIndex >= state.messages.length) return const SizedBox.shrink();
 
         final message = state.messages[msgIndex];
-        return _MessageBubble(message: message);
+        final isStreamingMsg = state.isStreaming &&
+            message.isAssistant &&
+            msgIndex == state.messages.length - 1;
+        return _MessageBubble(message: message, isStreaming: isStreamingMsg);
       },
     );
   }

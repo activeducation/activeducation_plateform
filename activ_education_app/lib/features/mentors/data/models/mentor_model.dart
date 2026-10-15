@@ -35,12 +35,27 @@ class MentorModel {
       yearsExperience: json['years_experience'],
       isVerified: json['is_verified'] ?? false,
       hourlyRate: json['hourly_rate'],
-      availableSlots: json['available_slots'] != null
-          ? List<String>.from(json['available_slots'])
-          : null,
+      availableSlots: _parseAvailableSlots(json['available_slots']),
       location: json['location'],
       linkedinUrl: json['linkedin_url'],
     );
+  }
+
+  /// Lit `available_slots` sans supposer qu'il s'agit d'une liste.
+  ///
+  /// En base, `mentors.available_slots` est un ENTIER (nombre de places
+  /// restantes, defaut 3) et non une liste de creneaux — ceux-ci vivent dans
+  /// la table `mentor_availability`. L'ancienne conversion
+  /// `List<String>.from(3)` levait un NoSuchMethodError qui faisait echouer
+  /// toute la page Mentors des qu'un mentor etait visible.
+  ///
+  /// On accepte donc une liste si le backend en fournit une un jour, et on
+  /// ignore proprement toute autre forme.
+  static List<String>? _parseAvailableSlots(dynamic value) {
+    if (value is List) {
+      return value.map((slot) => slot.toString()).toList();
+    }
+    return null;
   }
 
   Map<String, dynamic> toJson() => {

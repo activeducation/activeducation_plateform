@@ -69,6 +69,8 @@ class ApiEndpoints {
   static String submitSession(String id) => '$sessions/$id/submit';
   static String sessionResults(String id) => '$sessions/$id/results';
   static const String recommendations = '$orientation/recommendations';
+  static const String orientationProfile = '$orientation/profile';
+  static const String orientationMultiFactor = '$orientation/recommendations/multi-factor';
 
   // ============================================
   // CARRIERES
@@ -84,8 +86,19 @@ class ApiEndpoints {
   static String mentorReviews(String id) => '$mentors/$id/reviews';
   static String requestMentor(String id) => '$mentors/$id/request';
   static const String mentorApply = '$mentors/apply';
+  /// Depot de la photo de profil d'un candidat mentor.
+  /// Renvoie {url, path, bucket} ; l'URL est ensuite envoyee dans
+  /// le champ photo_url de la candidature.
+  static const String mentorApplyPhoto = '$mentors/apply/photo';
   static const String mentorRelationships = '$apiV1/mentor-relationships';
   static String relationshipById(String id) => '$mentorRelationships/$id';
+  /// Seances d'une relation : POST pour proposer, PATCH pour confirmer.
+  static String relationshipSessions(String id) =>
+      '${relationshipById(id)}/sessions';
+  static String relationshipSessionById(String relId, String sessionId) =>
+      '${relationshipSessions(relId)}/$sessionId';
+  /// Mentors classes selon le profil d'orientation de l'eleve.
+  static const String mentorSuggestions = '$apiV1/mentorship/suggestions';
   static const String mentorList = '$apiV1/mentors';
 
   // ============================================
@@ -112,7 +125,18 @@ class ApiEndpoints {
   // ============================================
   static const String chat = '$apiV1/chat';
   static const String chatMessage = '$chat/message';
+  static const String chatMessageStream = '$chat/message/stream';
   static String chatSession(String sessionId) => '$chat/session/$sessionId';
+
+  // ============================================
+  // TUTOR IA — quiz, maîtrise (BKT), recommandation
+  // ============================================
+  static const String tutor = '$apiV1/tutor';
+  static const String tutorQuizGenerate = '$tutor/quiz/generate';
+  static const String tutorQuizSubmit = '$tutor/quiz/submit';
+  static const String tutorMastery = '$tutor/mastery';
+  static const String tutorNextStep = '$tutor/next-step';
+  static String tutorSkillAnswer(String skillId) => '$tutor/skills/$skillId/answer';
 
   // ============================================
   // E-LEARNING

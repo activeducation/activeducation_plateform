@@ -21,11 +21,15 @@ import '../features/orientation/domain/entities/test_result.dart';
 import '../features/orientation/domain/entities/career.dart';
 import '../features/profile/presentation/pages/profile_page.dart';
 import '../features/ai_chat/presentation/pages/chat_page.dart';
+import '../features/tutor/presentation/pages/tutor_page.dart';
+import '../features/orientation_match/presentation/pages/orientation_profile_page.dart';
+import '../features/orientation_match/presentation/pages/orientation_recommendations_page.dart';
 import '../features/elearning/presentation/pages/elearning_catalog_page.dart';
 import '../features/elearning/presentation/pages/course_detail_page.dart';
 import '../features/elearning/presentation/pages/lesson_page.dart';
 import '../features/elearning/presentation/pages/course_exam_page.dart';
 import '../features/mentors/presentation/pages/mentors_page.dart';
+import '../features/mentors/presentation/pages/mentorship_page.dart';
 import '../features/search/presentation/search_page.dart';
 import '../features/partner/presentation/pages/create_organization_page.dart';
 import '../features/partner/presentation/pages/organization_dashboard_page.dart';
@@ -239,9 +243,34 @@ class AppRouter {
         },
       ),
       GoRoute(
+        path: '/tutor',
+        builder: (BuildContext context, GoRouterState state) {
+          return _responsive(const TutorPage(), maxWidth: 640);
+        },
+      ),
+      GoRoute(
+        path: '/orientation/profile',
+        builder: (BuildContext context, GoRouterState state) {
+          return _responsive(const OrientationProfilePage(), maxWidth: 640);
+        },
+      ),
+      GoRoute(
+        path: '/orientation/recommendations',
+        builder: (BuildContext context, GoRouterState state) {
+          return _responsive(const OrientationRecommendationsPage(), maxWidth: 720);
+        },
+      ),
+      GoRoute(
         path: '/mentors/apply',
         builder: (BuildContext context, GoRouterState state) =>
             _responsive(const BecomeMentorPage(), maxWidth: 560),
+      ),
+      // Espace mentorat de l'eleve. Hors du shell a onglets : on y arrive
+      // depuis l'annuaire des mentors, et il demande une session ouverte.
+      GoRoute(
+        path: '/mentorship',
+        builder: (BuildContext context, GoRouterState state) =>
+            _responsive(const MentorshipPage(), maxWidth: 720),
       ),
     ],
   );
