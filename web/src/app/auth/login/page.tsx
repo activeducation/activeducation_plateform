@@ -98,7 +98,7 @@ export default function LoginPage() {
             <div className="flex flex-col gap-1">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold text-text-primary">Mot de passe</label>
-                <a href="#" className="text-xs text-primary hover:underline font-medium">
+                <a href="/auth/forgot-password" className="text-xs text-primary hover:underline font-medium">
                   Mot de passe oublié ?
                 </a>
               </div>

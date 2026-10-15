@@ -36,7 +36,7 @@ export default function OrientationPage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   // États pour l'étape d'authentification (auth_gate)
-  const [authTab, setAuthTab] = useState<'register' | 'login'>('register');
+  const [authTab, setAuthTab] = useState<'register' | 'login' | 'forgot'>('register');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -259,6 +259,45 @@ export default function OrientationPage() {
     } catch (err: unknown) {
       console.error('Erreur connexion:', err);
       setAuthError("Impossible de vous connecter. Veuillez vérifier vos identifiants.");
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  // Traitement de la demande de réinitialisation de mot de passe
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthLoading(true);
+    setAuthError(null);
+    setAuthSuccessMessage(null);
+
+    if (!email.trim()) {
+      setAuthError("Veuillez renseigner votre adresse e-mail.");
+      setAuthLoading(false);
+      return;
+    }
+
+    try {
+      const supabase = createClient();
+      const redirectUrl = `${window.location.origin}/auth/reset-password`;
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: redirectUrl,
+      });
+
+      if (resetError) {
+        throw resetError;
+      }
+
+      setAuthSuccessMessage(
+        `Un lien de réinitialisation a été envoyé à ${email.trim()}. Vérifiez votre boîte de réception pour définir votre nouveau mot de passe.`
+      );
+    } catch (err: unknown) {
+      console.error("Erreur reset password:", err);
+      setAuthError(
+        err instanceof Error
+          ? err.message
+          : "Impossible d'envoyer l'e-mail de réinitialisation. Veuillez réessayer."
+      );
     } finally {
       setAuthLoading(false);
     }
@@ -575,7 +614,57 @@ export default function OrientationPage() {
                       </div>
                     )}
 
-                    {authTab === 'register' ? (
+                    {authTab === 'forgot' ? (
+                      <form onSubmit={handleForgotPassword} className="flex flex-col gap-4">
+                        <div className="mb-2">
+                          <h3 className="font-bold text-base text-text-primary">Récupération de mot de passe</h3>
+                          <p className="text-xs text-text-secondary mt-1">
+                            Saisissez votre e-mail pour recevoir un lien de réinitialisation sans perdre vos réponses au test.
+                          </p>
+                        </div>
+
+                        <Input
+                          label="Adresse Email"
+                          type="email"
+                          required
+                          placeholder="votre.email@exemple.com"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          disabled={authLoading}
+                        />
+
+                        <Button
+                          type="submit"
+                          variant="primary"
+                          size="lg"
+                          disabled={authLoading}
+                          className="w-full mt-2 flex items-center justify-center gap-2 h-12 shadow-sm"
+                        >
+                          {authLoading ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <span>Envoi en cours...</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>Envoyer le lien de réinitialisation</span>
+                              <ArrowRight className="w-4 h-4" />
+                            </>
+                          )}
+                        </Button>
+
+                        <div className="pt-4 border-t border-border-soft text-center text-xs text-text-secondary">
+                          Vous vous souvenez de votre mot de passe ?{' '}
+                          <button
+                            type="button"
+                            onClick={() => { setAuthTab('login'); setAuthError(null); setAuthSuccessMessage(null); }}
+                            className="text-primary font-bold hover:underline"
+                          >
+                            Retour à la connexion
+                          </button>
+                        </div>
+                      </form>
+                    ) : authTab === 'register' ? (
                       <form onSubmit={handleRegister} className="flex flex-col gap-4">
                         <Input
                           label="Nom complet"
@@ -655,15 +744,26 @@ export default function OrientationPage() {
                           disabled={authLoading}
                         />
 
-                        <Input
-                          label="Mot de passe"
-                          type="password"
-                          required
-                          placeholder="••••••••"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          disabled={authLoading}
-                        />
+                        <div className="flex flex-col gap-1">
+                          <Input
+                            label="Mot de passe"
+                            type="password"
+                            required
+                            placeholder="••••••••"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            disabled={authLoading}
+                          />
+                          <div className="flex justify-end mt-1">
+                            <button
+                              type="button"
+                              onClick={() => { setAuthTab('forgot'); setAuthError(null); setAuthSuccessMessage(null); }}
+                              className="text-xs text-primary hover:underline font-medium"
+                            >
+                              Mot de passe oublié ?
+                            </button>
+                          </div>
+                        </div>
 
                         <Button
                           type="submit"
