@@ -357,12 +357,12 @@ export default function HomePage() {
 
       {/* FOOTER */}
       <footer className="mt-20 border-t border-border-soft bg-surface pt-16 pb-8 px-[clamp(1.5rem,5vw,3.5rem)] text-sm text-text-secondary relative z-10">
-        <div className="max-w-[1400px] mx-auto">
+        <div className="max-w-6xl mx-auto">
           {/* Main Footer Content */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-8 mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-10 mb-12">
             
             {/* Brand Column */}
-            <div className="md:col-span-12 lg:col-span-5 flex flex-col gap-6 text-left">
+            <div className="md:col-span-2 lg:col-span-4 flex flex-col gap-5 text-left">
               <a href="/" className="flex items-center gap-4 group w-fit">
                 <img 
                   src="/logo.jpg" 
@@ -381,7 +381,7 @@ export default function HomePage() {
               <p className="text-text-secondary leading-relaxed max-w-sm">
                 La première plateforme panafricaine d'orientation basée sur l'intelligence artificielle. Découvrez votre potentiel, trouvez votre voie et intégrez les meilleures écoles.
               </p>
-              <div className="flex items-center gap-4 mt-2">
+              <div className="flex items-center gap-4 mt-1">
                 <a href="#" className="w-10 h-10 rounded-full bg-surface-alt border border-border-soft flex items-center justify-center text-text-secondary hover:text-primary hover:border-primary/50 transition-colors">
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.891h-2.33v6.988C18.343 21.128 22 16.991 22 12z" /></svg>
                 </a>
@@ -395,29 +395,28 @@ export default function HomePage() {
             </div>
 
             {/* Links Columns */}
-            <div className="md:col-span-4 lg:col-span-2 flex flex-col gap-4">
-              <h4 className="font-bold text-text-primary mb-2 text-base">La Plateforme</h4>
+            <div className="flex flex-col gap-3 lg:col-span-3">
+              <h4 className="font-bold text-text-primary mb-1 text-base">La Plateforme</h4>
               <a href="#" className="hover:text-primary transition-colors py-1">Accueil</a>
               <a href="/orientation" className="hover:text-primary transition-colors py-1">Test d'Orientation IA</a>
               <a href="#" className="hover:text-primary transition-colors py-1">Nos Écoles Partenaires</a>
               <a href="#" className="hover:text-primary transition-colors py-1">Catalogue de Formations</a>
             </div>
 
-            <div className="md:col-span-4 lg:col-span-2 flex flex-col gap-4">
-              <h4 className="font-bold text-text-primary mb-2 text-base">ActivEducation</h4>
+            <div className="flex flex-col gap-3 lg:col-span-2">
+              <h4 className="font-bold text-text-primary mb-1 text-base">ActivEducation</h4>
               <a href="#" className="hover:text-primary transition-colors py-1">À Propos</a>
               <a href="#" className="hover:text-primary transition-colors py-1">Nos Interventions</a>
               <a href="#" className="hover:text-primary transition-colors py-1">Équipe & Experts</a>
               <a href="#" className="hover:text-primary transition-colors py-1">Contactez-nous</a>
             </div>
 
-            <div className="md:col-span-4 lg:col-span-3 flex flex-col gap-4">
-              <h4 className="font-bold text-text-primary mb-2 text-base">Contact</h4>
+            <div className="flex flex-col gap-3 lg:col-span-3">
+              <h4 className="font-bold text-text-primary mb-1 text-base">Contact</h4>
               <p className="text-sm">Lomé, Togo</p>
-              <a href="mailto:contact@activeducation.tg" className="text-primary hover:underline font-medium">
-                contact@activeducation.tg
+              <a href="mailto:activedutg@gmail.com" className="text-primary hover:underline font-medium">
+                activedutg@gmail.com
               </a>
-              <p className="text-sm mt-2">Du Lundi au Vendredi<br/>08:00 - 18:00</p>
             </div>
             
           </div>
