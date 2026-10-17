@@ -769,21 +769,35 @@ export default function AdminExplorerClient({
                       className="border-b border-border-soft hover:bg-surface-alt/50 transition-colors"
                     >
                       <td className="p-4">
-                        <div className="flex flex-col">
-                          <span className="font-bold text-sm text-text-primary">{title}</span>
-                          {activeTab === "schools" && item.city && (
-                            <span className="text-xs text-text-secondary">{item.type || "Établissement"} • {item.city}</span>
+                        <div className="flex items-center gap-3">
+                          {item.bannerImage ? (
+                            <img 
+                              src={item.bannerImage} 
+                              alt={title} 
+                              className="w-12 h-10 rounded-lg object-cover border border-border-soft shrink-0 bg-surface-alt"
+                              onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                            />
+                          ) : (
+                            <div className="w-12 h-10 rounded-lg bg-surface-alt border border-border-soft flex items-center justify-center shrink-0 text-text-tertiary">
+                              <Building2 className="w-4 h-4" />
+                            </div>
                           )}
-                          {activeTab === "programs" && (
-                            <span className="text-xs text-text-secondary">
-                              {schools.find(s => s.id === item.schoolId)?.name || "École"} • {domains.find(d => d.id === item.domainId)?.title || "Domaine"}
-                            </span>
-                          )}
-                          {activeTab === "careers" && (
-                            <span className="text-xs text-text-secondary">
-                              {domains.find(d => d.id === item.domainId)?.title || "Domaine"}
-                            </span>
-                          )}
+                          <div className="flex flex-col min-w-0">
+                            <span className="font-bold text-sm text-text-primary truncate">{title}</span>
+                            {activeTab === "schools" && item.city && (
+                              <span className="text-xs text-text-secondary">{item.type || "Établissement"} • {item.city}</span>
+                            )}
+                            {activeTab === "programs" && (
+                              <span className="text-xs text-text-secondary">
+                                {schools.find(s => s.id === item.schoolId)?.name || "École"} • {domains.find(d => d.id === item.domainId)?.title || "Domaine"}
+                              </span>
+                            )}
+                            {activeTab === "careers" && (
+                              <span className="text-xs text-text-secondary">
+                                {domains.find(d => d.id === item.domainId)?.title || "Domaine"}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </td>
 
