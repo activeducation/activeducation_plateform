@@ -20,6 +20,7 @@ import {
   Check
 } from "lucide-react";
 import { Input } from "@/components/ui/Input";
+import { ImageUpload } from "@/components/ui/ImageUpload";
 
 export default function AdminExplorerClient({
   initialDomains,
@@ -287,12 +288,14 @@ export default function AdminExplorerClient({
               onChange={(e) => setFormData({...formData, salary: e.target.value})} 
               placeholder="350 000 - 800 000 FCFA"
             />
-            <Input 
-              label="Image Bannière (URL)" 
-              value={formData.bannerImage || ""} 
-              onChange={(e) => setFormData({...formData, bannerImage: e.target.value})} 
-              placeholder="https://..."
-            />
+            <div className="md:col-span-2">
+              <ImageUpload 
+                label="Image Bannière du domaine" 
+                value={formData.bannerImage || ""} 
+                onChange={(url) => setFormData({...formData, bannerImage: url})} 
+                bucket="domains"
+              />
+            </div>
           </div>
 
           <div className="flex flex-col gap-1">
@@ -380,18 +383,22 @@ export default function AdminExplorerClient({
               onChange={(e) => setFormData({...formData, rating: e.target.value})} 
               placeholder="ex: 4.6"
             />
-            <Input 
-              label="Image Bannière / Logo (URL)" 
-              value={formData.bannerImage || ""} 
-              onChange={(e) => setFormData({...formData, bannerImage: e.target.value})} 
-              placeholder="https://..."
-            />
-            <Input 
-              label="Équipements (séparés par des virgules)" 
-              value={formData.facilitiesString || ""} 
-              onChange={(e) => setFormData({...formData, facilitiesString: e.target.value})} 
-              placeholder="ex: Campus, Bibliothèque, Laboratoires, Wi-Fi"
-            />
+            <div className="md:col-span-2">
+              <Input 
+                label="Équipements (séparés par des virgules)" 
+                value={formData.facilitiesString || ""} 
+                onChange={(e) => setFormData({...formData, facilitiesString: e.target.value})} 
+                placeholder="ex: Campus, Bibliothèque, Laboratoires, Wi-Fi"
+              />
+            </div>
+            <div className="md:col-span-2">
+              <ImageUpload 
+                label="Image / Logo de l'établissement" 
+                value={formData.bannerImage || ""} 
+                onChange={(url) => setFormData({...formData, bannerImage: url})} 
+                bucket="schools"
+              />
+            </div>
           </div>
 
           <div className="flex flex-col gap-1">
@@ -482,12 +489,14 @@ export default function AdminExplorerClient({
               onChange={(e) => setFormData({...formData, status: e.target.value})} 
               placeholder="ex: Reconnu CAMES / État togolais"
             />
-            <Input 
-              label="Image d'illustration (URL)" 
-              value={formData.bannerImage || ""} 
-              onChange={(e) => setFormData({...formData, bannerImage: e.target.value})} 
-              placeholder="https://..."
-            />
+            <div className="md:col-span-2">
+              <ImageUpload 
+                label="Image de la formation" 
+                value={formData.bannerImage || ""} 
+                onChange={(url) => setFormData({...formData, bannerImage: url})} 
+                bucket="programs"
+              />
+            </div>
             <div className="md:col-span-2">
               <Input 
                 label="Matières clés (séparées par des virgules)" 
@@ -566,12 +575,14 @@ export default function AdminExplorerClient({
               </select>
             </div>
 
-            <Input 
-              label="Image d'illustration (URL)" 
-              value={formData.bannerImage || ""} 
-              onChange={(e) => setFormData({...formData, bannerImage: e.target.value})} 
-              placeholder="https://..."
-            />
+            <div className="md:col-span-2">
+              <ImageUpload 
+                label="Image du métier" 
+                value={formData.bannerImage || ""} 
+                onChange={(url) => setFormData({...formData, bannerImage: url})} 
+                bucket="careers"
+              />
+            </div>
 
             <div className="md:col-span-2">
               <Input 
