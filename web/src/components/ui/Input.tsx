@@ -3,10 +3,11 @@ import React from 'react';
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
+  rightElement?: React.ReactNode;
 }
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, className = '', ...props }, ref) => {
+  ({ label, error, rightElement, className = '', ...props }, ref) => {
     
     const isError = Boolean(error);
     
@@ -17,20 +18,28 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             {label}
           </label>
         )}
-        <input
-          ref={ref}
-          className={`
-            bg-surface h-[44px] rounded-sm px-4 text-text-primary text-[14px] outline-none transition-all duration-150
-            placeholder:text-text-tertiary
-            border 
-            ${isError 
-              ? 'border-error focus:ring-2 focus:ring-error/20' 
-              : 'border-border-soft focus:border-primary focus:ring-2 focus:ring-primary/10 hover:border-text-tertiary'
-            }
-            ${className}
-          `}
-          {...props}
-        />
+        <div className="relative flex items-center w-full">
+          <input
+            ref={ref}
+            className={`
+              bg-surface h-[44px] w-full rounded-sm px-4 text-text-primary text-[14px] outline-none transition-all duration-150
+              placeholder:text-text-tertiary
+              border 
+              ${isError 
+                ? 'border-error focus:ring-2 focus:ring-error/20' 
+                : 'border-border-soft focus:border-primary focus:ring-2 focus:ring-primary/10 hover:border-text-tertiary'
+              }
+              ${rightElement ? 'pr-11' : ''}
+              ${className}
+            `}
+            {...props}
+          />
+          {rightElement && (
+            <div className="absolute right-3 flex items-center justify-center">
+              {rightElement}
+            </div>
+          )}
+        </div>
         {isError && (
           <span className="text-error text-[13px]">
             {error}

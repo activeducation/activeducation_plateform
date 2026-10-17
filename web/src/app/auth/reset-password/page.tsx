@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { ArrowRight, Lock, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { PasswordInput } from "@/components/auth/PasswordInput";
 import { motion } from "framer-motion";
 import { createClient } from "@/utils/supabase/client";
 
@@ -148,26 +149,26 @@ export default function ResetPasswordPage() {
               )}
 
               <div className="flex flex-col gap-1">
-                <Input 
+                <PasswordInput 
                   label="Nouveau mot de passe" 
-                  type="password" 
                   placeholder="Minimum 6 caractères" 
                   required 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={isLoading}
+                  showStrength
                 />
               </div>
 
               <div className="flex flex-col gap-1">
-                <Input 
+                <PasswordInput 
                   label="Confirmer le nouveau mot de passe" 
-                  type="password" 
                   placeholder="••••••••" 
                   required 
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   disabled={isLoading}
+                  error={confirmPassword && password !== confirmPassword ? "Les deux mots de passe ne correspondent pas" : undefined}
                 />
               </div>
 

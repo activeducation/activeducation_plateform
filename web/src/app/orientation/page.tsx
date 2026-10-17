@@ -8,6 +8,7 @@ import { MatchResponse } from '@/lib/orientation';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
+import { PasswordInput } from '@/components/auth/PasswordInput';
 import { createClient } from '@/utils/supabase/client';
 import type { User } from '@supabase/supabase-js';
 import {
@@ -40,6 +41,7 @@ export default function OrientationPage() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [authSuccessMessage, setAuthSuccessMessage] = useState<string | null>(null);
@@ -155,6 +157,18 @@ export default function OrientationPage() {
 
     if (password.length < 6) {
       setAuthError('Le mot de passe doit comporter au moins 6 caractères.');
+      setAuthLoading(false);
+      return;
+    }
+
+    if (!confirmPassword.trim()) {
+      setAuthError('Veuillez confirmer votre mot de passe.');
+      setAuthLoading(false);
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setAuthError('Les deux mots de passe ne correspondent pas.');
       setAuthLoading(false);
       return;
     }
@@ -686,14 +700,24 @@ export default function OrientationPage() {
                           disabled={authLoading}
                         />
 
-                        <Input
+                        <PasswordInput
                           label="Mot de passe"
-                          type="password"
                           required
                           placeholder="Minimum 6 caractères"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
                           disabled={authLoading}
+                          showStrength
+                        />
+
+                        <PasswordInput
+                          label="Confirmer le mot de passe"
+                          required
+                          placeholder="••••••••"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          disabled={authLoading}
+                          error={confirmPassword && password !== confirmPassword ? "Les deux mots de passe ne correspondent pas" : undefined}
                         />
 
                         <Button
@@ -745,9 +769,8 @@ export default function OrientationPage() {
                         />
 
                         <div className="flex flex-col gap-1">
-                          <Input
+                          <PasswordInput
                             label="Mot de passe"
-                            type="password"
                             required
                             placeholder="••••••••"
                             value={password}

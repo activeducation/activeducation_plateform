@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { PasswordInput } from "@/components/auth/PasswordInput";
 import { 
   User, 
   GraduationCap, 
@@ -38,6 +39,7 @@ export function RegisterForm() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [authError, setAuthError] = useState("");
   
@@ -48,12 +50,24 @@ export function RegisterForm() {
 
   const nextStep = () => {
     if (step === 2) {
+      if (!fullName.trim()) {
+        setAuthError("Veuillez renseigner votre nom complet ou raison sociale.");
+        return;
+      }
       if (!email.trim() || !password.trim()) {
         setAuthError("Veuillez renseigner votre email et un mot de passe.");
         return;
       }
       if (password.length < 6) {
         setAuthError("Le mot de passe doit comporter au moins 6 caractères.");
+        return;
+      }
+      if (!confirmPassword.trim()) {
+        setAuthError("Veuillez confirmer votre mot de passe.");
+        return;
+      }
+      if (password !== confirmPassword) {
+        setAuthError("Les deux mots de passe ne correspondent pas.");
         return;
       }
       setAuthError("");
@@ -194,12 +208,19 @@ export function RegisterForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
-              <Input 
+              <PasswordInput 
                 label="Mot de passe" 
-                type="password" 
                 placeholder="••••••••" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                showStrength
+              />
+              <PasswordInput 
+                label="Confirmer le mot de passe" 
+                placeholder="••••••••" 
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                error={confirmPassword && password !== confirmPassword ? "Les deux mots de passe ne correspondent pas" : undefined}
               />
             </div>
 
@@ -398,6 +419,11 @@ export function RegisterForm() {
                 onClick={async () => {
                   setIsSubmitting(true);
                   setAuthError("");
+                  if (password !== confirmPassword) {
+                    setAuthError("Les deux mots de passe ne correspondent pas.");
+                    setIsSubmitting(false);
+                    return;
+                  }
                   try {
                     const supabase = createClient();
                     const { data, error } = await supabase.auth.signUp({

@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { ArrowLeft, ArrowRight, Lock, Mail, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { PasswordInput } from "@/components/auth/PasswordInput";
 import { motion } from "framer-motion";
 import { createClient } from "@/utils/supabase/client";
 
@@ -96,19 +97,18 @@ export default function LoginPage() {
             </div>
 
             <div className="flex flex-col gap-1">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-text-primary">Mot de passe</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-[13px] font-semibold text-text-primary">Mot de passe</label>
                 <a href="/auth/forgot-password" className="text-xs text-primary hover:underline font-medium">
                   Mot de passe oublié ?
                 </a>
               </div>
-              <input 
-                type="password" 
+              <PasswordInput 
                 placeholder="••••••••" 
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="h-[44px] rounded-sm border border-border-soft bg-surface px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+                disabled={isLoading}
               />
             </div>
 
