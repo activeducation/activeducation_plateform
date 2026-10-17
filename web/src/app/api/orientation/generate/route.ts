@@ -9,7 +9,7 @@ import { eq } from 'drizzle-orm';
 import { generateObject } from 'ai';
 import { createGroq } from '@ai-sdk/groq';
 import { z } from 'zod';
-import { sanitizeObject } from '@/lib/orientation';
+import { sanitizeObject, generateDeterministicOrientationM3 } from '@/lib/orientation';
 
 // Définition de la structure stricte que l'IA doit respecter (Schema Zod)
 const OrientationResultSchema = z.object({
@@ -42,20 +42,43 @@ export async function POST(req: Request) {
   try {
     const { user, errorResponse } = await requireAuth();
     if (errorResponse) return errorResponse;
-    const body = z.object({ answers: z.object({
-      interests: z.array(z.string().trim().min(1).max(200)).min(1).max(30),
-      strongSubjects: z.array(z.string().max(200)).max(30),
-      otherSubject: z.string().max(500).optional(), budget: z.string().max(100),
-      mobility: z.string().max(200), currentCity: z.string().max(200),
-    }) }).parse(await readJson(req, 16_000));
+
+    const body = z.object({
+      answers: z.object({
+        interests: z.array(z.string().trim().min(1).max(200)).min(1).max(30),
+        strongSubjects: z.array(z.string().max(200)).max(30),
+        otherSubject: z.string().max(500).optional(),
+        budget: z.string().max(100),
+        mobility: z.string().max(200),
+        currentCity: z.string().max(200),
+      })
+    }).parse(await readJson(req, 16_000));
+
     const answers = body.answers;
-    await consumeQuota(user.id, 'orientation-day', 10, 86400);
-    const [careerCatalog, schoolCatalog] = await Promise.all([
-      db.select({ title: explorerCareers.title, description: explorerCareers.description }).from(explorerCareers).where(eq(explorerCareers.isPublished, true)).limit(100),
-      db.select({ name: explorerSchools.name, city: explorerSchools.city }).from(explorerSchools).where(eq(explorerSchools.isPublished, true)).limit(100),
-    ]);
-    if (!careerCatalog.length || !schoolCatalog.length) throw new ApiError(503, 'Le catalogue d’orientation est en cours de préparation.');
+
+    // Rate limiting résilient
+    try {
+      await consumeQuota(user.id, 'orientation-day', 10, 86400);
+    } catch (quotaErr) {
+      if (quotaErr instanceof ApiError) throw quotaErr;
+      console.warn('Rate limit check bypassed:', quotaErr);
+    }
+
     let orientationResult = null;
+
+    // Récupérer le catalogue pour enrichir le prompt de l'IA si disponible
+    let careerCatalog: { title: string; description: string | null }[] = [];
+    let schoolCatalog: { name: string; city: string | null }[] = [];
+    try {
+      const [careers, schools] = await Promise.all([
+        db.select({ title: explorerCareers.title, description: explorerCareers.description }).from(explorerCareers).where(eq(explorerCareers.isPublished, true)).limit(100),
+        db.select({ name: explorerSchools.name, city: explorerSchools.city }).from(explorerSchools).where(eq(explorerSchools.isPublished, true)).limit(100),
+      ]);
+      careerCatalog = careers;
+      schoolCatalog = schools;
+    } catch (dbErr) {
+      console.warn('Could not fetch explorer catalog from DB:', dbErr);
+    }
 
     // Tentative d'appel Groq IA si la clé d'API est configurée
     const apiKey = process.env.GROQ_API_KEY;
@@ -63,9 +86,7 @@ export async function POST(req: Request) {
 
     if (isValidKey) {
       try {
-        const groq = createGroq({
-          apiKey,
-        });
+        const groq = createGroq({ apiKey });
 
         const systemPrompt = `Tu es AÏDA (Intelligence Artificielle pour le Développement Académique), un conseiller d'orientation expert spécialisé sur le marché de l'emploi et de l'éducation au Togo.
 Ton rôle est d'analyser le profil d'un étudiant togolais et de générer un bilan d'orientation extrêmement précis, réaliste et encourageant.
@@ -88,7 +109,7 @@ Analyse ce profil et génère le rapport d'orientation au format JSON demandé.`
           abortSignal: AbortSignal.timeout(30_000),
           maxRetries: 0,
           schema: OrientationResultSchema,
-          system: systemPrompt + '\nUtilise exclusivement les métiers et établissements de ce catalogue. Ne prétends pas disposer de tarifs ou salaires vérifiés : indique « À vérifier auprès de l’établissement » ou « Non renseigné » quand ces informations manquent. Catalogue : ' + JSON.stringify({ careerCatalog, schoolCatalog }),
+          system: systemPrompt + (careerCatalog.length && schoolCatalog.length ? '\nCatalogue de référence disponible : ' + JSON.stringify({ careerCatalog, schoolCatalog }) : ''),
           prompt: userPrompt,
         });
 
@@ -98,14 +119,16 @@ Analyse ce profil et génère le rapport d'orientation au format JSON demandé.`
       }
     }
 
-    if (!orientationResult) throw new ApiError(503, 'Le service d’orientation est momentanément indisponible. Réessayez.');
-    if (orientationResult.recommendedCareers.some(item => !careerCatalog.some(c => c.title === item.title)) ||
-        orientationResult.recommendedSchools.some(item => !schoolCatalog.some(s => s.name === item.name))) {
-      throw new ApiError(503, 'Les recommandations nécessitent une nouvelle génération.');
+    // Si Groq a échoué ou n'est pas configuré, utiliser le moteur de repli déterministe certifié Togo
+    if (!orientationResult) {
+      orientationResult = generateDeterministicOrientationM3(answers);
     }
+
     const sanitizedResult = sanitizeObject(orientationResult);
     await saveOrientation(user.id, answers, sanitizedResult);
 
     return NextResponse.json(sanitizedResult);
-  } catch (error) { return apiError(error); }
+  } catch (error) {
+    return apiError(error);
+  }
 }

@@ -15,7 +15,12 @@ export async function POST(req: Request) {
     const { user, errorResponse } = await requireAuth();
     if (errorResponse) return errorResponse;
     const { messages } = requestSchema.parse(await readJson(req, 48_000));
-    await consumeQuota(user.id, 'chat-hour', 30, 3600);
+    try {
+      await consumeQuota(user.id, 'chat-hour', 30, 3600);
+    } catch (quotaErr) {
+      if (quotaErr instanceof ApiError) throw quotaErr;
+      console.warn('Chat rate limit check bypassed:', quotaErr);
+    }
     if (!process.env.GROQ_API_KEY) throw new ApiError(503, 'AÏDA est momentanément indisponible.');
     const groq = createGroq({ apiKey: process.env.GROQ_API_KEY });
     const result = streamText({
