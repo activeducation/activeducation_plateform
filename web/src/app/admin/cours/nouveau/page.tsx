@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
+import { ImageUpload } from "@/components/ui/ImageUpload";
 import { ArrowLeft, Save } from "lucide-react";
 
 export default function AdminNewCoursePage() {
@@ -121,13 +122,17 @@ export default function AdminNewCoursePage() {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 md:col-span-2">
               <label className="text-sm font-bold text-text-primary">Nom de l'icône Lucide</label>
               <Input name="icon" value={formData.icon} onChange={handleChange} placeholder="Ex: Users, Monitor, Briefcase..." />
             </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-bold text-text-primary">URL de l'image (Optionnelle)</label>
-              <Input name="image" value={formData.image} onChange={handleChange} placeholder="https://..." />
+            <div className="md:col-span-2">
+              <ImageUpload
+                label="Image de couverture du cours"
+                value={formData.image || ""}
+                onChange={(url) => setFormData(prev => ({ ...prev, image: url }))}
+                bucket="elearning"
+              />
             </div>
           </div>
           

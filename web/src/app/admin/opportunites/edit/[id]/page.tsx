@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
+import { ImageUpload } from "@/components/ui/ImageUpload";
 import { ArrowLeft, Save } from "lucide-react";
 
 export default function AdminEditOpportunityPage({ params }: { params: Promise<{ id: string }> }) {
@@ -154,11 +155,13 @@ export default function AdminEditOpportunityPage({ params }: { params: Promise<{
             />
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-bold text-text-primary">URL de l'image (Optionnelle)</label>
-              <Input name="image" value={formData.image} onChange={handleChange} placeholder="https://..." />
-            </div>
+          <div className="flex flex-col gap-5">
+            <ImageUpload
+              label="Image de couverture de l'opportunité (Bourse, Stage, Événement)"
+              value={formData.image || ""}
+              onChange={(url) => setFormData(prev => ({ ...prev, image: url }))}
+              bucket="announcements"
+            />
             <div className="flex flex-col gap-2">
               <label className="text-sm font-bold text-text-primary">Lien officiel pour postuler</label>
               <Input name="link" value={formData.link} onChange={handleChange} placeholder="https://..." />
