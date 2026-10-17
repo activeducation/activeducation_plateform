@@ -92,29 +92,52 @@ export default function ExplorerClient({
         
         {activeTab === "metiers" && (
           <>
-            {initialCareers.length > 0 ? initialCareers.map((item) => (
-              <a href={`/student/explorer/metier/${item.slug}`} key={item.id} className="group block outline-none">
-                <Card variant="interactive" className="h-full overflow-hidden flex flex-col p-0">
-                  <div className="h-40 relative overflow-hidden bg-surface-alt">
-                    <img 
-                      src={item.bannerImage || "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=600&q=80"} 
-                      alt={item.title} 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                    />
-                    <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded text-[10px] font-bold text-primary uppercase shadow-sm">
-                      Métier
+            {initialCareers.length > 0 ? initialCareers.map((item) => {
+              const domain = initialDomains.find(d => d.id === item.domainId);
+              const skillsList = Array.isArray(item.skills) ? item.skills : [];
+
+              return (
+                <a href={`/student/explorer/metier/${item.slug}`} key={item.id} className="group block outline-none">
+                  <Card variant="interactive" className="h-full overflow-hidden flex flex-col p-0">
+                    <div className="h-44 relative overflow-hidden bg-surface-alt">
+                      <img 
+                        src={item.bannerImage || "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=600&q=80"} 
+                        alt={item.title} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                      />
+                      <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-md text-[10px] font-bold text-primary uppercase shadow-sm">
+                        {domain?.title || "Métier"}
+                      </div>
                     </div>
-                  </div>
-                  <div className="p-5 flex flex-col flex-1">
-                    <h3 className="font-bold text-lg text-text-primary mb-2 group-hover:text-primary transition-colors">{item.title}</h3>
-                    <p className="text-sm text-text-secondary line-clamp-3 mb-4">{item.description}</p>
-                    <div className="mt-auto flex items-center justify-between text-sm font-bold text-primary group-hover:underline">
-                      Découvrir <ArrowRight className="w-4 h-4" />
+                    <div className="p-5 flex flex-col flex-1">
+                      <h3 className="font-bold text-lg text-text-primary mb-2 group-hover:text-primary transition-colors leading-snug">
+                        {item.title}
+                      </h3>
+                      <p className="text-sm text-text-secondary line-clamp-2 mb-3 min-h-[40px]">
+                        {item.description || "Découvrez les compétences clés, les missions et les perspectives d'évolution pour ce métier."}
+                      </p>
+                      {skillsList.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mb-4">
+                          {skillsList.slice(0, 3).map((skill: string, idx: number) => (
+                            <span key={idx} className="text-[11px] font-medium bg-surface-alt border border-border-soft px-2 py-0.5 rounded text-text-secondary">
+                              {skill}
+                            </span>
+                          ))}
+                          {skillsList.length > 3 && (
+                            <span className="text-[11px] font-medium text-text-tertiary self-center">
+                              +{skillsList.length - 3}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      <div className="mt-auto flex items-center justify-between text-sm font-bold text-primary group-hover:underline pt-3 border-t border-border-soft">
+                        Découvrir <ArrowRight className="w-4 h-4" />
+                      </div>
                     </div>
-                  </div>
-                </Card>
-              </a>
-            )) : <p className="text-text-secondary col-span-full">Aucun métier trouvé.</p>}
+                  </Card>
+                </a>
+              );
+            }) : <p className="text-text-secondary col-span-full">Aucun métier trouvé.</p>}
           </>
         )}
 

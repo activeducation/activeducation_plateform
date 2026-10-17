@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowLeft, CheckCircle2, Building2, MapPin, GraduationCap } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Building2, MapPin, GraduationCap, TrendingUp, Banknote, Award, Briefcase } from "lucide-react";
 import Link from "next/link";
 import { AidaAssistant } from "@/components/student/AidaAssistant";
 import { Card } from "@/components/ui/Card";
@@ -38,8 +38,8 @@ export default async function MetierPage({ params }: { params: Promise<{ id: str
   const metier = metierQuery[0].career;
   const domain = metierQuery[0].domain;
 
-  // 2. Fetch Formations via intersection table
-  const formationsData = await db.select({
+  // 2. Fetch Formations via intersection table with domain fallback
+  let formationsData = await db.select({
     program: explorerPrograms,
     school: explorerSchools
   })
@@ -47,6 +47,17 @@ export default async function MetierPage({ params }: { params: Promise<{ id: str
   .innerJoin(explorerPrograms, eq(explorerCareerPrograms.programId, explorerPrograms.id))
   .leftJoin(explorerSchools, eq(explorerPrograms.schoolId, explorerSchools.id))
   .where(and(eq(explorerCareerPrograms.careerId, metier.id), eq(explorerPrograms.isPublished, true), eq(explorerSchools.isPublished, true)));
+
+  if (formationsData.length === 0 && metier.domainId) {
+    formationsData = await db.select({
+      program: explorerPrograms,
+      school: explorerSchools
+    })
+    .from(explorerPrograms)
+    .leftJoin(explorerSchools, eq(explorerPrograms.schoolId, explorerSchools.id))
+    .where(and(eq(explorerPrograms.domainId, metier.domainId), eq(explorerPrograms.isPublished, true), eq(explorerSchools.isPublished, true)))
+    .limit(3);
+  }
 
   // Parse JSONB arrays with safe fallbacks
   const skills = Array.isArray(metier.skills) ? metier.skills : [];
@@ -69,13 +80,34 @@ export default async function MetierPage({ params }: { params: Promise<{ id: str
           </Link>
         </div>
 
-        <div className="absolute bottom-0 left-0 w-full p-6 md:p-10 bg-gradient-to-t from-canvas via-canvas/80 to-transparent">
-          <span className="text-[10px] md:text-xs uppercase font-bold text-primary bg-primary/10 backdrop-blur-md px-3 py-1.5 rounded-sm mb-3 inline-block">
-            {domain?.title || "Secteur"}
-          </span>
-          <h1 className="font-display font-bold text-3xl md:text-5xl text-text-primary mb-2 drop-shadow-sm">
-            {metier.title}
-          </h1>
+        <div className="absolute bottom-0 left-0 w-full p-6 md:p-10 bg-gradient-to-t from-canvas via-canvas/80 to-transparent flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <span className="text-[10px] md:text-xs uppercase font-bold text-primary bg-primary/10 backdrop-blur-md px-3 py-1.5 rounded-sm mb-3 inline-block">
+              {domain?.title || "Secteur porteur"}
+            </span>
+            <h1 className="font-display font-bold text-3xl md:text-5xl text-white mb-2 drop-shadow-sm">
+              {metier.title}
+            </h1>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            {domain?.salary && (
+              <div className="bg-surface/20 backdrop-blur-md border border-white/10 rounded-xl p-3 flex flex-col items-center min-w-[120px]">
+                <span className="text-white text-xs text-white/80 flex items-center gap-1 font-medium">
+                  <Banknote className="w-3.5 h-3.5 text-gold" /> Rémunération estimée
+                </span>
+                <span className="text-sm font-bold text-gold mt-0.5">{domain.salary}</span>
+              </div>
+            )}
+            {domain?.employability && (
+              <div className="bg-surface/20 backdrop-blur-md border border-white/10 rounded-xl p-3 flex flex-col items-center min-w-[100px]">
+                <span className="text-white text-xs text-white/80 flex items-center gap-1 font-medium">
+                  <TrendingUp className="w-3.5 h-3.5 text-success" /> Employabilité
+                </span>
+                <span className="text-sm font-bold text-success mt-0.5">{domain.employability}</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -85,19 +117,23 @@ export default async function MetierPage({ params }: { params: Promise<{ id: str
         <div className="flex-1 flex flex-col gap-8">
           
           <section>
-            <h2 className="text-xl font-bold text-text-primary mb-4">Description du métier</h2>
-            <p className="text-text-secondary leading-relaxed">
+            <h2 className="text-xl font-bold text-text-primary mb-4 flex items-center gap-2">
+              <Briefcase className="w-5 h-5 text-primary" /> Missions & Description
+            </h2>
+            <p className="text-text-secondary leading-relaxed text-base">
               {metier.description || "Aucune description détaillée n'est disponible pour ce métier."}
             </p>
           </section>
 
           {skills.length > 0 && (
             <section>
-              <h2 className="text-xl font-bold text-text-primary mb-4">Compétences nécessaires</h2>
+              <h2 className="text-xl font-bold text-text-primary mb-4 flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-primary" /> Compétences requises
+              </h2>
               <div className="flex flex-wrap gap-2">
                 {skills.map((skill: string, i: number) => (
-                  <span key={i} className="px-3 py-1.5 bg-surface border border-border-soft rounded-md text-sm font-medium text-text-secondary flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-primary" /> {skill}
+                  <span key={i} className="px-3.5 py-2 bg-surface border border-border-soft rounded-lg text-sm font-medium text-text-primary flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-primary shrink-0" /> {skill}
                   </span>
                 ))}
               </div>
@@ -106,10 +142,12 @@ export default async function MetierPage({ params }: { params: Promise<{ id: str
 
           {opportunities.length > 0 && (
             <section>
-              <h2 className="text-xl font-bold text-text-primary mb-4">Débouchés & Opportunités</h2>
+              <h2 className="text-xl font-bold text-text-primary mb-4 flex items-center gap-2">
+                <Award className="w-5 h-5 text-gold-dark" /> Évolutions de carrière & Débouchés
+              </h2>
               <div className="flex flex-wrap gap-2">
                 {opportunities.map((opp: string, i: number) => (
-                  <span key={i} className="px-3 py-1.5 bg-gold/10 border border-gold/20 rounded-md text-sm font-bold text-gold-dark">
+                  <span key={i} className="px-3.5 py-2 bg-gold/10 border border-gold/20 rounded-lg text-sm font-bold text-gold-dark">
                     {opp}
                   </span>
                 ))}
