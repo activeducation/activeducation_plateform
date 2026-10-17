@@ -8,7 +8,8 @@ import {
   Briefcase, 
   User, 
   Target,
-  BookOpen
+  BookOpen,
+  ShieldCheck
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -20,6 +21,21 @@ export default function StudentLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const [isAdmin, setIsAdmin] = React.useState(false);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    fetch('/api/user')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (!cancelled && data?.role?.toUpperCase() === 'ADMIN') {
+          setIsAdmin(true);
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
   const getDesktopLinkClass = (path: string) => {
     // If the path is exact (for /student) or starts with the path (for sub-routes like /student/explorer/...)
     const isActive = path === "/student" ? pathname === "/student" : pathname.startsWith(path);
@@ -81,6 +97,16 @@ export default function StudentLayout({
             <User className="w-5 h-5" />
             Mon profil
           </Link>
+
+          {isAdmin && (
+            <Link 
+              href="/admin" 
+              className="mt-4 flex items-center gap-3 px-4 py-3 rounded-md bg-gold/15 text-gold-dark hover:bg-gold/25 font-bold text-sm transition-colors border border-gold/40 shadow-sm"
+            >
+              <ShieldCheck className="w-5 h-5 text-gold-dark" />
+              Espace Admin
+            </Link>
+          )}
         </nav>
       </aside>
 
@@ -117,6 +143,12 @@ export default function StudentLayout({
           <User className="w-5 h-5" />
           <span className={`text-[10px] ${pathname.startsWith("/student/profil") ? "font-bold" : "font-medium"}`}>Profil</span>
         </Link>
+        {isAdmin && (
+          <Link href="/admin" className="flex flex-col items-center gap-1 text-gold-dark">
+            <ShieldCheck className="w-5 h-5" />
+            <span className="text-[10px] font-bold">Admin</span>
+          </Link>
+        )}
       </nav>
 
       {/* AÏDA CHAT WIDGET */}
