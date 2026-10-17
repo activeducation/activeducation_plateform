@@ -24,6 +24,20 @@ export function AidaChatWidget() {
     });
     return () => subscription.unsubscribe();
   }, [stop, setMessages, clearError]);
+
+  useEffect(() => {
+    const handleOpenChat = (event: Event) => {
+      const customEvent = event as CustomEvent<{ prompt?: string }>;
+      setIsOpen(true);
+      if (customEvent.detail?.prompt) {
+        clearError();
+        void sendMessage({ text: customEvent.detail.prompt });
+      }
+    };
+
+    window.addEventListener('open-aida-chat', handleOpenChat);
+    return () => window.removeEventListener('open-aida-chat', handleOpenChat);
+  }, [sendMessage, clearError]);
   return <>
     <Button aria-label="Ouvrir AÏDA" onClick={() => setIsOpen(true)} className="fixed bottom-6 right-6 z-50"><Bot /></Button>
     {isOpen && <section aria-label="Conversation avec AÏDA" className="fixed bottom-0 right-0 md:bottom-6 md:right-6 z-50 flex flex-col w-full md:w-96 h-[70vh] bg-surface border border-border-strong rounded-md">

@@ -8,6 +8,8 @@ interface AidaAssistantProps {
   message: string;
   actionLabel?: string;
   actionHref?: string;
+  actionPrompt?: string;
+  onAction?: () => void;
   variant?: "inline" | "floating";
 }
 
@@ -16,10 +18,31 @@ export function AidaAssistant({
   message, 
   actionLabel, 
   actionHref,
+  actionPrompt,
+  onAction,
   variant = "inline"
 }: AidaAssistantProps) {
+  const handleAction = (e: React.MouseEvent) => {
+    if (onAction) {
+      e.preventDefault();
+      onAction();
+      return;
+    }
+
+    if (actionPrompt || !actionHref || actionHref === '#') {
+      e.preventDefault();
+      const promptToSend = actionPrompt || message || "Bonjour AÏDA, j'ai une question concernant cette page.";
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('open-aida-chat', {
+          detail: { prompt: promptToSend }
+        }));
+      }
+      return;
+    }
+  };
+
   return (
-    <div className={`relative overflow-hidden rounded-2xl bg-primary/5 border border-primary/20 p-5 ${variant === 'floating' ? 'shadow-xl backdrop-blur-md' : 'shadow-sm'}`}>
+    <div className={`relative overflow-hidden rounded-2xl bg-primary/5 border border-primary/20 p-5 ${variant === 'floating' ? 'shadow-lg backdrop-blur-md' : 'shadow-sm'}`}>
       {/* Subtle background flair */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
       
@@ -33,13 +56,23 @@ export function AidaAssistant({
             {message}
           </p>
           
-          {actionLabel && actionHref && (
-            <a 
-              href={actionHref} 
-              className="inline-flex items-center gap-2 mt-4 text-xs font-bold text-white bg-primary px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
-            >
-              {actionLabel} <ArrowRight className="w-4 h-4" />
-            </a>
+          {actionLabel && (
+            actionHref && actionHref !== '#' ? (
+              <a 
+                href={actionHref} 
+                className="inline-flex items-center gap-2 mt-4 text-xs font-bold text-white bg-primary px-4 py-2.5 rounded-lg hover:bg-primary-dark transition-all shadow-sm"
+              >
+                {actionLabel} <ArrowRight className="w-4 h-4" />
+              </a>
+            ) : (
+              <button 
+                type="button"
+                onClick={handleAction}
+                className="inline-flex items-center gap-2 mt-4 text-xs font-bold text-white bg-primary px-4 py-2.5 rounded-lg hover:bg-primary-dark transition-all cursor-pointer shadow-sm active:scale-95"
+              >
+                {actionLabel} <ArrowRight className="w-4 h-4" />
+              </button>
+            )
           )}
         </div>
       </div>

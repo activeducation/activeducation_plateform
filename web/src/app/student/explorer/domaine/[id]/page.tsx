@@ -152,10 +152,10 @@ export default async function DomainePage({ params }: { params: Promise<{ id: st
         <div className="w-full lg:w-80 flex flex-col gap-6">
           <AidaAssistant 
             title="Orientation Stratégique"
-            message={`L'exploration par "Domaine" est la meilleure façon de découvrir des métiers auxquels vous n'auriez jamais pensé. Si ce secteur vous intéresse globalement, regardez les métiers liés pour affiner votre choix !`}
+            message={`L'exploration par "Domaine" est la meilleure façon de découvrir des métiers auxquels vous n'auriez jamais pensé. Si ce secteur vous intéresse globalement, demandez conseil à AÏDA pour affiner vos choix !`}
             variant="floating"
-            actionLabel="J'aime ce domaine"
-            actionHref="#"
+            actionLabel="Demander conseil à AÏDA"
+            actionPrompt={`Bonjour AÏDA, le domaine "${domaine.title}" m'intéresse beaucoup. Quels sont les métiers d'avenir et les meilleures formations à Lomé pour ce secteur ?`}
           />
         </div>
 

@@ -181,10 +181,10 @@ export default async function FormationPage({ params }: { params: Promise<{ id: 
         <div className="w-full lg:w-80 flex flex-col gap-6">
           <AidaAssistant 
             title="Avis sur la formation"
-            message={`Cette formation de type ${program.level || ""} offre des débouchés très recherchés en Afrique de l'Ouest. Voulez-vous connaître les critères exacts d'admission pour la rentrée prochaine ?`}
+            message={`Cette formation de type ${program.level || "Diplôme supérieur"} offre des débouchés très recherchés en Afrique de l'Ouest. Voulez-vous connaître les critères exacts d'admission pour la rentrée prochaine ?`}
             variant="floating"
             actionLabel="Poser une question"
-            actionHref="#"
+            actionPrompt={`Bonjour AÏDA ! Peux-tu me donner des détails sur la formation "${program.title}" (${program.level || ""}) à ${school?.name || "cet établissement"} : conditions d'admission, durée et opportunités réelles au Togo et dans la sous-région ?`}
           />
         </div>
 

@@ -164,6 +164,8 @@ export default async function MetierPage({ params }: { params: Promise<{ id: str
             title="Pourquoi AÏDA vous le recommande"
             message={`Cette suggestion s'appuie notamment sur vos intérêts et les données actuelles du marché pour le secteur ${domain?.title || ""}.`}
             variant="floating"
+            actionLabel="Poser une question à AÏDA"
+            actionPrompt={`Bonjour AÏDA ! Peux-tu me conseiller sur le métier de "${metier.title}" : les compétences clés à développer, les salaires et débouchés concrets au Togo ?`}
           />
 
           <Card variant="standard" className="p-6">
