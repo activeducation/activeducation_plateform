@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation';
 import AdminLayoutClient from './AdminLayoutClient';
 import { requireAdmin } from '@/utils/auth';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const { errorResponse } = await requireAdmin();
   
