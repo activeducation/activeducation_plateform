@@ -61,9 +61,11 @@ export default function StudentDashboardClient({
             ) : (
               <AidaAssistant 
                 title="Profil Complété !"
-                message={`L'IA a identifié que vous aviez un fort potentiel pour le domaine : ${topCareer || 'Innovateur'}. Votre prochaine étape est d'explorer les cours liés à ce domaine.`}
+                message={`L'IA a identifié que vous aviez un fort potentiel pour le domaine : ${topCareer || 'Innovateur'}. Vous pouvez consulter votre analyse complète ou repasser le test si vos projets ont évolué.`}
                 actionLabel="Revoir mes résultats"
-                actionHref="/student/orientation?retake=true"
+                actionHref="/student/orientation/resultats"
+                secondaryActionLabel="Refaire le test"
+                secondaryActionHref="/student/orientation?retake=true"
               />
             )}
           </section>
@@ -156,9 +158,9 @@ export default function StudentDashboardClient({
                 <Button 
                   variant="outline" 
                   className="w-full mt-2 text-xs py-2"
-                  onClick={() => router.push('/student/orientation')}
+                  onClick={() => router.push(hasOrientation ? '/student/orientation/resultats' : '/student/orientation')}
                 >
-                  Voir mon orientation
+                  {hasOrientation ? "Revoir mes résultats" : "Passer le test d'orientation"}
                 </Button>
               </div>
             </div>
