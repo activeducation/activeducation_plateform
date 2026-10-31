@@ -74,14 +74,14 @@ export default function StudentDashboardClient({
               <Card 
                 variant="standard" 
                 className="p-5 flex flex-col justify-between gap-4 hover:border-primary/30 transition-colors cursor-pointer group"
-                onClick={() => router.push('/student/cours')}
+                onClick={() => router.push('/student/explorer')}
               >
                 <div>
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-3">
                     <Compass className="w-5 h-5 text-primary" />
                   </div>
-                  <h3 className="font-bold text-text-primary mb-1">Explorer l'Académie</h3>
-                  <p className="text-sm text-text-secondary">Consultez les formations et modules E-learning.</p>
+                  <h3 className="font-bold text-text-primary mb-1">Explorer les Métiers</h3>
+                  <p className="text-sm text-text-secondary">Découvrez les opportunités, secteurs d'avenir et écoles.</p>
                 </div>
                 <div className="flex items-center text-xs font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity">
                   Y aller <ArrowRight className="w-3 h-3 ml-1" />
@@ -156,9 +156,9 @@ export default function StudentDashboardClient({
                 <Button 
                   variant="outline" 
                   className="w-full mt-2 text-xs py-2"
-                  onClick={() => router.push('/student/parcours')}
+                  onClick={() => router.push('/student/orientation')}
                 >
-                  Voir ma feuille de route
+                  Voir mon orientation
                 </Button>
               </div>
             </div>

@@ -80,11 +80,11 @@ export default function StudentOrientationResultsPage() {
           </Button>
           <Button
             variant="primary"
-            onClick={() => router.push("/student/cours")}
+            onClick={() => router.push("/student/explorer")}
             className="flex items-center gap-2"
           >
-            <BookOpen className="w-4 h-4" />
-            Explorer les cours
+            <Briefcase className="w-4 h-4" />
+            Explorer les débouchés
           </Button>
         </div>
       </div>
@@ -341,10 +341,10 @@ export default function StudentOrientationResultsPage() {
 
         <Button
           variant="primary"
-          onClick={() => router.push("/student/cours")}
+          onClick={() => router.push("/student/explorer")}
           className="w-full sm:w-auto flex items-center justify-center gap-2 px-8"
         >
-          Explorer le catalogue des cours
+          Explorer les métiers & opportunités
           <ArrowRight className="w-4 h-4" />
         </Button>
       </div>

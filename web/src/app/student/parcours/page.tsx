@@ -19,6 +19,11 @@ import { useRouter } from "next/navigation";
 
 export default function ParcoursPage() {
   const router = useRouter();
+
+  // Redirection temporaire en attendant le lancement officiel (code intégral préservé)
+  useEffect(() => {
+    router.replace("/student");
+  }, [router]);
   const [currentXp, setCurrentXp] = useState(0);
   const [level, setLevel] = useState(1);
   const [rankTitle, setRankTitle] = useState("Novice");

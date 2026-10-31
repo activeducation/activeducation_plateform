@@ -4,11 +4,9 @@ import React from "react";
 import { 
   Home, 
   Compass, 
-  Map, 
   Briefcase, 
   User, 
   Target,
-  BookOpen,
   ShieldCheck
 } from "lucide-react";
 import Link from "next/link";
@@ -37,7 +35,6 @@ export default function StudentLayout({
   }, []);
 
   const getDesktopLinkClass = (path: string) => {
-    // If the path is exact (for /student) or starts with the path (for sub-routes like /student/explorer/...)
     const isActive = path === "/student" ? pathname === "/student" : pathname.startsWith(path);
     return isActive 
       ? "flex items-center gap-3 px-4 py-3 rounded-md bg-primary/10 text-primary font-bold text-sm"
@@ -77,14 +74,7 @@ export default function StudentLayout({
             <Compass className="w-5 h-5" />
             Explorer
           </Link>
-          <Link href="/student/cours" className={getDesktopLinkClass("/student/cours")}>
-            <BookOpen className="w-5 h-5" />
-            Académie
-          </Link>
-          <Link href="/student/parcours" className={getDesktopLinkClass("/student/parcours")}>
-            <Map className="w-5 h-5" />
-            Mon parcours
-          </Link>
+          {/* Note : Académie (/student/cours) et Mon parcours (/student/parcours) sont temporairement désactivés de la navigation */}
           <Link href="/student/orientation" className={getDesktopLinkClass("/student/orientation")}>
             <Target className="w-5 h-5" />
             Orientation AÏDA
@@ -127,17 +117,13 @@ export default function StudentLayout({
           <Compass className="w-5 h-5" />
           <span className={`text-[10px] ${pathname.startsWith("/student/explorer") ? "font-bold" : "font-medium"}`}>Explorer</span>
         </Link>
-        <Link href="/student/cours" className={getMobileLinkClass("/student/cours")}>
-          <BookOpen className="w-5 h-5" />
-          <span className={`text-[10px] ${pathname.startsWith("/student/cours") ? "font-bold" : "font-medium"}`}>Académie</span>
-        </Link>
-        <Link href="/student/parcours" className={getMobileLinkClass("/student/parcours")}>
-          <Map className="w-5 h-5" />
-          <span className={`text-[10px] ${pathname.startsWith("/student/parcours") ? "font-bold" : "font-medium"}`}>Parcours</span>
-        </Link>
         <Link href="/student/orientation" className={getMobileLinkClass("/student/orientation")}>
           <Target className="w-5 h-5" />
           <span className={`text-[10px] ${pathname.startsWith("/student/orientation") ? "font-bold" : "font-medium"}`}>AÏDA</span>
+        </Link>
+        <Link href="/student/opportunites" className={getMobileLinkClass("/student/opportunites")}>
+          <Briefcase className="w-5 h-5" />
+          <span className={`text-[10px] ${pathname.startsWith("/student/opportunites") ? "font-bold" : "font-medium"}`}>Opportunités</span>
         </Link>
         <Link href="/student/profil" className={getMobileLinkClass("/student/profil")}>
           <User className="w-5 h-5" />

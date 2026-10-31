@@ -130,7 +130,7 @@ export default function HomePage() {
                     </a>
                   </>
                 ) : (
-                  <a href="/student/cours">
+                  <a href="/student">
                     <Button variant="primary" size="lg" className="flex items-center gap-2 shadow-sm group text-[15px]">
                       <GraduationCap className="w-4 h-4 transition-transform group-hover:scale-110" />
                       <span>Accéder à mon espace</span>
@@ -343,7 +343,7 @@ export default function HomePage() {
                 </Button>
               </a>
             ) : (
-              <a href="/student/cours">
+              <a href="/student">
                 <Button variant="primary" size="lg" className="flex items-center justify-center gap-2.5 shadow-sm hover:-translate-y-1 transition-transform">
                   <span>Accéder à mon Espace</span>
                   <ArrowRight className="w-4 h-4" />

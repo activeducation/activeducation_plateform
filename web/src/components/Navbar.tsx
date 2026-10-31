@@ -56,7 +56,7 @@ export function Navbar() {
           </a>
           <div className="w-[1px] h-4 bg-border-soft mx-2"></div>
           <a
-            href={isLoggedIn ? "/student/cours" : "/auth/login"}
+            href={isLoggedIn ? "/student" : "/auth/login"}
             className="px-4 py-2 rounded-full hover:bg-gold/10 hover:text-gold-dark transition-all flex items-center gap-2"
           >
             <GraduationCap className="w-4 h-4" />

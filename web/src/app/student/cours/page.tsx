@@ -6,6 +6,11 @@ import CoursesClient from "./CoursesClient";
 import { redirect } from "next/navigation";
 
 export default async function CoursesPage() {
+  // Page temporairement désactivée pour les étudiants (code intégral préservé ci-dessous)
+  if (true as boolean) {
+    redirect("/student");
+  }
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 

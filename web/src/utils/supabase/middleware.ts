@@ -52,7 +52,7 @@ export async function updateSession(request: NextRequest) {
     (request.nextUrl.pathname === '/auth/login' || request.nextUrl.pathname === '/auth/register')
   ) {
     const url = request.nextUrl.clone()
-    url.pathname = '/student/cours'
+    url.pathname = '/student'
     return NextResponse.redirect(url)
   }
 
