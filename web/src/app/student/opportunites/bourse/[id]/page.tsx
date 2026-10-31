@@ -43,11 +43,11 @@ export default function BoursePage({ params }: { params: Promise<{ id: string }>
     <div className="flex flex-col gap-6 -mt-4 md:-mt-8 -mx-4 md:-mx-8 animate-fade-in">
       
       {/* FULL WIDTH BANNER */}
-      <div className="relative w-full h-[30dvh] md:h-[40dvh] bg-primary overflow-hidden">
+      <div className="relative w-full h-[30dvh] md:h-[40dvh] bg-surface-alt overflow-hidden">
         <img 
           src={bourse.image || "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1200&q=80"} 
           alt={bourse.title} 
-          className="w-full h-full object-cover opacity-30 mix-blend-overlay" 
+          className="w-full h-full object-cover" 
         />
         
         <div className="absolute top-4 left-4 md:top-8 md:left-8 z-20">

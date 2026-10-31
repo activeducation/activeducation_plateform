@@ -1,14 +1,15 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { Plus, Edit, Trash2, MapPin, Calendar, CheckCircle } from "lucide-react";
+import { Plus, Edit, Trash2, MapPin, CheckCircle, RefreshCw, AlertCircle, Bot } from "lucide-react";
 
 export default function OpportunitesAdminClient({ initialOpportunities }: { initialOpportunities: any[] }) {
   const [opportunities, setOpportunities] = useState(initialOpportunities);
-  const loading = false;
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const handleDelete = async (id: string) => {
     if (!confirm("Voulez-vous vraiment supprimer cette opportunité ?")) return;
@@ -28,26 +29,102 @@ export default function OpportunitesAdminClient({ initialOpportunities }: { init
     }
   };
 
+  const handleSyncAgent = async () => {
+    setIsSyncing(true);
+    setSyncStatus(null);
+
+    try {
+      const res = await fetch("/api/admin/opportunities/sync-agent", {
+        method: "POST"
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        setSyncStatus({
+          type: "success",
+          message: data.message || "Bourses d'études synchronisées avec succès par l'agent IA !"
+        });
+
+        // Recharger la liste mise à jour
+        const listRes = await fetch("/api/admin/opportunities");
+        if (listRes.ok) {
+          const freshData = await listRes.json();
+          setOpportunities(freshData);
+        }
+      } else {
+        setSyncStatus({
+          type: "error",
+          message: data.error || "Échec de la synchronisation par l'agent."
+        });
+      }
+    } catch (err: any) {
+      console.error("Sync agent error:", err);
+      setSyncStatus({
+        type: "error",
+        message: "Erreur de connexion avec l'agent IA."
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6 animate-fade-in">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-display font-bold text-text-primary mb-2">Opportunités</h1>
           <p className="text-text-secondary">Gérez les bourses d'études, stages et événements.</p>
         </div>
-        <Link href="/admin/opportunites/nouvelle">
-          <Button className="flex items-center gap-2">
-            <Plus className="w-4 h-4" /> Nouvelle opportunité
+
+        <div className="flex items-center gap-3">
+          <Button
+            variant="secondary"
+            onClick={handleSyncAgent}
+            disabled={isSyncing}
+            className="flex items-center gap-2 border-primary/40 text-primary hover:bg-primary/5"
+            title="Lancer l'agent IA pour moissonner les bourses officielles"
+          >
+            <RefreshCw className={`w-4 h-4 ${isSyncing ? "animate-spin" : ""}`} />
+            {isSyncing ? "Moissonnage en cours..." : "Lancer l'Agent IA Bourses"}
           </Button>
-        </Link>
+
+          <Link href="/admin/opportunites/nouvelle">
+            <Button className="flex items-center gap-2">
+              <Plus className="w-4 h-4" /> Nouvelle opportunité
+            </Button>
+          </Link>
+        </div>
       </div>
 
+      {syncStatus && (
+        <div
+          className={`p-4 rounded-lg flex items-center justify-between gap-3 text-sm font-medium border ${
+            syncStatus.type === "success"
+              ? "bg-success/10 border-success/30 text-success"
+              : "bg-error/10 border-error/30 text-error"
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            {syncStatus.type === "success" ? (
+              <CheckCircle className="w-5 h-5 flex-shrink-0" />
+            ) : (
+              <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            )}
+            <span>{syncStatus.message}</span>
+          </div>
+          <button
+            onClick={() => setSyncStatus(null)}
+            className="text-xs uppercase font-bold underline opacity-80 hover:opacity-100"
+          >
+            Fermer
+          </button>
+        </div>
+      )}
+
       <Card variant="standard" className="p-0 overflow-hidden">
-        {loading ? (
-          <div className="p-8 text-center text-text-secondary">Chargement...</div>
-        ) : opportunities.length === 0 ? (
+        {opportunities.length === 0 ? (
           <div className="p-8 text-center text-text-secondary">
-            Aucune opportunité pour le moment. Créez-en une !
+            Aucune opportunité pour le moment. Cliquez sur "Lancer l'Agent IA Bourses" pour importer les bourses officielles !
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -92,7 +169,13 @@ export default function OpportunitesAdminClient({ initialOpportunities }: { init
                             <Edit className="w-4 h-4" />
                           </Button>
                         </Link>
-                        <Button variant="secondary" size="sm" className="px-2 text-error border-error/20 hover:bg-error/10 hover:border-error" title="Supprimer" onClick={() => handleDelete(opp.id)}>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className="px-2 text-error border-error/20 hover:bg-error/10 hover:border-error"
+                          title="Supprimer"
+                          onClick={() => handleDelete(opp.id)}
+                        >
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>

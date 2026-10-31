@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "agent:scholarships": "node scripts/scholarship-agent.cjs"
   },
   "dependencies": {
     "@ai-sdk/groq": "^4.0.54",
